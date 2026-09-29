@@ -448,6 +448,20 @@ export const seedSiteSettings = {
   siteTitle: seedStoreConfig.brand.name,
   logoUrl: '',
   faviconUrl: '',
+  announcement: 'Free delivery on orders over Rs 5,000 · Cash on delivery available nationwide',
+  promo: {
+    enabled: true, eyebrow: 'Limited time', heading: '10% off your first order',
+    text: 'Use code RUBAYA10 at checkout on orders above Rs 3,000.', buttonText: 'Start shopping', buttonLink: '/shop',
+  },
+  editorial: {
+    enabled: true, eyebrow: 'The edit', heading: 'Festive dressing, made effortless.',
+    text: 'From everyday lawn to occasion-ready formals — our stylists picked the pieces that carry a look from morning tea to evening mehndi without a wardrobe change.',
+    imageUrl: 'https://picsum.photos/seed/editorial-story/900/700', buttonText: 'Shop the story', buttonLink: '/shop',
+  },
+  footer: {
+    about: 'Contemporary Pakistani fashion — lawn, formals and accessories made to last, delivered nationwide.',
+    phone: seedStoreConfig.contact.phone, email: seedStoreConfig.contact.email,
+  },
   heroSlides: [
     { id: 'slide_1', imageUrl: 'https://picsum.photos/seed/hero-1/1600/700', heading: 'Festive Edit, 2026', subheading: 'Hand-embroidered lawn & luxury pret', buttonText: 'Shop now', buttonLink: '/shop', sortOrder: 0 },
     { id: 'slide_2', imageUrl: 'https://picsum.photos/seed/hero-2/1600/700', heading: 'Made to order, made for you', subheading: 'Custom sizing on every bridal piece', buttonText: 'Explore bridal', buttonLink: '/shop', sortOrder: 1 },

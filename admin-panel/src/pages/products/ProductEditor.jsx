@@ -74,6 +74,10 @@ export default function ProductEditor() {
     )
   }
 
+  // Data that arrived after the first render (API mode): the reset above has queued the draft,
+  // which lands on the immediate re-render — don't touch `draft` until then.
+  if (!draft) return <div className="page"><LoadState status={status} retry={retry} label="product" /></div>
+
   function patch(p) {
     setDraft((d) => ({ ...d, ...p }))
     setDirty(true)

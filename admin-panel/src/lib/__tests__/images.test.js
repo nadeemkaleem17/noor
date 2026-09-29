@@ -3,6 +3,13 @@ import { addImages, imageRuleErrors, moveImage, normalizeImages, primaryImage, r
 import { validateItem } from '../validate.js'
 import * as F from '../../contract/fixtures.js'
 
+describe('test environment', () => {
+  it('never runs against a real API (vite.config.js test.env clears VITE_API_URL)', async () => {
+    const { API_MODE } = await import('../db.js')
+    expect(API_MODE).toBe(false)
+  })
+})
+
 const img = (id, sortOrder, isPrimary = false) => ({ id, url: `https://x.test/${id}.jpg`, alt: id, sortOrder, isPrimary })
 const ids = (list) => list.map((i) => i.id)
 const primaryId = (list) => list.filter((i) => i.isPrimary).map((i) => i.id)

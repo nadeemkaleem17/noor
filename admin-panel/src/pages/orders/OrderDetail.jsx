@@ -66,7 +66,9 @@ export default function OrderDetail() {
   const { value: storeConfig } = useSingleton('storeConfig')
   const order = orders.find((o) => o.id === id)
   const [notes, setNotes] = useState(order?.internalNotes || '')
-  const [notesForId, setNotesForId] = useState(id)
+  // Keyed on the order actually being present, so notes also load when the order arrives from the API after the first render.
+  const notesKey = order ? id : null
+  const [notesForId, setNotesForId] = useState(notesKey)
   const [pending, setPending] = useState(null) // the transition awaiting confirmation
   const [courier, setCourier] = useState(COURIERS[0])
   const [tracking, setTracking] = useState('')
@@ -74,8 +76,8 @@ export default function OrderDetail() {
 
   // Reset the notes draft whenever the route's order id changes, synchronously during
   // render (same pattern as ProductEditor/Settings) — fixes notes leaking between orders (F-05).
-  if (id !== notesForId) {
-    setNotesForId(id)
+  if (notesKey !== notesForId) {
+    setNotesForId(notesKey)
     setNotes(order?.internalNotes || '')
   }
 

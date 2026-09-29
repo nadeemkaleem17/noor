@@ -8,4 +8,9 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  // Tests always exercise the localStorage data layer. Without this, a developer's .env.local
+  // (VITE_API_URL) would point the test suite at a running API and reset/overwrite its data.
+  test: {
+    env: { VITE_API_URL: '', VITE_ADMIN_KEY: '' },
+  },
 })

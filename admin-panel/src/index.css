@@ -724,3 +724,5 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
   .image-grid { grid-template-columns: repeat(2, 1fr); }
   .data-source { display: none; }
 }
+.plain-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.plain-fieldset:disabled { opacity: 0.5; }

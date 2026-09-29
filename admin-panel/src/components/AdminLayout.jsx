@@ -114,7 +114,7 @@ export default function AdminLayout() {
         <div className="sidebar-brand">
           <div className="brand-text">
             <span className="mark">01</span>
-            <span className="name">Noor & Co. Admin</span>
+            <span className="name">Admin Panel</span>
           </div>
           <button
             type="button"
@@ -136,7 +136,7 @@ export default function AdminLayout() {
             <div className="sidebar-brand">
               <div className="brand-text">
                 <span className="mark">01</span>
-                <span className="name">Noor & Co. Admin</span>
+                <span className="name">Admin Panel</span>
               </div>
               <button type="button" className="collapse-btn" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation">
                 <X />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, ChevronUp, ChevronDown, GripVertical, ExternalLink } from 'lucide-react'
 import { useSingleton } from '../../hooks/useCollection.js'
-import { TextInput } from '../../components/Field.jsx'
+import { TextInput, TextArea, CheckboxRow } from '../../components/Field.jsx'
 import { ImageField } from '../../components/ImageUpload.jsx'
 import { LoadState, EmptyState } from '../../components/ui.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
@@ -11,6 +11,46 @@ import { API_MODE, UPLOAD_DESTINATION } from '../../lib/db.js'
 import { useToast } from '../../context/toastContext.js'
 
 const renumber = (slides) => slides.map((s, i) => ({ ...s, sortOrder: i }))
+const EMPTY_BANNER = { enabled: true, eyebrow: '', heading: '', text: '', buttonText: '', buttonLink: '' }
+// Settings saved before the home-page blocks existed have no promo/editorial/footer: fill them in.
+const withDefaults = (v) => v && ({
+  announcement: '',
+  ...v,
+  promo: { ...EMPTY_BANNER, ...v.promo },
+  editorial: { ...EMPTY_BANNER, imageUrl: '', ...v.editorial },
+  footer: { about: '', phone: '', email: '', ...v.footer },
+})
+
+// One home-page block (promo band / editorial section): show toggle, copy, optional button and image.
+function BannerEditor({ id, title, description, value, onChange, errors, withImage = false }) {
+  const set = (p) => onChange({ ...value, ...p })
+  return (
+    <section className="card card-pad settings-section" aria-labelledby={id}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <h2 id={id} className="section-title" style={{ margin: 0 }}>{title}</h2>
+        <CheckboxRow label="Show on home page" checked={value.enabled} onChange={(enabled) => set({ enabled })} />
+      </div>
+      <p className="hint">{description}</p>
+      <fieldset className="plain-fieldset" disabled={!value.enabled}>
+        <div className="form-grid">
+          <TextInput label="Small label above the heading" value={value.eyebrow} onChange={(e) => set({ eyebrow: e.target.value })} />
+          <TextInput label="Heading" value={value.heading} onChange={(e) => set({ heading: e.target.value })} />
+        </div>
+        <TextArea label="Text" rows={3} value={value.text} onChange={(e) => set({ text: e.target.value })} />
+        <div className="form-grid">
+          <TextInput label="Button text" value={value.buttonText} placeholder="Shop now" onChange={(e) => set({ buttonText: e.target.value })} hint="Leave empty for no button." />
+          <div>
+            <TextInput label="Button link" value={value.buttonLink} placeholder="/shop" onChange={(e) => set({ buttonLink: e.target.value })} aria-invalid={!!errors.buttonLink} />
+            {errors.buttonLink && <span className="field-error" role="alert">{errors.buttonLink}</span>}
+          </div>
+        </div>
+        {withImage && (
+          <ImageField label="Image" value={value.imageUrl} onChange={(imageUrl) => set({ imageUrl })} maxSide={1400} previewClass="wide" hint="Landscape image, about 900 × 700." />
+        )}
+      </fieldset>
+    </section>
+  )
+}
 const blankSlide = () => ({ id: makeId('slide'), imageUrl: '', heading: '', subheading: '', buttonText: '', buttonLink: '/shop', sortOrder: 0 })
 
 // Only relative paths or http(s) URLs make sense as a storefront button link.
@@ -26,7 +66,7 @@ export default function SiteSettings() {
   const { value: saved, save, status, retry } = useSingleton('siteSettings')
   const { value: storeConfig, save: saveStoreConfig } = useSingleton('storeConfig')
   const push = useToast()
-  const [draft, setDraft] = useState(saved)
+  const [draft, setDraft] = useState(() => withDefaults(saved))
   const [prevSaved, setPrevSaved] = useState(saved)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -36,7 +76,7 @@ export default function SiteSettings() {
   // Reset the draft when the stored settings change and nothing is being edited (same pattern as Settings.jsx).
   if (saved !== prevSaved && !dirty) {
     setPrevSaved(saved)
-    setDraft(saved)
+    setDraft(withDefaults(saved))
   }
 
   useEffect(() => {
@@ -79,6 +119,10 @@ export default function SiteSettings() {
     const r = SiteSettingsSchema.safeParse(candidate)
     if (!r.success) r.error.issues.forEach((i) => { found[i.path.join('.')] ??= i.message })
     candidate.heroSlides.forEach((s, i) => { const p = linkProblem(s.buttonLink); if (p) found[`heroSlides.${i}.buttonLink`] = p })
+    for (const block of ['promo', 'editorial']) {
+      const p = linkProblem(candidate[block].buttonLink)
+      if (p) found[`${block}.buttonLink`] = p
+    }
     setErrors(found)
     if (Object.keys(found).length) {
       push('Fix the highlighted fields before saving', 'danger')
@@ -97,6 +141,11 @@ export default function SiteSettings() {
           name: candidate.siteTitle,
           logo: { ...storeConfig.brand.logo, light: candidate.logoUrl },
           favicon: candidate.faviconUrl || undefined,
+        },
+        contact: {
+          ...storeConfig.contact,
+          ...(candidate.footer.phone && { phone: candidate.footer.phone }),
+          ...(candidate.footer.email && { email: candidate.footer.email }),
         },
       })
     }
@@ -137,6 +186,11 @@ export default function SiteSettings() {
             />
           </div>
           <p className="hint">{UPLOAD_DESTINATION}</p>
+          <TextInput
+            label="Announcement bar" value={draft.announcement} placeholder="Free delivery on orders over Rs 5,000"
+            onChange={(e) => patch({ announcement: e.target.value })}
+            hint="The thin strip above the storefront header. Leave empty to hide it."
+          />
         </section>
 
         <section className="card card-pad settings-section" aria-labelledby="site-hero">
@@ -195,6 +249,38 @@ export default function SiteSettings() {
               ))}
             </ol>
           )}
+        </section>
+
+        <BannerEditor
+          id="site-promo" title="Promo banner"
+          description="The dark band in the middle of the home page, e.g. a discount code."
+          value={draft.promo} onChange={(promo) => patch({ promo })}
+          errors={{ buttonLink: err('promo.buttonLink') }}
+        />
+        <BannerEditor
+          id="site-editorial" title="Editorial section" withImage
+          description="The image-and-story section near the bottom of the home page."
+          value={draft.editorial} onChange={(editorial) => patch({ editorial })}
+          errors={{ buttonLink: err('editorial.buttonLink') }}
+        />
+
+        <section className="card card-pad settings-section" aria-labelledby="site-footer">
+          <h2 id="site-footer" className="section-title">Footer &amp; contact</h2>
+          <TextArea
+            label="About text (footer)" rows={2} value={draft.footer.about}
+            onChange={(e) => patch({ footer: { ...draft.footer, about: e.target.value } })}
+          />
+          <div className="form-grid">
+            <TextInput
+              label="Phone / WhatsApp" value={draft.footer.phone} placeholder="0300-1234567"
+              onChange={(e) => patch({ footer: { ...draft.footer, phone: e.target.value } })}
+              hint="Used for the storefront's WhatsApp support link and contact page."
+            />
+            <TextInput
+              label="Email" type="email" value={draft.footer.email} placeholder="hello@example.com"
+              onChange={(e) => patch({ footer: { ...draft.footer, email: e.target.value } })}
+            />
+          </div>
         </section>
       </div>
     </div>

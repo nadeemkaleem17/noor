@@ -308,11 +308,29 @@ export const HeroSlide = z.object({
   sortOrder: z.number().int(),
 })
 
+// A home-page content block below the hero; `enabled: false` hides it on the storefront.
+export const HomeBanner = z.object({
+  enabled: z.boolean().default(true),
+  eyebrow: z.string().default(''),
+  heading: z.string().default(''),
+  text: z.string().default(''),
+  buttonText: z.string().default(''),
+  buttonLink: z.string().default(''),
+})
+
 export const SiteSettings = z.object({
   siteTitle: z.string().trim().min(1, 'Website title is required'),
   logoUrl: z.string().default(''),
   faviconUrl: z.string().default(''),
+  announcement: z.string().default(''), // storefront top bar; empty hides it
   heroSlides: z.array(HeroSlide).default([]),
+  promo: HomeBanner.default({}),
+  editorial: HomeBanner.extend({ imageUrl: z.string().default('') }).default({}),
+  footer: z.object({
+    about: z.string().default(''),
+    phone: z.string().default(''),
+    email: z.string().default(''),
+  }).default({}),
 })
 
 // -------------------------------------------------------- pages / menus ---
