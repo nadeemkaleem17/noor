@@ -1,0 +1,21 @@
+{
+  "name": "noor-mock-api",
+  "private": true,
+  "version": "0.1.0",
+  "description": "In-memory Express mock of the Noor store API (contract-shaped data, no database).",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "zod": "^3.25.76"
+  }
+}

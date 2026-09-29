@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noor Mock API</title>
+<style>
+  :root { --bg:#fbf9f6; --card:#fff; --fg:#231f1c; --muted:#8a8078; --line:#e7e0d8; --accent:#7a2e3a; --ok:#3f7d58; --bad:#b23a3a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1a1716; --card:#24201e; --fg:#f1ece6; --muted:#a39a92; --line:#3a3431; --accent:#d98a96; --ok:#7cc49a; --bad:#e58080; } }
+  * { box-sizing: border-box; } body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px; } h1 { margin:0 0 4px; font-size:22px; } h2 { font-size:16px; margin:28px 0 10px; }
+  .muted { color:var(--muted); } .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; overflow:hidden; }
+  .stat b { display:block; font-size:24px; } .slides { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .slide { padding:0; } .slide img { width:100%; aspect-ratio:16/7; object-fit:cover; display:block; background:var(--line); } .slide div { padding:10px 14px; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 14px; font:inherit; cursor:pointer; }
+  details { margin-top:8px; } summary { cursor:pointer; font-family:ui-monospace, monospace; }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; overflow:auto; max-height:360px; font-size:12px; }
+  #status.ok { color:var(--ok); } #status.bad { color:var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Noor Mock API</h1>
+  <p class="muted">Live data from this server's in-memory store. <span id="status">Loading…</span> <button id="refresh">Refresh</button></p>
+  <div class="stats">
+    <div class="card stat"><span class="muted">Active products</span><b id="count">–</b></div>
+    <div class="card stat"><span class="muted">Site title</span><b id="title">–</b></div>
+    <div class="card stat"><span class="muted">Uptime</span><b id="uptime">–</b></div>
+  </div>
+  <h2>Hero slides</h2>
+  <div class="slides" id="slides"></div>
+  <h2>Raw JSON</h2>
+  <div id="raw"></div>
+</main>
+<script>
+  const endpoints = ['/health', '/api/public/products', '/api/public/settings', '/api/public/categories']
+  const $ = (id) => document.getElementById(id)
+  const el = (tag, text, cls) => Object.assign(document.createElement(tag), { textContent: text ?? '', className: cls ?? '' })
+
+  async function load() {
+    $('status').textContent = 'Loading…'; $('status').className = ''
+    try {
+      const [health, products, settings, categories] = await Promise.all(endpoints.map(async (u) => {
+        const r = await fetch(u); if (!r.ok) throw new Error(`${u} → ${r.status}`); return r.json()
+      }))
+      $('count').textContent = products.length
+      $('title').textContent = settings.siteTitle
+      $('uptime').textContent = `${health.uptimeSec}s`
+      $('slides').replaceChildren(...settings.heroSlides.map((s) => {
+        const card = el('div', '', 'card slide'), body = el('div')
+        card.append(Object.assign(document.createElement('img'), { src: s.imageUrl, alt: s.heading, loading: 'lazy' }), body)
+        body.append(el('strong', s.heading), el('div', s.subheading, 'muted'), el('div', s.buttonText && `${s.buttonText} → ${s.buttonLink}`, 'muted'))
+        return card
+      }))
+      if (!settings.heroSlides.length) $('slides').replaceChildren(el('p', 'No hero slides.', 'muted'))
+      $('raw').replaceChildren(...[health, products, settings, categories].map((data, i) => {
+        const d = el('details'); d.append(el('summary', `GET ${endpoints[i]}`), el('pre', JSON.stringify(data, null, 2))); return d
+      }))
+      $('status').textContent = `Loaded at ${new Date().toLocaleTimeString()}`; $('status').className = 'ok'
+    } catch (e) { $('status').textContent = `Failed: ${e.message}`; $('status').className = 'bad' }
+  }
+  $('refresh').onclick = load
+  load()
+</script>
+</body>
+</html>

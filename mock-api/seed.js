@@ -1,0 +1,112 @@
+// Copied from admin-panel/src/contract/fixtures.js (subset: 5 products of different kinds).
+// Prices are Money in minor units: 699000 = Rs. 6,990.
+const pkr = (amount) => ({ amount, currency: 'PKR' })
+const img = (id, alt, role = 'model') => ({
+  id, type: 'image', url: `https://picsum.photos/seed/${id}/900/1200`, alt, width: 900, height: 1200, role,
+})
+const sizes = (ids) => ids.map((id, i) => ({ id, label: id.toUpperCase(), sortOrder: i, kind: 'standard' }))
+
+export const categories = [
+  { id: 'cat_women', handle: 'women', name: 'Women', parentId: null, filterSchema: ['fabric', 'piece', 'occasion'] },
+  { id: 'cat_unstitched', handle: 'unstitched', name: 'Unstitched', parentId: 'cat_women', filterSchema: ['fabric', 'piece'] },
+  { id: 'cat_stitched', handle: 'stitched', name: 'Stitched', parentId: 'cat_women', filterSchema: ['fabric', 'piece', 'occasion'] },
+  { id: 'cat_bridal', handle: 'bridal', name: 'Bridal & Formals', parentId: 'cat_women', filterSchema: ['fabric', 'occasion'] },
+  { id: 'cat_footwear', handle: 'footwear', name: 'Footwear', parentId: null, filterSchema: ['material'] },
+  { id: 'cat_accessories', handle: 'accessories', name: 'Accessories', parentId: null, filterSchema: ['material'] },
+  { id: 'cat_men', handle: 'men', name: 'Men', parentId: null, filterSchema: ['fabric'] },
+  { id: 'cat_kids', handle: 'kids', name: 'Kids', parentId: null, filterSchema: ['fabric'] },
+]
+
+const euSizes = ['36', '37', '38', '39', '40', '41'].map((l, i) => ({ id: `eu${l}`, label: l, sortOrder: i, kind: 'standard' }))
+
+export const products = [
+  {
+    id: 'p1', handle: 'noor-embroidered-lawn-3pc', status: 'active', publishedAt: '2026-08-01T00:00:00Z',
+    kind: 'stitched', title: 'Noor Embroidered Lawn 3-Piece', subtitle: 'Shirt, dupatta & trouser',
+    primaryCategoryId: 'cat_stitched', categoryIds: ['cat_stitched', 'cat_women'], collectionIds: ['col_sale'],
+    descriptionMd: 'Embroidered lawn shirt with chiffon dupatta and dyed trouser.',
+    highlights: ['Hand-embellished neckline', 'Pure chiffon dupatta', 'Pre-shrunk fabric'],
+    components: [
+      { id: 'c1', type: 'shirt', label: 'Embroidered shirt', fabric: 'Lawn', included: true },
+      { id: 'c2', type: 'dupatta', label: 'Chiffon dupatta', fabric: 'Chiffon', included: true },
+      { id: 'c3', type: 'trouser', label: 'Dyed trouser', fabric: 'Cambric', included: true },
+    ],
+    attributes: { fabric: ['lawn'], piece: ['3'], occasion: ['casual', 'festive'] },
+    options: [{ id: 'opt_size', name: 'Size', role: 'size', display: 'buttons', sizeSystemId: 'sys_alpha', values: sizes(['xs', 's', 'm', 'l', 'xl']) }],
+    variants: ['xs', 's', 'm', 'l', 'xl'].map((s, i) => ({
+      id: `p1-${s}`, sku: `NOR-3PC-${s.toUpperCase()}`, optionValueIds: [s], price: pkr(699000), compareAt: pkr(899000),
+      stock: { status: i === 4 ? 'low_stock' : 'in_stock', quantity: i === 4 ? 3 : 20, maxPerOrder: 10 },
+    })),
+    media: [img('p1-1', 'Noor 3-piece, front'), img('p1-2', 'Noor 3-piece, detail', 'detail'), img('p1-3', 'Noor 3-piece, back')],
+    sizeChartId: 'chart_alpha', badges: ['sale'],
+  },
+  {
+    id: 'p3', handle: 'raaz-unstitched-lawn-3pc', status: 'active', publishedAt: '2026-07-20T00:00:00Z',
+    kind: 'unstitched', title: 'Raaz Unstitched Lawn 3-Piece', primaryCategoryId: 'cat_unstitched',
+    categoryIds: ['cat_unstitched', 'cat_women'], collectionIds: ['col_new'],
+    descriptionMd: 'Unstitched lawn suit — cut piece by piece.',
+    components: [
+      { id: 'c1', type: 'shirt', label: 'Shirt fabric', fabric: 'Lawn', quantity: '2.5 m', included: true },
+      { id: 'c2', type: 'dupatta', label: 'Dupatta', fabric: 'Chiffon', quantity: '2.5 m', included: true },
+      { id: 'c3', type: 'trouser', label: 'Trouser fabric', fabric: 'Cambric', quantity: '2.5 m', included: true },
+    ],
+    attributes: { fabric: ['lawn'], piece: ['3'], occasion: ['casual'] }, options: [],
+    variants: [{ id: 'p3-1', sku: 'RAZ-UNS-3PC', optionValueIds: [], price: pkr(549000), stock: { status: 'in_stock', quantity: 40, maxPerOrder: 10 } }],
+    media: [img('p3-1', 'Raaz unstitched, flat lay', 'flat')], badges: ['new'],
+  },
+  {
+    id: 'p4', handle: 'amani-bridal-made-to-order', status: 'active', publishedAt: '2026-06-01T00:00:00Z',
+    kind: 'made-to-order', title: 'Amani Bridal Ensemble', subtitle: 'Made to order', primaryCategoryId: 'cat_bridal',
+    categoryIds: ['cat_bridal', 'cat_women'], collectionIds: ['col_eid'],
+    descriptionMd: 'Hand-embellished bridal shirt with organza dupatta. 6-week lead time.',
+    components: [
+      { id: 'c1', type: 'shirt', label: 'Hand-embellished shirt', fabric: 'Organza', technique: 'Zardozi', included: true },
+      { id: 'c2', type: 'dupatta', label: 'Embellished dupatta', fabric: 'Net', included: true },
+      { id: 'c3', type: 'lehnga', label: 'Lehnga', fabric: 'Raw silk', included: true },
+    ],
+    attributes: { fabric: ['organza', 'silk'], occasion: ['bridal'] },
+    options: [{ id: 'opt_size', name: 'Size', role: 'size', display: 'buttons', sizeSystemId: 'sys_alpha',
+      values: [...sizes(['xs', 's', 'm', 'l', 'xl']), { id: 'custom', label: 'Custom', sortOrder: 5, kind: 'custom' }] }],
+    variants: ['xs', 's', 'm', 'l', 'xl'].map((s) => ({
+      id: `p4-${s}`, sku: `AMN-BRD-${s.toUpperCase()}`, optionValueIds: [s], price: pkr(4800000), stock: { status: 'made_to_order', maxPerOrder: 2 },
+    })).concat([{ id: 'p4-custom', sku: 'AMN-BRD-CUSTOM', optionValueIds: ['custom'], price: pkr(5200000), stock: { status: 'made_to_order', maxPerOrder: 1 } }]),
+    media: [img('p4-1', 'Amani bridal, front'), img('p4-2', 'Amani bridal, detail', 'detail')],
+    sizeChartId: 'chart_bridal', customSizeSchemaId: 'form_custom_size',
+    madeToOrder: { leadTime: { minDays: 35, maxDays: 42, label: '5–6 weeks' }, returnable: false, depositPercent: 50 },
+    badges: ['made-to-order'],
+  },
+  {
+    id: 'p7', handle: 'sana-khussa', status: 'active', publishedAt: '2026-08-02T00:00:00Z',
+    kind: 'footwear', title: 'Sana Embroidered Khussa', primaryCategoryId: 'cat_footwear', categoryIds: ['cat_footwear'], collectionIds: [],
+    descriptionMd: 'Hand-embroidered khussa, EU sizing.', components: [], attributes: { material: ['fabric'] },
+    options: [
+      { id: 'opt_size', name: 'Size', role: 'size', display: 'select', sizeSystemId: 'sys_eu', values: euSizes },
+      { id: 'opt_color', name: 'Color', role: 'color', display: 'swatch', values: [
+        { id: 'gold', label: 'Gold', sortOrder: 0, kind: 'standard', swatch: { hex: ['#c9a13b'] } },
+        { id: 'black', label: 'Black', sortOrder: 1, kind: 'standard', swatch: { hex: ['#161616'] } },
+      ] },
+    ],
+    variants: euSizes.flatMap((sz) => ['gold', 'black'].map((c) => ({
+      id: `p7-${sz.id}-${c}`, sku: `KHU-${sz.label}-${c.slice(0, 2).toUpperCase()}`, optionValueIds: [sz.id, c],
+      price: pkr(320000), stock: { status: 'in_stock', quantity: 15, maxPerOrder: 10 },
+    }))),
+    media: [img('p7-1', 'Sana khussa, gold')],
+  },
+  {
+    id: 'p9', handle: 'nadia-embroidered-clutch', status: 'active', publishedAt: '2026-08-05T00:00:00Z',
+    kind: 'accessory', title: 'Nadia Embroidered Clutch', primaryCategoryId: 'cat_accessories', categoryIds: ['cat_accessories'], collectionIds: [],
+    descriptionMd: 'Hand-embroidered evening clutch, 22 × 12 cm.', components: [], attributes: { material: ['fabric'] }, options: [],
+    variants: [{ id: 'p9-1', sku: 'CLU-NAD-001', optionValueIds: [], price: pkr(380000), stock: { status: 'in_stock', quantity: 25, maxPerOrder: 10 } }],
+    media: [img('p9-1', 'Nadia clutch')],
+  },
+]
+
+export const settings = {
+  siteTitle: 'Noor & Co.',
+  logoUrl: '',
+  faviconUrl: '',
+  heroSlides: [
+    { imageUrl: 'https://picsum.photos/seed/hero-1/1600/700', heading: 'Festive Edit, 2026', subheading: 'Hand-embroidered lawn & luxury pret', buttonText: 'Shop now', buttonLink: '/collections/festive', sortOrder: 0 },
+    { imageUrl: 'https://picsum.photos/seed/hero-2/1600/700', heading: 'Made to order, made for you', subheading: 'Custom sizing on every bridal piece', buttonText: 'Explore bridal', buttonLink: '/c/women/bridal', sortOrder: 1 },
+  ],
+}
