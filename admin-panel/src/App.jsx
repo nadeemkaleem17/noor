@@ -16,6 +16,7 @@ import Pages from './pages/content/Pages.jsx'
 import Menus from './pages/content/Menus.jsx'
 import Templates from './pages/content/Templates.jsx'
 import Settings from './pages/store/Settings.jsx'
+import SiteSettings from './pages/store/SiteSettings.jsx'
 import Shipping from './pages/store/Shipping.jsx'
 import Appearance from './pages/store/Appearance.jsx'
 import NotFound from './pages/NotFound.jsx'
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/menus" element={<Menus />} />
             <Route path="/templates" element={<Templates />} />
 
+            <Route path="/site" element={<SiteSettings />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/appearance" element={<Appearance />} />
             <Route path="/shipping" element={<Shipping />} />

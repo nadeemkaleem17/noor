@@ -9,6 +9,7 @@ import { syncCollectionMembership } from '../../lib/collections.js'
 import { useToast } from '../../context/toastContext.js'
 import { useCollection } from '../../hooks/useCollection.js'
 import { ContractError, summarizeFailures } from '../../lib/validate.js'
+import { ApiError } from '../../lib/api.js'
 
 const AREAS_ORDER = ['Contract', 'References', 'Handles', 'Collections']
 
@@ -42,14 +43,16 @@ export default function DataPublishing() {
     setPendingImport(parsed)
   }
 
-  function confirmImport() {
+  async function confirmImport() {
     if (!pendingImport) return
     try {
-      importAll(pendingImport.bundle)
+      await importAll(pendingImport.bundle) // in API mode, products/categories/settings sync to the server
     } catch (e) {
-      if (!(e instanceof ContractError)) throw e
-      setImportError(`Nothing was imported. ${summarizeFailures(e.failures)}`)
+      if (e instanceof ContractError) setImportError(`Nothing was imported. ${summarizeFailures(e.failures)}`)
+      else if (e instanceof ApiError) setImportError(`Local data was imported, but syncing to the API failed: ${e.message}`)
+      else throw e
       setPendingImport(null)
+      recheck()
       return
     }
     setPendingImport(null)

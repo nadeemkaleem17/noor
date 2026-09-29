@@ -40,6 +40,19 @@ export const Media = z.object({
   durationSec: z.number().optional(),
 })
 
+// Admin-managed product gallery: uploaded from the device or linked by URL. `sortOrder` is the
+// gallery order; exactly one image should be isPrimary (the storefront shows it first, on cards too).
+// Independent of `media` on purpose (media keeps roles/video for the richer PDP).
+export const ProductImage = z.object({
+  id: z.string(),
+  url: z.string().min(1),
+  alt: z.string().default(''),
+  sortOrder: z.number().int(),
+  isPrimary: z.boolean().default(false),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+})
+
 // -------------------------------------------------------------- product ---
 export const ProductKind = z.enum([
   'stitched', 'unstitched', 'made-to-order', 'footwear',
@@ -132,6 +145,7 @@ export const Product = z.object({
   options: z.array(ProductOption).max(3),
   variants: z.array(Variant).min(1),
   media: z.array(Media).min(1),
+  images: z.array(ProductImage).default([]),
   sizeChartId: z.string().optional(),
   customSizeSchemaId: z.string().optional(),
   fit: Fit.optional(),
@@ -279,6 +293,26 @@ export const StoreConfig = z.object({
     returns: z.string().optional(), shipping: z.string().optional(),
     privacy: z.string().optional(), terms: z.string().optional(),
   }),
+})
+
+// ---------------------------------------------------------- site settings
+// What the storefront shell reads at boot: title, logo, favicon, home hero carousel.
+// Same shape as the API's /api/public/settings (mock-api/schemas.js).
+export const HeroSlide = z.object({
+  id: z.string().optional(),
+  imageUrl: z.string().min(1, 'Add an image'),
+  heading: z.string().trim().min(1, 'Heading is required'),
+  subheading: z.string().default(''),
+  buttonText: z.string().default(''),
+  buttonLink: z.string().default(''),
+  sortOrder: z.number().int(),
+})
+
+export const SiteSettings = z.object({
+  siteTitle: z.string().trim().min(1, 'Website title is required'),
+  logoUrl: z.string().default(''),
+  faviconUrl: z.string().default(''),
+  heroSlides: z.array(HeroSlide).default([]),
 })
 
 // -------------------------------------------------------- pages / menus ---

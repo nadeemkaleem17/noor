@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { useCollection, useSingleton } from '../../hooks/useCollection.js'
 import { formatMoney, formatDateTime, formatDate } from '../../lib/format.js'
-import { StatusPill, ConfirmDialog } from '../../components/ui.jsx'
+import { StatusPill, ConfirmDialog, LoadState } from '../../components/ui.jsx'
 import { TextArea, TextInput, SelectInput } from '../../components/Field.jsx'
 import { useToast } from '../../context/toastContext.js'
 import { printInvoice } from '../../lib/invoice.js'
@@ -62,7 +62,7 @@ export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const push = useToast()
-  const { items: orders, update } = useCollection('orders')
+  const { items: orders, update, status: loadStatus, retry } = useCollection('orders')
   const { value: storeConfig } = useSingleton('storeConfig')
   const order = orders.find((o) => o.id === id)
   const [notes, setNotes] = useState(order?.internalNotes || '')
@@ -86,6 +86,10 @@ export default function OrderDetail() {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   }, [orders, order])
 
+  if (!order && loadStatus.state !== 'ready') {
+    return <div className="page"><LoadState status={loadStatus} retry={retry} label="order" /></div>
+  }
+
   if (!order) {
     return <div className="page"><p>Order not found.</p><button className="btn secondary" onClick={() => navigate('/orders')}>Back to orders</button></div>
   }
@@ -97,15 +101,15 @@ export default function OrderDetail() {
     setCourier(COURIERS[0]); setTracking(''); setReason('')
     setPending(t)
   }
-  function runTransition(to, extra) {
-    if (!update(order.id, transitionPatch(order, to, extra))) return
+  async function runTransition(to, extra) {
+    if (!(await update(order.id, transitionPatch(order, to, extra)))) return
     push(`Order marked ${to}`, to === 'cancelled' || to === 'returned' ? 'danger' : 'success')
     setPending(null)
   }
 
-  function saveNotes() {
+  async function saveNotes() {
     if (notes === (order.internalNotes || '')) return
-    if (!update(order.id, { internalNotes: notes })) return
+    if (!(await update(order.id, { internalNotes: notes }))) return
     push('Notes saved', 'success')
   }
 

@@ -5,19 +5,20 @@ import { syncCollectionMembership } from '../../lib/collections.js'
 import { useCollection } from '../../hooks/useCollection.js'
 import { formatMoney } from '../../lib/format.js'
 import { priceRange, aggregateStock } from '../../lib/variants.js'
-import { StatusPill, EmptyState, ConfirmDialog } from '../../components/ui.jsx'
+import { StatusPill, EmptyState, ConfirmDialog, LoadState, SyncErrorBanner } from '../../components/ui.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { downloadCsv } from '../../lib/csv.js'
-
-
+import { primaryImage } from '../../lib/images.js'
 import { makeId, slugify, randomSuffix } from '../../lib/id.js'
 import { useToast } from '../../context/toastContext.js'
 
+// Main gallery image, falling back to the first media item for products without a gallery.
+const thumbOf = (p) => primaryImage(p.images)?.url || p.media?.[0]?.url
 
 export default function ProductsList() {
   const navigate = useNavigate()
   const push = useToast()
-  const { items: products, create, update, remove } = useCollection('products')
+  const { items: products, create, update, remove, status: loadStatus, retry } = useCollection('products')
   const { items: categories } = useCollection('categories')
   const [q, setQ] = useState('')
   const [status, setStatus] = useState('all')
@@ -45,17 +46,21 @@ export default function ProductsList() {
   function toggleSelectAll() {
     setSelected(selected.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)))
   }
-  function bulkSetStatus(next) {
-    selected.forEach((id) => update(id, { status: next }))
-    push(`${selected.size} product${selected.size === 1 ? '' : 's'} set to ${next}`, 'success')
+  const plural = (n) => `${n} product${n === 1 ? '' : 's'}`
+  // One at a time, so each failure gets its own toast and the count below is honest.
+  async function bulkSetStatus(next) {
+    let done = 0
+    for (const id of selected) if (await update(id, { status: next })) done++
+    if (done) push(`${plural(done)} set to ${next}`, 'success')
     setSelected(new Set())
   }
-  function bulkDelete() {
-    selected.forEach((id) => remove(id))
-      syncCollectionMembership()
-    push(`${selected.size} product${selected.size === 1 ? '' : 's'} deleted`, 'danger')
-    setSelected(new Set())
+  async function bulkDelete() {
     setBulkDeleteOpen(false)
+    let done = 0
+    for (const id of selected) if (await remove(id)) done++
+    syncCollectionMembership()
+    if (done) push(`${plural(done)} deleted`, 'danger')
+    setSelected(new Set())
   }
   function exportCsv() {
     downloadCsv('products.csv', filtered, [
@@ -72,10 +77,10 @@ export default function ProductsList() {
     push(`Exported ${filtered.length} products`, 'success')
   }
 
-function handleNew() {
-  const title = 'Untitled product'
-  const created = create({
-    handle: `${slugify(title)}-${randomSuffix(3)}`,
+  async function handleNew() {
+    const title = 'Untitled product'
+    const created = await create({
+      handle: `${slugify(title)}-${randomSuffix(3)}`,
       status: 'draft',
       kind: 'stitched',
       title,
@@ -87,26 +92,27 @@ function handleNew() {
       options: [],
       variants: [{ id: makeId('v'), sku: 'SKU-NEW', optionValueIds: [], price: { amount: 0, currency: 'PKR' }, stock: { status: 'in_stock', quantity: 0, maxPerOrder: 10 } }],
       media: [],
+      images: [],
     }, 'p')
     if (!created) return
     navigate(`/products/${created.id}`)
   }
 
-function handleDuplicate(p) {
+  async function handleDuplicate(p) {
     const suffix = randomSuffix(3).toUpperCase()
-  const copy = create({
-    ...structuredClone(p),
-    id: undefined,
-    title: `${p.title} (copy)`,
-    handle: `${p.handle}-copy-${randomSuffix(2)}`,
-    status: 'draft',
-    variants: p.variants.map((v) => ({ ...v, sku: `${v.sku}-C${suffix}` })), // SKUs must stay unique
-  })
-  if (!copy) return
-  syncCollectionMembership()
-  push('Product duplicated')
-  navigate(`/products/${copy.id}`)
-}
+    const copy = await create({
+      ...structuredClone(p),
+      id: undefined,
+      title: `${p.title} (copy)`,
+      handle: `${p.handle}-copy-${randomSuffix(2)}`,
+      status: 'draft',
+      variants: p.variants.map((v) => ({ ...v, sku: `${v.sku}-C${suffix}` })), // SKUs must stay unique
+    })
+    if (!copy) return
+    syncCollectionMembership()
+    push('Product duplicated')
+    navigate(`/products/${copy.id}`)
+  }
 
   return (
     <div className="page">
@@ -159,8 +165,11 @@ function handleDuplicate(p) {
         </div>
       )}
 
+      <SyncErrorBanner status={products.length ? loadStatus : null} retry={retry} label="products" />
       <div className="card">
-        {filtered.length === 0 ? (
+        {!products.length && loadStatus.state !== 'ready' ? (
+          <div className="card-pad"><LoadState status={loadStatus} retry={retry} label="products" /></div>
+        ) : filtered.length === 0 ? (
           <div className="card-pad"><EmptyState title="No products found" body="Try a different search or filter, or create a new product." /></div>
         ) : (
           <div className="table-wrap">
@@ -177,7 +186,7 @@ function handleDuplicate(p) {
                   return (
                     <tr key={p.id} className="clickable" onClick={() => navigate(`/products/${p.id}`)}>
                       <td onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelected(p.id)} /></td>
-                      <td><img className="thumb" src={p.media[0]?.url} alt="" /></td>
+                      <td><img className="thumb" src={thumbOf(p)} alt="" /></td>
                       <td>
                         <div style={{ fontWeight: 500 }}>{p.title}</div>
                         <div className="mono" style={{ fontSize: 11.5, color: 'var(--muted)' }}>{p.handle}</div>
@@ -212,7 +221,13 @@ function handleDuplicate(p) {
           body="This removes the product and all its variants from the catalog. This can't be undone."
           confirmLabel="Delete product"
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => { remove(deleteTarget.id); syncCollectionMembership(); push('Product deleted', 'danger'); setDeleteTarget(null) }}
+          onConfirm={async () => {
+            const target = deleteTarget
+            setDeleteTarget(null)
+            if (!(await remove(target.id))) return
+            syncCollectionMembership()
+            push('Product deleted', 'danger')
+          }}
         />
       )}
 

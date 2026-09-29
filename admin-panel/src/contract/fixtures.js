@@ -435,3 +435,21 @@ export const seedTemplates = [
     section('sec_s2', 'product_grid', { columns: 4, perPage: 24, emptyMessage: 'No results found.' }),
   ]),
 ]
+// ------------------------------------------------------- product images
+// Seed products start with an admin-style gallery built from their media (first image = main).
+for (const p of seedProducts) {
+  p.images = p.media.filter((m) => m.type === 'image').map((m, i) => ({
+    id: `${m.id}-img`, url: m.url, alt: m.alt, sortOrder: i, isPrimary: i === 0, width: m.width, height: m.height,
+  }))
+}
+
+// -------------------------------------------------------- site settings
+export const seedSiteSettings = {
+  siteTitle: seedStoreConfig.brand.name,
+  logoUrl: '',
+  faviconUrl: '',
+  heroSlides: [
+    { id: 'slide_1', imageUrl: 'https://picsum.photos/seed/hero-1/1600/700', heading: 'Festive Edit, 2026', subheading: 'Hand-embroidered lawn & luxury pret', buttonText: 'Shop now', buttonLink: '/shop', sortOrder: 0 },
+    { id: 'slide_2', imageUrl: 'https://picsum.photos/seed/hero-2/1600/700', heading: 'Made to order, made for you', subheading: 'Custom sizing on every bridal piece', buttonText: 'Explore bridal', buttonLink: '/shop', sortOrder: 1 },
+  ],
+}

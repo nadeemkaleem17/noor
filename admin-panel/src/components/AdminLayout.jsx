@@ -1,9 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { onStorageError, API_MODE } from '../lib/db.js'
+import { API_URL } from '../lib/api.js'
+import { useToast } from '../context/toastContext.js'
 import {
   LayoutDashboard, Shirt, FolderTree, Tags, Ruler, ShoppingBag, Ticket,
   FileText, Menu as MenuIcon, Settings, Truck, Layers, DatabaseZap, MessageSquareText, LayoutTemplate,
-  PanelLeftClose, PanelLeftOpen, Sun, Moon, X,
+  PanelLeftClose, PanelLeftOpen, Sun, Moon, X, Globe, Cloud, HardDrive,
 } from 'lucide-react'
 import { useCollection } from '../hooks/useCollection.js'
 import { usePersistentState } from '../hooks/usePersistentState.js'
@@ -43,6 +46,7 @@ const NAV = [
   {
     label: 'Store',
     items: [
+      { to: '/site', icon: Globe, label: 'Site settings' },
       { to: '/settings', icon: Settings, label: 'Store settings' },
       { to: '/shipping', icon: Truck, label: 'Shipping & payments' },
       { to: '/data', icon: DatabaseZap, label: 'Data & publishing' },
@@ -85,6 +89,18 @@ export default function AdminLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const location = useLocation()
   const [prevPath, setPrevPath] = useState(location.pathname)
+
+  // Browser storage full (usually uploaded images in local mode): say so once, instead of silently
+  // keeping the change in memory only.
+  const push = useToast()
+  useEffect(() => {
+    let warned = false
+    return onStorageError(() => {
+      if (warned) return
+      warned = true
+      push("Browser storage is full — recent changes won't survive a reload. Remove some images, or connect the API (VITE_API_URL).", 'danger')
+    })
+  }, [push])
 
   // Close the mobile drawer whenever the route changes (F-10).
   if (prevPath !== location.pathname) {
@@ -143,6 +159,13 @@ export default function AdminLayout() {
           </button>
           <div />
           <div className="topbar-right">
+            <span
+              className={`data-source ${API_MODE ? 'api' : 'local'}`}
+              title={API_MODE ? `Products, categories, orders and site settings are saved to ${API_URL}` : 'VITE_API_URL is not set: everything is saved in this browser'}
+            >
+              {API_MODE ? <Cloud size={13} aria-hidden="true" /> : <HardDrive size={13} aria-hidden="true" />}
+              {API_MODE ? 'Connected to API' : 'Local data only'}
+            </span>
             <button
               type="button"
               className="icon-btn"

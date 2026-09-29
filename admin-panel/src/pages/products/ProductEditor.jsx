@@ -5,6 +5,8 @@ import { useCollection } from '../../hooks/useCollection.js'
 import { TextInput, TextArea, SelectInput, CheckboxRow, LinesArea } from '../../components/Field.jsx'
 import OptionsVariantsEditor from './OptionsVariantsEditor.jsx'
 import MediaEditor from './MediaEditor.jsx'
+import ImagesEditor from './ImagesEditor.jsx'
+import { LoadState } from '../../components/ui.jsx'
 import { slugify, slugifyLoose } from '../../lib/id.js'
 import { validateItem } from '../../lib/validate.js'
 import { syncCollectionMembership } from '../../lib/collections.js'
@@ -13,7 +15,7 @@ import { useToast } from '../../context/toastContext.js'
 import { TabBar } from '../../components/TabBar.jsx'
 import ComponentsEditor from './ComponentsEditor.jsx'
 
-const TABS = ['Details', 'Attributes', 'Options & variants', 'Components', 'Media', 'Sizing & fit', 'Merchandising', 'SEO']
+const TABS = ['Details', 'Images', 'Attributes', 'Options & variants', 'Components', 'Media', 'Sizing & fit', 'Merchandising', 'SEO']
 const KINDS = ['stitched', 'unstitched', 'made-to-order', 'footwear', 'accessory', 'bundle', 'home', 'beauty']
 const COLOR_FAMILIES = ['black', 'white', 'grey', 'beige', 'brown', 'red', 'pink', 'orange', 'yellow', 'green', 'blue', 'purple', 'gold', 'silver', 'multi']
 const BADGES = ['new', 'sale', 'bestseller', 'limited', 'made-to-order', 'sold-out']
@@ -22,7 +24,7 @@ export default function ProductEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const push = useToast()
-  const { items: products, update } = useCollection('products')
+  const { items: products, update, status, retry } = useCollection('products')
   const { items: categories } = useCollection('categories')
   const { items: collectionsList } = useCollection('collectionsList')
   const { items: attributeDefs } = useCollection('attributes')
@@ -36,6 +38,7 @@ export default function ProductEditor() {
   const [tab, setTab] = useState('Details')
   const [dirty, setDirty] = useState(false)
   const [validationErrors, setValidationErrors] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   // Resetting local state synchronously during render (not in an effect) when the
   // underlying product changes — same pattern as Settings.jsx / the storefront's Product.jsx.
@@ -58,6 +61,10 @@ export default function ProductEditor() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [dirty])
 
+  if (!saved && status.state !== 'ready') {
+    return <div className="page"><LoadState status={status} retry={retry} label="product" /></div>
+  }
+
   if (!saved) {
     return (
       <div className="page">
@@ -72,7 +79,13 @@ export default function ProductEditor() {
     setDirty(true)
   }
 
-  function save() {
+  // The gallery editor hands us updater functions so concurrent uploads never clobber each other.
+  function patchImages(next) {
+    setDraft((d) => ({ ...d, images: typeof next === 'function' ? next(d.images || []) : next }))
+    setDirty(true)
+  }
+
+  async function save() {
     const candidate = { ...draft, handle: slugify(draft.handle) }
     const result = validateItem('products', candidate)
     if (!result.success) {
@@ -81,7 +94,10 @@ export default function ProductEditor() {
       return
     }
     setValidationErrors(null)
-    if (!update(id, candidate)) return
+    setSaving(true)
+    const ok = await update(id, candidate)
+    setSaving(false)
+    if (!ok) return // the toast already explains why; stay dirty so nothing is lost
     syncCollectionMembership() // keep Collection.productIds in step with this product's collectionIds
     setDirty(false)
     push('Product saved', 'success')
@@ -112,7 +128,7 @@ export default function ProductEditor() {
           <a className="btn secondary" href={`https://example-storefront.test/products/${draft.handle}`} target="_blank" rel="noreferrer">
             <ExternalLink size={14} /> Preview
           </a>
-          <button className="btn primary" onClick={save} disabled={!dirty}>{dirty ? 'Save changes' : 'Saved'}</button>
+          <button className="btn primary" onClick={save} disabled={!dirty || saving}>{saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}</button>
         </div>
       </div>
 
@@ -218,6 +234,7 @@ export default function ProductEditor() {
 
       {tab === 'Options & variants' && <OptionsVariantsEditor product={draft} onChange={patch} />}
       {tab === 'Components' && <ComponentsEditor components={draft.components || []} onChange={(components) => patch({ components })} />}
+      {tab === 'Images' && <ImagesEditor images={draft.images || []} onChange={patchImages} />}
       {tab === 'Media' && <MediaEditor media={draft.media || []} onChange={(media) => patch({ media })} />}
 
       {tab === 'Sizing & fit' && (

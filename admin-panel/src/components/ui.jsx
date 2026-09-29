@@ -1,7 +1,43 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { X, Inbox } from 'lucide-react'
+import { X, Inbox, CloudOff, RotateCcw } from 'lucide-react'
+
+// Loading / error surface for data that comes from the API (see useCollection's `status`).
+// Loading shows skeleton rows shaped like a table (no layout jump when data lands); an error
+// explains what failed and offers a retry.
+export function LoadState({ status, retry, label = 'data', rows = 4 }) {
+  if (status?.state === 'error') {
+    return (
+      <div className="load-error card card-pad" role="alert">
+        <CloudOff size={18} aria-hidden="true" />
+        <div style={{ flex: 1 }}>
+          <strong>Couldn't load {label} from the API.</strong>
+          <p className="hint">{status.error}</p>
+        </div>
+        {retry && <button className="btn secondary sm" onClick={retry}><RotateCcw size={13} /> Try again</button>}
+      </div>
+    )
+  }
+  return (
+    <div className="load-skeleton" aria-busy="true">
+      <span className="sr-only">Loading {label}…</span>
+      {Array.from({ length: rows }, (_, i) => <div key={i} className="skeleton-row" aria-hidden="true" />)}
+    </div>
+  )
+}
+
+// A thin banner for pages that already show (possibly stale) data when a background refresh fails.
+export function SyncErrorBanner({ status, retry, label = 'data' }) {
+  if (status?.state !== 'error') return null
+  return (
+    <div className="sync-banner" role="alert">
+      <CloudOff size={15} aria-hidden="true" />
+      <span>Couldn't refresh {label} from the API: {status.error}</span>
+      {retry && <button className="btn ghost sm" onClick={retry}><RotateCcw size={13} /> Retry</button>}
+    </div>
+  )
+}
 
 // Wraps any icon-only trigger with an accessible, delayed tooltip. Use in
 // place of a bare `title="…"` attribute on icon buttons — title tooltips are

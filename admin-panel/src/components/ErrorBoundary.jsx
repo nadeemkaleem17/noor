@@ -64,7 +64,7 @@ export class ErrorBoundary extends Component {
                   className="btn danger"
                   onClick={() => {
                     if (window.confirm('This clears all admin data in this browser back to the sample fixtures. Continue?')) {
-                      resetAllData()
+                      resetAllData({ includeApi: false }) // this browser only; never wipes the API server
                       window.location.reload()
                     }
                   }}

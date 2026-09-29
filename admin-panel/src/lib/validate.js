@@ -10,7 +10,8 @@
 // priced yet...), so for those only the light rules in layer 1 run. Anything 'active' or 'scheduled'
 // must satisfy the full contract, because that is what the storefront will read.
 
-import { collections, StoreConfig } from '../contract/schemas.js'
+import { collections, StoreConfig, SiteSettings } from '../contract/schemas.js'
+import { imageRuleErrors } from './images.js'
 
 const PRODUCT_STATUSES = ['draft', 'scheduled', 'active', 'archived']
 const HANDLE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -40,6 +41,9 @@ function productRules(p) {
       err('madeToOrder.depositPercent', 'Must be between 0 and 100')
     }
   }
+
+  // Gallery rules apply even to drafts: a draft with two "main" images would publish broken.
+  errors.push(...imageRuleErrors(p.images))
 
   if (p.seo?.title && p.seo.title.length > 70) err('seo.title', 'Keep under 70 characters')
   if (p.seo?.description && p.seo.description.length > 320) err('seo.description', 'Keep under 320 characters')
@@ -109,8 +113,8 @@ export function summarizeFailures(failures = []) {
   return rest.length ? `${head} (+${rest.length} more record${rest.length === 1 ? '' : 's'})` : head
 }
 
-// Same shape as validateItem, for singletons (only storeConfig today).
-const SINGLETON_SCHEMAS = { storeConfig: StoreConfig }
+// Same shape as validateItem, for singletons.
+const SINGLETON_SCHEMAS = { storeConfig: StoreConfig, siteSettings: SiteSettings }
 export function validateSingleton(name, value) {
   const schema = SINGLETON_SCHEMAS[name]
   if (!schema) return { success: true }

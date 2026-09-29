@@ -23,7 +23,7 @@ export default function Collections() {
   function openEdit(c) {
     setEditing({ ...c, description: c.description || '', memberIds: derivedProductIds(products, c.id) })
   }
-  function save(draft) {
+  async function save(draft) {
     const handle = slugify(draft.handle || draft.title)
     if (!draft.title.trim()) return push('Give the collection a title', 'danger')
     if (!handle) return push('Give the collection a handle', 'danger')
@@ -33,7 +33,8 @@ export default function Collections() {
     const saved = draft.id ? update(draft.id, base) : create(base, 'col')
     if (!saved) return // rejected by the contract; keep the editor open
     const id = draft.id || saved.id
-    replaceProducts(applyMembership(products, id, draft.memberIds))
+    // Products may live on the API: wait for their collectionIds to be written before confirming.
+    if (!(await replaceProducts(applyMembership(products, id, draft.memberIds)))) return
     push(draft.id ? 'Collection saved' : 'Collection created', 'success')
     setEditing(null)
   }
@@ -84,11 +85,12 @@ export default function Collections() {
           body={`${count(deleteTarget.id)} product(s) will be removed from it. The products themselves are not deleted.`}
           confirmLabel="Delete collection"
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => {
-            replaceProducts(applyMembership(products, deleteTarget.id, []))
-            remove(deleteTarget.id)
-            push('Collection deleted', 'danger')
+          onConfirm={async () => {
+            const target = deleteTarget
             setDeleteTarget(null)
+            if (!(await replaceProducts(applyMembership(products, target.id, [])))) return
+            remove(target.id)
+            push('Collection deleted', 'danger')
           }}
         />
       )}

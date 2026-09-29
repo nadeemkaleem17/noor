@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Plus, Trash2, ChevronRight } from 'lucide-react'
 import { useCollection } from '../../hooks/useCollection.js'
-import { Drawer, ConfirmDialog } from '../../components/ui.jsx'
+import { Drawer, ConfirmDialog, LoadState, SyncErrorBanner } from '../../components/ui.jsx'
 import { TextInput, SelectInput, CheckboxRow } from '../../components/Field.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { slugify, slugifyLoose } from '../../lib/id.js'
 import { useToast } from '../../context/toastContext.js'
 
 export default function Categories() {
-  const { items: categories, create, update, remove } = useCollection('categories')
+  const { items: categories, create, update, remove, status, retry } = useCollection('categories')
   const { items: attributes } = useCollection('attributes')
   const { items: products } = useCollection('products')
   const push = useToast()
@@ -31,10 +31,10 @@ export default function Categories() {
     setEditing({ id: null, handle: '', name: '', parentId: null, filterSchema: [] })
   }
 
-  function save() {
+  async function save() {
     // The contract has parentId as optional (never null), so leave it out for top-level categories.
     const payload = { ...editing, handle: slugify(editing.handle || editing.name), parentId: editing.parentId || undefined }
-    const saved = editing.id ? update(editing.id, payload) : create(payload, 'cat')
+    const saved = await (editing.id ? update(editing.id, payload) : create(payload, 'cat'))
     if (!saved) return // rejected by the contract; the toast already says why, keep the editor open
     push(editing.id ? 'Category updated' : 'Category created', 'success')
     setEditing(null)
@@ -93,12 +93,17 @@ export default function Categories() {
         description="The category tree that drives storefront navigation and filter panels (doc 02 §1)."
         actions={<button className="btn primary" onClick={openNew}><Plus size={15} /> New category</button>}
       />
-      <div className="card table-wrap">
-        <table className="grid">
-          <thead><tr><th>Name</th><th>Handle</th><th>Filters shown</th><th></th></tr></thead>
-          <tbody>{roots.map((c) => <Row key={c.id} cat={c} depth={0} />)}</tbody>
-        </table>
-      </div>
+      <SyncErrorBanner status={categories.length ? status : null} retry={retry} label="categories" />
+      {!categories.length && status.state !== 'ready' ? (
+        <div className="card card-pad"><LoadState status={status} retry={retry} label="categories" /></div>
+      ) : (
+        <div className="card table-wrap">
+          <table className="grid">
+            <thead><tr><th>Name</th><th>Handle</th><th>Filters shown</th><th></th></tr></thead>
+            <tbody>{roots.map((c) => <Row key={c.id} cat={c} depth={0} />)}</tbody>
+          </table>
+        </div>
+      )}
 
       {editing && (
         <Drawer
@@ -137,11 +142,15 @@ export default function Categories() {
           body="Any sub-categories will move up one level."
           confirmLabel="Delete category"
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => {
-            categories.filter((c) => c.parentId === deleteTarget.id).forEach((c) => update(c.id, { parentId: deleteTarget.parentId || undefined }))
-            remove(deleteTarget.id)
-            push('Category deleted', 'danger')
+          onConfirm={async () => {
+            const target = deleteTarget
             setDeleteTarget(null)
+            // Move children up first, one at a time; stop if any move fails so nothing is orphaned.
+            for (const child of categories.filter((c) => c.parentId === target.id)) {
+              if (!(await update(child.id, { parentId: target.parentId || undefined }))) return
+            }
+            if (!(await remove(target.id))) return
+            push('Category deleted', 'danger')
           }}
         />
       )}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Plus, Trash2, RotateCcw } from 'lucide-react'
 import { useSingleton } from '../../hooks/useCollection.js'
 import { TextInput, SelectInput, CheckboxRow } from '../../components/Field.jsx'
@@ -58,11 +59,13 @@ export default function Settings() {
 
       {tab === 'Brand' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
-          <div className="form-grid">
-            <TextInput label="Store name" value={draft.brand.name} onChange={(e) => patch({ brand: { ...draft.brand, name: e.target.value } })} />
-            <TextInput label="Tagline" value={draft.brand.tagline || ''} onChange={(e) => patch({ brand: { ...draft.brand, tagline: e.target.value } })} />
+          <div className="card card-pad" style={{ background: 'var(--surface-2)' }}>
+            <strong>{draft.brand.name}</strong>
+            <p className="hint" style={{ marginTop: 4 }}>
+              The website title, logo and favicon are edited on <Link to="/site">Site settings</Link>, where you can upload images from your device.
+            </p>
           </div>
-          <TextInput label="Logo URL (light)" value={draft.brand.logo?.light || ''} onChange={(e) => patch({ brand: { ...draft.brand, logo: { ...draft.brand.logo, light: e.target.value } } })} />
+          <TextInput label="Tagline" value={draft.brand.tagline || ''} onChange={(e) => patch({ brand: { ...draft.brand, tagline: e.target.value } })} />
         </div>
       )}
 
@@ -172,8 +175,14 @@ export default function Settings() {
           body="This overwrites everything in this admin panel with the original seed data and reloads the page. Any edits you've made will be lost."
           confirmLabel="Reset everything"
           onCancel={() => setConfirmReset(false)}
-          onConfirm={() => {
-            resetAllData()
+          onConfirm={async () => {
+            try {
+              await resetAllData() // in API mode this also resets the server
+            } catch (e) {
+              push(`Reset failed: ${e.message}`, 'danger')
+              setConfirmReset(false)
+              return
+            }
             push('Demo data reset', 'success')
             window.location.reload()
           }}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Download } from 'lucide-react'
 import { useCollection } from '../../hooks/useCollection.js'
 import { formatMoney, formatDateTime } from '../../lib/format.js'
-import { StatusPill, EmptyState } from '../../components/ui.jsx'
+import { StatusPill, EmptyState, LoadState, SyncErrorBanner } from '../../components/ui.jsx'
 import PageHeader from '../../components/PageHeader.jsx'
 import { downloadCsv } from '../../lib/csv.js'
 import { useToast } from '../../context/toastContext.js'
@@ -13,7 +13,7 @@ const STATUSES = ['all', 'pending', 'confirmed', 'dispatched', 'delivered', 'can
 export default function OrdersList() {
   const navigate = useNavigate()
   const push = useToast()
-  const { items: orders } = useCollection('orders')
+  const { items: orders, status: loadStatus, retry } = useCollection('orders')
   const [q, setQ] = useState('')
   const [status, setStatus] = useState('all')
   const [from, setFrom] = useState('')
@@ -67,8 +67,11 @@ export default function OrdersList() {
         </div>
       </div>
 
+      <SyncErrorBanner status={orders.length ? loadStatus : null} retry={retry} label="orders" />
       <div className="card">
-        {filtered.length === 0 ? (
+        {!orders.length && loadStatus.state !== 'ready' ? (
+          <div className="card-pad"><LoadState status={loadStatus} retry={retry} label="orders" /></div>
+        ) : filtered.length === 0 ? (
           <div className="card-pad"><EmptyState title="No orders match" body="Try clearing the search or status filter." /></div>
         ) : (
           <div className="table-wrap">
