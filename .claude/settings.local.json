@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(cd D:\\\\SOLHUT\\\\SELF-PROJECT\\\\noor\\\\ecommerce-website; npx vite build --outDir C:\\\\Users\\\\SOLHUT4\\\\.claude\\\\jobs\\\\42300a5e\\\\tmp\\\\shop-dist --emptyOutDir 2>&1 | Select-Object -Last 15; \"EXIT build: $LASTEXITCODE\"; npx eslint . 2>&1 | Select-Object -Last 20; \"EXIT lint: $LASTEXITCODE\")"
-    ]
-  }
-}
