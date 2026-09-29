@@ -23,11 +23,12 @@ export function CatalogProvider({ children }) {
   const [remote, setRemote] = useState(null) // { products, categories, categoryTree } from the API
   const [status, setStatus] = useState(apiEnabled ? 'loading' : 'ready')
   const [error, setError] = useState(null)
-  const [attempt, setAttempt] = useState(0)
+  const [attempt, setAttempt] = useState({ n: 0, silent: false })
 
   useEffect(() => {
     if (!apiEnabled) return
     const controller = new AbortController()
+    const { silent } = attempt
     Promise.all([
       apiGet('/api/public/products', { signal: controller.signal }),
       apiGet('/api/public/categories', { signal: controller.signal }),
@@ -40,6 +41,7 @@ export function CatalogProvider({ children }) {
       })
       .catch((err) => {
         if (controller.signal.aborted) return
+        if (silent) return // a background refresh failing keeps whatever is already on screen
         setRemote(null)
         setError(err.message || 'Could not load the catalog')
         setStatus('error')
@@ -50,8 +52,20 @@ export function CatalogProvider({ children }) {
   const retry = useCallback(() => {
     setStatus('loading')
     setError(null)
-    setAttempt((n) => n + 1)
+    setAttempt((a) => ({ n: a.n + 1, silent: false }))
   }, [])
+
+  // Re-fetch in the background (no skeletons): after checkout, and when the tab regains focus so
+  // changes made in the admin (new products, prices, stock) show up without a manual reload.
+  const refresh = useCallback(() => {
+    if (apiEnabled) setAttempt((a) => ({ n: a.n + 1, silent: true }))
+  }, [])
+  useEffect(() => {
+    if (!apiEnabled) return
+    const onFocus = () => { if (document.visibilityState === 'visible') refresh() }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [refresh])
 
   const usingRemote = remote !== null
   // While an API request is in flight, show nothing rather than flashing the mock catalog.
@@ -81,10 +95,10 @@ export function CatalogProvider({ children }) {
   const value = useMemo(
     () => ({
       products, categories, categoryTree,
-      status, error, retry, source: usingRemote ? 'api' : 'mock',
+      status, error, retry, refresh, source: usingRemote ? 'api' : 'mock',
       decrementStock, getProduct, getRelated,
     }),
-    [products, categories, categoryTree, status, error, retry, usingRemote, decrementStock, getProduct, getRelated]
+    [products, categories, categoryTree, status, error, retry, refresh, usingRemote, decrementStock, getProduct, getRelated]
   )
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>

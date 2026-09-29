@@ -445,3 +445,7 @@ ul, ol { list-style: none; }
   .hc-slide::after { background: linear-gradient(0deg, rgba(20,18,16,0.8) 0%, rgba(20,18,16,0.3) 60%, rgba(20,18,16,0.05) 100%); }
   .hc-nav { display: none; }
 }
+
+/* ---- per-size availability (API catalog) + footer contact ---- */
+.size-btn.sold-out, .size-btn:disabled { opacity: 0.4; text-decoration: line-through; cursor: not-allowed; }
+.foot-contact { margin-top: 8px; font-size: 13.5px; }

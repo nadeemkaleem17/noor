@@ -3,6 +3,7 @@ import { useCatalog } from '../../context/CatalogContext'
 import { useStoreConfig } from '../../hooks/useStoreConfig'
 import ProductCard from '../../components/ProductCard'
 import HeroCarousel from '../../components/HeroCarousel'
+import CtaLink from '../../components/CtaLink'
 import { HeroSkeleton, ProductGridSkeleton } from '../../components/Skeletons'
 import { ProductImage } from '../../components/ui'
 
@@ -33,6 +34,7 @@ export default function Home() {
   const newArrivals = products.filter((p) => p.tags?.includes('new')).slice(0, 4)
   const featured = bestsellers.length ? bestsellers : products.slice(0, 4)
   const catalogLoading = catalogStatus === 'loading'
+  const { promo, editorial } = store
 
   let hero
   if (store.heroSlides.length) hero = <HeroCarousel slides={store.heroSlides} />
@@ -71,16 +73,18 @@ export default function Home() {
         )}
       </section>
 
-      <section className="promo-band">
-        <div className="container promo-band-inner">
-          <div>
-            <span className="eyebrow">Limited time</span>
-            <h2>10% off your first order</h2>
-            <p>Use code <strong>RUBAYA10</strong> at checkout on orders above Rs 3,000.</p>
+      {promo?.enabled && (promo.heading || promo.text) && (
+        <section className="promo-band">
+          <div className="container promo-band-inner">
+            <div>
+              {promo.eyebrow && <span className="eyebrow">{promo.eyebrow}</span>}
+              {promo.heading && <h2>{promo.heading}</h2>}
+              {promo.text && <p>{promo.text}</p>}
+            </div>
+            <CtaLink text={promo.buttonText} href={promo.buttonLink} />
           </div>
-          <Link to="/shop" className="btn btn-gold">Start shopping</Link>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="container section">
         <div className="section-head">
@@ -94,17 +98,22 @@ export default function Home() {
         )}
       </section>
 
-      <section className="editorial-band container">
-        <div className="editorial-copy">
-          <span className="eyebrow">The edit</span>
-          <h2>Festive dressing, made effortless.</h2>
-          <p>From everyday lawn to occasion-ready formals — our stylists picked the pieces that carry a look from morning tea to evening mehndi without a wardrobe change.</p>
-          <Link to="/shop?category=Lawn+Suits" className="btn btn-outline">Shop the story</Link>
-        </div>
-        <div className="editorial-media">
-          <ProductImage seed="editorial-story" index={2} label="Festive edit" size="hero" width={900} height={700} />
-        </div>
-      </section>
+      {editorial?.enabled && (editorial.heading || editorial.text) && (
+        <section className="editorial-band container">
+          <div className="editorial-copy">
+            {editorial.eyebrow && <span className="eyebrow">{editorial.eyebrow}</span>}
+            {editorial.heading && <h2>{editorial.heading}</h2>}
+            {editorial.text && <p>{editorial.text}</p>}
+            <CtaLink text={editorial.buttonText} href={editorial.buttonLink} className="btn btn-outline" />
+          </div>
+          <div className="editorial-media">
+            <ProductImage
+              src={editorial.imageUrl || undefined} seed="editorial-story" index={2}
+              label={editorial.heading || 'Editorial'} size="hero" width={900} height={700}
+            />
+          </div>
+        </section>
+      )}
     </>
   )
 }

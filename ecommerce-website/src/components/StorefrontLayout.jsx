@@ -37,7 +37,7 @@ export default function StorefrontLayout() {
 
   return (
     <div className="storefront" data-theme={store.theme}>
-      <div className="top-bar">Free delivery on orders over Rs 5,000 · Cash on delivery available nationwide</div>
+      {store.announcement && <div className="top-bar">{store.announcement}</div>}
 
       <header className="sf-header">
         <button className="sf-burger" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu">☰</button>
@@ -132,7 +132,14 @@ export default function StorefrontLayout() {
         <div className="container foot-grid">
           <div>
             <h3 className="foot-logo">{store.storeName}</h3>
-            <p>Contemporary Pakistani fashion — lawn, formals and accessories made to last, delivered nationwide.</p>
+            {store.footerAbout && <p>{store.footerAbout}</p>}
+            {(store.phone || store.email) && (
+              <p className="foot-contact">
+                {store.phone && <span>{store.phone}</span>}
+                {store.phone && store.email && ' · '}
+                {store.email && <a href={`mailto:${store.email}`}>{store.email}</a>}
+              </p>
+            )}
           </div>
           <div>
             <h4>Shop</h4>

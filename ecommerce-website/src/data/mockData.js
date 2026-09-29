@@ -54,4 +54,16 @@ export const STORE_CONFIG = {
   theme: 'heritage-gold', // heritage-gold | monochrome | botanical
   phone: '0300-1112233',
   email: 'fahad@rubaya.pk',
+  // Home/layout copy. The admin's Site settings override all of these when VITE_API_URL is set.
+  announcement: 'Free delivery on orders over Rs 5,000 · Cash on delivery available nationwide',
+  footerAbout: 'Contemporary Pakistani fashion — lawn, formals and accessories made to last, delivered nationwide.',
+  promo: {
+    enabled: true, eyebrow: 'Limited time', heading: '10% off your first order',
+    text: 'Use code RUBAYA10 at checkout on orders above Rs 3,000.', buttonText: 'Start shopping', buttonLink: '/shop',
+  },
+  editorial: {
+    enabled: true, eyebrow: 'The edit', heading: 'Festive dressing, made effortless.',
+    text: 'From everyday lawn to occasion-ready formals — our stylists picked the pieces that carry a look from morning tea to evening mehndi without a wardrobe change.',
+    imageUrl: '', buttonText: 'Shop the story', buttonLink: '/shop?category=Lawn+Suits',
+  },
 }

@@ -5,13 +5,26 @@ import { StoreConfigContext } from './storeConfig'
 
 // Read-only store configuration. The admin project owns it (doc 03 §8); the storefront never writes it.
 // Base values come from mockData's STORE_CONFIG; when VITE_API_URL is set, GET /api/public/settings
-// overrides the parts the API provides (title, logo, favicon, hero slides). Phone, email and theme
-// are not served by the API yet, so they keep their mock values.
+// (the admin's Site settings page) overrides title, logo, favicon, announcement bar, hero slides,
+// promo banner, editorial section, footer text and contact phone/email. Theme is still mock-only.
 
 const str = (v) => (typeof v === 'string' ? v.trim() : '')
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+
+// A home-page block from the API, keeping only string/boolean fields (never trust the shape blindly).
+function banner(v, fallback) {
+  if (!isObj(v)) return fallback
+  return {
+    enabled: v.enabled !== false,
+    eyebrow: str(v.eyebrow), heading: str(v.heading), text: str(v.text),
+    buttonText: str(v.buttonText), buttonLink: str(v.buttonLink),
+    ...('imageUrl' in v && { imageUrl: str(v.imageUrl) }),
+  }
+}
 
 function fromSettings(settings) {
   const slides = Array.isArray(settings?.heroSlides) ? settings.heroSlides : []
+  const footer = isObj(settings?.footer) ? settings.footer : {}
   return {
     ...(str(settings?.siteTitle) && { storeName: str(settings.siteTitle) }),
     logoUrl: str(settings?.logoUrl),
@@ -19,6 +32,13 @@ function fromSettings(settings) {
     heroSlides: slides
       .filter((s) => s && str(s.imageUrl) && str(s.heading))
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    // Settings saved before these fields existed simply keep the storefront defaults.
+    ...('announcement' in (settings || {}) && { announcement: str(settings.announcement) }),
+    ...(isObj(settings?.promo) && { promo: banner(settings.promo, STORE_CONFIG.promo) }),
+    ...(isObj(settings?.editorial) && { editorial: banner(settings.editorial, STORE_CONFIG.editorial) }),
+    ...(str(footer.about) && { footerAbout: str(footer.about) }),
+    ...(str(footer.phone) && { phone: str(footer.phone) }),
+    ...(str(footer.email) && { email: str(footer.email) }),
   }
 }
 
@@ -37,13 +57,32 @@ export function StoreConfigProvider({ children }) {
   const [settings, setSettings] = useState(null)
   const [status, setStatus] = useState(apiEnabled ? 'loading' : 'ready')
 
+  // Load once, then again whenever the tab regains focus, so edits saved in the admin's Site settings
+  // appear on the storefront when you switch back to it. A failed re-check keeps what's on screen.
   useEffect(() => {
     if (!apiEnabled) return
-    const controller = new AbortController()
-    apiGet('/api/public/settings', { signal: controller.signal })
-      .then((data) => { setSettings(fromSettings(data)); setStatus('ready') })
-      .catch(() => { if (!controller.signal.aborted) setStatus('error') })
-    return () => controller.abort()
+    let controller = null
+    let loadedOnce = false
+    const load = () => {
+      controller?.abort()
+      controller = new AbortController()
+      const { signal } = controller
+      apiGet('/api/public/settings', { signal })
+        .then((data) => {
+          const next = fromSettings(data)
+          setSettings((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+          setStatus('ready')
+          loadedOnce = true
+        })
+        .catch(() => { if (!signal.aborted && !loadedOnce) setStatus('error') })
+    }
+    const onFocus = () => { if (document.visibilityState === 'visible') load() }
+    load()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      controller?.abort()
+    }
   }, [])
 
   const value = useMemo(

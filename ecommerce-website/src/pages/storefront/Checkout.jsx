@@ -12,7 +12,7 @@ const CITIES = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'M
 export default function Checkout() {
   const { items, subtotal, discount, shipping, total, appliedPromo, clearCart } = useCart()
   const { placeOrder } = useOrders()
-  const { decrementStock } = useCatalog()
+  const { decrementStock, refresh: refreshCatalog } = useCatalog()
   const { recordUsage } = usePromo()
   const navigate = useNavigate()
 
@@ -20,6 +20,7 @@ export default function Checkout() {
   const [payment, setPayment] = useState('cod')
   const [errors, setErrors] = useState({})
   const [placing, setPlacing] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
   const nameRef = useRef(null)
   const phoneRef = useRef(null)
   const addressRef = useRef(null)
@@ -42,18 +43,33 @@ export default function Checkout() {
     return Object.keys(errs).length === 0
   }
 
-  function handlePlaceOrder() {
+  async function handlePlaceOrder() {
     if (placing) return // idempotent guard — no double submit
     if (!validate()) return
     setPlacing(true)
-    const order = placeOrder({
-      customer: { name: form.name.trim(), phone: form.phone.trim(), address: form.address.trim(), city: form.city },
-      items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, size: i.size || null })),
-      subtotal, discount, shipping, total,
-      promoCode: appliedPromo ? appliedPromo.promo.code : null,
-      paymentMethod: payment,
-    })
+    setSubmitError(null)
+    let order
+    try {
+      // With the API connected this creates the order on the server (it then shows in the admin);
+      // the server re-checks prices and stock and may refuse, e.g. if a size just sold out.
+      order = await placeOrder({
+        customer: { name: form.name.trim(), phone: form.phone.trim(), address: form.address.trim(), city: form.city },
+        items: items.map((i) => ({
+          id: i.id, name: i.name, price: i.price, qty: i.qty, size: i.size || null,
+          ...(i.variantId && { variantId: i.variantId, sku: i.sku }),
+          ...(i.image && { image: i.image }),
+        })),
+        subtotal, discount, shipping, total,
+        promoCode: appliedPromo ? appliedPromo.promo.code : null,
+        paymentMethod: payment,
+      })
+    } catch (err) {
+      setSubmitError(err.message || "We couldn't place your order. Please try again.")
+      setPlacing(false)
+      return
+    }
     decrementStock(items)
+    refreshCatalog() // pick up the server's new stock levels
     if (appliedPromo) recordUsage(appliedPromo.promo.id)
     clearCart()
     navigate('/order-confirmation/' + order.id, { state: { order } })
@@ -76,6 +92,12 @@ export default function Checkout() {
   return (
     <div className="page-wrap">
       <h1 className="page-title">Checkout</h1>
+
+      {submitError && (
+        <div className="error-summary" role="alert">
+          <strong>Your order wasn't placed.</strong> {submitError}
+        </div>
+      )}
 
       {errorCount > 0 && (
         <div className="error-summary" role="alert">

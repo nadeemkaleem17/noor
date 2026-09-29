@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { safeHref } from '../utils/api'
+import CtaLink from './CtaLink'
 
 const INTERVAL_MS = 6000
-
-function SlideButton({ text, href }) {
-  const target = safeHref(href)
-  if (!text || !target) return null
-  return target.startsWith('/')
-    ? <Link to={target} className="btn btn-gold">{text}</Link>
-    : <a href={target} className="btn btn-gold" rel="noopener noreferrer">{text}</a>
-}
 
 // Hero slides from the store settings (already filtered + sorted by StoreConfigProvider).
 // Auto-advances, but pauses while hovered/focused, and never auto-plays for users who
@@ -58,7 +49,7 @@ export default function HeroCarousel({ slides }) {
             <div className="hc-copy">
               <h1>{s.heading}</h1>
               {s.subheading && <p>{s.subheading}</p>}
-              <SlideButton text={s.buttonText} href={s.buttonLink} />
+              <CtaLink text={s.buttonText} href={s.buttonLink} />
             </div>
           </div>
         ))}

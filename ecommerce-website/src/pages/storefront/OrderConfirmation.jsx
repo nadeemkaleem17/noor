@@ -39,7 +39,7 @@ export default function OrderConfirmation() {
       <div className="confirm-lines">
         {order.items.map((item) => (
           <div className="confirm-line" key={item.id + (item.size || '')}>
-            <ProductImage seed={`${item.id}-0`} label={item.name} size="sm" />
+            <ProductImage src={item.image} seed={`${item.id}-0`} label={item.name} size="sm" />
             <div className="di-info">
               <span className="di-name">{item.name}{item.size ? ` (${item.size})` : ''}</span>
               <span className="di-price">Qty {item.qty} · {formatPKR(item.price * item.qty)}</span>

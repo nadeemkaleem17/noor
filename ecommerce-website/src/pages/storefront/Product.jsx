@@ -6,6 +6,7 @@ import { useWishlist } from '../../context/WishlistContext'
 import ProductCard from '../../components/ProductCard'
 import { ProductImage, EmptyState } from '../../components/ui'
 import { ProductPageSkeleton } from '../../components/Skeletons'
+import { variantFor } from '../../utils/catalogAdapter'
 import { formatPKR } from '../../utils/format'
 
 function Accordion({ title, children, defaultOpen = false }) {
@@ -67,7 +68,17 @@ export default function Product() {
     )
   }
 
-  const outOfStock = product.stock === 0
+  // API products know each size's own price and stock; mock products only have product-level values.
+  const hasVariants = product.variants?.length > 0
+  const chosen = hasVariants && (!hasSizes || selectedSize) ? variantFor(product, selectedSize || null) : null
+  const sizeStock = (size) => (hasVariants
+    ? product.variants.filter((v) => v.size === size).reduce((sum, v) => sum + v.stock, 0)
+    : product.stock)
+  const price = chosen ? chosen.price : product.price
+  const compareAt = chosen ? chosen.compareAt : product.compareAt
+  const stock = chosen ? chosen.stock : product.stock
+  const outOfStock = product.stock === 0 || stock === 0
+  const qtyShown = Math.max(1, Math.min(qty, stock || 1))
 
   function selectSize(size) {
     setSizeError(false)
@@ -88,12 +99,12 @@ export default function Product() {
 
   function handleAdd() {
     if (!validateSize()) return
-    addItem(product, qty, hasSizes ? selectedSize : null)
+    addItem(product, qtyShown, hasSizes ? selectedSize : null)
   }
 
   function handleBuyNow() {
     if (!validateSize()) return
-    addItem(product, qty, hasSizes ? selectedSize : null)
+    addItem(product, qtyShown, hasSizes ? selectedSize : null)
     navigate('/checkout')
   }
 
@@ -134,8 +145,8 @@ export default function Product() {
           <span className="pc-category">{product.category}{product.subcategory ? ` · ${product.subcategory}` : ''}</span>
           <h1>{product.name}</h1>
           <div className="pd-price-row">
-            <span className="pd-price">{formatPKR(product.price)}</span>
-            {product.compareAt && <span className="pc-compare">{formatPKR(product.compareAt)}</span>}
+            <span className="pd-price">{formatPKR(price)}</span>
+            {compareAt > price && <span className="pc-compare">{formatPKR(compareAt)}</span>}
           </div>
           <p className="pd-desc">{product.description}</p>
 
@@ -146,30 +157,38 @@ export default function Product() {
                 <Link to="/pages/size-guide" className="size-guide-link">Size guide</Link>
               </div>
               <div className="size-options">
-                {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    className={'size-btn' + (selectedSize === size ? ' active' : '')}
-                    onClick={() => selectSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {product.sizes.map((size) => {
+                  const soldOut = hasVariants && sizeStock(size) === 0
+                  return (
+                    <button
+                      key={size}
+                      className={'size-btn' + (selectedSize === size ? ' active' : '') + (soldOut ? ' sold-out' : '')}
+                      onClick={() => selectSize(size)}
+                      disabled={soldOut}
+                      aria-label={soldOut ? `${size} (sold out)` : undefined}
+                      title={soldOut ? 'Sold out' : undefined}
+                    >
+                      {size}
+                    </button>
+                  )
+                })}
               </div>
               {sizeError && <p className="pd-size-error">Please select a size.</p>}
             </div>
           )}
 
           <p className={'pd-stock ' + (outOfStock ? 'out' : 'in')}>
-            {outOfStock ? 'Out of stock' : `${product.stock} in stock`}
+            {outOfStock ? 'Out of stock'
+              : hasSizes && hasVariants && !selectedSize ? 'Select a size to see availability'
+                : stock <= 3 ? `Only ${stock} left` : `${stock} in stock`}
           </p>
 
           {!outOfStock && (
             <div className="pd-qty-row">
               <div className="qty-row">
-                <button className="qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
-                <span className="qty-val">{qty}</span>
-                <button className="qty-btn" onClick={() => setQty((q) => Math.min(product.stock, q + 1))} disabled={qty >= product.stock}>+</button>
+                <button className="qty-btn" onClick={() => setQty(Math.max(1, qtyShown - 1))}>−</button>
+                <span className="qty-val">{qtyShown}</span>
+                <button className="qty-btn" onClick={() => setQty(Math.min(stock, qtyShown + 1))} disabled={qtyShown >= stock}>+</button>
               </div>
             </div>
           )}
