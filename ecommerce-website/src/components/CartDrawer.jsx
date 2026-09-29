@@ -28,7 +28,7 @@ export default function CartDrawer() {
             <div className="drawer-items">
               {items.map((item) => (
                 <div className="drawer-item" key={item.key}>
-                  <ProductImage seed={`${item.id}-0`} index={item.swatch} label={item.name} size="sm" />
+                  <ProductImage src={item.image} seed={`${item.id}-0`} index={item.swatch} label={item.name} size="sm" />
                   <div className="di-info">
                     <span className="di-name">{item.name}</span>
                     {item.size && <span className="di-size">Size: {item.size}</span>}

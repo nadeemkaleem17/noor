@@ -2,33 +2,46 @@ import { Link } from 'react-router-dom'
 import { useCatalog } from '../../context/CatalogContext'
 import { useStoreConfig } from '../../hooks/useStoreConfig'
 import ProductCard from '../../components/ProductCard'
+import HeroCarousel from '../../components/HeroCarousel'
+import { HeroSkeleton, ProductGridSkeleton } from '../../components/Skeletons'
 import { ProductImage } from '../../components/ui'
 
+function StaticHero({ store, heroProduct }) {
+  return (
+    <section className="hero">
+      <div className="hero-copy">
+        <span className="eyebrow">Autumn edit, new in</span>
+        <h1>Wear your confidence, thread by thread.</h1>
+        <p>Hand-finished lawn, kurtas and formals — designed in Lahore, cut for everyday wear, delivered to your door across Pakistan.</p>
+        <div className="hero-actions">
+          <Link to="/shop" className="btn btn-gold">Shop the edit</Link>
+          <Link to="/shop?category=Lawn+Suits" className="btn btn-outline">Explore lawn</Link>
+        </div>
+      </div>
+      <div className="hero-img">
+        <ProductImage seed="hero-main" index={0} label={`${store.storeName} — new season edit`} size="hero" width={1000} height={800} />
+        {heroProduct && <span className="hero-tag">{heroProduct.name} — from Rs {heroProduct.price.toLocaleString('en-PK')}</span>}
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
-  const { products, categories } = useCatalog()
+  const { products, categories, status: catalogStatus } = useCatalog()
   const store = useStoreConfig()
   const bestsellers = products.filter((p) => p.tags?.includes('bestseller')).slice(0, 4)
   const newArrivals = products.filter((p) => p.tags?.includes('new')).slice(0, 4)
   const featured = bestsellers.length ? bestsellers : products.slice(0, 4)
-  const heroProduct = featured[0]
+  const catalogLoading = catalogStatus === 'loading'
+
+  let hero
+  if (store.heroSlides.length) hero = <HeroCarousel slides={store.heroSlides} />
+  else if (store.status === 'loading') hero = <HeroSkeleton />
+  else hero = <StaticHero store={store} heroProduct={featured[0]} />
 
   return (
     <>
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Autumn edit, new in</span>
-          <h1>Wear your confidence, thread by thread.</h1>
-          <p>Hand-finished lawn, kurtas and formals — designed in Lahore, cut for everyday wear, delivered to your door across Pakistan.</p>
-          <div className="hero-actions">
-            <Link to="/shop" className="btn btn-gold">Shop the edit</Link>
-            <Link to="/shop?category=Lawn+Suits" className="btn btn-outline">Explore lawn</Link>
-          </div>
-        </div>
-        <div className="hero-img">
-          <ProductImage seed="hero-main" index={0} label={`${store.storeName} — new season edit`} size="hero" width={1000} height={800} />
-          {heroProduct && <span className="hero-tag">{heroProduct.name} — from Rs {heroProduct.price.toLocaleString('en-PK')}</span>}
-        </div>
-      </section>
+      {hero}
 
       <section className="trust-strip container">
         <div><span className="trust-icon">🚚</span><span>Free delivery over Rs 5,000</span></div>
@@ -51,9 +64,11 @@ export default function Home() {
           <h2>Bestsellers</h2>
           <Link to="/shop?tag=bestseller">View all →</Link>
         </div>
-        <div className="products">
-          {featured.map((p) => <ProductCard product={p} key={p.id} />)}
-        </div>
+        {catalogLoading ? <ProductGridSkeleton /> : (
+          <div className="products">
+            {featured.map((p) => <ProductCard product={p} key={p.id} />)}
+          </div>
+        )}
       </section>
 
       <section className="promo-band">
@@ -72,9 +87,11 @@ export default function Home() {
           <h2>New arrivals</h2>
           <Link to="/shop?tag=new">View all →</Link>
         </div>
-        <div className="products">
-          {newArrivals.map((p) => <ProductCard product={p} key={p.id} />)}
-        </div>
+        {catalogLoading ? <ProductGridSkeleton /> : (
+          <div className="products">
+            {newArrivals.map((p) => <ProductCard product={p} key={p.id} />)}
+          </div>
+        )}
       </section>
 
       <section className="editorial-band container">

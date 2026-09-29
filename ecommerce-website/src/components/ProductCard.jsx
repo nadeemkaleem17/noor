@@ -15,7 +15,7 @@ export default function ProductCard({ product }) {
     <div className="product-card">
       <div className="pc-media">
         <Link to={`/product/${product.id}`} aria-label={product.name}>
-          <ProductImage seed={`${product.id}-0`} index={product.swatch} label={product.name} size="lg" />
+          <ProductImage src={product.images?.[0]?.url} seed={`${product.id}-0`} index={product.swatch} label={product.name} size="lg" />
         </Link>
         {product.tags?.includes('new') && <span className="pc-new">New</span>}
         {product.compareAt && <span className="pc-sale">Sale</span>}

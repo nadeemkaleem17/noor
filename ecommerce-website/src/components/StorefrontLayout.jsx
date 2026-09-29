@@ -5,10 +5,17 @@ import { useStoreConfig } from '../hooks/useStoreConfig'
 import { useCatalog } from '../context/CatalogContext'
 import CartDrawer from './CartDrawer'
 
+// Uploaded logo when the store settings provide one; the text name otherwise, or if the image fails.
+function StoreLogo({ name, logoUrl }) {
+  const [failedUrl, setFailedUrl] = useState(null)
+  if (!logoUrl || failedUrl === logoUrl) return name
+  return <img className="sf-logo-img" src={logoUrl} alt={name} onError={() => setFailedUrl(logoUrl)} />
+}
+
 export default function StorefrontLayout() {
   const { itemCount, setDrawerOpen } = useCart()
   const store = useStoreConfig()
-  const { categoryTree } = useCatalog()
+  const { categoryTree, status: catalogStatus, error: catalogError, retry } = useCatalog()
   const [menuOpen, setMenuOpen] = useState(false)
   const [openCat, setOpenCat] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -34,7 +41,9 @@ export default function StorefrontLayout() {
 
       <header className="sf-header">
         <button className="sf-burger" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu">☰</button>
-        <Link to="/" className="sf-logo" onClick={closeAll}>{store.storeName}</Link>
+        <Link to="/" className="sf-logo" onClick={closeAll} aria-label={`${store.storeName} home`}>
+          <StoreLogo name={store.storeName} logoUrl={store.logoUrl} />
+        </Link>
 
         <nav className={'mega-nav' + (menuOpen ? ' open' : '')}>
           <ul>
@@ -110,6 +119,13 @@ export default function StorefrontLayout() {
         </div>
       )}
 
+      {catalogStatus === 'error' && (
+        <div className="catalog-error" role="alert">
+          <span>{catalogError || 'Could not load the catalog'}. Showing our sample collection for now.</span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={retry}>Try again</button>
+        </div>
+      )}
+
       <main><Outlet /></main>
 
       <footer className="sf-footer">
@@ -121,10 +137,10 @@ export default function StorefrontLayout() {
           <div>
             <h4>Shop</h4>
             <ul>
-              <li><Link to="/shop?category=Lawn+Suits">Lawn Suits</Link></li>
-              <li><Link to="/shop?category=Kurtas">Kurtas</Link></li>
-              <li><Link to="/shop?category=Dupattas">Dupattas</Link></li>
-              <li><Link to="/shop?category=Footwear">Footwear</Link></li>
+              {categoryTree.slice(0, 4).map((cat) => (
+                <li key={cat.name}><Link to={`/shop?category=${encodeURIComponent(cat.name)}`}>{cat.name}</Link></li>
+              ))}
+              <li><Link to="/shop">Shop all</Link></li>
             </ul>
           </div>
           <div>

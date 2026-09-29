@@ -6,7 +6,8 @@ const CartContext = createContext(null)
 const isCartLine = (i) =>
   isObj(i) && isStr(i.key) && isStr(i.id) && isStr(i.name) &&
   isNum(i.price) && isNum(i.qty) && i.qty > 0 &&
-  (i.size === null || isStr(i.size))
+  (i.size === null || isStr(i.size)) &&
+  (i.image === undefined || isStr(i.image)) // optional: lines saved before images existed have none
 const isAppliedPromo = (v) =>
   v === null || (isObj(v) && isObj(v.promo) && isStr(v.promo.code) && isNum(v.discount))
 
@@ -17,7 +18,7 @@ function lineKey(id, size) {
 }
 
 export function CartProvider({ children }) {
-  const [items, setItems] = usePersistentState('cart', [], isArrayOf(isCartLine)) // { key, id, name, price, swatch, stock, size, qty }
+  const [items, setItems] = usePersistentState('cart', [], isArrayOf(isCartLine)) // { key, id, name, price, swatch, stock, size, qty, image? }
   const [appliedPromo, setAppliedPromo] = usePersistentState('cart-promo', null, isAppliedPromo) // { promo, discount }
   const [isDrawerOpen, setDrawerOpen] = useState(false)
 
@@ -28,7 +29,8 @@ export function CartProvider({ children }) {
       if (existing) {
         return prev.map((i) => (i.key === key ? { ...i, qty: i.qty + qty } : i))
       }
-      return [...prev, { key, id: product.id, name: product.name, price: product.price, swatch: product.swatch, stock: product.stock, size, qty }]
+      const image = product.images?.[0]?.url
+      return [...prev, { key, id: product.id, name: product.name, price: product.price, swatch: product.swatch, stock: product.stock, size, qty, ...(image && { image }) }]
     })
     setDrawerOpen(true)
   }

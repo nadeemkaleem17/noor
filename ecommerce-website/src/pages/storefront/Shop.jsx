@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import { useCatalog } from '../../context/CatalogContext'
 import ProductCard from '../../components/ProductCard'
 import { EmptyState } from '../../components/ui'
+import { ProductGridSkeleton } from '../../components/Skeletons'
 
 export default function Shop() {
-  const { products, categoryTree } = useCatalog()
+  const { products, categoryTree, status } = useCatalog()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeCategory = searchParams.get('category') || ''
   const activeSub = searchParams.get('sub') || ''
@@ -69,7 +70,7 @@ export default function Shop() {
     <div>
       <div className="shop-head">
         <h1>{heading}</h1>
-        <p>{filtered.length} product{filtered.length === 1 ? '' : 's'}{activeSub ? ` in ${activeSub}` : ''}</p>
+        <p>{status === 'loading' ? 'Loading…' : `${filtered.length} product${filtered.length === 1 ? '' : 's'}${activeSub ? ` in ${activeSub}` : ''}`}</p>
       </div>
 
       <div className="filter-bar">
@@ -111,7 +112,9 @@ export default function Shop() {
       </div>
 
       <div className="container section" style={{ paddingTop: 0 }}>
-        {filtered.length === 0 ? (
+        {status === 'loading' ? (
+          <ProductGridSkeleton count={8} />
+        ) : filtered.length === 0 ? (
           <EmptyState
             title="No results"
             body="Try removing a filter or searching for something else."

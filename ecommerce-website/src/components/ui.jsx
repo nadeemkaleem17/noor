@@ -26,19 +26,22 @@ export function Swatch({ index = 0, label, size = 'md', className = '' }) {
   )
 }
 
-// Real (seeded-random) photo with a graceful fallback to the gradient Swatch if the image
-// fails to load — a missing/broken image should never surface as a broken <img> icon.
-export function ProductImage({ seed, index = 0, label, size = 'md', className = '', width = 600, height = 800 }) {
-  const [failed, setFailed] = useState(false)
-  if (failed) return <Swatch index={index} label={label} size={size} className={className} />
+// Product photo — a real `src` when the product has one, otherwise a seeded placeholder — with a
+// graceful fallback to the gradient Swatch if it fails to load, so a missing/broken image never
+// surfaces as a broken <img> icon. Failure is tracked per URL, so switching to a different image
+// (gallery thumbnails) gets a fresh attempt.
+export function ProductImage({ src, seed, index = 0, label, size = 'md', className = '', width = 600, height = 800, loading = 'lazy' }) {
+  const url = src || placeholderImage(seed, width, height)
+  const [failedUrl, setFailedUrl] = useState(null)
+  if (failedUrl === url) return <Swatch index={index} label={label} size={size} className={className} />
   return (
     <div className={`swatch swatch-${size} ${className}`}>
       <img
         className="swatch-img"
-        src={placeholderImage(seed, width, height)}
+        src={url}
         alt={label || ''}
-        loading="lazy"
-        onError={() => setFailed(true)}
+        loading={loading}
+        onError={() => setFailedUrl(url)}
       />
     </div>
   )

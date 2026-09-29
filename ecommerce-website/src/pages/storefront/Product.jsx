@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCatalog } from '../../context/CatalogContext'
 import { useCart } from '../../context/CartContext'
 import { useWishlist } from '../../context/WishlistContext'
 import ProductCard from '../../components/ProductCard'
 import { ProductImage, EmptyState } from '../../components/ui'
+import { ProductPageSkeleton } from '../../components/Skeletons'
 import { formatPKR } from '../../utils/format'
 
 function Accordion({ title, children, defaultOpen = false }) {
@@ -22,7 +23,7 @@ function Accordion({ title, children, defaultOpen = false }) {
 
 export default function Product() {
   const { id } = useParams()
-  const { getProduct, getRelated } = useCatalog()
+  const { getProduct, getRelated, status } = useCatalog()
   const { addItem } = useCart()
   const { toggle, has } = useWishlist()
   const navigate = useNavigate()
@@ -33,9 +34,11 @@ export default function Product() {
   const product = getProduct(id)
   const hasSizes = Array.isArray(product?.sizes) && product.sizes.length > 0
   const selectedSize = searchParams.get('size') || ''
-  const galleryCount = Math.max(1, product?.gallery || 1)
+  // images[] is already ordered by the catalog: primary image first, then by sortOrder.
+  const images = product?.images?.length ? product.images : [{ url: undefined, alt: product?.name }]
   const [activeImage, setActiveImage] = useState(0)
-  const related = useMemo(() => getRelated(product, 4), [product, getRelated])
+  const shownImage = Math.min(activeImage, images.length - 1)
+  const related = getRelated(product, 4)
 
   // The route stays on the same component instance across /product/:id navigations
   // (e.g. clicking a related product), so local UI state must be reset explicitly —
@@ -49,6 +52,8 @@ export default function Product() {
     setActiveImage(0)
     setSizeError(false)
   }
+
+  if (!product && status === 'loading') return <ProductPageSkeleton />
 
   if (!product) {
     return (
@@ -102,18 +107,23 @@ export default function Product() {
       <div className="pd-wrap">
         <div className="pd-gallery">
           <div className="pd-gallery-main">
-            <ProductImage seed={`${product.id}-${activeImage}`} index={product.swatch} label={`${product.name} — image ${activeImage + 1}`} size="lg" width={800} height={1000} />
+            <ProductImage
+              src={images[shownImage].url} seed={`${product.id}-${shownImage}`} index={product.swatch}
+              label={images[shownImage].alt || `${product.name} — image ${shownImage + 1}`}
+              size="lg" width={800} height={1000} loading="eager"
+            />
           </div>
-          {galleryCount > 1 && (
+          {images.length > 1 && (
             <div className="pd-thumbs">
-              {Array.from({ length: galleryCount }).map((_, i) => (
+              {images.map((img, i) => (
                 <button
-                  key={i}
-                  className={'pd-thumb' + (i === activeImage ? ' active' : '')}
+                  key={`${i}-${img.url}`}
+                  className={'pd-thumb' + (i === shownImage ? ' active' : '')}
                   onClick={() => setActiveImage(i)}
-                  aria-label={`View image ${i + 1}`}
+                  aria-label={`View image ${i + 1}${img.alt ? `: ${img.alt}` : ''}`}
+                  aria-pressed={i === shownImage}
                 >
-                  <ProductImage seed={`${product.id}-${i}`} index={product.swatch} label={`${product.name} thumbnail ${i + 1}`} size="sm" />
+                  <ProductImage src={img.url} seed={`${product.id}-${i}`} index={product.swatch} label="" size="sm" />
                 </button>
               ))}
             </div>
