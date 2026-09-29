@@ -9,12 +9,29 @@ the admin panel and storefront before a real backend exists.
 
 ## Run locally
 
-Requires Node 20.11+.
+Requires Node 22.9+.
+
+**Everything at once** (API + admin + storefront, already connected), from the repo root:
+
+```bash
+npm run dev
+```
+
+That serves the API on http://localhost:3000, the admin on http://localhost:5173 and the storefront on
+http://localhost:5174. Ctrl+C stops all three. It needs three gitignored files (create them once):
+
+| File | Contents |
+|---|---|
+| `mock-api/.env` | `ADMIN_KEY=dev-key` |
+| `admin-panel/.env.local` | `VITE_API_URL=http://localhost:3000` and `VITE_ADMIN_KEY=dev-key` |
+| `ecommerce-website/.env.local` | `VITE_API_URL=http://localhost:3000` |
+
+**Just the API:**
 
 ```bash
 cd mock-api
-npm install
-ADMIN_KEY=dev-key npm start      # PowerShell: $env:ADMIN_KEY="dev-key"; npm start
+npm install      # first time only
+npm start        # reads ADMIN_KEY / PORT from mock-api/.env if present
 ```
 
 Open http://localhost:3000 to see the status page (live product count, site title, hero
@@ -39,7 +56,13 @@ slides and raw JSON). `npm run dev` restarts the server on file changes.
 | POST | `/api/admin/products` | Full `Product`; `id` optional (generated). 409 on duplicate id/handle |
 | PUT | `/api/admin/products/:id` | Full replace; URL id wins. 404 / 409 |
 | DELETE | `/api/admin/products/:id` | 204 / 404 |
-| PUT | `/api/admin/settings` | Full `Settings` object |
+| PUT | `/api/admin/settings` | Full `Settings` object (title, logo, favicon, announcement, hero slides, promo, editorial, footer) |
+| POST | `/api/public/orders` | Storefront checkout. Checks each line's price and stock against the catalog (409 with a readable reason if not), then decrements stock |
+| GET | `/api/public/orders/:orderNo?phone=` | Order tracking; the order number **and** phone must match (404 otherwise) |
+| GET | `/api/admin/products` | Every product, including drafts |
+| GET / POST / PUT / DELETE | `/api/admin/categories[/:id]` | Category CRUD |
+| GET / PUT | `/api/admin/orders[/:id]` | Orders for the admin; PUT stores status changes, dispatch details and notes |
+| POST | `/api/admin/reset` | Back to the seed data (uploads are kept) |
 | POST | `/api/admin/uploads` | Multipart field `file`; JPEG/PNG/WebP/GIF/AVIF, max 2 MB. Returns `{ url }` served from `/uploads/…` (last 50 kept) |
 
 Admin routes return `401` without a valid `x-admin-key`. Request bodies are validated with zod

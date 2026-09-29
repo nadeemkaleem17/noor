@@ -142,11 +142,29 @@ export const HeroSlide = z.object({
   sortOrder: z.number().int(),
 })
 
+// Home-page content blocks below the hero. `enabled: false` hides the block on the storefront.
+const Banner = z.object({
+  enabled: z.boolean().default(true),
+  eyebrow: z.string().default(''),
+  heading: z.string().default(''),
+  text: z.string().default(''),
+  buttonText: z.string().default(''),
+  buttonLink: z.string().default(''),
+})
+
 export const Settings = z.object({
   siteTitle: z.string().min(1),
   logoUrl: z.string().default(''),
   faviconUrl: z.string().default(''),
+  announcement: z.string().default(''), // top bar text; empty hides it
   heroSlides: z.array(HeroSlide).default([]),
+  promo: Banner.default({}),
+  editorial: Banner.extend({ imageUrl: z.string().default('') }).default({}),
+  footer: z.object({
+    about: z.string().default(''),
+    phone: z.string().default(''),
+    email: z.string().default(''),
+  }).default({}),
 })
 
 // Orders (copied from the contract). The storefront creates them; the admin moves them through statuses.
