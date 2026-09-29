@@ -110,3 +110,45 @@ export const settings = {
     { imageUrl: 'https://picsum.photos/seed/hero-2/1600/700', heading: 'Made to order, made for you', subheading: 'Custom sizing on every bridal piece', buttonText: 'Explore bridal', buttonLink: '/c/women/bridal', sortOrder: 1 },
   ],
 }
+
+// Every seeded product also gets an admin-style images[] gallery built from its media (first = main).
+for (const p of products) {
+  p.images = p.media.map((m, i) => ({
+    id: `${m.id}-img`, url: m.url, alt: m.alt, sortOrder: i, isPrimary: i === 0, width: m.width, height: m.height,
+  }))
+}
+
+// Copied from the contract fixtures (seedOrders). Line prices are Money in minor units.
+export const orders = [
+  {
+    id: 'o1', orderNo: 'SF-10231', status: 'pending', createdAt: '2026-09-21T09:12:00Z',
+    customer: { name: 'Amna Raza', phone: '0301-2345678', email: 'amna@example.com' },
+    shippingAddress: { address: 'House 12, Street 4, DHA Phase 5', city: 'Karachi', landmark: 'Near Sunset Mall' },
+    lines: [{ productId: 'p1', variantId: 'p1-m', title: 'Noor Embroidered Lawn 3-Piece', variantLabel: 'M', sku: 'NOR-3PC-M', qty: 1, price: pkr(699000) }],
+    subtotal: pkr(699000), shippingFee: pkr(25000), total: pkr(724000), paymentMethod: 'cod',
+  },
+  {
+    id: 'o2', orderNo: 'SF-10230', status: 'confirmed', createdAt: '2026-09-20T15:40:00Z',
+    customer: { name: 'Bilal Ahmed', phone: '0333-1122334' },
+    shippingAddress: { address: 'Flat 3B, Gulberg III', city: 'Lahore' },
+    lines: [{ productId: 'p4', variantId: 'p4-custom', title: 'Amani Bridal Ensemble', variantLabel: 'Custom', sku: 'AMN-BRD-CUSTOM', qty: 1, price: pkr(5200000), customization: { chest: 38, waist: 32, shoulder: 15, length: 56 } }],
+    promoCode: 'EID25', subtotal: pkr(5200000), discount: pkr(1300000), shippingFee: pkr(0), total: pkr(3900000), paymentMethod: 'bank_transfer', invoiceNo: 'INV-2026-0142',
+  },
+  {
+    id: 'o3', orderNo: 'SF-10229', status: 'dispatched', createdAt: '2026-09-19T11:05:00Z',
+    customer: { name: 'Sara Khan', phone: '0345-9988776' },
+    shippingAddress: { address: 'E-11/2', city: 'Islamabad' },
+    lines: [
+      { productId: 'p9', variantId: 'p9-1', title: 'Nadia Embroidered Clutch', variantLabel: '—', sku: 'CLU-NAD-001', qty: 1, price: pkr(380000) },
+    ],
+    subtotal: pkr(380000), shippingFee: pkr(0), total: pkr(380000), paymentMethod: 'cod', invoiceNo: 'INV-2026-0141',
+    dispatch: { courier: 'TCS', trackingNo: 'TCS-55019', dispatchedAt: '2026-09-20T10:00:00Z' },
+  },
+  {
+    id: 'o4', orderNo: 'SF-10228', status: 'delivered', createdAt: '2026-09-14T08:00:00Z',
+    customer: { name: 'Hina Malik', phone: '0312-4455667' },
+    shippingAddress: { address: 'Model Town', city: 'Lahore' },
+    lines: [{ productId: 'p3', variantId: 'p3-1', title: 'Raaz Unstitched Lawn 3-Piece', variantLabel: '—', sku: 'RAZ-UNS-3PC', qty: 1, price: pkr(549000) }],
+    subtotal: pkr(549000), shippingFee: pkr(25000), total: pkr(574000), paymentMethod: 'card', invoiceNo: 'INV-2026-0139',
+  },
+]
