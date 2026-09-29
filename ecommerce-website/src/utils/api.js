@@ -18,7 +18,16 @@ export class ApiError extends Error {
 
 // GET a JSON resource. Rejects with ApiError on network failure, timeout or non-2xx.
 // Pass an AbortSignal to cancel (e.g. on unmount); that rejects with the signal's AbortError.
-export async function apiGet(path, { signal } = {}) {
+export function apiGet(path, { signal } = {}) {
+  return request('GET', path, { signal })
+}
+
+// POST JSON (checkout). On a 4xx the server's own message ("Only 1 left…") becomes the error message.
+export function apiPost(path, body, { signal } = {}) {
+  return request('POST', path, { signal, body })
+}
+
+async function request(method, path, { signal, body } = {}) {
   if (!apiEnabled) throw new ApiError('VITE_API_URL is not set')
   const controller = new AbortController()
   let timedOut = false
@@ -27,7 +36,12 @@ export async function apiGet(path, { signal } = {}) {
   signal?.addEventListener('abort', onAbort, { once: true })
   let res
   try {
-    res = await fetch(`${API_URL}${path}`, { signal: controller.signal, headers: { Accept: 'application/json' } })
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: body === undefined ? { Accept: 'application/json' } : { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
   } catch (err) {
     if (signal?.aborted) throw err
     throw new ApiError(timedOut ? 'The store server took too long to respond' : 'Could not reach the store server')
@@ -35,12 +49,14 @@ export async function apiGet(path, { signal } = {}) {
     clearTimeout(timer)
     signal?.removeEventListener('abort', onAbort)
   }
-  if (!res.ok) throw new ApiError(`Store server returned ${res.status}`, res.status)
+  let data = null
   try {
-    return await res.json()
+    data = await res.json()
   } catch {
-    throw new ApiError('Store server sent an invalid response', res.status)
+    if (res.ok) throw new ApiError('Store server sent an invalid response', res.status)
   }
+  if (!res.ok) throw new ApiError(data?.error || `Store server returned ${res.status}`, res.status)
+  return data
 }
 
 // Only allow relative links and http(s) URLs from API-provided settings, so a bad value

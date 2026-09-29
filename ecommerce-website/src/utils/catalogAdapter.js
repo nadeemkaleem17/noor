@@ -67,6 +67,7 @@ export function productFromContract(product, byId) {
   const sizes = sizeOption ? [...sizeOption.values].sort((a, b) => a.sortOrder - b.sortOrder).map((v) => v.label) : undefined
   const compareAt = toRupees(cheapest?.compareAt)
   const price = toRupees(cheapest?.price) ?? 0
+  const sizeLabelOf = (v) => sizeOption?.values.find((o) => v.optionValueIds?.includes(o.id))?.label ?? null
   return {
     id: product.id,
     name: product.title,
@@ -80,7 +81,26 @@ export function productFromContract(product, byId) {
     tags: (product.badges || []).filter((b) => b === 'new' || b === 'bestseller'),
     swatch: hashIndex(product.id),
     images: galleryFromContract(product),
+    // Buyable variants, so the product page can show per-size price/stock and checkout can
+    // send the exact variant the API expects. (Mock products have none; pages fall back to price/stock.)
+    variants: variants.map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      size: sizeLabelOf(v),
+      price: toRupees(v.price) ?? price,
+      compareAt: toRupees(v.compareAt),
+      stock: stockOf([v]),
+    })),
   }
+}
+
+// The variant a shopper is buying: the one for the chosen size (preferring one in stock, for
+// products that also vary by colour), or the first in-stock variant when the product has no sizes.
+export function variantFor(product, size) {
+  const list = product?.variants
+  if (!list?.length) return null
+  const candidates = size ? list.filter((v) => v.size === size) : list
+  return candidates.find((v) => v.stock > 0) || candidates[0] || null
 }
 
 export function catalogFromContract(products, categories) {
