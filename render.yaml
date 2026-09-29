@@ -1,0 +1,62 @@
+# Render Blueprint: creates the mock API and both frontends from this one repo.
+# Dashboard → New + → Blueprint → pick this repo. See mock-api/README.md → "Deploy to Render".
+#
+# Each service has a rootDir, so a push only redeploys the services whose folder changed.
+# VITE_* values are baked in at build time: after changing one, redeploy that static site.
+services:
+  # ---------------------------------------------------------------- API ---
+  - type: web
+    name: noor-mock-api
+    runtime: node
+    plan: free
+    rootDir: mock-api
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ADMIN_KEY
+        generateValue: true # random secret; view it under the service's Environment tab
+      # PORT is set by Render automatically; server.js reads it.
+
+  # --------------------------------------------------------- storefront ---
+  - type: web
+    name: noor-storefront
+    runtime: static
+    rootDir: ecommerce-website
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite # client-side routing: deep links like /product/p1 serve the app
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        sync: false # entered on first deploy, e.g. https://noor-mock-api.onrender.com
+
+  # -------------------------------------------------------------- admin ---
+  - type: web
+    name: noor-admin
+    runtime: static
+    rootDir: admin-panel
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        sync: false
+      # Anyone who loads the admin site can read this key from its JavaScript bundle.
+      # Acceptable for the mock API (data resets on every restart); not for a real backend.
+      - key: VITE_ADMIN_KEY
+        fromService:
+          type: web
+          name: noor-mock-api
+          envVarKey: ADMIN_KEY

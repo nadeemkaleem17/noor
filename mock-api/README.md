@@ -91,10 +91,63 @@ Prices are `Money` in minor units: `{"amount": 699000, "currency": "PKR"}` means
 
 ## Deploy to Render
 
-1. Push the `noor` repo to GitHub.
-2. In Render, choose **New → Web Service** and pick the repo.
-3. Set **Root Directory** to `mock-api`, **Build Command** to `npm install`, and **Start Command** to `npm start`.
-4. Under **Environment**, add `ADMIN_KEY` (a long random string) and, optionally, `PUBLIC_URL`.
-5. Deploy, then open `https://<service>.onrender.com/`.
+[`render.yaml`](../render.yaml) at the repo root is a Render Blueprint that creates three services:
 
-On Render's free plan the service sleeps when idle and wakes back up with fresh seed data.
+| Service | Type | Root dir | Build | Serves |
+|---|---|---|---|---|
+| `noor-mock-api` | Web service (Node, free) | `mock-api` | `npm ci` → `npm start` | this API |
+| `noor-storefront` | Static site | `ecommerce-website` | `npm ci && npm run build` | `dist/` |
+| `noor-admin` | Static site | `admin-panel` | `npm ci && npm run build` | `dist/` |
+
+Render sets `PORT` itself. The Blueprint generates a random `ADMIN_KEY` and copies it into the admin
+site's `VITE_ADMIN_KEY`. Both static sites rewrite `/*` to `/index.html` so deep links survive a
+refresh. All three pin `NODE_VERSION=22` (Vite 8 needs Node 20.19+).
+
+### Steps
+
+1. **Push the repo to GitHub.** On github.com click **+ → New repository**, name it `noor`, leave
+   every "Initialize" box unticked, then from the repo root:
+   `git remote add origin https://github.com/<you>/noor.git` and `git push -u origin master`.
+2. In [dashboard.render.com](https://dashboard.render.com) click **New + → Blueprint**.
+3. **Connect GitHub** if asked and give Render access to the `noor` repo.
+4. Pick `noor`, branch `master`, Blueprint path `render.yaml`, and name the Blueprint (e.g. `noor`).
+5. Render asks for the values marked `sync: false`. For **both** `VITE_API_URL` fields enter
+   `https://noor-mock-api.onrender.com`. Click **Apply**.
+6. Wait for `noor-mock-api` to show **Live** and open its URL: the status page should list 5 products.
+7. Open `noor-storefront`'s URL: the header should read "Noor & Co." and the home page should show the
+   hero slides. Open a product and refresh the page to confirm deep links work.
+8. **If Render gave the API a different URL** (it adds a suffix when a name is taken, e.g.
+   `noor-mock-api-x7k2.onrender.com`): open **noor-storefront → Environment**, fix `VITE_API_URL`,
+   click **Save, rebuild, and deploy**, then do the same on **noor-admin**.
+9. To use the admin endpoints with curl, copy the key from **noor-mock-api → Environment → ADMIN_KEY**
+   (eye icon).
+
+Without the Blueprint: create the API with **New + → Web Service** (root `mock-api`, build `npm ci`,
+start `npm start`, health check `/health`, env `ADMIN_KEY` + `NODE_VERSION=22`), and each frontend with
+**New + → Static Site** (root, build and publish dir as in the table, env as in `render.yaml`), then add
+a **Redirects/Rewrites** rule `/*` → `/index.html` (Action: Rewrite) on each static site.
+
+### Frontend environment variables
+
+| Variable | App | Local (`.env.local` in the app folder) | On Render |
+|---|---|---|---|
+| `VITE_API_URL` | storefront + admin | `http://localhost:3000` | the API's `https://….onrender.com` URL |
+| `VITE_ADMIN_KEY` | admin only | the `ADMIN_KEY` you started this server with | filled from the API by the Blueprint |
+
+Vite bakes `VITE_*` values into the JavaScript at build time: restart `npm run dev` after editing
+`.env.local`, and redeploy the static site after changing them on Render. Leave `VITE_API_URL` unset
+to run a frontend on its built-in sample data.
+
+> The admin panel does not read these variables yet (its API client is still to be written). Until it
+> does, the deployed admin site stores everything in each visitor's browser.
+
+### Things to know
+
+- **Free web services sleep** after ~15 minutes idle and take ~30–60 s to wake. The storefront waits up
+  to 20 s for the API; after a longer cold start it shows sample products with a "Try again" banner.
+- **Every wake-up resets the data** to the seed: product edits, settings and uploads are lost.
+- **`VITE_ADMIN_KEY` is public.** Anyone who loads the admin site can read it from the bundle and write
+  to this API. Fine for a demo whose data resets; don't reuse the pattern with a real backend. To keep
+  the admin private, delete the `noor-admin` service from `render.yaml` and run it locally instead.
+- Uploaded image URLs are built from the request host (`trust proxy` is on, so they are `https`). Set
+  `PUBLIC_URL` only if you put the API behind a custom domain.

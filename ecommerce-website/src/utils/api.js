@@ -3,7 +3,10 @@
 export const API_URL = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '')
 export const apiEnabled = API_URL !== ''
 
-const TIMEOUT_MS = 8000
+// Generous on purpose: a free Render web service sleeps when idle and can take 30–60s to wake.
+// This covers shorter cold starts; after a longer one the catalog falls back to sample data and
+// the "Try again" banner recovers once the API is up.
+const TIMEOUT_MS = 20000
 
 export class ApiError extends Error {
   constructor(message, status = 0) {
