@@ -1,0 +1,277 @@
+# 13 — Quality
+
+| Field | Value |
+|---|---|
+| ID | DOC-13 |
+| Title | Testing pyramid, CI gates, performance budgets, accessibility, observability |
+| Status | Draft |
+| Owner | Tech lead |
+| Last updated | 2026-10-02 |
+| Depends on | DOC-03 … DOC-12, DOC-14 §6, DOC-15 §6 |
+| Decisions used | ADR-0002, ADR-0004, ADR-0006, ADR-0007, ADR-0009, ADR-0010, ADR-0013, ADR-0018, ADR-0020 |
+
+## 1. Purpose and scope
+
+**Governs:** what is tested and how, which checks block a merge, the budgets a build must meet, the accessibility standard and how it is verified, and what the running system reports about itself.
+**Does not govern:** pipeline wiring (DOC-14 §6), the checks' authoring rules (each owning doc's acceptance checklist), production alert routing (decided with the host in the production phase, README A-08).
+
+Replaces today's state (F-23): about 67 unit cases in two admin files, none in the storefront, no CI.
+
+The acceptance checklists at the end of every doc are the **requirements**; this document says which kind of automated check proves each kind of requirement.
+
+## 2. Test types
+
+| Layer | Tool | Runs against | What belongs here | Speed target |
+|---|---|---|---|---|
+| Unit | Vitest | Pure functions, no I/O | Money helpers and rounding, promo evaluation, pricing computation, state-machine tables, slug/phone normalisation, theme contrast and `themeCss`, cursor encode/decode, masking, permission matrix, Markdown allow-list, CSV escaping | < 10 s per package |
+| Contract | Vitest | `@noor/contract` | Every schema parses its fixture; route table invariants (each route has auth; staff routes have a permission; error codes registered); OpenAPI snapshot | < 10 s |
+| API integration | Vitest + real MySQL 8.4 | `buildApp()` with `app.inject`, one database per test file | Every endpoint: happy path, validation, auth/permission, domain errors; transactions, locking and concurrency; outbox and jobs; audit rows | < 3 min total |
+| Component | Storybook 10 + `@storybook/addon-vitest` (browser mode) + `addon-a11y` | `@noor/ui` and app feature components | Every state story renders; axe passes; keyboard maps (DOC-04b §5); RTL story | < 2 min |
+| End-to-end | Playwright (Chromium; WebKit for the smoke set) | Built storefront + admin + API + seeded MySQL | The journeys in §4 | < 6 min |
+| Performance (lab) | Lighthouse CI; bundle-size script | Built storefront, seeded | Budgets of DOC-06.10 §2 | < 4 min |
+| Query plans | Vitest + `EXPLAIN` | Seeded 3,000-product database | The query set in §6.3 uses indexes | < 30 s |
+| Static | `tsc`, ESLint, `dependency-cruiser`, `check-logical`, contrast gate, `ts-ratio`, gitleaks, `pnpm audit` | Source | Types, boundaries, tokens, secrets, known vulnerabilities | < 2 min |
+
+Proportions follow the pyramid: many unit and integration tests, a small end-to-end set. A behaviour is tested at the **lowest** layer that can prove it; an end-to-end test never re-proves a rule an integration test covers.
+
+Not used: snapshot tests of rendered component markup (brittle, low signal; visual review happens in Storybook), mocking the database (integration tests use the real engine: the bugs that matter here are locking, constraints and SQL), tests that call a real external provider.
+
+## 3. Rules for writing tests
+
+| Rule | Detail |
+|---|---|
+| Location | Next to the code: `*.test.ts(x)`. End-to-end in `apps/e2e/tests/*.spec.ts` |
+| Naming | `describe('<unit>')` + `it('<observable behaviour>')`; cite the requirement when one exists: `it('rejects two lines of one variant over stock (ADR-0020, K10)')` |
+| Data | Factory helpers in `apps/api/test/factories.ts` (`aProduct({ variants: 2 })`, `anOrder({ status: 'confirmed' })`) that insert through repositories. Tests never depend on the demo seed or on each other |
+| Database isolation | Each integration test **file** gets its own schema (`rubaya_test_<worker>`), migrated once, tables truncated between tests. Files run in parallel workers |
+| Time | `clock` is injected; tests set it. No `setTimeout` sleeps; job tests call `runDueJobs()` |
+| Randomness | Seeded; ids are real UUIDv7 |
+| External services | Fakes implementing the interfaces of DOC-12 (`FakePaymentProvider`, `FakeChannel`) |
+| Assertions | Assert observable results (response, rows, emitted events), not internal calls |
+| Concurrency tests | Use real parallel requests against one app instance with a real pool (`Promise.all` of `app.inject`), repeated 20 times in CI to catch flakiness |
+| A bug fix | Starts with a failing test that reproduces it |
+| What not to test | Framework behaviour, trivial getters, generated code, the exact text of English copy |
+
+## 4. End-to-end journeys (the complete set)
+
+| ID | Journey | Proves |
+|---|---|---|
+| E2E-01 | Browse home → category → filter by size and one attribute → product → add to cart → checkout (COD) → order page | The main purchase path, server totals, masked order page |
+| E2E-02 | Same purchase with JavaScript disabled | Progressive enhancement (DOC-06.1 §8, DOC-06.5 §6) |
+| E2E-03 | Apply a valid promo, then one below minimum spend | Promo UI and error mapping |
+| E2E-04 | Add the last unit in two browser contexts; both check out | One order succeeds, the other sees the stock message and its cart updated |
+| E2E-05 | Made-to-order product with custom size → order shows measurements; admin sees them | Customisation path |
+| E2E-06 | Track order by number + phone in three phone formats; wrong phone | Tracking and uniform failure |
+| E2E-07 | Customer cancels a pending order; stock returns | Customer action + inventory |
+| E2E-08 | Admin: sign in (password + TOTP) → confirm → dispatch → deliver the order from E2E-01 | Staff workflow, invoice number, audit entries |
+| E2E-09 | Admin: create a product of each kind, publish, view on storefront | Editor ↔ storefront agreement (DOC-07.3 §12) |
+| E2E-10 | Admin: adjust stock, edit price; storefront reflects both | Cache purge path |
+| E2E-11 | Admin: `viewer` role sees no write controls on every list screen; direct URL to a forbidden screen shows the 403 state | Permissions in the UI |
+| E2E-12 | Admin: bulk publish 30 products, bulk dispatch with one bad row | Bulk flow and failure report |
+| E2E-13 | Admin: edit theme (blocked by contrast, then valid) → storefront shows it | Theme path |
+| E2E-14 | Storefront at 360 × 740 and admin orders at 360 px: no horizontal scroll, sticky bar present, primary actions reachable | Mobile layout |
+| E2E-15 | Keyboard-only purchase: skip link → product → options → add → checkout → place order | Keyboard accessibility |
+| E2E-16 | Storefront and admin under `dir="rtl"` test locale: no overlap, drawers from the correct side | RTL readiness |
+| E2E-17 | Zero third-party network requests on home, PLP, PDP, cart, checkout | DOC-06.10 §7, DOC-12 §6.1 |
+
+"Smoke set" (also run after any future deploy): E2E-01, E2E-06, E2E-08.
+
+## 5. CI gates
+
+Every pull request must pass (DOC-14 §6 runs them, DOC-15 §6 lists them for authors):
+
+| Gate | Fails when |
+|---|---|
+| Types | Any `tsc` error; `any` or `@ts-ignore` present (lint) |
+| Lint | ESLint error, including import boundaries, no JSX string literals (storefront, ui), no `process.env` outside config, bare `TODO` |
+| Module rules | `dependency-cruiser` finds an edge not in the allowed list (DOC-08 §5.1) |
+| Tokens and direction | `check-contrast` or `check-logical` fails; a hex colour outside `tokens.css`/presets |
+| Unit, contract, integration, component | Any test fails; a test is skipped (`.skip`/`.only` are lint errors) |
+| Coverage | Line coverage below the floor for the paths in the table below. Coverage is a floor for the listed risky paths only, not a global target |
+| OpenAPI | Generated document differs from the committed snapshot |
+| Migrations | Drift between schema files and migrations; an applied migration file changed |
+| End-to-end | Any journey fails (run for changes under `apps/` or `packages/`) |
+| Performance | A DOC-06.10 lab budget or bundle budget is exceeded (run for storefront/ui changes) |
+| Query plans | A listed query stops using its index |
+| Security | gitleaks finding; high or critical advisory in production dependencies |
+| PR title | Not a conventional commit |
+| Admin TS ratio | Decreases (ADR-0002) |
+
+| Path | Coverage floor (lines and branches) |
+|---|---|
+| `packages/contract/src/money*`, pricing in `modules/cart`, `modules/promotions` | 100% |
+| `modules/orders` (service, transitions), `modules/inventory`, `modules/payments` | 95% |
+| `modules/auth` | 95% |
+| Everything else | No floor; reviewed by judgement |
+
+Flaky tests: a test that fails and passes on retry is quarantined the same day with an issue, and fixed or deleted within a week. CI does not auto-retry failed tests (retries hide concurrency bugs).
+
+## 6. Performance
+
+### 6.1 Storefront
+
+Budgets are DOC-06.10 §2. Lighthouse CI runs three times per URL and uses the median, with the reference profile, against: `/`, one category with 300 products, one product with 6 images and 8 variants, `/cart` with 3 lines.
+
+### 6.2 API (measured in integration tests against the seeded 3,000-product, 20,000-order database on CI hardware; they are regression guards, not production promises)
+
+| Endpoint | p95 budget |
+|---|---|
+| `catalog.listProducts` (category + 2 filters + facets) | 120 ms |
+| `catalog.getProduct` | 60 ms |
+| `cart.get`, `cart.addLine` | 60 ms |
+| `cart.quote` | 80 ms |
+| `orders.create` (3 lines, promo) | 250 ms |
+| `orders.getByToken` | 60 ms |
+| `admin.orders.list` (status + search) | 150 ms |
+| `admin.products.list` | 150 ms |
+| `admin.dashboard.summary` (30 days) | 300 ms |
+| `admin.search` | 150 ms |
+
+### 6.3 Query-plan set
+
+`EXPLAIN` must show index access (no full scan of `products`, `variants`, `orders`, `order_lines`, `audit_log`) for: category listing with one attribute filter and each sort; size facet count; text search; product by handle; cart by token hash; order by number; order by token hash; orders by status + placed date; orders by phone prefix; order lines by SKU; audit list by entity; customers by phone prefix; jobs claim query; outbox unprocessed query.
+
+### 6.4 Admin
+
+Initial JavaScript ≤ 200 kB gzip (ADR-0015); each lazy route chunk ≤ 120 kB; a 100-row table scrolls at 60 fps on a mid-range laptop (manual check when `DataTable` changes); a 100-variant product form types without perceptible lag (React Profiler: no commit over 16 ms while typing in one field).
+
+### 6.5 Load testing
+
+Not part of local development. It is a production-phase task before the first sale/drop (runbook R-8, DOC-14): a scripted load of the listing → PDP → cart → checkout path at 3× the expected peak (A-03: about 2,000 concurrent sessions, 1,500 orders in a day) against staging, watching lock waits, error rate and queue latency. The concurrency correctness is already proven locally by the integration tests (ADR-0020 acceptance).
+
+## 7. Accessibility
+
+Standard: **WCAG 2.2 level AA** for the storefront and the admin.
+
+| Check | How | When |
+|---|---|---|
+| Automated rules (axe) | `addon-a11y` on every story; `@axe-core/playwright` on each page visited by E2E-01, E2E-08, E2E-09 | Every PR |
+| Contrast | Token contrast gate (DOC-04a §9) | Every PR |
+| Keyboard | Component keyboard-map tests (DOC-04b §5); E2E-15 | Every PR |
+| Focus visibility and order | Part of E2E-15; reviewed in Storybook | Every PR touching UI |
+| Target size, reflow at 320 CSS px, 200% zoom | E2E-14 plus a manual check | Each milestone |
+| Screen reader | Manual pass with NVDA (Windows) on: home, PLP with filters, PDP option selection and add to cart, cart, checkout with errors, order page; admin: login, orders list, order detail actions | Before the storefront milestone closes and before go-live |
+| Reduced motion | Story + one E2E assertion (carousel does not auto-advance) | Every PR touching motion |
+| RTL | RTL stories; E2E-16 | Every PR touching layout |
+| Forms | Labels, `aria-describedby` errors, error summary announcement: component tests of `Field`/`RHFField`; E2E-01 with invalid input | Every PR |
+| Language | `lang`/`dir` on `<html>`; asserted in E2E-01 | — |
+
+Automated tools find only part of the problems; the manual passes are required, and their date and findings are recorded in §12.
+
+Definition of an accessibility bug: anything that blocks a keyboard or screen-reader user from completing a journey in §4, or any failed WCAG 2.2 AA criterion. Such bugs block the milestone they are found in.
+
+## 8. Observability
+
+### 8.1 Logs (from day one, DOC-08 §14)
+
+Structured JSON with `requestId`; local output is pretty-printed by `pino-pretty` in development only. Enough to trace: storefront request → API request → transaction → outbox event → job → notification log row.
+
+### 8.2 Health
+
+`/healthz`, `/readyz` (DOC-10.8 §5); `admin.system.info` shows queue depth and dead-job count to owners.
+
+### 8.3 Metrics (specified now, exported in the production phase)
+
+Collected in-process and exposed at `GET /metrics` (Prometheus text format, reachable only from the private network) once a host exists; locally the same numbers appear in `admin.system.info` and logs.
+
+| Metric | Type | Labels |
+|---|---|---|
+| `http_requests_total`, `http_request_duration_seconds` | counter, histogram | `route` (pattern), `method`, `status_class` |
+| `db_query_duration_seconds`, `db_pool_in_use` | histogram, gauge | `module` |
+| `db_deadlock_retries_total`, `db_lock_wait_seconds` | counter, histogram | `operation` |
+| `orders_created_total`, `orders_transition_total` | counter | `channel`, `payment_method` / `to` |
+| `order_create_conflicts_total` | counter | `code` (`insufficient_stock`, `price_changed`, …) |
+| `jobs_processed_total`, `jobs_duration_seconds`, `jobs_queue_depth`, `jobs_oldest_pending_seconds`, `jobs_dead_total` | counter, histogram, gauges | `type`, `outcome` |
+| `outbox_unprocessed` | gauge | |
+| `notifications_total` | counter | `template`, `channel`, `status` |
+| `auth_login_total`, `auth_lockouts_total` | counter | `outcome` |
+| `rate_limited_total` | counter | `bucket` |
+| `inventory_consistency_mismatches` | gauge | (nightly check, DOC-09.4 §2.3) |
+
+### 8.4 Alerts (thresholds fixed here; routing chosen with the host)
+
+| Alert | Condition | Severity |
+|---|---|---|
+| API error rate | 5xx over 2% of requests for 5 minutes | page |
+| Readiness failing | `/readyz` failing for 2 minutes | page |
+| Checkout failing | `orders.create` 5xx over 1% for 5 minutes, or zero orders for 2 hours during 10:00–23:00 PKT when the 7-day average for that hour is ≥ 3 | page |
+| Slow API | p95 over 1 s for 10 minutes | warn |
+| Lock waits | `db_lock_wait_seconds` p95 over 200 ms for 10 minutes (ADR-0020 revisit trigger) | warn |
+| Queue backing up | `jobs_oldest_pending_seconds` over 300 for 10 minutes (ADR-0009 trigger: p95 latency 30 s) | warn |
+| Dead jobs | `jobs_dead_total` increases | warn (also a dashboard card) |
+| Inventory mismatch | `inventory_consistency_mismatches` > 0 | page |
+| Login lockouts | 3 lockouts in a day, or 20 failed logins from one IP in an hour | warn |
+| Backup | No successful backup in 26 hours | page |
+| Certificate / domain expiry | Under 14 days | warn |
+
+Locally none of these page anyone; the same conditions are visible in logs and `admin.system.info`.
+
+### 8.5 Error tracking
+
+Unhandled errors (API 500s, storefront server errors, admin and storefront browser errors) are logged with `requestId`. A hosted error tracker is a production-phase choice; until then the admin and storefront report browser errors to `POST /api/v1/client-errors` (public, bucket `default`, body `{ message, stack?, route, app, release }`, truncated to 4 kB, no user identifiers), which logs them at `error`. A browser extension's errors are filtered by ignoring stacks without our own script URLs.
+
+### 8.6 Real-user web vitals
+
+`POST /api/v1/vitals` (DOC-12 §6.1) writes to one table, owned by `reporting`:
+
+| Column (`web_vitals_daily`) | Type | Notes |
+|---|---|---|
+| `day` | date | PK part (Asia/Karachi) |
+| `route` | varchar(40) (bin) | PK part: route id (`home`, `category`, `product`, `cart`, `checkout`, `order`, `page`, `other`) |
+| `metric` | varchar(4) (bin) | PK part: `LCP`, `INP`, `CLS` |
+| `bucket` | smallint | PK part: histogram bucket index (LCP and INP: 100 ms steps up to 10 s; CLS: 0.01 steps up to 1) |
+| `count` | int | Incremented with `INSERT … ON DUPLICATE KEY UPDATE` |
+
+The 75th percentile per route and day is computed from the buckets. This is the 67th table; DOC-09.0 §3 lists it under platform/reporting. Rows older than 180 days are deleted. A simple table on `/settings/data` shows p75 per route for the last 28 days against the "good" thresholds.
+
+## 9. Manual checks per milestone
+
+| Check | Milestones |
+|---|---|
+| Walk every screen of the milestone against its doc's acceptance checklist; tick the boxes in the PR that closes the milestone | all |
+| Screen-reader pass (§7) | storefront, admin commerce, before go-live |
+| Real device: a mid-range Android phone on throttled data, full purchase | storefront, before go-live |
+| OWASP checklist (DOC-11 §11) | commerce backend, before go-live |
+| Restore rehearsal, latency measurement, load test | production phase only |
+
+## 10. Rules
+
+**Always:** write the failing test first for a bug; test money, stock, order and auth paths against the real database; keep each behaviour tested at one layer; treat a red or flaky test as a stop signal.
+**Never:** mock MySQL for logic that depends on transactions, locks or constraints; skip or auto-retry a failing test to get a green build; call a real provider from a test; lower a budget or a coverage floor without a changelog row here explaining why.
+**Common mistakes:** an end-to-end test for every validation rule; tests coupled to the demo seed; asserting on English copy; measuring performance on a database with ten rows.
+
+## 11. Acceptance checklist
+
+- [ ] `pnpm check` runs every gate that needs no browser or database in under 3 minutes locally; `pnpm test:integration` and `pnpm test:e2e` run the rest.
+- [ ] Each of the five ADR-0020 acceptance tests exists as a named integration test.
+- [ ] The route × role matrix test and the "every non-GET admin route audits" test exist (DOC-11 §13).
+- [ ] All 17 end-to-end journeys exist and pass on Chromium; the smoke set also on WebKit.
+- [ ] Coverage floors of §5 are enforced by configuration.
+- [ ] The seeded performance database (3,000 products, 25,000 variants, 20,000 orders) is generated by `db:seed --perf` in under 2 minutes.
+- [ ] The query-plan test covers every query in §6.3.
+- [ ] The manual accessibility passes are recorded in §12.
+
+## 12. Records
+
+| Check | Date | By | Findings |
+|---|---|---|---|
+| Screen-reader pass, storefront | not yet | | |
+| Screen-reader pass, admin | not yet | | |
+| Real-device purchase | not yet | | |
+
+## 13. Open questions and assumptions
+
+| # | Item | Assumption | Revisit trigger |
+|---|---|---|---|
+| Q-13-1 | Vitest 5 browser mode with the Storybook addon | Works (DOC-04b Q-04b-3) | M2 setup; fallback `@storybook/test-runner` |
+| Q-13-2 | API latency budgets | Guesses for CI hardware, set as regression guards | First measured run at the end of the commerce-backend milestone: replace with measured p95 × 1.5 |
+| Q-13-3 | Metrics exporter and alerting tool | Chosen with the host (production phase) | `LAUNCH-01` |
+| Q-13-4 | Hosted error tracker | None until production | Production phase |
+| Q-13-5 | Screen reader used | NVDA on Windows (the development machine); TalkBack on the Android test phone for the storefront | — |
+| Q-13-6 | CI minutes | Within the git host's free allowance for a private repository | Limits hit → run e2e and Lighthouse only on PRs labelled ready |
+
+## 14. Changelog
+
+| Date | Change |
+|---|---|
+| 2026-10-02 | Initial version (Phase 6). Adds table `web_vitals_daily` (67 tables in total) and `POST /api/v1/client-errors` |
