@@ -272,3 +272,4 @@ Schemas are written as TypeScript-like shapes; in the contract they are Zod sche
 |---|---|
 | 2026-10-02 | Initial version (Phase 5, part 2) |
 | 2026-10-02 | Phase 7 consistency review: field issue codes listed (§6.3); they were used in DOC-06.5 without a registry |
+| 2026-10-02 | M0-04: the code registry exists in `@noor/contract` (`errorStatus`, `fieldIssueCodes`); status per code in the table above is now enforced by it. Client-side network failure is reported as `unavailable` with status 0 |

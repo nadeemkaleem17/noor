@@ -73,3 +73,4 @@ The implementation helper (hand-rolled route table vs a library) is decided in D
 | 2026-10-02 | Proposed |
 | 2026-10-02 | Phase 4: route helper decided: `fastify-type-provider-zod` + a small registrar; OpenAPI via `@fastify/swagger` (DOC-08 §6.1) |
 | 2026-10-02 | Phase 5: conventions (errors, pagination, idempotency, bulk, auth classes) in DOC-10.0; endpoints in DOC-10.1 … 10.8 |
+| 2026-10-02 | M0-04: route table is `defineRoutes` with a discriminated `auth`/`permission` type (a staff route without a permission does not compile); the client is `createClient(table, opts)`; the client sends only the query keys the caller passed; query schemas accept wire strings and native values (`qint`, `csv`, `flag`); `errorStatus` is the single code -> HTTP status registry; `toFieldIssues` maps Zod issues to field codes |

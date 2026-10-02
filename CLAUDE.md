@@ -26,13 +26,13 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01 and M0-02 done; next **M0-03** (local services) and **M0-04** (`packages/contract`) |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, M0-02, M0-04 done. M0-03 (local services) waits for MySQL 8.4 (native, no Docker). Next: **M0-05** (API skeleton) |
 | Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
-| New code | `packages/config` (`@noor/config`: tsconfig base, ESLint pieces, Vitest preset) |
+| New code | `packages/config` (tooling), `packages/contract` (`@noor/contract`: money, phone, enums, errors, route table, typed client) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
-- **Docker is not installed.** Local MySQL 8.4 must be installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work).
+- **No Docker, by decision.** Local MySQL 8.4 is installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work). Use `STORAGE_DRIVER=local`, `IMAGE_TRANSFORM=none`; spike M0-08 (MinIO/imgproxy) is skipped.
 - `typescript` is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
 - **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).
 - `pnpm` was installed with `npm i -g pnpm@11.28.3` (`corepack enable` needs administrator rights here).
@@ -57,7 +57,7 @@ Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefron
 ```
 pnpm install
 pnpm dev          # old admin (:5173) + legacy mock API (:3000)
-pnpm test         # vitest: apps/admin, packages/config
+pnpm test         # vitest: apps/admin, packages/config, packages/contract
 pnpm lint
 pnpm build
 pnpm check        # typecheck + lint + test

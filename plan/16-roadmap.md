@@ -87,7 +87,7 @@ flowchart LR
 | M0-09 | CI workflow: `check`, `api-integration` (MySQL service), `security`, `pr-title`; branch protection | DOC-14 §6, DOC-13 §5, DOC-15 §3–6 | M0-05 | 1 | A PR with a failing test or a secret cannot merge |
 | M0-10 | `packages/ui` skeleton: Tailwind v4, `tokens.css` with all four verified palettes, `cn`, Storybook 10 with a11y and RTL/dark toolbars, `check-contrast`, `check-logical` | DOC-04a | M0-02 | 2.5 | Both scripts pass; `@theme inline` and `--color-*: initial` confirmed (DOC-04a Q-04a-3) |
 | M0-11 | **RTL spike**: Dialog, Drawer, Menu with submenu, Tabs, Combobox, Select, Tooltip on Base UI under `dir="rtl"` | DOC-04b §8, ADR-0007 | M0-10 | 0.5 | Table in DOC-04b §8 filled; any Radix fallback recorded in ADR-0007 |
-| M0-12 | `apps/storefront` skeleton (React Router 8 framework mode, one SSR page, CSP headers, env validation) + `packages/i18n` + **i18n spike** | DOC-03 §5.2, §9–10, DOC-11 §5.3, ADR-0004 | M0-02, M0-10 | 2 | DOC-03 §9 spike result recorded; `curl` shows server-rendered HTML with a translated string |
+| M0-12 | `apps/storefront` skeleton (React Router 8 framework mode, one SSR page, CSP headers, env validation) + `packages/i18n` (including `formatMoney`, `formatDate`, `formatNumber`; ADR-0013) + **i18n spike** | DOC-03 §5.2, §9–10, DOC-11 §5.3, ADR-0004 | M0-02, M0-10 | 2 | DOC-03 §9 spike result recorded; `curl` shows server-rendered HTML with a translated string |
 | M0-13 | Repo scripts: `route-keys.mjs`, `ts-ratio.mjs`; `dependency-cruiser` rules file for API modules | DOC-10.8 §6, ADR-0002, DOC-08 §5.1 | M0-05 | 0.5 | CI runs all three |
 
 ### M1 — Backend core
@@ -275,7 +275,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 
 | Milestone | Tasks | Done |
 |---|---|---|
-| M0 | 13 | 2 (M0-01, M0-02 done; M0-01's `pnpm dev` check waits for you to stop the old dev servers) |
+| M0 | 13 | 3 (M0-01, M0-02, M0-04 done; M0-03 waits for MySQL; M0-01's three empty root folders wait for the editor window on `admin-panel` to close) |
 | M1 | 13 | 0 |
 | M2 | 5 | 0 |
 | M3 | 7 | 0 |
@@ -317,3 +317,5 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | Phase 7 consistency review: route key `admin.me.get` |
 | 2026-10-02 | M0-01 started. Deviations: the `*.zip` archives are git-ignored instead of deleted (they are the owner's untracked files); `.nvmrc` is 24 (installed Node is 24.14) |
 | 2026-10-02 | M0-02 done: `packages/config` (tsconfig base, ESLint pieces, Vitest preset, 7 fixture tests). `.gitattributes` added (LF) |
+| 2026-10-02 | M0-04 done with a narrower scope than written: `packages/contract` v0 holds the foundation (money, phone, enums, permissions, error registry with HTTP status per code, ApiError, pagination/query helpers, shared pieces Image/Swatch/FormSchema/ThemeTokens/LineCustomization, route-table types, typed client). Entity schemas (Product, Order, Promo, Settings ...) are NOT migrated from the old `schemas.js`: DOC-10 redefines them, so each is written with the first endpoint that uses it (M1-xx, M4-xx) |
+| 2026-10-02 | M0-12 now names `formatMoney` explicitly (it is not in the contract) |

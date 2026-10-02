@@ -194,3 +194,4 @@ Two renames against today's contract: product kind `made-to-order` → `made_to_
 |---|---|
 | 2026-10-02 | Initial version (Phase 5, part 1) |
 | 2026-10-02 | Phase 6: `web_vitals_daily` added (DOC-13 §8.6); 67 tables |
+| 2026-10-02 | M0-04: the enum registry of section 5 exists in `@noor/contract` (`enums`, `Enum`); a test asserts unique snake_case values |

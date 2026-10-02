@@ -60,3 +60,4 @@ Assumes PKR exponent 2 as stated in the contract. Whether the shop wants whole-r
 |---|---|
 | 2026-10-02 | Proposed; corrects v1's "minor = 1 rupee" (already corrected in v2) |
 | 2026-10-02 | Phase 5: exact pricing computation and per-line discount allocation in DOC-09.6 §4 |
+| 2026-10-02 | M0-04: helpers operate on bare integers (`add`, `sub`, `mulInt`, `percentOf`, `allocate`, `parseRupees`, `moneyToDecimalString`, BigInt inside); `Money` is the JSON boundary shape. `formatMoney` lives in `@noor/i18n` (DOC-03 section 4), not in the contract, so the contract has no display code. The `* 100` / `/ 100` lint rule is not added yet (task M0-02 left it out; add with the first app code that does money) |
