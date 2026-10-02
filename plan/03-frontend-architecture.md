@@ -24,7 +24,7 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | Node | `>=22.22` (`engines`); `.nvmrc` = 24 | dev machine has 24.14 | 22.22 is the React Router v8 floor; newer LTS lines are fine |
 | pnpm | `11.28.3` (`packageManager` field) | 11.28.3 on 30 Sep 2026 | **Not 12** (Rust rewrite, 26 Aug 2026; revisit after 3 months without a lockfile-breaking fix). Installed with `npm i -g pnpm@11.28.3` where `corepack enable` lacks rights |
 | turbo | `^2.11` | 2.11.x, Sep 2026 | `turbo.json` uses `tasks` (the 1.x `pipeline` key is gone) |
-| typescript | `>=5.5`, exact version pinned at M0 | ADR-0002 | Assumption: current stable at M0 is used; no feature above 5.5 is required |
+| typescript | `~6.0.3` | 6.0.3 | **Not 7.x** (7.0.2 is the native compiler): `typescript-eslint` supports `<6.1` only (ADR-0002 revisit trigger). Move to 7 when `typescript-eslint` supports it |
 | react, react-dom | `^19.2.8` | repo `package.json` | Already installed in both apps |
 | vite | `^8.3` | repo `package.json` | |
 | react-router, @react-router/dev, @react-router/node | `~8.4` | 8.4.0 on 15 Sep 2026 | ESM-only; `react-router-dom` no longer exists; middleware on by default |
@@ -182,24 +182,7 @@ flowchart LR
 | No deep imports into another package's `src/` | package `exports` map (unlisted paths do not resolve) |
 | No `index.ts` barrel files inside an app | Review (DOC-15 §7); barrels defeat Vite code splitting |
 
-`packages/config/eslint.config.js` (the boundary part; built-in rule, no extra plugin):
-```js
-import { readdirSync } from 'node:fs'
-
-// One override per feature folder: a feature may not import any other feature.
-export const featureBoundaries = (featuresDir, alias) =>
-  readdirSync(featuresDir).map((name) => ({
-    files: [`${featuresDir}/${name}/**`],
-    rules: {
-      'no-restricted-imports': ['error', {
-        patterns: [{
-          group: [`${alias}/features/*`, `!${alias}/features/${name}`, `!${alias}/features/${name}/**`],
-          message: 'Features do not import each other. Compose them in a route (DOC-03 §5.3).',
-        }],
-      }],
-    },
-  }))
-```
+`packages/config/eslint.js` exports `appRules({ alias, featuresDir, cwd })`, used by each app's `eslint.config.js`. It returns one **complete** `no-restricted-imports` rule per path (shared patterns + that path's own), because ESLint flat config replaces, not merges, the options of the same rule when several entries match a file (found by the M0-02 fixture test: a feature-only rule had silently dropped the `zod`/Radix ban). The same package exports `base` (TypeScript baseline, `no-explicit-any`, `ts-ignore`, non-null, `.only`/`.skip`, task-id-on-TODO rule), `noProcessEnv` (API) and a Vitest `base`. Fixture tests in `packages/config/test` prove each rule fails on forbidden code.
 
 Path aliases: `@/` → `apps/admin/src`, `~/` → `apps/storefront/app` (the React Router template default).
 
@@ -333,7 +316,7 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 |---|---|---|---|
 | Q-03-1 | `remix-i18next` on React Router 8 | Works; fallback defined in §9 | Spike fails |
 | Q-03-2 | TanStack Table v9 is two months old | Stable enough for a new build | Two blocking bugs in M1 → pin v8 and record here |
-| Q-03-3 | Exact TypeScript pin | Current stable at M0 | — |
+| Q-03-3 | Exact TypeScript pin | `~6.0.3`, see §2 | `typescript-eslint` supports TypeScript 7 |
 | Q-03-4 | Packages consumed as source | Fine while nothing is published | A package is published or build time exceeds 60 s |
 
 ## 14. Changelog
@@ -344,3 +327,4 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 | 2026-10-02 | Initial version (Phase 1). Research added to DOC-02 §4: Tailwind v4, Base UI RTL, TanStack, RHF, pnpm, Turborepo, React Router 8.4, i18n, bulletproof-react, FSD |
 | 2026-10-02 | Phase 7 consistency review: cart cookie and forwarded headers match DOC-10.0 §3 |
 | 2026-10-02 | M0-01: Node and pnpm rows updated to what is installed |
+| 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3; `appRules` replaces the separate boundary helpers (§5.3); `typescript-eslint` pinned to ~8.70.1 because pnpm's 7-day release-age gate refuses 8.71.0 (published 28 Sep 2026) |

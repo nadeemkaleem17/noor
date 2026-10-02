@@ -399,3 +399,4 @@ Reviewed before each release that touches auth, orders, payments or uploads.
 | 2026-10-02 | Phase 5: `TRACKING_KEY` added to §7 (tracking tokens are HMAC-derived, DOC-10.3 §4) |
 | 2026-10-02 | Phase 5: analytics consent question added (Q-11-8) |
 | 2026-10-02 | Phase 7 consistency review: route key for the `search` bucket |
+| 2026-10-02 | M0-02: the 7-day `minimumReleaseAge` gate (§10) blocked a 4-day-old `typescript-eslint`; the response was to pin the previous release, not to weaken the gate (works as intended) |

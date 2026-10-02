@@ -275,7 +275,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 
 | Milestone | Tasks | Done |
 |---|---|---|
-| M0 | 13 | 0 (M0-01 in progress: workspace, install and the admin's test, lint and build pass; `pnpm dev` not yet verified because old dev servers still hold ports 3000 and 5173; three empty old folders remain to delete) |
+| M0 | 13 | 2 (M0-01, M0-02 done; M0-01's `pnpm dev` check waits for you to stop the old dev servers) |
 | M1 | 13 | 0 |
 | M2 | 5 | 0 |
 | M3 | 7 | 0 |
@@ -316,3 +316,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | Initial version (Phase 6) |
 | 2026-10-02 | Phase 7 consistency review: route key `admin.me.get` |
 | 2026-10-02 | M0-01 started. Deviations: the `*.zip` archives are git-ignored instead of deleted (they are the owner's untracked files); `.nvmrc` is 24 (installed Node is 24.14) |
+| 2026-10-02 | M0-02 done: `packages/config` (tsconfig base, ESLint pieces, Vitest preset, 7 fixture tests). `.gitattributes` added (LF) |

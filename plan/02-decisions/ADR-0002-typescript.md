@@ -58,3 +58,4 @@ Assumes TypeScript ≥ 5.5 is available. Native-compiler status not researched.
 | Date | Change |
 |---|---|
 | 2026-10-02 | Proposed |
+| 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3 because `typescript-eslint` 8.x supports `<6.1`; TypeScript 7.0 (native compiler) is the revisit trigger noted below, now actionable |

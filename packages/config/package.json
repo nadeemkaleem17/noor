@@ -1,0 +1,26 @@
+{
+  "name": "@noor/config",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Shared tooling config: tsconfig base, ESLint flat config pieces, Vitest preset. No runtime code (plan/03-frontend-architecture.md section 4).",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint.js",
+    "./vitest": "./vitest.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "typescript-eslint": "~8.70.1"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

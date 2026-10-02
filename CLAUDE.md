@@ -26,13 +26,14 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**, task **M0-01** in progress (workspace created; see "Open items") |
+| Roadmap position | Milestone **M0 Foundation**: M0-01 and M0-02 done; next **M0-03** (local services) and **M0-04** (`packages/contract`) |
 | Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
-| New code | None yet. `packages/` does not exist |
+| New code | `packages/config` (`@noor/config`: tsconfig base, ESLint pieces, Vitest preset) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
 - **Docker is not installed.** Local MySQL 8.4 must be installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work).
+- `typescript` is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
 - **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).
 - `pnpm` was installed with `npm i -g pnpm@11.28.3` (`corepack enable` needs administrator rights here).
 - Three empty folders `admin-panel/`, `ecommerce-website/`, `mock-api/` may remain at the root: they are locked by
@@ -44,7 +45,7 @@ Open items on this machine:
 apps/admin/          old admin dashboard, moved from admin-panel/ (React 19, Vite 8, JSX, Radix, zod 3).
                      Rebuilt screen by screen from milestone M3; do not add features to the old code.
 legacy/mock-api/     old in-memory Express API. Only here so the old admin runs. Deleted at M7.
-legacy/storefront/   old customer site. Reference only; it is rewritten as apps/storefront (M5). Deleted at M7.
+legacy/storefront/   old customer site. Reference only; no lint script (old lint errors, frozen); it is rewritten as apps/storefront (M5). Deleted at M7.
 plan/                the documentation set
 package.json  pnpm-workspace.yaml  turbo.json
 ```
@@ -56,7 +57,7 @@ Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefron
 ```
 pnpm install
 pnpm dev          # old admin (:5173) + legacy mock API (:3000)
-pnpm test         # vitest, currently apps/admin only
+pnpm test         # vitest: apps/admin, packages/config
 pnpm lint
 pnpm build
 pnpm check        # typecheck + lint + test
