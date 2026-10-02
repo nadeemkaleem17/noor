@@ -1,12 +1,21 @@
 {
   "name": "noor",
   "private": true,
-  "description": "Noor & Co.: mock API, admin panel and storefront. Each app has its own package.json; this file only holds repo-level scripts.",
+  "description": "Rubaya store: API, admin and storefront in one workspace. The plan is in plan/ (start at plan/AGENTS.md).",
   "type": "module",
-  "scripts": {
-    "dev": "node scripts/dev.mjs"
-  },
+  "packageManager": "pnpm@11.28.3",
   "engines": {
-    "node": ">=22.9"
+    "node": ">=22.22"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@noor/admin --filter=noor-mock-api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "check": "turbo run typecheck lint test"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.0"
   }
 }

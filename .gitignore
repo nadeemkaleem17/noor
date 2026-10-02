@@ -2,14 +2,17 @@
 node_modules/
 dist/
 dist-ssr/
+build/
+.turbo/
 
-# env files (keep an example if one is added later)
+# env files (names and comments live in .env.example)
 .env
 .env.*
 !.env.example
 
-# user uploads
+# user uploads / local data
 uploads/
+.data/
 
 # logs / OS / local tooling
 *.log
@@ -17,5 +20,5 @@ uploads/
 *.local
 .claude/settings.local.json
 
-# old source archive
-ecommerce-website/codebase-ecommerce.zip
+# source archives
+*.zip

@@ -1,59 +1,109 @@
 # noor
 
-Two independent React 19 + Vite 8 apps (JSX, no TypeScript) for a Pakistani fashion
-store (PKR). Each has its own `package.json` and git repo — run commands inside the
-project folder. No backend: both persist to browser `localStorage`.
+Online fashion store for Pakistan (PKR). Customers see the name **Rubaya** (domain `rubaya.pk`);
+"noor" is only the internal project, repo and package name (`@noor/*`).
 
-## admin-panel/ — store admin dashboard
-Manages products (options/variants, media, components), categories, collections,
-attributes, size charts, orders (with invoices), promos, reviews, CMS pages,
-menus, templates, shipping, settings and appearance, plus a "Data Publishing" page.
-Uses React Router, Radix UI, zod and the React Compiler.
+Everything is built and run **locally** first. Production is a separate, later phase.
 
-```
-npm install
-npm run dev      # Vite dev server
-npm run build    # production build
-npm run lint     # eslint
-npm test         # vitest run (tests in src/lib/__tests__)
-```
+## How to work here
 
-```
-admin-panel/src/
-  App.jsx, main.jsx    routes (/products, /orders, /promos, /settings, ...)
-  components/          AdminLayout, Toast, TabBar, Field, ui primitives
-  pages/               one folder per area: products, catalog, orders, promos,
-                       content, store, data (+ Dashboard, Reviews, NotFound)
-  contract/            schemas.js (zod, shared with storefront) + fixtures.js (seed data)
-  lib/                 db.js (localStorage "admin API", keys prefixed `admin:`),
-                       validate, orders, invoice, variants, csv, format, ...
-```
-Note: `db.js` is the one adapter to swap for real HTTP later; components must not
-touch `localStorage` directly.
+1. **Read [plan/AGENTS.md](plan/AGENTS.md) first**, then only the doc your task cites. The plan in `plan/` is the
+   source of truth (81 files; do not read it whole). [plan/README.md](plan/README.md) is the index.
+2. **Take the next task from [plan/16-roadmap.md](plan/16-roadmap.md) §5**, in order. Each task names the doc
+   sections that specify it and what "done" means. Tick it in §8 when finished.
+3. **Before writing code, answer in one or two lines each** (skip only for typo-level edits):
+   - Which task id and doc section is this?
+   - Does it already exist here? Extend it with a prop instead of writing a sibling.
+   - Does the platform, the standard library or an installed dependency already do it?
+   - What is the smallest change that satisfies the doc, and what am I deliberately not building?
+   - Will two places use it? Then it goes in `packages/` or a shared folder and takes props.
+4. **Ponytail mode is on**: simplest solution that works, no speculative abstractions, no new dependency
+   without a stated reason. Never simplify away validation, error handling, security or accessibility.
+5. If the plan is wrong or silent, fix the doc in the same change. If code and plan disagree, the plan wins.
+6. Report honestly: what was verified, what was not, and any failing check with its output.
 
-## ecommerce-website/ — customer storefront
-Home, Shop, Product, Cart, Checkout, Order confirmation, Track order, Wishlist and CMS
-pages. State lives in React contexts backed by localStorage; React Router only.
+## Current state (update when it changes)
 
-```
-npm install
-npm run dev
-npm run build
-npm run lint     # (no tests configured)
-```
+| | |
+|---|---|
+| Roadmap position | Milestone **M0 Foundation**, task **M0-01** in progress (workspace created; see "Open items") |
+| Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
+| New code | None yet. `packages/` does not exist |
+| Running today | The old admin against the old mock API |
+
+Open items on this machine:
+- **Docker is not installed.** Local MySQL 8.4 must be installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work).
+- **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).
+- `pnpm` was installed with `npm i -g pnpm@11.28.3` (`corepack enable` needs administrator rights here).
+- Three empty folders `admin-panel/`, `ecommerce-website/`, `mock-api/` may remain at the root: they are locked by
+  old dev servers still running. Stop those terminals, then delete the three folders.
+
+## Layout
 
 ```
-ecommerce-website/src/
-  App.jsx, main.jsx    routes
-  components/          StorefrontLayout, CartDrawer, ProductCard, ui
-  context/             Cart, Catalog, Orders, Promo, Wishlist (+ AppProviders)
-  pages/storefront/    Home, Shop, Product, Cart, Checkout, OrderConfirmation,
-                       TrackOrder, Wishlist, CmsPage, ComingSoon
-  data/mockData.js     seed catalog
-  hooks/               usePersistentState, useStoreConfig
-  utils/               format.js, images.js
+apps/admin/          old admin dashboard, moved from admin-panel/ (React 19, Vite 8, JSX, Radix, zod 3).
+                     Rebuilt screen by screen from milestone M3; do not add features to the old code.
+legacy/mock-api/     old in-memory Express API. Only here so the old admin runs. Deleted at M7.
+legacy/storefront/   old customer site. Reference only; it is rewritten as apps/storefront (M5). Deleted at M7.
+plan/                the documentation set
+package.json  pnpm-workspace.yaml  turbo.json
 ```
-Note: `CHANGELOG_THIS_PASS.md` mentions a seller dashboard/login (`SellerContext`,
-`/seller/*`), but those files are not in the current `src/` — treat it as stale.
 
-The apps don't talk to each other yet; admin `contract/` defines the future shared API shape.
+Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}`.
+
+## Commands (repo root)
+
+```
+pnpm install
+pnpm dev          # old admin (:5173) + legacy mock API (:3000)
+pnpm test         # vitest, currently apps/admin only
+pnpm lint
+pnpm build
+pnpm check        # typecheck + lint + test
+pnpm --filter @noor/admin <script>
+```
+
+Env files (gitignored, already present): `legacy/mock-api/.env` (`ADMIN_KEY=dev-key`),
+`apps/admin/.env.local` (`VITE_API_URL=http://localhost:3000`, `VITE_ADMIN_KEY=dev-key`).
+
+## Target stack (decisions in plan/02-decisions/)
+
+| Area | Decision |
+|---|---|
+| Backend | Node.js, Fastify 5 modular monolith, TypeScript |
+| Database | MySQL 8.4 + Drizzle ORM (`mysql2`). Order and invoice numbers from a `counters` table |
+| Jobs / search | Own `jobs` table + outbox in MySQL; InnoDB `FULLTEXT` + synonyms |
+| Contract | One Zod 4 package shared by all apps; REST under `/api/v1`; OpenAPI generated |
+| Storefront | React Router 8 framework mode, server-rendered |
+| Admin | React SPA; TanStack Query; no localStorage domain data, no mock mode |
+| UI | `@noor/ui`: owned components on Base UI, Tailwind v4, semantic tokens, logical (RTL-safe) properties |
+| Auth | Server sessions, Argon2id, TOTP, role permissions. No shared admin key |
+| Money / orders | Integer paisa only; server computes every price; idempotent order creation; stock reserved then committed |
+| Launch scope | Cash on delivery only; Pakistan only; no external service needed to run locally |
+
+## Rules that are easy to break
+
+- Money is `{ amount, currency: 'PKR' }` in integer paisa (`699000` = Rs. 6,990). No floats, ever.
+- The client never sends a price, discount, fee or total.
+- Order status, stock and payment status change only through the functions named in plan/09-data-model/07 and 04.
+- Do not copy code from `legacy/` or the old `apps/admin` without reading the audit finding that covers it
+  (plan/01-audit.md): several defects live inside working code.
+- Cite the finding id (`F-xx`, `K-x`) in any change that fixes an audit item.
+- Do not commit or push unless asked. Never push to `master` directly.
+
+## The old admin (`apps/admin/src`), until it is replaced
+
+- `lib/db.js` is its only data layer (localStorage, or the mock API when `VITE_API_URL` is set); pages use
+  `hooks/useCollection.js` (`useCollection(name)`, `useSingleton(name)`).
+- `contract/schemas.js` (zod 3) + `fixtures.js` become `packages/contract` and the seed data (tasks M0-04, M1-13).
+- Shared pieces: `components/Field.jsx`, `components/ui.jsx`, `components/ImageUpload.jsx`, `lib/format.js`,
+  `lib/variants.js`, `lib/images.js`, `lib/orders.js`, `lib/invoice.js`.
+- Tests: `src/lib/__tests__` (vitest). They force local mode.
+
+## Known gotchas
+
+- The mock API loses all data on restart.
+- `apps/admin/README.md` and `legacy/storefront/README.md` are the untouched Vite template.
+- `legacy/storefront/CHANGELOG_THIS_PASS.md` describes seller features that do not exist.
+- `*.zip` archives in the old project folders are ignored by git; do not read or commit them.
+- `plan/NOOR_DOCS.md` is a stale single-file snapshot of Phase 0; the split files govern.
