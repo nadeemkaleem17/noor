@@ -73,3 +73,4 @@ Fastify 5 plugin versions and Zod 4 type-provider support were **not researched*
 |---|---|
 | 2026-10-02 | Proposed |
 | 2026-10-02 | Phase 4: versions pinned; module list, dependency edges and request lifecycle specified in DOC-08 |
+| 2026-10-02 | M0-05: spike 1 confirms Fastify 5.12 + fastify-type-provider-zod 7 + our own validator compiler; route table and handlers must match exactly at startup (tested) |

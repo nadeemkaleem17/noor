@@ -9,7 +9,7 @@ export type ClientOptions = {
   /** Headers added to every call (CSRF token, internal key, cart token, locale ...). Evaluated per call. */
   headers?: () => Record<string, string>
   /** Browser clients send the session cookie; ignored by Node. Default "include". */
-  credentials?: RequestCredentials
+  credentials?: 'omit' | 'same-origin' | 'include'
   timeoutMs?: number
 }
 

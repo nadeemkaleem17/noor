@@ -3,5 +3,8 @@ packages:
   - "packages/*"
   - "legacy/*"
 
+allowBuilds:
+  esbuild: true
+
 # Do not install a version published less than 7 days ago (plan/11-security-auth.md §10).
 minimumReleaseAge: 10080

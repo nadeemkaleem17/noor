@@ -23,12 +23,12 @@ Replaces `mock-api/server.js` (one 212-line file with in-memory arrays).
 |---|---|---|---|
 | Node.js | 22.22 | DOC-03 §2 | Runtime |
 | fastify | `^5.12` | 5.12.5 on 16 Sep 2026 | HTTP framework (ADR-0016). Not 6.0 (alpha) |
-| fastify-type-provider-zod | `>=5 <7` | README of the package: v5–6 support Zod 4; v7 needs Zod ≥ 4.2 | Zod validation/serialisation compilers and JSON-schema transform |
+| fastify-type-provider-zod | `^7.0` | 7.0.0 (Jun 2026), peers `zod >=4.1.5`, `fastify ^5.5`, `@fastify/swagger >=9.5.1` | Response serializer and OpenAPI transform. **Validation uses our own compiler** (below) so the original ZodError keeps its field codes |
 | @fastify/cookie | `^11.1` | 11.1.2 | Session cookie |
 | @fastify/helmet | `^13.1` | 13.1.1 | Security headers |
 | @fastify/rate-limit | `^11.2` | 11.2.0 | Per-route rate limits |
 | @fastify/cors | current 11.x at M0 | not version-verified | CORS for the admin origin |
-| @fastify/swagger | current at M0 | not version-verified | OpenAPI 3.1 document from route schemas |
+| @fastify/swagger | `~9.9.0` | 9.9.0 (22 Sep 2026); 9.9.1 refused by the 7-day release-age gate | OpenAPI 3.1 document from route schemas |
 | drizzle-orm, drizzle-kit | `0.45.x` (ADR-0008) | 0.45.2 in Sep 2026 | ORM and migrations, `drizzle-orm/mysql2` |
 | mysql2 | `^3` | not version-verified | Driver, pooled |
 | zod | `^4` via `@noor/contract` | ADR-0005 | Schemas |
@@ -352,7 +352,7 @@ export class DomainError extends Error {
 |---|---|
 | Format | pino JSON to stdout; one line per request: `time, level, requestId, method, route (the pattern, not the raw URL), status, durationMs, actorId?, ip` |
 | Request id | UUID; propagated storefront → API via `X-Request-Id`; put on jobs created by the request (`payload.requestId`) so a notification can be traced to the order request |
-| Redaction | pino `redact` paths: `req.headers.cookie`, `req.headers.authorization`, `*.password`, `*.token`, `*.phone`, `*.email`, `*.address`, `*.landmark`, `*.secret`, `*.code`. Request and response **bodies are never logged** (ADR-0016) |
+| Redaction | pino `redact` paths: `req.headers.cookie`, `req.headers.authorization`, `*.password`, `*.token`, `*.phone`, `*.email`, `*.address`, `*.landmark`, `*.secret`, `*.promoCode`. Request and response **bodies are never logged** (ADR-0016) |
 | Levels | `error` (5xx, job dead-lettered), `warn` (4xx that indicate abuse: rate limited, CSRF failure, invalid transition), `info` (requests, job results), `debug` (off in production) |
 | Slow queries | Any query over 200 ms is logged at `warn` with the statement text and no parameters |
 | Query URLs | Query strings are logged without values for `phone`, `q`, `token` |
@@ -393,7 +393,7 @@ Results are recorded in §18. A failed spike changes this document before any mo
 | # | Item | Assumption | Revisit trigger |
 |---|---|---|---|
 | Q-08-1 | Drizzle `mysql-core` supports `.for('update', { skipLocked: true })` and table-level `check()` in 0.45 | Yes; otherwise those two statements use the `sql` template | `M0-API-SPIKE-3` |
-| Q-08-2 | `fastify-type-provider-zod` major to pin | The highest major that supports the Zod 4 minor we install (v5/6 for Zod 4.0–4.1, v7 for ≥ 4.2) | `M0-API-SPIKE-1` |
+| Q-08-2 | `fastify-type-provider-zod` major to pin | **Answered (M0-API-SPIKE-1): v7** with Zod 4.6.5 | — |
 | Q-08-3 | imgproxy current version, AVIF support in the open-source build, URL signing details | Not researched in this phase | `M0-API-SPIKE-4`; fallback is ADR-0011 option B |
 | Q-08-4 | `@fastify/swagger` output for Zod 4 schemas | Works through the type provider's JSON-schema transform | `M0-API-SPIKE-1`; fallback: build OpenAPI directly with `z.toJSONSchema` |
 | Q-08-5 | Job throughput | Far below ADR-0009's revisit trigger (50 jobs/s) at A-03 scale | Queue latency p95 over 30 s |
@@ -405,3 +405,4 @@ Results are recorded in §18. A failed spike changes this document before any mo
 |---|---|
 | 2026-10-02 | Initial version (Phase 4). Resolves ADR-0005 (route helper) and ADR-0009 (worker design) open questions; amends ADR-0011's URL example (imgproxy native format) |
 | 2026-10-02 | Phase 7 consistency review: reporting owns `web_vitals_daily`; `nodemailer` and `dependency-cruiser` listed in §2 |
+| 2026-10-02 | M0-05 / spike 1 done: registrar, error handler, config, logger, OpenAPI snapshot. Findings: (1) a custom validator compiler is used because the provider's flattens Zod issues; (2) Fastify 5.12 deprecates `disableRequestLogging` and `requestIdLogLabel`: use `logController`; (3) `trustProxy` is a function `(addr, hop) => hop < N` (Fastify's types omit the numeric form); (4) the redact path `*.code` also hid error codes in logs, replaced by `*.promoCode`; (5) the `db.ts` pool moves to M0-06 (spike 3) with Drizzle |

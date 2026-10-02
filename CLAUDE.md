@@ -26,9 +26,9 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, M0-02, M0-04 done. M0-03 (local services) waits for MySQL 8.4 (native, no Docker). Next: **M0-05** (API skeleton) |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05 done. M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; otherwise **M0-10** (UI tokens/Storybook) |
 | Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
-| New code | `packages/config` (tooling), `packages/contract` (`@noor/contract`: money, phone, enums, errors, route table, typed client) |
+| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton: config, errors, route registrar, OpenAPI snapshot; 2 placeholder handlers) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
@@ -57,7 +57,8 @@ Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefron
 ```
 pnpm install
 pnpm dev          # old admin (:5173) + legacy mock API (:3000)
-pnpm test         # vitest: apps/admin, packages/config, packages/contract
+pnpm test         # vitest: apps/admin, apps/api, packages/config, packages/contract
+pnpm --filter @noor/api start   # API on 127.0.0.1:3000 (needs NODE_ENV, APP_ENV, ADMIN_ORIGIN; see apps/api/.env.example)
 pnpm lint
 pnpm build
 pnpm check        # typecheck + lint + test
