@@ -26,9 +26,9 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-12** (storefront skeleton + i18n); **M0-06** once MySQL is installed |
-| Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
-| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, Storybook; no components yet) |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done |
+| Branch | `chore/M0-01-workspace`, one commit per M0 task, not pushed (`master` is the default branch) |
+| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, Storybook; no components yet), `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
@@ -45,12 +45,13 @@ Open items on this machine:
 apps/admin/          old admin dashboard, moved from admin-panel/ (React 19, Vite 8, JSX, Radix, zod 3).
                      Rebuilt screen by screen from milestone M3; do not add features to the old code.
 legacy/mock-api/     old in-memory Express API. Only here so the old admin runs. Deleted at M7.
+apps/storefront/     new customer site (React Router 8, SSR; routes in app/routes.ts; `~/` = app/; env in .env, see .env.example).
 legacy/storefront/   old customer site. Reference only; no lint script (old lint errors, frozen); it is rewritten as apps/storefront (M5). Deleted at M7.
 plan/                the documentation set
 package.json  pnpm-workspace.yaml  turbo.json
 ```
 
-Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}`.
+Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}`; all exist now (admin is still the old code).
 
 ## Commands (repo root)
 
@@ -62,6 +63,8 @@ pnpm --filter @noor/api start   # API on 127.0.0.1:3000 (needs NODE_ENV, APP_ENV
 pnpm lint
 pnpm build
 pnpm check        # typecheck + lint + test + TypeScript-share check + physical-direction (RTL) check
+pnpm --filter @noor/storefront dev     # new storefront on :5174 (the old legacy/storefront also uses 5174: run one)
+pnpm --filter @noor/storefront build && pnpm --filter @noor/storefront start   # production server: CSP header is sent only here
 pnpm --filter @noor/ui storybook   # component workshop on :6006 (toolbars: brand, scheme, direction)
 pnpm route-keys   # write plan/10-api/route-keys.txt; --check: contract routes must be documented
 pnpm --filter @noor/admin <script>

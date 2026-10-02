@@ -1,0 +1,10 @@
+{
+  "home": {
+    "title": "Welcome to Rubaya",
+    "tagline": "Pakistani fashion, delivered to your door.",
+    "items": "{count, plural, one {# item} other {# items}} in your bag"
+  },
+  "language": {
+    "switch": "اردو"
+  }
+}

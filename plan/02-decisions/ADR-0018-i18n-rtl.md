@@ -63,3 +63,4 @@ Assumes A-04. Choice of Urdu font (licence, weight) and i18n library are made in
 |---|---|
 | 2026-10-02 | Proposed |
 | 2026-10-02 | Phase 1: library fixed as i18next + react-i18next + i18next-icu, `remix-i18next` for SSR with a spike (DOC-03 §9); Urdu font Noto Nastaliq Urdu (DOC-04a §7) |
+| 2026-10-02 | M0-12: `remix-i18next` not used; per-request `createI18n` in `@noor/i18n` (DOC-03 §9). Formatters `formatMoney`, `formatDate`, `formatNumber` are in `@noor/i18n` with `numberingSystem: latn` via the `-u-nu-latn` tag; dates use `Asia/Karachi` |

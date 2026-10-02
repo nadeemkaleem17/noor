@@ -1,0 +1,5 @@
+{
+  "extends": "@noor/config/tsconfig.base.json",
+  "compilerOptions": { "lib": ["ES2023", "DOM"], "resolveJsonModule": true, "types": [] },
+  "include": ["src", "test", "locales"]
+}

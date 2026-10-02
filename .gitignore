@@ -23,3 +23,4 @@ uploads/
 # source archives
 *.zip
 storybook-static/
+.react-router/

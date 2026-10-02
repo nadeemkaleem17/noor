@@ -78,3 +78,4 @@ v2's Google "dynamic rendering is a workaround" quote and the Baymard "load more
 | Date | Change |
 |---|---|
 | 2026-10-02 | Proposed; keeps v2's decision, adds cache classes and data path |
+| 2026-10-02 | M0-12: skeleton built: one SSR page, per-route `Cache-Control` through `lib/cache.ts`, security headers and a per-request-nonce CSP in `entry.server.tsx` (built server only), env validated at boot. Nonce vs CDN cache recorded as DOC-03 Q-03-5 |

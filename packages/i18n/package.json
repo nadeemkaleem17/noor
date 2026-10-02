@@ -1,0 +1,28 @@
+{
+  "name": "@noor/i18n",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "description": "Rubaya translations (en, ur) and Intl formatters: money, date, number (plan/03-frontend-architecture.md section 9, ADR-0018). No React.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noor/contract": "workspace:*",
+    "i18next": "^26.4.2",
+    "i18next-icu": "^2.4.4",
+    "intl-messageformat": "^11"
+  },
+  "devDependencies": {
+    "@noor/config": "workspace:*",
+    "eslint": "^10.10.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

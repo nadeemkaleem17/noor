@@ -37,8 +37,8 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | @hookform/resolvers | `^5.9` | 5.9.1 | ≥ 5.1.0 required for Zod 4 |
 | zod | `^4` | ADR-0005 | Only via `@noor/contract` re-export in apps |
 | zustand | `^5.0` | 5.0.15 | Storefront only |
-| i18next, react-i18next, i18next-icu | current majors at M0 | supported-frameworks page | Not version-verified |
-| remix-i18next | `>=7` | ≥ 7 targets React Router framework mode | Compatibility with React Router **8** not verified: task `M0-I18N-SPIKE` (§9) |
+| ~~remix-i18next~~ | — | 8.0.0 declares `react-router ^8` as a peer | **Not used** (M0-12): the locale comes from the URL prefix, so its detection adds nothing; see §9 |
+| i18next, react-i18next, i18next-icu, intl-messageformat | `^26.4`, `^17.0`, `^2.4`, `^11` | installed at M0-12 | `i18next-icu` needs `intl-messageformat` below 12 |
 | storybook, @storybook/react-vite, @storybook/addon-a11y | `~10.6.0` | 10.6.0 (2 Sep 2026; 10.6.1 is inside the 7-day gate) | ESM-only. `@storybook/addon-vitest` is added with the component test pipeline (M2-05) |
 | clsx, tailwind-merge | `^2.1.1`, `^3.7.0` | 3.7.0 (12 Sep 2026) | `cn()` in `@noor/ui` |
 | vitest | `^5` | repo `package.json` | Already used by the admin |
@@ -248,8 +248,8 @@ There is exactly one `ApiError` class, in `@noor/contract` (removes the two dive
 ## 9. i18n and RTL wiring
 
 - Catalogs: `packages/i18n/locales/{en,ur}/{common,storefront,errors}.json`. `ur` may be incomplete; missing keys fall back to `en`.
-- Library: `i18next` + `react-i18next` + `i18next-icu` (ICU plurals/select). Storefront SSR integration through `remix-i18next`.
-- **`M0-I18N-SPIKE` (half a day, before any storefront page):** confirm `remix-i18next` works on React Router 8.4 middleware. Fallback if it does not: a 30-line `i18n.server.ts` that creates one i18next instance per request from the catalogs and passes it through root loader data; no other code changes, because components only call `useTranslation()`.
+- Library: `i18next` + `react-i18next` + `i18next-icu` (ICU plurals/select). Storefront SSR uses the per-request instance below, not `remix-i18next`.
+- **`M0-I18N-SPIKE` result (M0-12, 2 Oct 2026): fallback adopted, `remix-i18next` not installed.** `remix-i18next` 8.0.0 does declare React Router 8 support, but it exists to detect the locale from headers, cookies and the session, and here the locale is the URL prefix (§8). So `createI18n(locale)` in `@noor/i18n` (about 20 lines, synchronous) builds one i18next instance per request on the server and one on the client; the root loader returns only `{ locale, dir }`, and components call `useTranslation()`. Loaders and `meta` use the same function for page titles. Checked with `curl`: `/` returns `<title>Welcome to Rubaya</title>` and English text, `/ur` returns `lang="ur" dir="rtl"` with Urdu text, plural included, and the page hydrates and navigates between locales without a reload. Cost: both catalogs ship in the root chunk (ponytail: split by locale with a dynamic import once `ur` grows), and ICU (`i18next-icu` + `intl-messageformat`) adds about 11 kB gzip to it. The home page loads about 156 kB gzip of JavaScript against the 170 kB budget before any real UI exists; revisit ICU (i18next's built-in `_one`/`_other` plurals do the same for en and ur) when M1 UI work brings the total near the budget.
 - Key naming: `<area>.<element>[.<state>]`, e.g. `cart.empty.title`, `checkout.submit`, `errors.insufficient_stock`. Keys are static strings (no template-built keys) so unused keys can be found by grep.
 - Storefront and `@noor/ui`: no user-visible string literals in JSX (`react/jsx-no-literals`, with `noStrings: true, ignoreProps: true`). Admin: English literals are allowed (ADR-0018: staff UI is English-only in v1).
 - `<html lang dir>` comes from the root loader; `dir` is `rtl` for `ur`. The root wraps the tree in `<DirectionProvider direction={dir}>` (`@noor/ui/direction`).
@@ -308,14 +308,16 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 - [ ] ESLint fails on a cross-feature import, a direct `@base-ui/react` import in an app, and a direct `zod` import in an app (one fixture test each in `packages/config`).
 - [ ] `grep -rE "apiEnabled|API_MODE|VITE_ADMIN_KEY" apps` returns nothing.
 - [ ] `grep -r "localStorage" apps/storefront/app` returns nothing; in `apps/admin/src` only `lib/prefs.ts` matches.
-- [ ] Starting the storefront without `API_INTERNAL_URL` exits with an error naming the variable.
-- [ ] `M0-I18N-SPIKE` result recorded in §14.
+- [x] Starting the storefront without `API_INTERNAL_URL` exits with an error naming the variable (checked at M0-12: exit 1, names all three missing variables).
+- [x] `M0-I18N-SPIKE` result recorded in §9 (M0-12).
 
 ## 13. Open questions and assumptions
 
 | # | Item | Assumption | Revisit trigger |
 |---|---|---|---|
-| Q-03-1 | `remix-i18next` on React Router 8 | Works; fallback defined in §9 | Spike fails |
+| Q-03-1 | `remix-i18next` on React Router 8 | **Answered at M0-12**: not needed (§9) | Locale detection beyond the URL prefix (cookie, `Accept-Language`) is wanted |
+| Q-03-5 | Nonce on CDN-cached pages | Each request gets a fresh CSP nonce, also on cacheable routes; a CDN would serve one nonce to many visitors. DOC-11 §5.3 wants hash-allowed inline blocks there | Before the CDN is switched on (M1 caching task) |
+| Q-03-6 | React Router dev server and CSP | The CSP is sent only by the built server (`import.meta.env.PROD`); Vite dev injects inline scripts | A CSP regression is found only in a production build, so the header test runs against `pnpm build && pnpm start` |
 | Q-03-2 | TanStack Table v9 is two months old | Stable enough for a new build | Two blocking bugs in M1 → pin v8 and record here |
 | Q-03-3 | Exact TypeScript pin | `~6.0.3`, see §2 | `typescript-eslint` supports TypeScript 7 |
 | Q-03-4 | Packages consumed as source | Fine while nothing is published | A package is published or build time exceeds 60 s |
@@ -330,3 +332,4 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 | 2026-10-02 | M0-01: Node and pnpm rows updated to what is installed |
 | 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3; `appRules` replaces the separate boundary helpers (§5.3); `typescript-eslint` pinned to ~8.70.1 because pnpm's 7-day release-age gate refuses 8.71.0 (published 28 Sep 2026) |
 | 2026-10-02 | M0-10: Tailwind, Storybook and cn dependencies pinned |
+| 2026-10-02 | M0-12: `M0-I18N-SPIKE` answered (fallback adopted, §9); `remix-i18next` row struck; i18n dependency versions fixed; Q-03-1 answered, Q-03-5 and Q-03-6 added |
