@@ -1,0 +1,84 @@
+# CI (plan/14-devops.md section 6, plan/13-quality.md section 5). Runs on every pull request and on master.
+# Jobs are added as their parts exist: api-integration (MySQL service) arrives with the first integration test (M0-06),
+# e2e with the storefront (M5), lighthouse with the storefront budgets (M5-11), dependency-cruiser with the first API modules (M1-01).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # version comes from "packageManager" in package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # typecheck + lint + tests for every workspace, then the TypeScript-share check
+      - run: pnpm check
+      # every route in the contract must be described in plan/10-api
+      - run: pnpm route-keys --check
+      - run: pnpm build
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # gitleaks scans history
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # production dependencies only; high and critical advisories fail the build
+      - run: pnpm audit --prod --audit-level high
+
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      # Conventional Commits (plan/15-conventions.md section 4); the squash commit is the PR title
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            perf
+            test
+            docs
+            chore
+            db
+          scopes: |
+            api
+            admin
+            storefront
+            contract
+            ui
+            i18n
+            config
+            plan
+            repo

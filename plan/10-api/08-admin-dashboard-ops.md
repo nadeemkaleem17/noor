@@ -97,7 +97,7 @@ They expose no version, host or configuration detail.
 
 ## 6. Route inventory
 
-The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied** in this document. At M0 the contract route table is the list: `node scripts/route-keys.mjs` writes `plan/10-api/route-keys.txt` from `packages/contract`, and a test fails if a key in that file is not described in one of these documents (matched by the key string) or a documented key is missing from the table. Phase 7 uses that file for the consistency review.
+The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied** in this document. The contract route table is the list: `pnpm route-keys` (`scripts/route-keys.mjs`) writes `plan/10-api/route-keys.txt` from `packages/contract`, and a test fails if a key in that file is not described in one of these documents (matched by the key string) or a documented key is missing from the table. Phase 7 uses that file for the consistency review.
 
 ## 7. Rules
 
@@ -129,3 +129,4 @@ The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied*
 | 2026-10-02 | Initial version (Phase 5, part 2) |
 | 2026-10-02 | Phase 5 part 3: public `POST /api/v1/vitals` (storefront field metrics) is defined in DOC-12 §6.1 and belongs to this file's `reporting` module; body `{ name: 'LCP' | 'INP' | 'CLS', value: number, route: string, navigationType?: string }`, 204, bucket `default` |
 | 2026-10-02 | Phase 6: public `POST /api/v1/client-errors` (browser error intake, DOC-13 §8.5) belongs to this file: body `{ message: string, stack?: string, route: string, app: 'storefront' | 'admin', release: string }` (≤ 4 kB), 204, bucket `default` |
+| 2026-10-02 | M0-13: `pnpm route-keys --check` fails when a contract route is not described here and reports how many documented routes are not built yet (about 177 at M0; approximate, rows that use shorthand such as `.create` are not expanded) |

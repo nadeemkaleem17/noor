@@ -275,7 +275,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 
 | Milestone | Tasks | Done |
 |---|---|---|
-| M0 | 13 | 4 (M0-01, 02, 04, 05 done; M0-03 and M0-06/07 wait for MySQL; M0-01's three empty root folders wait for the editor window on `admin-panel` to close) |
+| M0 | 13 | 6 (M0-01, 02, 04, 05, 09, 13 done; M0-03, 06, 07 wait for MySQL; M0-08 skipped (no Docker); the three empty root folders wait for the editor window on `admin-panel` to close) |
 | M1 | 13 | 0 |
 | M2 | 5 | 0 |
 | M3 | 7 | 0 |
@@ -320,3 +320,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | M0-04 done with a narrower scope than written: `packages/contract` v0 holds the foundation (money, phone, enums, permissions, error registry with HTTP status per code, ApiError, pagination/query helpers, shared pieces Image/Swatch/FormSchema/ThemeTokens/LineCustomization, route-table types, typed client). Entity schemas (Product, Order, Promo, Settings ...) are NOT migrated from the old `schemas.js`: DOC-10 redefines them, so each is written with the first endpoint that uses it (M1-xx, M4-xx) |
 | 2026-10-02 | M0-12 now names `formatMoney` explicitly (it is not in the contract) |
 | 2026-10-02 | M0-05 done (spike 1 recorded in DOC-08 section 19). Scope note: the database pool is part of M0-06, so `/readyz` takes an injected check until then; rate limit, helmet, CORS and sessions stay in M1-04 and M1-02 |
+| 2026-10-02 | M0-09 and M0-13 done as workflow files and scripts. M0-09: `.github/workflows/ci.yml` (check, security, pr-title) and the PR template exist but have never run: they need a push to GitHub and branch protection set in the repository settings (owner action). `api-integration` joins with the first MySQL test (M0-06). M0-13: `route-keys.mjs` and `ts-ratio.mjs` done; the dependency-cruiser rules move to M1-01 because they can only be tested against real modules. M0-08 is skipped (no Docker) |

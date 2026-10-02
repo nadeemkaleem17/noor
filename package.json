@@ -13,7 +13,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run typecheck lint test"
+    "check": "turbo run typecheck lint test && node scripts/ts-ratio.mjs",
+    "route-keys": "pnpm --filter @noor/api exec tsx ../../scripts/route-keys.mjs",
+    "ts-ratio": "node scripts/ts-ratio.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.0"
