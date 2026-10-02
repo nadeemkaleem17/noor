@@ -73,3 +73,4 @@ Tailwind v4 specifics were not researched in Phase 0; the first task of Phase 1 
 |---|---|
 | 2026-10-02 | Proposed; supersedes v2's CSS Modules choice |
 | 2026-10-02 | Phase 1: `@theme` syntax checked; real token set and contrast gate in DOC-04a. Storefront ships light-only in v1 (DOC-04a §6); lint for physical utilities is a script, not an ESLint plugin |
+| 2026-10-02 | M0-10: `@theme` syntax verified by compiling tokens.css (Tailwind 4.3.3); the lint for physical utilities is `scripts/check-logical.mjs` over TypeScript and CSS in `packages/ui`, `apps/storefront` and migrated admin files |

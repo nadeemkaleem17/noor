@@ -69,6 +69,9 @@ export const ThemeTokens = z.strictObject({
   colors: z.strictObject({
     bg: HexColor, surface: HexColor, fg: HexColor, muted: HexColor, line: HexColor, accent: HexColor,
     onAccent: HexColor.optional(), sale: HexColor, success: HexColor, warning: HexColor, danger: HexColor, focus: HexColor,
+    // Optional overrides of the colors the UI otherwise derives (DOC-04a section 6). Presets set them to keep the brand look.
+    surface2: HexColor.optional(), fgSoft: HexColor.optional(), lineStrong: HexColor.optional(),
+    accentText: HexColor.optional(), accentSoft: HexColor.optional(),
   }),
   fonts: z.strictObject({ heading: z.enum(themeFonts), body: z.enum(themeFonts) }),
   radius: z.strictObject({

@@ -1,0 +1,167 @@
+/* The only place a color, radius, shadow, type size or duration is defined (plan/04-design-system/tokens.md).
+   Three tiers: --sem-* semantic variables set per brand and scheme here, mapped to Tailwind utilities by @theme
+   (components use the utility, never the variable). Contrast of every pair is checked by test/contrast.test.ts. */
+@import "tailwindcss";
+
+/* dark mode is a [data-theme="dark"] ancestor; components do not use the dark: variant for colors (they use tokens) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  /* Tailwind's default palette, radii, type scale and breakpoints are removed so only tokens can be used */
+  --color-*: initial;
+  --color-bg: var(--sem-bg);
+  --color-surface: var(--sem-surface);
+  --color-surface-2: var(--sem-surface-2);
+  --color-fg: var(--sem-fg);
+  --color-fg-soft: var(--sem-fg-soft);
+  --color-muted: var(--sem-muted);
+  --color-line: var(--sem-line);
+  --color-line-strong: var(--sem-line-strong);
+  --color-accent: var(--sem-accent);
+  --color-on-accent: var(--sem-on-accent);
+  --color-accent-text: var(--sem-accent-text);
+  --color-accent-soft: var(--sem-accent-soft);
+  --color-sale: var(--sem-sale);
+  --color-success: var(--sem-success);
+  --color-success-soft: var(--sem-success-soft);
+  --color-warning: var(--sem-warning);
+  --color-warning-soft: var(--sem-warning-soft);
+  --color-danger: var(--sem-danger);
+  --color-danger-soft: var(--sem-danger-soft);
+  --color-focus: var(--sem-focus);
+  --color-sidebar: var(--sem-sidebar-bg);
+  --color-sidebar-fg: var(--sem-sidebar-fg);
+  --color-sidebar-muted: var(--sem-sidebar-muted);
+  --color-sidebar-active: var(--sem-sidebar-active);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-heading: var(--sem-font-heading);
+  --font-body: var(--sem-font-body);
+
+  --radius-*: initial;
+  --radius-control: var(--sem-radius-control);
+  --radius-card: var(--sem-radius-card);
+  --radius-media: var(--sem-radius-media);
+
+  --shadow-*: initial;
+  --shadow-card: var(--sem-shadow-card);
+  --shadow-pop: var(--sem-shadow-pop);
+  --shadow-modal: var(--sem-shadow-modal);
+}
+
+@theme {
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --text-*: initial;
+  --text-xs: 0.6875rem; /* 11px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-base: 0.875rem; /* 14px, admin body */
+  --text-md: 1rem; /* 16px, storefront body */
+  --text-lg: 1.25rem; /* 20px */
+  --text-xl: 1.75rem; /* 28px */
+  --text-2xl: 2.25rem; /* 36px */
+  --text-3xl: 3rem; /* 48px, storefront hero only */
+
+  --leading-*: initial;
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-urdu: 2.1;
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 30rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+/* z-index scale: no other values (tokens.md section 5) */
+@utility z-base { z-index: 0; }
+@utility z-sticky { z-index: 10; }
+@utility z-drawer { z-index: 40; }
+@utility z-modal { z-index: 50; }
+@utility z-popover { z-index: 60; }
+@utility z-toast { z-index: 70; }
+
+/* Durations are plain variables, used as duration-(--dur-micro). All become 0 under reduced motion (see base layer). */
+:root {
+  --dur-micro: 120ms;
+  --dur-small: 200ms;
+  --dur-modal: 320ms;
+  --dur-modal-close: 200ms;
+}
+
+/* ---- brand: admin (light) ---- */
+[data-brand="admin-burgundy"] {
+  --sem-bg: #FBF9F6; --sem-surface: #FFFFFF; --sem-surface-2: #F5F1EB;
+  --sem-fg: #231F1C; --sem-fg-soft: #4A433D; --sem-muted: #6B625C;
+  --sem-line: #E7E0D8; --sem-line-strong: #8C8279;
+  --sem-accent: #7A2E3A; --sem-on-accent: #FFFFFF; --sem-accent-text: #7A2E3A; --sem-accent-soft: #F4E7E9;
+  --sem-sale: #B23A3A; --sem-success: #2F6B47; --sem-warning: #855B1A; --sem-danger: #B23A3A;
+  --sem-success-soft: #E8F1EA; --sem-warning-soft: #FBF1E1; --sem-danger-soft: #FBEAEA;
+  --sem-focus: #2C3E8C;
+  --sem-sidebar-bg: #1C1918; --sem-sidebar-fg: #EFE9E2; --sem-sidebar-muted: #9C9188; --sem-sidebar-active: #2A2523;
+  --sem-shadow-card: 0 1px 2px rgb(35 31 28 / 0.06);
+  --sem-shadow-pop: 0 12px 32px rgb(28 25 24 / 0.16);
+  --sem-shadow-modal: 0 24px 64px rgb(20 16 14 / 0.28);
+  --sem-font-heading: "Instrument Sans", system-ui, sans-serif;
+  --sem-font-body: "Instrument Sans", system-ui, sans-serif;
+  --sem-radius-control: 6px; --sem-radius-card: 10px; --sem-radius-media: 8px;
+  --control-h: 2.25rem;
+  color-scheme: light;
+}
+
+/* ---- brand: admin (dark). One block; a tiny script in index.html resolves the OS preference into data-theme ---- */
+[data-brand="admin-burgundy"][data-theme="dark"] {
+  --sem-bg: #15130F; --sem-surface: #1E1B17; --sem-surface-2: #28241E;
+  --sem-fg: #EDE7DF; --sem-fg-soft: #B8AFA3; --sem-muted: #9F978D;
+  --sem-line: #3A342B; --sem-line-strong: #857C72;
+  --sem-accent: #C97F8C; --sem-on-accent: #1C1211; --sem-accent-text: #D99AA5; --sem-accent-soft: #3A2429;
+  --sem-sale: #E17B7B; --sem-success: #6FBE8C; --sem-warning: #E0AD5C; --sem-danger: #E17B7B;
+  --sem-success-soft: #1E2E23; --sem-warning-soft: #332A19; --sem-danger-soft: #35201F;
+  --sem-focus: #7C8FE8;
+  --sem-sidebar-bg: #0F0D0A; --sem-sidebar-fg: #EDE7DF; --sem-sidebar-muted: #8F8579; --sem-sidebar-active: #1E1B17;
+  --sem-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sem-shadow-pop: 0 12px 32px rgb(0 0 0 / 0.5);
+  --sem-shadow-modal: 0 24px 64px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+/* ---- brand: storefront default (storefront-gold). A store theme from the API overrides these (theme.ts) ---- */
+[data-brand="storefront"] {
+  --sem-bg: #FBF8F3; --sem-surface: #FFFFFF; --sem-surface-2: #F4EFE6;
+  --sem-fg: #141210; --sem-fg-soft: #3D3832; --sem-muted: #6A6359;
+  --sem-line: #E7E0D4; --sem-line-strong: #8C8279;
+  --sem-accent: #C9A227; --sem-on-accent: #1A1408; --sem-accent-text: #806010; --sem-accent-soft: #FBF6E8;
+  --sem-sale: #B23A2E; --sem-success: #2F6B40; --sem-warning: #855B1A; --sem-danger: #B23A2E;
+  --sem-success-soft: #E8F1EA; --sem-warning-soft: #FBF1E1; --sem-danger-soft: #FBEAEA;
+  --sem-focus: #2C3E8C;
+  --sem-shadow-card: 0 1px 2px rgb(20 18 16 / 0.06);
+  --sem-shadow-pop: 0 12px 32px rgb(20 18 16 / 0.16);
+  --sem-shadow-modal: 0 24px 64px rgb(20 16 14 / 0.28);
+  --sem-font-heading: "Playfair Display", Georgia, serif;
+  --sem-font-body: "Inter", system-ui, sans-serif;
+  --sem-radius-control: 6px; --sem-radius-card: 10px; --sem-radius-media: 0;
+  --media-ratio: 3/4;
+  --control-h: 2.75rem;
+  color-scheme: light;
+}
+
+/* Urdu pages: a Nastaliq face needs more vertical room and its own font stack */
+:lang(ur) {
+  --sem-font-heading: "Noto Nastaliq Urdu", "Noto Naskh Arabic", Tahoma, sans-serif;
+  --sem-font-body: "Noto Nastaliq Urdu", "Noto Naskh Arabic", Tahoma, sans-serif;
+  line-height: 2.1;
+}
+
+@layer base {
+  html { background: var(--sem-bg); color: var(--sem-fg); font-family: var(--sem-font-body); }
+  :focus-visible { outline: 2px solid var(--sem-focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after { animation-duration: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+  }
+}

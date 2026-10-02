@@ -28,7 +28,7 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | react, react-dom | `^19.2.8` | repo `package.json` | Already installed in both apps |
 | vite | `^8.3` | repo `package.json` | |
 | react-router, @react-router/dev, @react-router/node | `~8.4` | 8.4.0 on 15 Sep 2026 | ESM-only; `react-router-dom` no longer exists; middleware on by default |
-| tailwindcss, @tailwindcss/vite | `^4` | tailwindcss.com docs | CSS-first `@theme`; no `tailwind.config.js` |
+| tailwindcss, @tailwindcss/vite, @tailwindcss/node | `^4.3.3` | 4.3.3 (16 Jul 2026), compiled and tested at M0-10 | CSS-first `@theme`; no `tailwind.config.js`. Apps import `@noor/ui/tokens.css` and add `@source` lines for their own files and `packages/ui/src` |
 | @base-ui/react | `~1.8` | 1.8.0 on 4 Sep 2026 | `DirectionProvider` for RTL |
 | @tanstack/react-query | `^5.104` | 5.104.0 on 26 Sep 2026 | Admin only |
 | @tanstack/react-table | `^9` | v9 stable 4 Aug 2026 | Admin only. New project, so start on v9; v8 tutorials do not apply |
@@ -39,7 +39,8 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | zustand | `^5.0` | 5.0.15 | Storefront only |
 | i18next, react-i18next, i18next-icu | current majors at M0 | supported-frameworks page | Not version-verified |
 | remix-i18next | `>=7` | ≥ 7 targets React Router framework mode | Compatibility with React Router **8** not verified: task `M0-I18N-SPIKE` (§9) |
-| storybook, @storybook/react-vite, @storybook/addon-a11y, @storybook/addon-vitest | `^10` | 10.6 in Sep 2026 | ESM-only |
+| storybook, @storybook/react-vite, @storybook/addon-a11y | `~10.6.0` | 10.6.0 (2 Sep 2026; 10.6.1 is inside the 7-day gate) | ESM-only. `@storybook/addon-vitest` is added with the component test pipeline (M2-05) |
+| clsx, tailwind-merge | `^2.1.1`, `^3.7.0` | 3.7.0 (12 Sep 2026) | `cn()` in `@noor/ui` |
 | vitest | `^5` | repo `package.json` | Already used by the admin |
 | react-markdown | current major at M1 | not re-verified | Storefront **server only**: CMS page bodies (DOC-06.8) |
 | web-vitals | current major at M1 | not re-verified | Storefront field metrics (DOC-06.10 §9) |
@@ -328,3 +329,4 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 | 2026-10-02 | Phase 7 consistency review: cart cookie and forwarded headers match DOC-10.0 §3 |
 | 2026-10-02 | M0-01: Node and pnpm rows updated to what is installed |
 | 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3; `appRules` replaces the separate boundary helpers (§5.3); `typescript-eslint` pinned to ~8.70.1 because pnpm's 7-day release-age gate refuses 8.71.0 (published 28 Sep 2026) |
+| 2026-10-02 | M0-10: Tailwind, Storybook and cn dependencies pinned |

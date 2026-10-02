@@ -26,9 +26,9 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; otherwise **M0-10** (UI tokens/Storybook) |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-11** (RTL spike on Base UI), **M0-12** (storefront skeleton + i18n); **M0-06** once MySQL is installed |
 | Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
-| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton: config, errors, route registrar, OpenAPI snapshot; 2 placeholder handlers) |
+| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, Storybook; no components yet) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
@@ -61,7 +61,8 @@ pnpm test         # vitest: apps/admin, apps/api, packages/config, packages/cont
 pnpm --filter @noor/api start   # API on 127.0.0.1:3000 (needs NODE_ENV, APP_ENV, ADMIN_ORIGIN; see apps/api/.env.example)
 pnpm lint
 pnpm build
-pnpm check        # typecheck + lint + test + TypeScript-share check
+pnpm check        # typecheck + lint + test + TypeScript-share check + physical-direction (RTL) check
+pnpm --filter @noor/ui storybook   # component workshop on :6006 (toolbars: brand, scheme, direction)
 pnpm route-keys   # write plan/10-api/route-keys.txt; --check: contract routes must be documented
 pnpm --filter @noor/admin <script>
 ```

@@ -1,0 +1,50 @@
+{
+  "name": "@noor/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "description": "Rubaya design system: tokens, theme helpers, contrast gate, components (plan/04-design-system).",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./cn": "./src/cn.ts",
+    "./contrast": "./src/contrast.ts",
+    "./theme": "./src/theme.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@noor/contract": "workspace:*",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@noor/config": "workspace:*",
+    "@storybook/addon-a11y": "~10.6.0",
+    "@storybook/react-vite": "~10.6.0",
+    "@tailwindcss/node": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "eslint": "^10.10.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "storybook": "~10.6.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.1"
+  }
+}

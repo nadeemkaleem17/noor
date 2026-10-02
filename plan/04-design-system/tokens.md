@@ -156,7 +156,7 @@ export function themeCss(theme: ThemeTokens, fallback = storefrontGold): string 
 
 Only values that pass the regex, the allow-list or an enum lookup reach the CSS; anything else falls back. No admin-supplied string is ever interpolated raw.
 
-`ThemeTokens.colors` has 12 keys; the 6 semantic tokens it lacks are derived in the same function: `surface-2` and `accent-soft` = `color-mix(in srgb, <accent or fg> 8%, <bg>)`, `fg-soft` = `color-mix(in srgb, fg 80%, bg)`, `line-strong` = `color-mix(in srgb, fg 50%, bg)`, `accent-text` = `accent` when its contrast on `bg` is ≥ 4.5, otherwise `fg`. The admin Appearance page runs the same contrast function and blocks saving a theme whose `fg`, `muted` or `sale` fails 4.5:1 on `bg` (DOC-07).
+`ThemeTokens.colors` has 12 required keys; the semantic tokens it lacks are derived in `deriveColors()` and emitted as literal hex (so the CSS and the contrast gate see identical values): `surface-2` = 4% of `fg` mixed into `bg`, `accent-soft` = 10% of `accent`, `fg-soft` = 80% of `fg`, `line-strong` = 50% of `fg`, status `-soft` backgrounds = 12% of the status color, `accent-text` = `accent` when its contrast on `bg` is ≥ 4.5, otherwise `fg`, `on-accent` = white or black, whichever contrasts more. The admin Appearance page runs the same contrast function and blocks saving a theme whose `fg`, `muted` or `sale` fails 4.5:1 on `bg` (DOC-07).
 
 ## 7. Fonts
 
@@ -282,13 +282,13 @@ The dark block must not be duplicated by hand as it is today (`admin index.css:8
 }
 ```
 
-The storefront presets `monochrome` and `botanical` are not CSS blocks: they are `ThemeTokens` objects in `packages/contract/src/theme-presets.ts`, applied through the same injection path as a custom theme, so there is one code path.
+All three storefront presets (`storefront-gold`, `monochrome`, `botanical`) are `ThemeTokens` objects in `packages/contract/src/theme-presets.ts`, applied through the same injection path as a custom theme (`themeCss()` in `@noor/ui/theme`, used by the storefront root loader and the admin preview). `ThemeTokens.colors` accepts optional overrides for the derived colors (`surface2`, `fgSoft`, `lineStrong`, `accentText`, `accentSoft`); presets set them so brand colors such as the dark-gold accent text are kept, while a custom theme leaves them out and gets derived, readable values.
 
 Because every colour utility resolves to a variable that the theme switches, **components never use the `dark:` variant.** It exists only for the rare asset swap (a logo with light and dark files).
 
 ## 9. The contrast gate
 
-`packages/ui/scripts/check-contrast.mjs` (about 30 lines, no dependency) holds the WCAG luminance formula, reads the token blocks from `tokens.css` and the presets from the contract, and exits non-zero if any pair in this list is below its threshold:
+The gate is `packages/ui/test/contrast.test.ts` (it runs in `pnpm test`, so `pnpm check` includes it). It uses the WCAG formula in `packages/ui/src/contrast.ts`, reads the token blocks from `tokens.css` and the presets from the contract, and fails if any pair in this list is below its threshold:
 
 | Pair | Threshold |
 |---|---|
@@ -297,7 +297,7 @@ Because every colour utility resolves to a variable that the theme switches, **c
 | `fg` on `success-soft`, `warning-soft`, `danger-soft`, `accent-soft` | 4.5 |
 | `line-strong`, `focus` on `bg`, `surface` | 3.0 |
 
-It runs in `pnpm check`. The same function is exported from `@noor/ui/contrast` for the admin Appearance page (§6).
+The same functions are exported from `@noor/ui/contrast` for the admin Appearance page (§6). The test also asserts that the storefront block of `tokens.css` equals the `storefront-gold` preset, so the two cannot drift.
 
 ## 10. Logical properties
 
@@ -334,7 +334,7 @@ Directional icons (chevrons, arrows, "back") flip with `rtl:-scale-x-100`. Icons
 |---|---|---|---|
 | Q-04a-1 | Size of Noto Nastaliq Urdu woff2 | Not measured; ADR-0018 budget is 150 kB | Measured over budget → subset to the Urdu block with `unicode-range` or switch to a Naskh face for body text |
 | Q-04a-2 | "Admin Panel Elite UI Design System v1" document | Not available in the repo; admin values come from `admin-panel/src/index.css` | The document is supplied and disagrees |
-| Q-04a-3 | Tailwind `@theme inline` and `--color-*: initial` | Taken from tailwindcss.com theme docs via search summaries, not exercised | First `pnpm build` of `@noor/ui` at M0 |
+| Q-04a-3 | Tailwind `@theme inline` and `--color-*: initial` | **Confirmed at M0-10** by `packages/ui/test/tailwind.test.ts`, which compiles `tokens.css` with Tailwind 4.3.3: semantic utilities resolve to the `--sem-*` variables, `bg-red-500` does not exist, logical utilities exist, our breakpoints and z-index utilities work | — |
 | Q-04a-4 | Storefront dark mode | Off in v1 (§6) | Trigger in §6 |
 
 ## 14. Changelog
@@ -342,3 +342,4 @@ Directional icons (chevrons, arrows, "back") flip with `rtl:-scale-x-100`. Icons
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 1). Seven colour values changed from the current CSS to pass the contrast gate (§4) |
+| 2026-10-02 | M0-10: `tokens.css` implemented as written, with these changes: the `@theme` block is split (colors, radii, shadows and fonts are `inline` and point at `--sem-*`; text sizes, leading, breakpoints and easing are plain `@theme`); durations are plain `:root` variables; z-index is six `@utility` rules; `--sem-shadow-*` per brand/scheme replaces fixed shadow values; `--control-h` is set per brand and by density. Q-04a-3 confirmed. Contrast gate is a Vitest test, not a script. Presets are all in the contract and `themeCss` is in `@noor/ui/theme` |

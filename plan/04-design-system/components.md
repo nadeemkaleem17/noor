@@ -268,7 +268,7 @@ Result is recorded in §11. Base UI documents RTL support through `DirectionProv
 | Q-04b-1 | Base UI primitive names (`NumberField`, `ToggleGroup`, `Combobox`, `Toast`, `Field`) | Exist in `@base-ui/react` 1.8 as named; not checked against base-ui.com component by component | First build of each component; a missing primitive is hand-built on native elements and noted here |
 | Q-04b-2 | RTL spike | Not run yet | §8 |
 | Q-04b-3 | Storybook interaction tests through `@storybook/addon-vitest` | Works with Vitest 5 | Setup at M0 fails → run stories with `@storybook/test-runner` instead |
-| Q-04b-4 | `tailwind-merge` support for Tailwind v4 class names | Current major supports v4 | `cn()` drops a class in testing |
+| Q-04b-4 | `tailwind-merge` support for Tailwind v4 class names | **Answered at M0-10**: v3.7 supports Tailwind v4, **but it must be told our token names**: unconfigured it classifies `text-md` (a size) as a color and drops one of `text-md text-fg`. `cn()` uses `extendTailwindMerge` with our colors, text sizes, radii, shadows, fonts, leading and z-index values; `packages/ui/test/cn.test.ts` covers it. **Keep the lists in `cn.ts` in step with `tokens.css`** | Any new token name |
 
 ## 12. Changelog
 
@@ -276,3 +276,4 @@ Result is recorded in §11. Base UI documents RTL support through `DirectionProv
 |---|---|
 | 2026-10-02 | Initial version (Phase 1) |
 | 2026-10-02 | Phase 7 consistency review: payment and stock statuses match DOC-09.0 §5 |
+| 2026-10-02 | M0-10: `cn()` configured with the token names (Q-04b-4) |
