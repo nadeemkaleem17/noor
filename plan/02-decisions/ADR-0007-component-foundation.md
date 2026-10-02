@@ -46,16 +46,17 @@ We own the code of every primitive wrapper (more maintenance, full control); upg
 ## Acceptance checklist
 - [ ] `grep -r "@radix-ui" apps/*/package.json packages/*/package.json` is empty after the admin migration milestone.
 - [ ] Each component has Storybook stories for all states and an axe test.
-- [ ] RTL spike result is recorded in DOC-04.
+- [x] RTL spike result is recorded in DOC-04b §8 (M0-11).
 
 ## Revisit trigger
 Spike fails on two or more components; Base UI ships a breaking major that costs more than 3 dev-days; or shadcn changes its default again.
 
 ## Open questions and assumptions
-Base UI RTL behaviour is **not verified**. Base UI tooltip delay default (50 ms vs Radix 200 ms) will be set explicitly in DOC-04.
+Base UI RTL behaviour is **verified at M0-11** (DOC-04b §8): all checks pass; the only change is `alignItemWithTrigger={false}` on the `Select` positioner. Base UI tooltip delay default (50 ms vs Radix 200 ms) will be set explicitly in DOC-04.
 
 ## Changelog
 | Date | Change |
 |---|---|
 | 2026-10-02 | Proposed |
 | 2026-10-02 | Phase 1: Base UI `DirectionProvider` confirmed to exist; RTL spike specified in DOC-04b §8, still to run |
+| 2026-10-02 | M0-11: RTL spike passed on Base UI 1.8.0; no Radix fallback needed |

@@ -26,7 +26,7 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-11** (RTL spike on Base UI), **M0-12** (storefront skeleton + i18n); **M0-06** once MySQL is installed |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-12** (storefront skeleton + i18n); **M0-06** once MySQL is installed |
 | Branch | `chore/M0-01-workspace` (nothing committed yet; `master` is the default branch) |
 | New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, Storybook; no components yet) |
 | Running today | The old admin against the old mock API |

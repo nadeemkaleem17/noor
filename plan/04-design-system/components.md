@@ -233,18 +233,20 @@ export function Button({ variant = 'primary', size, loading, iconStart, iconEnd,
 
 ## 8. RTL spike (ADR-0007, mandatory before building §4.3)
 
-Task `M0-RTL-SPIKE`, half a day: one Storybook page in `dir="rtl"` with Urdu text containing `Dialog`, `Drawer side="end"`, `Menu` with a submenu, `Tabs`, `Combobox`, `Select`, `Tooltip`, inside `<DirectionProvider direction="rtl">`.
+Task `M0-11`, run on 2 Oct 2026 with `@base-ui/react` 1.8.0 (`packages/ui/src/spikes/rtl-spike.stories.tsx`, story `Spikes/RTL`; deleted when the real components land in M2): one Storybook page in `dir="rtl"` containing `Dialog`, a side drawer (a `Dialog` docked with `end-0`), `Menu` with a submenu, `Tabs`, `Combobox`, `Select`, `Tooltip`, `Popover`, inside `<DirectionProvider direction="rtl">`. Measured in the browser pane with real key presses (the pane at 1000 px wide).
 
-| Check | Pass condition |
-|---|---|
-| Drawer | Slides from the left edge |
-| Menu submenu | Opens toward the left; `ArrowLeft` opens it, `ArrowRight` closes it |
-| Tabs | `ArrowLeft` moves to the next tab (visually leftward) |
-| Combobox / Select popup | Aligned to the right edge of the trigger; text right-aligned |
-| Tooltip / Popover with `side="inline-end"` | Appears on the left |
-| Focus return | Trigger refocused on close |
+| Check | Pass condition | Result |
+|---|---|---|
+| Drawer | Slides from the left edge | **Pass**: docked at the left edge. Slide-in uses `ltr:`/`rtl:` variants on `translate-x` |
+| Menu submenu | Opens toward the left; `ArrowLeft` opens it, `ArrowRight` closes it | **Pass**: submenu at x 516–628 left of the parent menu (627–726); `ArrowLeft` opened it with focus on its first item; `ArrowRight` closed it and returned focus to the trigger item; `ArrowRight` on the trigger did not open it. The chevron needs `rtl:-scale-x-100` |
+| Tabs | `ArrowLeft` moves to the next tab (visually leftward) | **Pass**: tabs are laid out right to left, Tab A at the right; `ArrowLeft` moved A → B, `ArrowRight` went back |
+| Combobox / Select popup | Aligned to the right edge of the trigger; text right-aligned | **Pass for Combobox** (popup right edge = input right edge). **Select fails with its default**: item-aligned positioning put the popup 14 px past the trigger's start edge, not mirrored from LTR. **Fix: `alignItemWithTrigger={false}` on `Select.Positioner`** gives a normal anchored popup, right-aligned (inset 4 px by the popup padding). Make this the default in the `Select` component |
+| Tooltip / Popover with `side="inline-end"` | Appears on the left | **Pass**: Popover opened left of its trigger. The Tooltip had no room on the left, so it flipped to `inline-start` (the right) as designed; `data-side` reports the logical side |
+| Focus return | Trigger refocused on close | **Pass** for Drawer, Menu, Popover, Select. Dialog is centred correctly (`start-1/2` with `ltr:`/`rtl:` translate) |
 
-Result is recorded in §11. Base UI documents RTL support through `DirectionProvider` (the provider changes behaviour only; `dir="rtl"` on the document must be set by us). If a component fails without a small patch, that component alone is built on Radix and the exception is recorded in ADR-0007.
+Not verifiable in the browser pane and identical in LTR (so not a direction issue): focus moving into a Dialog when it opens, and Tab trapping, were not observed because the pane often reports `document.hasFocus() === false`. M2-07 covers focus trapping with Playwright component tests.
+
+Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvider` only changes component behaviour; the Storybook decorator and the apps set `dir` on `<html>` themselves.
 
 ## 9. Rules
 
@@ -259,14 +261,14 @@ Result is recorded in §11. Base UI documents RTL support through `DirectionProv
 - [ ] Each row of §5 has an interaction test.
 - [ ] `grep -rn "@radix-ui\|@base-ui" apps` returns nothing.
 - [ ] `grep -rn "asChild" apps packages` returns nothing.
-- [ ] `M0-RTL-SPIKE` table in §8 is filled in.
+- [x] `M0-11` RTL spike table in §8 is filled in (M0-11, 2 Oct 2026).
 
 ## 11. Open questions and assumptions
 
 | # | Item | Assumption | Revisit trigger |
 |---|---|---|---|
 | Q-04b-1 | Base UI primitive names (`NumberField`, `ToggleGroup`, `Combobox`, `Toast`, `Field`) | Exist in `@base-ui/react` 1.8 as named; not checked against base-ui.com component by component | First build of each component; a missing primitive is hand-built on native elements and noted here |
-| Q-04b-2 | RTL spike | Not run yet | §8 |
+| Q-04b-2 | RTL spike | **Answered at M0-11**: passes; Select needs `alignItemWithTrigger={false}` | §8 |
 | Q-04b-3 | Storybook interaction tests through `@storybook/addon-vitest` | Works with Vitest 5 | Setup at M0 fails → run stories with `@storybook/test-runner` instead |
 | Q-04b-4 | `tailwind-merge` support for Tailwind v4 class names | **Answered at M0-10**: v3.7 supports Tailwind v4, **but it must be told our token names**: unconfigured it classifies `text-md` (a size) as a color and drops one of `text-md text-fg`. `cn()` uses `extendTailwindMerge` with our colors, text sizes, radii, shadows, fonts, leading and z-index values; `packages/ui/test/cn.test.ts` covers it. **Keep the lists in `cn.ts` in step with `tokens.css`** | Any new token name |
 
@@ -277,3 +279,4 @@ Result is recorded in §11. Base UI documents RTL support through `DirectionProv
 | 2026-10-02 | Initial version (Phase 1) |
 | 2026-10-02 | Phase 7 consistency review: payment and stock statuses match DOC-09.0 §5 |
 | 2026-10-02 | M0-10: `cn()` configured with the token names (Q-04b-4) |
+| 2026-10-02 | M0-11: RTL spike run, results in §8; Q-04b-2 answered |
