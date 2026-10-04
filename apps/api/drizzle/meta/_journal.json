@@ -43,6 +43,13 @@
       "when": 1791132244976,
       "tag": "0005_shipping",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1791133425610,
+      "tag": "0006_taxonomy",
+      "breakpoints": true
     }
   ]
 }

@@ -27,3 +27,9 @@ export const oldRejected = (db, before, limit) => db.select().from(media).where(
 
 /** @param {import('../../platform/db.js').Executor} db @param {string[]} ids */
 export const findMany = (db, ids) => (ids.length ? db.select().from(media).where(inArray(media.id, ids)) : Promise.resolve([]))
+
+/** Ids among `ids` that are ready files. @param {import('../../platform/db.js').Executor} db @param {string[]} ids */
+export async function readyIds(db, ids) {
+  if (!ids.length) return new Set(/** @type {string[]} */ ([]))
+  return new Set((await db.select({ id: media.id }).from(media).where(and(inArray(media.id, ids), eq(media.status, 'ready')))).map((r) => r.id))
+}

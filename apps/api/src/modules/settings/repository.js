@@ -1,5 +1,4 @@
-import { and, asc, count, desc, eq, inArray, like, or } from 'drizzle-orm'
-import { media } from '../../db/schema/media.js'
+import { and, asc, count, desc, eq, like, or } from 'drizzle-orm'
 import { pageRedirects, pages, menus, settings } from '../../db/schema/content.js'
 import { staffUsers } from '../../db/schema/auth.js'
 
@@ -124,11 +123,3 @@ export const upsertRedirect = (db, oldSlug, pageId) =>
 /** A slug in use by a page is not a redirect any more. @param {Db} db @param {string} slug */
 export const dropRedirect = (db, slug) => db.delete(pageRedirects).where(eq(pageRedirects.oldSlug, slug))
 
-// ---- media ------------------------------------------------------------------------------------------------------------------
-
-/** Ids among `ids` that are ready images. @param {Db} db @param {string[]} ids */
-export async function readyMediaIds(db, ids) {
-  if (!ids.length) return new Set()
-  const rows = await db.select({ id: media.id }).from(media).where(and(inArray(media.id, ids), eq(media.status, 'ready')))
-  return new Set(rows.map((r) => r.id))
-}

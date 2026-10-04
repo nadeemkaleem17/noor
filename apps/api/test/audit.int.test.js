@@ -7,6 +7,7 @@ import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
+import { attributes, formSchemas, sizeCharts, sizeSystems } from '../src/db/schema/taxonomy.js'
 import { setClock } from '../src/platform/clock.js'
 import { record } from '../src/modules/audit/index.js'
 import { newTotpSecret } from '../src/modules/auth/totp.js'
@@ -25,6 +26,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.db.delete(loginAttempts)
     for (const table of [pages, menus, settings, shippingZones, couriers]) await t.db.delete(table)
     await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City']))
+    for (let i = 0; i < 4; i++) await t.migrate.pool.query('DELETE c FROM categories c LEFT JOIN categories k ON k.parent_id = c.id WHERE k.id IS NULL')
+    for (const table of [attributes, sizeCharts, sizeSystems, formSchemas]) await t.db.delete(table)
     await t.db.delete(staffUsers)
   })
 
@@ -292,6 +295,39 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       },
       act: ({ b, id }) => b.call('PUT', `/admin/couriers/${id}`, { body: { ...courier, name: 'Swift', enabled: false } }),
     }
+
+    // ---- catalog structure: each sample builds what it needs through the API, then clears the audit rows it caused ----
+    /** @param {(b: any) => Promise<any>} build @param {(ctx: any) => Promise<{ status: number }>} act */
+    const withSetup = (build, act) => ({
+      prepare: async () => {
+        const s = await signedIn('owner')
+        const ctx = await build(s.b)
+        await t.migrate.db.delete(auditLog)
+        return { ...s, ...ctx }
+      },
+      act,
+    })
+    const cat = (/** @type {string} */ handle) => ({ name: handle, handle, visible: true, attributes: [] })
+    const attr = (/** @type {string} */ code) => ({ code, label: code, type: 'enum', display: 'checkbox', filterable: true, values: [{ code: 'a', label: 'A' }, { code: 'b', label: 'B' }] })
+    const chart = { title: 'Kameez', unit: 'in', tables: [{ id: 'k', title: 'K', columns: ['Bust'], rows: [{ label: 'S', values: [34] }] }] }
+    const form = { title: 'Custom', allowNotes: false, fields: [{ key: 'bust', label: 'Bust', type: 'number', required: false }] }
+    samples['admin.categories.create'] = withSetup(async () => ({}), ({ b }) => b.call('POST', '/admin/categories', { body: cat('women') }))
+    samples['admin.categories.update'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/categories', { body: cat('women') })).body.id }), ({ b, id }) => b.call('PUT', `/admin/categories/${id}`, { body: { ...cat('women2'), version: 1 } }))
+    samples['admin.categories.reorder'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/categories', { body: cat('women') })).body.id }), ({ b, id }) => b.call('POST', '/admin/categories/reorder', { body: { parentId: null, orderedIds: [id] } }))
+    samples['admin.categories.delete'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/categories', { body: cat('women') })).body.id }), ({ b, id }) => b.call('DELETE', `/admin/categories/${id}`))
+    samples['admin.attributes.create'] = withSetup(async () => ({}), ({ b }) => b.call('POST', '/admin/attributes', { body: attr('fabric') }))
+    samples['admin.attributes.update'] = withSetup(async (b) => ({ a: (await b.call('POST', '/admin/attributes', { body: attr('fabric') })).body }), ({ b, a }) => b.call('PUT', `/admin/attributes/${a.id}`, { body: { ...attr('fabric'), label: 'Material', values: a.values.map((/** @type {any} */ v) => ({ id: v.id, code: v.code, label: v.label })) } }))
+    samples['admin.attributes.mergeValue'] = withSetup(async (b) => ({ a: (await b.call('POST', '/admin/attributes', { body: attr('fabric') })).body }), ({ b, a }) => b.call('POST', `/admin/attributes/${a.id}/values/${a.values[0].id}/merge`, { body: { intoValueId: a.values[1].id } }))
+    samples['admin.attributes.delete'] = withSetup(async (b) => ({ a: (await b.call('POST', '/admin/attributes', { body: attr('fabric') })).body }), ({ b, a }) => b.call('DELETE', `/admin/attributes/${a.id}`))
+    samples['admin.sizeSystems.create'] = withSetup(async () => ({}), ({ b }) => b.call('POST', '/admin/size-systems', { body: { name: 'Std', values: [{ label: 'S' }, { label: 'M' }] } }))
+    samples['admin.sizeSystems.update'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/size-systems', { body: { name: 'Std', values: [{ label: 'S' }] } })).body.id }), ({ b, id }) => b.call('PUT', `/admin/size-systems/${id}`, { body: { name: 'Std2', values: [{ label: 'S' }, { label: 'L' }] } }))
+    samples['admin.sizeSystems.delete'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/size-systems', { body: { name: 'Std', values: [{ label: 'S' }] } })).body.id }), ({ b, id }) => b.call('DELETE', `/admin/size-systems/${id}`))
+    samples['admin.sizeCharts.create'] = withSetup(async () => ({}), ({ b }) => b.call('POST', '/admin/size-charts', { body: chart }))
+    samples['admin.sizeCharts.update'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/size-charts', { body: chart })).body.id }), ({ b, id }) => b.call('PUT', `/admin/size-charts/${id}`, { body: { ...chart, title: 'Kameez 2', version: 1 } }))
+    samples['admin.sizeCharts.delete'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/size-charts', { body: chart })).body.id }), ({ b, id }) => b.call('DELETE', `/admin/size-charts/${id}`))
+    samples['admin.formSchemas.create'] = withSetup(async () => ({}), ({ b }) => b.call('POST', '/admin/form-schemas', { body: form }))
+    samples['admin.formSchemas.update'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/form-schemas', { body: form })).body.id }), ({ b, id }) => b.call('PUT', `/admin/form-schemas/${id}`, { body: { ...form, title: 'Custom 2', version: 1 } }))
+    samples['admin.formSchemas.delete'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/form-schemas', { body: form })).body.id }), ({ b, id }) => b.call('DELETE', `/admin/form-schemas/${id}`))
 
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {

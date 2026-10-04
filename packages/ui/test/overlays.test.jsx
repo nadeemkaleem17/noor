@@ -133,7 +133,9 @@ describe('Menu keyboard map', () => {
     const { user } = setup()
     const trigger = screen.getByRole('button', { name: 'Actions' })
     trigger.focus()
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+    await user.keyboard('{ArrowDown}')
+    await waitFor(() => expect(focused()).toBe('Edit')) // the menu opens asynchronously: wait for focus before moving on
+    await user.keyboard('{ArrowDown}{Enter}')
     expect(items[1]?.onSelect).toHaveBeenCalledOnce()
     await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
     await user.keyboard('{ArrowDown}')

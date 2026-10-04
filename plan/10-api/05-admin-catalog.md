@@ -117,6 +117,15 @@ CategoryInput = { name: string, handle: string, parentId?: Id | null, descriptio
 AdminCategory = CategoryInput & { id: Id, sortOrder: int, productCount: int, image?: Image, version: int }
 ```
 
+Built at M1-08 (`packages/contract/src/taxonomy.js`, `apps/api/src/modules/catalog`). Refinements to the tables above:
+
+- Everything that counts products, variants or product options (`productCount`, `usedByProducts`, `usedByVariants`, `usedBy`, the primary-category block) goes through a `usage` object handed to `createCatalogService`; until products exist (M1-09) every count is 0. The foreign keys remain the backstop: a `RESTRICT` refusal is mapped to `409 in_use`. A refusal carries the counts: `usedBy: { children, products }` for categories, `usedBy: { products, categories }` for attributes, `values: [{ id, code, usedByProducts }]` for attribute values, `values: [{ id, label, usedByVariants }]` for sizes, `usedBy: { options }` for size systems, `usedBy: { products }` for forms.
+- A category may be placed only under a parent that leaves the whole subtree within three levels, never under itself or a descendant; its filters must be `filterable` attributes, each at most once; moving it to another parent puts it last among the new siblings. `filters` of a category without its own are those of the nearest ancestor that has some (`effectiveFilters`). A changed handle is kept in `handle_redirects`.
+- `boolean` attributes get the values `yes` and `no`, `number` attributes one placeholder value (`value`), created by the server; sending `values` for them is `400`. `color` attributes need a swatch on every value. A value's `id` and `code` never change.
+- A size system is saved whole (values matched by id, order is size order); labels may swap places in one save.
+- A custom-size form in use by products may gain fields but never lose or rename one (fields have no id, their key is their identity). Deleting charts is always allowed (products lose the link).
+- `admin.categories.reorder` and the other writes purge the cache tags `categories`, `attributes` or `sizes` (outbox event `catalog.updated`).
+
 ## 6. Collections
 
 | Key | Method & path | Permission | Request | Response | Errors |

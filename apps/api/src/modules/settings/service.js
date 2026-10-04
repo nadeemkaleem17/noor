@@ -9,6 +9,7 @@ import { now } from '../../platform/clock.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { emit } from '../../platform/outbox.js'
 import { diffOf, record } from '../audit/index.js'
+import { readyIds } from '../media/repository.js'
 import { defaults } from './defaults.js'
 import * as repo from './repository.js'
 import { resolveTokens } from './tokens.js'
@@ -82,7 +83,7 @@ export function createSettingsService({ db, config, media, shippingFacts = async
   /** @param {import('../../platform/db.js').Executor} tx @param {string[]} ids */
   async function mustBeReady(tx, ids) {
     const unique = [...new Set(ids)]
-    const ready = await repo.readyMediaIds(tx, unique)
+    const ready = await readyIds(tx, unique)
     const bad = unique.find((id) => !ready.has(id))
     if (bad) throw new DomainError('media_not_ready', { mediaId: bad })
   }
