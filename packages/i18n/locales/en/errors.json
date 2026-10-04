@@ -1,4 +1,22 @@
 {
   "unknown": "Something went wrong. Please try again.",
-  "insufficient_stock": "Not enough stock for this item."
+  "insufficient_stock": "Not enough stock for this item.",
+  "required": "This field is required",
+  "too_short": "Too short",
+  "too_long": "Too long",
+  "too_small": "Too small",
+  "too_big": "Too big",
+  "invalid_format": "This is not in the right format",
+  "unrecognized_keys": "Unexpected field",
+  "name_invalid": "Enter a valid name",
+  "phone_invalid": "Enter a valid mobile number, for example 0300 1234567",
+  "email_invalid": "Enter a valid email address",
+  "address_too_short": "Enter the full address",
+  "city_not_served": "We do not deliver to this city yet",
+  "link_invalid": "Enter a valid link",
+  "color_invalid": "Enter a valid color",
+  "handle_invalid": "Use lowercase letters, numbers and dashes",
+  "sku_invalid": "Enter a valid SKU",
+  "code_invalid": "Enter a valid code",
+  "not_unique": "This value is already used"
 }

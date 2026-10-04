@@ -42,7 +42,7 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | storybook, @storybook/react-vite, @storybook/addon-a11y | `~10.6.0` | 10.6.0 (2 Sep 2026; 10.6.1 is inside the 7-day gate) | ESM-only. `@storybook/addon-vitest` is added with the component test pipeline (M2-05) |
 | clsx, tailwind-merge | `^2.1.1`, `^3.7.0` | 3.7.0 (12 Sep 2026) | `cn()` in `@noor/ui` |
 | vitest | `^5` | repo `package.json` | Already used by the admin |
-| react-markdown | current major at M1 | not re-verified | Storefront **server only**: CMS page bodies (DOC-06.8) |
+| react-markdown, remark-gfm | `^10.1`, current | react-markdown 10.1.0 installed at M2-04 | CMS page bodies (DOC-06.8), through `@noor/ui/markdown`. `remark-gfm` is needed for pipe tables (the allow-list includes `table`); it is a plugin of the same unified family, not a second renderer |
 | web-vitals | current major at M1 | not re-verified | Storefront field metrics (DOC-06.10 §9) |
 | babel-plugin-react-compiler | `^1.0.0` | repo `package.json` | On in every app (DOC-05 §3) |
 
@@ -333,3 +333,4 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 | 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3; `appRules` replaces the separate boundary helpers (§5.3); `typescript-eslint` pinned to ~8.70.1 because pnpm's 7-day release-age gate refuses 8.71.0 (published 28 Sep 2026) |
 | 2026-10-02 | M0-10: Tailwind, Storybook and cn dependencies pinned |
 | 2026-10-02 | M0-12: `M0-I18N-SPIKE` answered (fallback adopted, §9); `remix-i18next` row struck; i18n dependency versions fixed; Q-03-1 answered, Q-03-5 and Q-03-6 added |
+| 2026-10-02 | M2-04: `remark-gfm` added next to `react-markdown`; `react-hook-form` is a peer and dev dependency of `@noor/ui` (for `RHFField`) |

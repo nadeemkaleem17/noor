@@ -58,5 +58,10 @@
       "preorder": "پری آرڈر"
     }
   },
-  "slideOf": "{total} میں سے {n}"
+  "slideOf": "{total} میں سے {n}",
+  "upload": "اپ لوڈ کریں",
+  "dropHere": "تصاویر یہاں چھوڑیں یا فائلیں چنیں",
+  "uploading": "اپ لوڈ ہو رہا ہے",
+  "uploadFailed": "اپ لوڈ نہیں ہو سکا",
+  "removeImage": "تصویر ہٹائیں"
 }

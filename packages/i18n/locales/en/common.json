@@ -58,5 +58,10 @@
       "preorder": "Pre-order"
     }
   },
-  "slideOf": "{n} of {total}"
+  "slideOf": "{n} of {total}",
+  "upload": "Upload",
+  "dropHere": "Drop images here or choose files",
+  "uploading": "Uploading",
+  "uploadFailed": "Upload failed",
+  "removeImage": "Remove image"
 }

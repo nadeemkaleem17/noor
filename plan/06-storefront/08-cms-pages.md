@@ -87,3 +87,4 @@ Seeded by `db:seed` and listed in the footer menu. Staff can edit but not delete
 |---|---|
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Owner answer: legal pages drafted by us (A-09) |
+| 2026-10-02 | M2-04: renderer built as `Markdown` in `@noor/ui/markdown`; also needs `remark-gfm` for tables; `skipHtml` drops raw HTML; images need a `"WxH"` title and our image origin (checked with `startsWith(origin + "/")`, so `img.rubaya.pk.evil.com` fails); §6 first bullet is a unit test |
