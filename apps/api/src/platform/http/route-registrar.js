@@ -12,6 +12,7 @@ export const API_PREFIX = '/api/v1'
  * @property {string} staffId
  * @property {ReadonlySet<import('@noor/contract').Permission>} permissions
  * @property {string} [name]
+ * @property {string} role
  */
 
 /**

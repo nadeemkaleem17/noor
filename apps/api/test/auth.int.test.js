@@ -4,117 +4,23 @@ import { eq } from 'drizzle-orm'
 import { generateSync } from 'otplib'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { permissions } from '@noor/contract'
-import { buildApp } from '../src/app.js'
 import { auditLog } from '../src/db/schema/audit.js'
 import { authTokens, loginAttempts, recoveryCodes, sessions, staffUsers } from '../src/db/schema/auth.js'
 import { advanceClock, now, setClock } from '../src/platform/clock.js'
-import { parseConfig } from '../src/platform/config.js'
-import { uuidv7 } from '../src/platform/ids.js'
-import { hashPassword } from '../src/modules/auth/password.js'
-import { insertUser } from '../src/modules/auth/repository.js'
 import { roleList } from '../src/modules/auth/roles.js'
-import { createSealer } from '../src/modules/auth/secrets.js'
 import { sha256Hex } from '../src/modules/auth/tokens.js'
 import { newTotpSecret } from '../src/modules/auth/totp.js'
-import { createTestDatabase, dbAvailable } from './support/db.js'
+import { app, browser, closeHarness, config, createHarness, makeStaff, ORIGIN, PASSWORD, sealer, signedIn, t } from './support/staff.js'
+import { dbAvailable } from './support/db.js'
 
-const ORIGIN = 'http://localhost:5173'
-const COOKIE = 'rb_admin_dev'
-const PASSWORD = 'correct horse battery staple'
-const KEY = Buffer.alloc(32, 5).toString('base64')
-const config = parseConfig({
-  NODE_ENV: 'test', APP_ENV: 'local', ADMIN_ORIGIN: ORIGIN, LOG_LEVEL: 'silent', SESSION_COOKIE_NAME: COOKIE, DATA_ENCRYPTION_KEY: KEY,
-  DATABASE_URL: 'mysql://x:y@h/d', DATABASE_MIGRATION_URL: 'mysql://x:y@h/d',
-})
-const sealer = createSealer(KEY)
-
-/** @type {Awaited<ReturnType<typeof createTestDatabase>>} */
-let t
-/** @type {Awaited<ReturnType<typeof buildApp>>} */
-let app
-let passwordHash = ''
-
-/** A browser: remembers the session cookie and the CSRF token, and sends the headers a real admin page would. */
-function browser(ip = '10.0.0.1') {
-  const state = { cookie: /** @type {string | null} */ (null), csrf: /** @type {string | null} */ (null) }
-  return {
-    state,
-    /**
-     * @param {string} method
-     * @param {string} url
-     * @param {{ body?: unknown, csrf?: boolean, origin?: string | null, headers?: Record<string, string> }} [o]
-     */
-    async call(method, url, { body, csrf = true, origin = ORIGIN, headers = {} } = {}) {
-      /** @type {Record<string, string>} */
-      const h = { 'user-agent': 'vitest' }
-      if (state.cookie) h.cookie = `${COOKIE}=${state.cookie}`
-      if (origin) h.origin = origin
-      if (csrf && state.csrf && method !== 'GET') h['x-csrf-token'] = state.csrf
-      Object.assign(h, headers)
-      const res = await app.inject({ method: /** @type {'GET'} */ (method), url: `/api/v1${url}`, remoteAddress: ip, headers: h, ...(body !== undefined ? { payload: /** @type {object} */ (body) } : {}) })
-      const set = res.cookies.find((c) => c.name === COOKIE)
-      if (set) state.cookie = set.value === '' ? null : set.value
-      const json = res.body ? safeJson(res.body) : undefined
-      return { status: res.statusCode, body: json, headers: res.headers }
-    },
-    /** Signs in and loads the CSRF token. @param {string} email @param {string} [password] */
-    async login(email, password = PASSWORD) {
-      const r = await this.call('POST', '/admin/auth/login', { body: { email, password } })
-      if (r.status === 200 && r.body.next === 'ok') await this.refreshCsrf()
-      return r
-    },
-    async refreshCsrf() {
-      const me = await this.call('GET', '/admin/me')
-      state.csrf = me.body?.csrfToken ?? null
-      return me
-    },
-    /** Second step with a fresh code for `secret`. @param {string} secret */
-    async twoFactor(secret) {
-      const r = await this.call('POST', '/admin/auth/2fa', { body: { code: generateSync({ secret, epoch: Math.floor(now().getTime() / 1000) }) } })
-      if (r.status === 200) await this.refreshCsrf()
-      return r
-    },
-  }
-}
-const safeJson = (/** @type {string} */ s) => {
-  try {
-    return JSON.parse(s)
-  } catch {
-    return s
-  }
-}
-
-/** Inserts an active staff member with a known password (and optionally 2FA on). */
-async function makeStaff(/** @type {string} */ role, { email = `${role}-${uuidv7().slice(-6)}@rubaya.pk`, totp = /** @type {string | undefined} */ (undefined), status = 'active', name = `${role} person` } = {}) {
-  const id = uuidv7()
-  const at = new Date()
-  await insertUser(t.db, { id, email, name, role, status, passwordHash, createdAt: at, updatedAt: at, ...(totp ? { totpSecretEnc: sealer.seal(totp), totpEnabledAt: at } : {}) })
-  return { id, email, role, totp }
-}
-/** A signed-in browser for a staff member made with makeStaff (2FA completed when they have a secret). */
-async function signedIn(/** @type {string} */ role, o = {}) {
-  const totp = role === 'owner' || role === 'manager' ? newTotpSecret() : undefined
-  const user = await makeStaff(role, { totp, ...o })
-  const b = browser()
-  const r = await b.login(user.email)
-  if (r.body.next === 'two_factor') await b.twoFactor(/** @type {string} */ (totp))
-  await b.call('POST', '/admin/me/confirm-password', { body: { password: PASSWORD } })
-  return { b, user }
-}
 
 describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
-  beforeAll(async () => {
-    t = await createTestDatabase()
-    app = await buildApp({ config, db: t.db })
-    passwordHash = await hashPassword(PASSWORD)
-  }, 60_000)
-  afterAll(async () => {
-    await app?.close()
-    await t?.drop()
-  })
+  beforeAll(createHarness, 60_000)
+  afterAll(closeHarness)
   afterEach(async () => {
     setClock(null)
-    for (const table of [auditLog, loginAttempts]) await t.db.delete(table)
+    await t.migrate.db.delete(auditLog) // only the migration user may remove audit entries
+    await t.db.delete(loginAttempts)
     await t.db.delete(staffUsers) // sessions, tokens and recovery codes cascade
   })
 
@@ -569,7 +475,7 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
 
     it('every state change above wrote an audit entry in the same transaction (invite sample)', async () => {
       const { b: owner } = await signedIn('owner')
-      await t.db.delete(auditLog)
+      await t.migrate.db.delete(auditLog)
       await owner.call('POST', '/admin/staff', { body: { name: 'Audit Me', email: 'audit@rubaya.pk', role: 'viewer' } })
       const rows = await t.db.select({ action: auditLog.action, label: auditLog.entityLabel }).from(auditLog)
       expect(rows).toEqual([{ action: 'staff.invited', label: 'audit@rubaya.pk' }])

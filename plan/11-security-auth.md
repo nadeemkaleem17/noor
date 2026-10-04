@@ -267,7 +267,7 @@ Written by `audit.record(tx, …)` inside the mutating transaction (ADR-0012). E
 | Coverage | Every admin mutation; sign-in success and failure; lock; logout; 2FA enrol/disable/reset; password change/reset; session revocation; role change; invite; export of personal data; bulk action (one entry with counts + per-item entries); customer-initiated order cancel; job dead-letter |
 | Diff | Changed fields only, `{ field: [before, after] }`. Redacted always: password hashes, TOTP secrets, recovery codes, tokens, session ids, provider credentials. Customer phone/address changes are stored but masked on read without `customers:read` |
 | Enforcement | A test asserts that every admin route with a non-GET method produced exactly one audit row (table-driven over the route table) |
-| Immutability | No update or delete route. The API's database user has `INSERT, SELECT` on `audit_log` and **no** `UPDATE`/`DELETE`; the retention job runs under the migration user (DOC-14) |
+| Immutability | No update or delete route. Two database triggers (`audit_log_no_update`, `audit_log_no_delete`, migration `0002`) refuse `UPDATE` and `DELETE` for every database user except `rubaya_migrate`; the retention job runs under that user (DOC-14). Triggers, not grants, because MySQL cannot revoke a table privilege from a user who holds it on the whole schema. The trigger tests `USER()`: inside a trigger `CURRENT_USER()` is the definer |
 | Retention | 24 months; `auth.*`, role, money-setting and payment entries 36 months (DOC-07.13 §5) |
 | Not logged | Reads (DOC-07.13 Q-07.13-3); request bodies |
 
@@ -375,7 +375,7 @@ Reviewed before each release that touches auth, orders, payments or uploads.
 - [ ] Database dump inspection: no plaintext passwords, session ids, tokens or TOTP secrets.
 - [ ] `grep -rn "VITE_ADMIN_KEY\|dev-key" apps packages` returns nothing; gitleaks passes.
 - [ ] Response headers on storefront, API and admin match §5.3 (automated header test).
-- [ ] The API database user cannot `UPDATE` or `DELETE` `audit_log` (integration test expects a permission error).
+- [ ] The API database user cannot `UPDATE` or `DELETE` `audit_log` (integration test expects the trigger's error `audit_log is append-only`).
 - [ ] A `viewer` receives masked phones in `admin.orders.get`.
 
 ## 14. Open questions and assumptions

@@ -2,7 +2,7 @@
 // No schema here returns a password hash, TOTP secret, token hash or session cookie value.
 import { z } from 'zod'
 import { Enum } from './enums.js'
-import { Page, PageQuery } from './pagination.js'
+import { CursorPage, Page, PageQuery } from './pagination.js'
 import { Permission } from './permissions.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
@@ -120,4 +120,51 @@ export const authRoutes = defineRoutes({
   'admin.staff.clearLock': { method: 'POST', path: '/admin/staff/:id/unlock', auth: 'staff', permission: 'staff:manage', status: 204, params: IdParams, response: Empty },
   'admin.staff.deactivate': { method: 'POST', path: '/admin/staff/:id/deactivate', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams, response: StaffUser },
   'admin.staff.reactivate': { method: 'POST', path: '/admin/staff/:id/reactivate', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams, response: StaffUser },
+})
+
+// ---- audit log (DOC-10.4 section 5). Read-only: no route creates, changes or deletes an entry.
+export const AuditEntry = z.strictObject({
+  id: Id,
+  at: IsoDate,
+  actorType: Enum.actorType,
+  actorId: Id.optional(),
+  actorLabel: z.string(),
+  actorRole: StaffRole.optional(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string().optional(),
+  entityLabel: z.string().optional(),
+  summary: z.string().optional(),
+  reason: z.string().optional(),
+  category: z.enum(['general', 'security', 'money']),
+  /** Masked (last part hidden) for everyone except an owner. */
+  ip: z.string().optional(),
+})
+/** @typedef {z.infer<typeof AuditEntry>} AuditEntry */
+
+export const AuditEntryDetail = AuditEntry.extend({
+  /** A field is a [before, after] pair, or the text "[redacted]" when it holds a secret. */
+  diff: z.record(z.string(), z.union([z.tuple([z.unknown(), z.unknown()]), z.literal('[redacted]')])).optional(),
+  userAgent: z.string().optional(),
+  requestId: z.string().optional(),
+})
+
+export const auditRoutes = defineRoutes({
+  'admin.audit.list': {
+    method: 'GET', path: '/admin/audit', auth: 'staff', permission: 'audit:read',
+    query: z.strictObject({
+      actorId: Id.optional(),
+      entityType: z.string().max(32).optional(),
+      entityId: z.string().max(64).optional(),
+      action: z.string().max(64).optional(),
+      category: z.enum(['security', 'money']).optional(),
+      from: IsoDate.optional(),
+      to: IsoDate.optional(),
+      q: z.string().trim().min(2).max(80).optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+      cursor: z.string().max(80).optional(),
+    }),
+    response: CursorPage(AuditEntry),
+  },
+  'admin.audit.get': { method: 'GET', path: '/admin/audit/:id', auth: 'staff', permission: 'audit:read', params: IdParams, response: AuditEntryDetail },
 })

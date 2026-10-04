@@ -42,13 +42,15 @@ export async function createTestDatabase() {
   await server.pool.query(`CREATE DATABASE \`${name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
   const m = createDatabase(withDatabase(/** @type {string} */ (migrationUrl), name), 2)
   await migrate(m.db, { migrationsFolder: migrations })
-  await m.pool.end()
   const app = createDatabase(withDatabase(/** @type {string} */ (appUrl), name), 20)
   return {
     ...app,
     name,
+    /** Handle for the migration user (DDL, and DELETE on the audit log): for tests that need those rights. */
+    migrate: m,
     async drop() {
       await app.pool.end()
+      await m.pool.end()
       await server.pool.query(`DROP DATABASE IF EXISTS \`${name}\``)
       await server.pool.end()
     },

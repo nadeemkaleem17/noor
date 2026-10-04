@@ -9,6 +9,7 @@ import { DomainError, errorHandler, sendProblem, toProblem } from './platform/er
 import { loggerOptions } from './platform/logger.js'
 import { API_PREFIX, registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
 import cookie from '@fastify/cookie'
+import { createAuditService } from './modules/audit/index.js'
 import { createAuthorize, createAuthService } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
 
@@ -39,7 +40,8 @@ export async function buildApp(opts) {
   // the database handle is optional so route-table tests can run without one; auth routes then fail only when they need it
   const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
   const auth = createAuthService({ db, config })
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth })))
+  const audit = createAuditService(db)
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit })))
 
   const app = Fastify({
     logger: loggerOptions(config),

@@ -62,3 +62,6 @@ export async function record(tx, e) {
   })
   return id
 }
+
+export { createAuditService, maskIp, summarize } from './service.js'
+export { auditHandlers } from './routes.js'

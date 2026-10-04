@@ -129,7 +129,7 @@ export function createAuthService({ db, config }) {
       if (!ok || !user) {
         await transaction(db, async (tx) => {
           await repo.insertAttempt(tx, { id: uuidv7(), emailHash, ip: req.ip, succeeded: false, createdAt: at })
-          await record(tx, { actor: { type: 'system', label: 'sign-in' }, action: 'auth.login_failed', entityType: 'staff', ...(user ? { entityId: user.id, entityLabel: user.email } : {}), category: 'security', ip: req.ip, userAgent: req.userAgent, ...(req.requestId ? { requestId: req.requestId } : {}) })
+          await record(tx, { actor: { type: 'system', label: 'sign-in' }, action: 'auth.login_failed', entityType: 'staff', entityLabel: email.slice(0, 200), ...(user ? { entityId: user.id } : {}), category: 'security', ip: req.ip, userAgent: req.userAgent, ...(req.requestId ? { requestId: req.requestId } : {}) })
         })
         throw new DomainError('invalid_credentials')
       }

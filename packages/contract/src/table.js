@@ -1,7 +1,7 @@
 // The assembled route table. Each area keeps its routes next to its schemas; this file only merges them.
 // Task M0-05 starts it with two real routes from DOC-10 (one public, one staff); every milestone adds more.
 import { z } from 'zod'
-import { authRoutes } from './auth.js'
+import { auditRoutes, authRoutes } from './auth.js'
 import { defineRoutes } from './routes.js'
 import { Id, IsoDate } from './primitives.js'
 
@@ -29,6 +29,7 @@ export const SystemInfo = z.strictObject({
 
 export const routes = defineRoutes({
   ...authRoutes,
+  ...auditRoutes,
   // DOC-10.1
   'shipping.listCities': {
     method: 'GET', path: '/shipping/cities', auth: 'public',
