@@ -35,6 +35,17 @@ All endpoints: auth `public`; `Cache-Control: public, s-maxage=60, stale-while-r
 | `reviews.listForProduct` | `GET /products/:id/reviews` | Q: `limit?` (≤ 20, default 5), `cursor?` | 200 `ReviewListing` | `not_found` | Tag `product:<handle>`. Approved only |
 | `seo.listSitemapEntries` | `GET /sitemap-entries` | Q: `limit?` (≤ 5000), `cursor?` | 200 `CursorPage<SitemapEntry>` | — | `s-maxage=3600` |
 
+Built at M1-12 (`packages/contract/src/catalog-public.js`, `apps/api/src/modules/catalog/public*.js`). What differs, or is left for later:
+
+- **Reviews:** `reviews.listForProduct` and `rating` on cards and detail arrive with the reviews module.
+- **Listing:** `ListingQuery` is an open object so `attr.<code>` keys fit; any other unknown key, an unknown attribute code, `sort=relevance` without `q`, `priceMin` above `priceMax` and a bad cursor are `400`. A hidden category, a draft collection and one outside its window are `404`. `ids` ignores every other filter and returns live products in the order given. A text search answers `Cache-Control: private, no-store` and counts against the `search` bucket (60/min/IP); everything else is `public, s-maxage=60, stale-while-revalidate=600`. A zero-result text search is written to the miss log.
+- **Cursors:** keyset on the sort key plus the product id (`newest`, `price_*`, `bestselling`, `featured`, and the collection's own order inside a collection), so a walk returns every product once even when products are published during it; `relevance` pages by offset.
+- **Facets:** `kind`, `size` (only sizes with an available variant), `color` (colour family), `inStock`, and, inside a category, its filters (own or inherited, in order, `number` attributes left out); counts leave out the facet's own selection and values with count 0 stay. `pricePresets` are four ranges from the quartiles, empty when fewer than four products match. `facets=0` and `ids` skip all of it.
+- **Detail:** `getProduct` takes a handle or an id; an old handle answers `{ redirectTo: <handle> }`; a valid `preview` token (made by `admin.products.previewLink`) opens that one product in any status, uncached. `available` is `min(on hand - reserved, maxPerOrder)` for counted variants and absent otherwise. `delivery` comes from the cheapest method of each zone that has cities. `locale=ur` uses the Urdu text where it exists.
+- **Back in stock:** needs `features.notifyMe` (else `404`), a live product and an enabled variant. The rate limit is counted before the stock check (10/hour/IP, 3/day/phone), so the answer for a variant that is in stock (`409 variant_unavailable`) also uses up one of the three.
+- **Sitemap:** one position-based cursor; `total` is included. Facet entries are the single-value filter pages of categories that mark an attribute `seoIndexable`, for values that have live products.
+- **Not measured yet:** the 3,000-product timing and size checks of section 8 need the `--perf` seed (M1-13).
+
 ## 3. Listing query and response
 
 ```ts

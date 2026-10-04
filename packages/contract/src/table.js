@@ -2,6 +2,7 @@
 // Task M0-05 starts it with two real routes from DOC-10 (one public, one staff); every milestone adds more.
 import { z } from 'zod'
 import { auditRoutes, authRoutes } from './auth.js'
+import { catalogPublicRoutes } from './catalog-public.js'
 import { contentPublicRoutes, contentRoutes } from './content.js'
 import { inventoryRoutes } from './inventory.js'
 import { mediaRoutes } from './media.js'
@@ -45,6 +46,7 @@ export const routes = defineRoutes({
   ...shippingRoutes,
   ...taxonomyRoutes,
   ...productRoutes,
+  ...catalogPublicRoutes,
   ...inventoryRoutes,
   // DOC-10.1
   'shipping.listCities': {

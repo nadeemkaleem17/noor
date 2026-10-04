@@ -16,6 +16,7 @@ import { registerLocalStorageRoutes } from './platform/http/storage-routes.js'
 import { createAuditService } from './modules/audit/index.js'
 import { createCatalogService } from './modules/catalog/index.js'
 import { createInventory } from './modules/inventory/index.js'
+import { createSearch } from './modules/search/index.js'
 import { createMediaService } from './modules/media/index.js'
 import { createSettingsService } from './modules/settings/index.js'
 import { createShippingService } from './modules/shipping/index.js'
@@ -60,7 +61,12 @@ export async function buildApp(opts) {
   let catalog
   // stock and the catalog know each other: stock tells products to refresh their cached status, products ask stock for levels
   const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
-  catalog = createCatalogService({ db, config, media, stock: inventory.stock })
+  catalog = createCatalogService({
+    db, config, media, stock: inventory.stock, search: createSearch({ db }),
+    deliveryFacts: () => shipping.facts(),
+    notifyEnabled: async () => (await settings.get('store')).value.features.notifyMe,
+    subscribe: (s) => inventory.subscribe(s),
+  })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
   const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, catalog, inventory })))
 

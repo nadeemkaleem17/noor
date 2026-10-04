@@ -32,6 +32,7 @@ const denyStaff = /** @type {Authorize} */ (async () => null)
  * @property {R extends { auth: 'staff' | 'staff-any' | 'staff-pending'; } ? Actor : null} actor
  * @property {string} requestId
  * @property {HttpInfo} http
+ * @property {(bucket: string, by: import('./rate-limit.js').By, subject: string) => Promise<void>} limit counts one request against a rate-limit rule the route knows the subject of (a phone, an order number ...); throws `rate_limited`
  */
 
 /**
@@ -41,6 +42,7 @@ const denyStaff = /** @type {Authorize} */ (async () => null)
  * @property {string} userAgent
  * @property {(name: string, value: string, options: import('@fastify/cookie').CookieSerializeOptions) => void} setCookie
  * @property {(name: string) => void} clearCookie
+ * @property {(name: string, value: string) => void} setHeader overrides a response header (the shared-cache flag of the route is set first)
  */
 
 /**
@@ -139,12 +141,16 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
         }
       },
       handler: async (req, reply) => {
+        // the route's cache flag first, so a handler can still say something stricter (a search, a preview)
+        if (def.cache === 'shared') void reply.header('cache-control', 'public, s-maxage=60, stale-while-revalidate=600')
         const out = await handler({
           params: req.params,
           query: req.query,
           body: req.body,
           actor: (/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor ?? null,
           requestId: req.id,
+          /** @param {string} bucket @param {import('./rate-limit.js').By} by @param {string} subject */
+          limit: async (bucket, by, subject) => void (await limiter.consume(bucket, by, subject)),
           http: {
             ip: clientIp(req),
             userAgent: String(req.headers['user-agent'] ?? ''),
@@ -152,9 +158,10 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
             setCookie: (name, value, options) => void reply.setCookie(name, value, options),
             /** @param {string} name */
             clearCookie: (name) => void reply.clearCookie(name, { path: '/' }),
+            /** @param {string} name @param {string} value */
+            setHeader: (name, value) => void reply.header(name, value),
           },
         })
-        if (def.cache === 'shared') void reply.header('cache-control', 'public, s-maxage=60, stale-while-revalidate=600')
         reply.code(status)
         return status === 204 ? reply.send() : out
       },

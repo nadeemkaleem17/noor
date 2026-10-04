@@ -90,6 +90,13 @@ export function createSearch({ db }) {
     if (gone.length) await x.delete(productSearch).where(inArray(productSearch.productId, gone))
   }
 
+  /** Counts a query that found nothing (not phone-like text, one count per query and Karachi day). @param {string} normalised */
+  async function recordMiss(normalised) {
+    if (!normalised || looksLikePhone(normalised)) return
+    const day = new Date(now().getTime() + KARACHI_MS).toISOString().slice(0, 10)
+    await db.insert(searchMisses).values({ day, query: normalised, count: 1 }).onDuplicateKeyUpdate({ set: { count: sql`${searchMisses.count} + 1` } })
+  }
+
   return {
     reindexProduct: (/** @type {string} */ id) => reindex(db, [id]),
 
@@ -141,11 +148,29 @@ export function createSearch({ db }) {
           found = first ? [{ id: first.id, score: Number.MAX_SAFE_INTEGER }, ...rows.filter((r) => r.id !== first.id)].slice(0, limit) : rows
         } else if (sku[0]) found = [{ id: sku[0].id, score: Number.MAX_SAFE_INTEGER }]
       }
-      if (!found.length && logMiss && normalised && offset === 0 && !looksLikePhone(normalised)) {
-        const day = new Date(now().getTime() + KARACHI_MS).toISOString().slice(0, 10)
-        await db.insert(searchMisses).values({ day, query: normalised, count: 1 }).onDuplicateKeyUpdate({ set: { count: sql`${searchMisses.count} + 1` } })
-      }
+      if (!found.length && logMiss && offset === 0) await recordMiss(normalised)
       return found
+    },
+
+    /** Counts a query that found nothing: the public listing calls this when a text search has no results. @param {string} q */
+    logMiss: (q) => recordMiss(normalise(q)),
+
+    /**
+     * What a listing needs to put a text search into its own query: a condition on `products` that holds for matches (or the exact SKU), and an
+     * expression to order by relevance. `empty` means the text has no usable word, so nothing can match. No customer text reaches the SQL syntax.
+     * @param {string} q
+     * @returns {Promise<{ empty: true } | { empty: false, where: import('drizzle-orm').SQL, order: import('drizzle-orm').SQL }>}
+     */
+    async predicate(q) {
+      const normalised = normalise(q)
+      const expr = normalised ? toExpression(normalised, await synonyms()) : ''
+      const typed = q.trim().toUpperCase()
+      const skuHit = /^[A-Z0-9._-]{1,40}$/.test(typed) ? (await db.select({ id: variants.productId }).from(variants).where(eq(variants.sku, typed)).limit(1))[0]?.id : undefined
+      if (!expr && !skuHit) return { empty: true }
+      const matches = expr ? sql`${products.id} in (select ps2.product_id from product_search ps2 where match(ps2.title_text, ps2.body_text) against (${expr} in boolean mode))` : sql`1 = 0`
+      const where = skuHit ? sql`(${products.id} = ${skuHit} or ${matches})` : matches
+      const score = expr ? sql`coalesce(match(ps.title_text) against (${expr} in boolean mode) * 3 + match(ps.title_text, ps.body_text) against (${expr} in boolean mode), 0)` : sql`0`
+      return { empty: false, where, order: skuHit ? sql`(${score} + (${products.id} = ${skuHit}) * 1000000)` : score }
     },
 
     /** The most frequent queries that found nothing, for the dashboard. @param {{ days?: number, limit?: number }} [opts] */

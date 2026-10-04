@@ -1,4 +1,7 @@
-// Handlers for the catalog structure routes of the contract (plan/10-api/05 sections 5 and 7).
+// Handlers for the catalog routes of the contract: admin (plan/10-api/05) and public (plan/10-api/02).
+import { publicCatalogHandlers } from './public-routes.js'
+
+
 const staff = (/** @type {unknown} */ actor) => /** @type {import('./common.js').Staff} */ (actor)
 /** The signed-in staff member, with whether they may publish (products:publish). */
 const publisher = (/** @type {unknown} */ actor) => ({ ...staff(actor), canPublish: /** @type {{ permissions: ReadonlySet<string> }} */ (actor).permissions.has('products:publish') })
@@ -7,11 +10,12 @@ const publisher = (/** @type {unknown} */ actor) => ({ ...staff(actor), canPubli
  * @param {ReturnType<typeof import('./service.js').createCatalogService>} catalog
  * @returns {Partial<import('../../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>>}
  */
-export function catalogHandlers({ categories, attributes, sizes, products, collections }) {
+export function catalogHandlers({ categories, attributes, sizes, products, collections, listing, public: pub }) {
   /** @param {{ ip: string, userAgent: string }} http @param {string} requestId */
   const info = (http, requestId) => ({ ip: http.ip, userAgent: http.userAgent, requestId })
 
   return {
+    ...publicCatalogHandlers(pub, listing),
     'admin.categories.list': async () => categories.list(),
     'admin.categories.create': async ({ actor, body, http, requestId }) => categories.create(staff(actor), body, info(http, requestId)),
     'admin.categories.reorder': async ({ actor, body, http, requestId }) => {

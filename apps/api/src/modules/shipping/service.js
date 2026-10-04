@@ -336,6 +336,7 @@ export function createShippingService({ db }) {
       return {
         ...(freeAbove === undefined ? {} : { freeAboveFrom: money(freeAbove), freeAbove: rs(freeAbove) }),
         defaultEta: { minDays: Math.min(...cheapest.map((m) => m.etaMinDays)), maxDays: Math.max(...cheapest.map((m) => m.etaMaxDays)) },
+        codAvailable: cheapest.some((m) => m.codAllowed),
         fee: rs(fee),
       }
     },
