@@ -47,5 +47,16 @@ export const isReferenced = (e) => (cause(e).cause?.errno ?? cause(e).errno) ===
 /** @param {Staff} a @param {RequestInfo} req */
 export const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId })
 
-/** Tells the storefront which cached pages to drop. @param {import('../../platform/db.js').Executor} tx @param {string[]} tags @param {string} requestId */
-export const purge = (tx, tags, requestId) => emit(tx, { type: 'catalog.updated', payload: { tags }, ...(requestId ? { requestId } : {}) })
+/**
+ * Tells the storefront which cached pages to drop. A change to categories or attributes also tells search to rebuild, because their names
+ * are part of every product's search text.
+ * @param {import('../../platform/db.js').Executor} tx @param {string[]} tags @param {string} requestId
+ */
+export async function purge(tx, tags, requestId) {
+  const rid = requestId ? { requestId } : {}
+  await emit(tx, { type: 'catalog.updated', payload: { tags }, ...rid })
+  if (tags.includes('categories') || tags.includes('attributes')) await emit(tx, { type: 'catalog.structure_changed', payload: { tags }, ...rid })
+}
+
+/** A product was saved, published or changed: search rebuilds its row. @param {import('../../platform/db.js').Executor} tx @param {string} productId */
+export const productChanged = (tx, productId) => emit(tx, { type: 'product.updated', payload: { productId } })

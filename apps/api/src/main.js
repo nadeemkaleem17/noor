@@ -2,7 +2,7 @@ import { buildApp } from './app.js'
 import { ConfigError, loadConfig } from './platform/config.js'
 import { createAppDatabase, databaseReadiness } from './platform/db.js'
 import { startBackground } from './platform/runtime.js'
-import { backgroundOf } from './modules/index.js'
+import { backgroundOf, eventHandlers } from './modules/index.js'
 
 let config
 try {
@@ -20,7 +20,7 @@ const app = await buildApp({ config, db, readiness: databaseReadiness(pool) })
 app.addHook('onClose', async () => pool.end())
 
 if (config.DEV_INLINE_WORKER) {
-  const background = startBackground({ db, ...backgroundOf({ db, config, log: app.log }), eventHandlers: {}, log: app.log })
+  const background = startBackground({ db, ...backgroundOf({ db, config, log: app.log }), eventHandlers, log: app.log })
   app.addHook('onClose', async () => background.stop())
 }
 

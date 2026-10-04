@@ -85,7 +85,7 @@ volumes: { mysql-data: {}, minio-data: {} }
 
 `infra/mysql/init/01-users.sql` creates the two database users of DOC-11 §6: `rubaya_app` (DML on all tables; `INSERT, SELECT` only on `audit_log`) and `rubaya_migrate` (DDL + DML). Image tags are pinned to exact versions when the file is first committed.
 
-`--innodb-ft-min-token-size=2` lets full-text search match two-letter words (the default 3 would drop sizes and short Roman-Urdu words, ADR-0010); it must be set the same way in every environment because changing it requires rebuilding the index.
+`--innodb-ft-min-token-size=2` lets full-text search match two-letter words (the default 3 would drop sizes and short Roman-Urdu words, ADR-0010); the stopword list is switched off by the migration that creates the FULLTEXT indexes (plan/09-data-model/05-search.md section 3.1). It must be set the same way in every environment because changing it requires rebuilding the index.
 
 ### 3.3 First run
 

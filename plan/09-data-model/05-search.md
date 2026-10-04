@@ -76,6 +76,17 @@ LIMIT 25;
 
 The expression is built from sanitised tokens and passed as a bound parameter; boolean-mode operators typed by a customer (`+ - * " ( ) ~ < > @`) are stripped in step 1.
 
+### 3.1 As built (M1-11)
+
+`apps/api/src/modules/search` (`query.js` the pure query builder, `service.js`, `synonyms.js` the seed). Differences and details:
+
+- **Stopwords:** instead of a server-wide stopword table, migration 0009 runs `SET SESSION innodb_ft_enable_stopword = 0` before it creates the two FULLTEXT indexes, so the index holds no stopwords and "in", "for" and "the" are searchable. `innodb_ft_min_token_size=2` stays a server setting (plan/14). A database that is rebuilt from a dump must create the indexes the same way.
+- **Hyphens** in a query read as spaces (the index splits at them too). Words of one letter are dropped before the expression is built (the index holds none), and the last remaining word is the prefix.
+- **SKU:** an exact SKU is looked up only when the query is plain ASCII `A-Z 0-9 . _ -`; it is returned first.
+- **API:** `search.run({ q, where?, limit?, offset?, logMiss? })` returns `[{ id, score }]`; `where` is a predicate on `products` (the listing's filters, price and stock), so a text search and a listing are one query. `topMisses()` feeds the dashboard list.
+- **Index upkeep:** events `product.updated` (a product was saved or published) start job `search.reindex_product`; `catalog.structure_changed` (a category or attribute changed) starts `search.reindex_all`. A product that is not active has its row removed by the same job. Stock changes do not touch the index. The miss log is trimmed daily (`search.cleanup_misses`, 180 days).
+- Seed: `createSearch(...).seedSynonyms()` (64 spellings in 19 groups, every member leads to the others); part of the base seed (M1-13).
+
 ## 4. Rules
 
 **Always:** reindex through the job when a product, its categories, attributes or status change; pass the search expression as a parameter; keep the same filter predicates for search and listings (one query builder).

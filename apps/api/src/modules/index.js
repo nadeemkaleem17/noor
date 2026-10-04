@@ -8,6 +8,7 @@ import { createInventory, inventoryHandlers } from './inventory/index.js'
 import { createCatalogService } from './catalog/index.js'
 import { createMediaService, mediaHandlers, mediaJobs } from './media/index.js'
 import { createSettingsService } from './settings/index.js'
+import { createSearch, searchEvents, searchJobs } from './search/index.js'
 import { settingsHandlers } from './settings/routes.js'
 import { shippingHandlers } from './shipping/routes.js'
 
@@ -28,6 +29,9 @@ export const appHandlers = (config, { auth, audit, media, settings, shipping, ca
   'admin.system.info': async () => ({ environment: config.APP_ENV, version: config.APP_VERSION, queue: { pending: 0, dead: 0 } }),
 })
 
+/** Which jobs the outbox starts for each event type; the relay of every background process uses it. */
+export const eventHandlers = { ...searchEvents }
+
 /**
  * What the background process runs: job handlers and scheduled jobs of every module. The API (with DEV_INLINE_WORKER) and src/worker.js both start from this.
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, log?: { error: (o: object, msg: string) => void } }} deps
@@ -42,6 +46,7 @@ export function backgroundOf({ db, config, storage = createStorage(config), log 
   return {
     handlers: {
       ...mediaJobs(media),
+      ...searchJobs(createSearch({ db })),
       'catalog.publish_scheduled': async () => void (await catalog.products.publishDue()),
       'inventory.expire_reservations': async () => void (await inventory.expireReservations()),
       'inventory.verify': async () => {
@@ -50,6 +55,6 @@ export function backgroundOf({ db, config, storage = createStorage(config), log 
       },
       'inventory.cleanup_subscriptions': async () => inventory.cleanupSubscriptions(),
     },
-    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }], // media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
+    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }, { type: 'search.cleanup_misses', cron: '30 21 * * *' }], // media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
   }
 }

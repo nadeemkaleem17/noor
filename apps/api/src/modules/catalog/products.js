@@ -10,7 +10,7 @@ import { readyIds } from '../media/repository.js'
 import { diffOf, record } from '../audit/index.js'
 import { attributeValues, attributes, categories, formSchemas, sizeCharts, sizeSystemValues, sizeSystems } from '../../db/schema/taxonomy.js'
 import { bundleItems, collectionProducts, productAttributeValues, productCategories, productMedia, productOptionValues, productOptions, productRelated, products, variantOptionValues, variants } from '../../db/schema/products.js'
-import { actorOf, duplicateKey, isReferenced, purge } from './common.js'
+import { actorOf, duplicateKey, isReferenced, productChanged, purge } from './common.js'
 import { allPass, publishChecks } from './product-checks.js'
 import { bestStatus, loadProducts, noStock, variantStatus } from './product-loader.js'
 import * as taxonomy from './repository.js'
@@ -451,6 +451,7 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
         const after = (await load(tx, [productId]))[0]
         await record(tx, { ...actorOf(actor, req), action: existing ? 'product.updated' : 'product.created', entityType: 'product', entityId: productId, entityLabel: input.handle, diff: diffOf(auditView(before), auditView(after)) })
         await purge(tx, ['products', `product:${input.handle}`, ...(existing && existing.handle !== input.handle ? [`product:${existing.handle}`] : [])], req.requestId)
+        await productChanged(tx, productId)
       })
     } catch (e) {
       const key = duplicateKey(e)
@@ -632,6 +633,7 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
           await tx.update(products).set({ status: 'active', publishedAt: locked.publishedAt ?? at, publishAt: null, version: locked.version + 1, updatedAt: at }).where(eq(products.id, p.id))
           await record(tx, { actor: { type: 'system', label: 'scheduled publish' }, action: 'product.published', entityType: 'product', entityId: p.id, entityLabel: p.handle, diff: { status: ['scheduled', 'active'] } })
           await purge(tx, ['products', `product:${p.handle}`], '')
+          await productChanged(tx, p.id)
           published += 1
         })
       }
