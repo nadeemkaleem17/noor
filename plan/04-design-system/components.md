@@ -233,7 +233,7 @@ export function Button({ variant = 'primary', size, loading, iconStart, iconEnd,
 
 ## 8. RTL spike (ADR-0007, mandatory before building §4.3)
 
-Task `M0-11`, run on 2 Oct 2026 with `@base-ui/react` 1.8.0 (`packages/ui/src/spikes/rtl-spike.stories.tsx`, story `Spikes/RTL`; deleted when the real components land in M2): one Storybook page in `dir="rtl"` containing `Dialog`, a side drawer (a `Dialog` docked with `end-0`), `Menu` with a submenu, `Tabs`, `Combobox`, `Select`, `Tooltip`, `Popover`, inside `<DirectionProvider direction="rtl">`. Measured in the browser pane with real key presses (the pane at 1000 px wide).
+Task `M0-11`, run on 2 Oct 2026 with `@base-ui/react` 1.8.0 (`packages/ui/src/spikes/rtl-spike.stories.tsx`, story `Spikes/RTL`; deleted at M2-05 after the real components landed, see git history of commit 90425f5): one Storybook page in `dir="rtl"` containing `Dialog`, a side drawer (a `Dialog` docked with `end-0`), `Menu` with a submenu, `Tabs`, `Combobox`, `Select`, `Tooltip`, `Popover`, inside `<DirectionProvider direction="rtl">`. Measured in the browser pane with real key presses (the pane at 1000 px wide).
 
 | Check | Pass condition | Result |
 |---|---|---|
@@ -257,8 +257,8 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 ## 10. Acceptance checklist
 
 - [ ] Every component in §4 exists with stories for each variant and state, an `RTL` story and a `Dark` story.
-- [ ] `pnpm --filter @noor/ui test` runs the a11y check on every story with zero violations.
-- [ ] Each row of §5 has an interaction test.
+- [x] `pnpm --filter @noor/ui test` runs the a11y check on every story with zero violations (M2-05, 35 stories).
+- [x] Each row of §5 has an interaction test, except `F6` and `Esc` on a focused toast (Base UI behaviour, not yet asserted).
 - [ ] `grep -rn "@radix-ui\|@base-ui" apps` returns nothing.
 - [ ] `grep -rn "asChild" apps packages` returns nothing.
 - [x] `M0-11` RTL spike table in §8 is filled in (M0-11, 2 Oct 2026).
@@ -272,7 +272,7 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 |---|---|---|---|
 | Q-04b-1 | Base UI primitive names (`NumberField`, `ToggleGroup`, `Combobox`, `Toast`, `Field`) | Exist in `@base-ui/react` 1.8 as named; not checked against base-ui.com component by component | First build of each component; a missing primitive is hand-built on native elements and noted here |
 | Q-04b-2 | RTL spike | **Answered at M0-11**: passes; Select needs `alignItemWithTrigger={false}` | §8 |
-| Q-04b-3 | Storybook interaction tests through `@storybook/addon-vitest` | **Changed at M2-02**: the keyboard-map tests are Vitest + jsdom + Testing Library + user-event (`packages/ui/test/*.test.tsx`, helper `test/dom.tsx`), with no browser download and no Storybook coupling. Base UI focus management, menus, selects, comboboxes, toasts and tooltips all work in jsdom; layout and animation do not, so positions and slide direction were checked in a real browser (M0-11, M2-02). `addon-vitest` is optional now; the axe gate over every story is still M2-05 | M2-05 finds jsdom cannot cover a required row |
+| Q-04b-3 | Storybook interaction tests through `@storybook/addon-vitest` | **Changed at M2-02**: the keyboard-map tests are Vitest + jsdom + Testing Library + user-event (`packages/ui/test/*.test.tsx`, helper `test/dom.tsx`), with no browser download and no Storybook coupling. Base UI focus management, menus, selects, comboboxes, toasts and tooltips all work in jsdom; layout and animation do not, so positions and slide direction were checked in a real browser (M0-11, M2-02). `addon-vitest` is not used. **M2-05 done**: `test/stories.a11y.test.tsx` renders every story with `composeStories` (project annotations from `.storybook/preview.tsx`, so providers and per-story `globals` apply) and runs axe over the whole document; it also proves the gate fails on an unlabeled button. Rules off: `color-contrast` (no layout in jsdom; the token gate covers the pairs) and `region` (page-level) | M2-05 finds jsdom cannot cover a required row |
 | Q-04b-4 | `tailwind-merge` support for Tailwind v4 class names | **Answered at M0-10**: v3.7 supports Tailwind v4, **but it must be told our token names**: unconfigured it classifies `text-md` (a size) as a color and drops one of `text-md text-fg`. `cn()` uses `extendTailwindMerge` with our colors, text sizes, radii, shadows, fonts, leading and z-index values; `packages/ui/test/cn.test.ts` covers it. **Keep the lists in `cn.ts` in step with `tokens.css`** | Any new token name |
 
 **M2-02 notes.** Built: Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast (`ToastProvider` + `useToast`), Select, Combobox (single, `multiple`, async `onSearch` with a 250 ms debounce that ignores answers to older queries). Differences from the table in §4.3: `Dialog`/`Drawer`/`ConfirmDialog`/`Popover`/`Menu`/`Tooltip` take `trigger` (or `children` for Tooltip) as an element rendered through Base UI's `render`; `Popover` needs a `label` (the panel's accessible name); `Menu` has no submenu yet (build it with the first screen that needs one; the RTL behaviour is proven in §8); `Select` sets `alignItemWithTrigger={false}` (§8). Toasts beyond 3 are not rendered (Base UI marks them `limited`). The toast close button is `aria-hidden` until the viewport is expanded or focused (Base UI behaviour). New `common` keys: `cancel`, `confirm`, `typeToConfirm`, `dismiss`, `noResults`, `searching`, `notifications`, `remove`. Keyboard-map rows covered by tests: Dialog/Drawer/ConfirmDialog (open, Tab trap, Esc, focus return, non-dismissible, pending, typed confirm, backdrop), Menu (open keys, arrows, Home/End, typeahead, Enter, Esc), Select, Combobox (filter, arrows, Enter, Esc, async, multiple), Popover, Tooltip, Toast. Not covered yet: `F6` to the toast region, `Esc` on a focused toast, Menu under RTL (nothing direction-dependent in a flat menu). Axe: zero violations on the 10 overlay stories (open dialogs and drawers included).
@@ -293,3 +293,4 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 | 2026-10-02 | M2-02: overlay components built; Q-04b-3 changed to jsdom keyboard tests; notes in §11 |
 | 2026-10-02 | M2-03: navigation, display and feedback components built; notes in §11 |
 | 2026-10-02 | M2-04: data-aware components built; notes in §11 |
+| 2026-10-02 | M2-05: story a11y gate built (jsdom + axe over every story); acceptance checklist ticked; spike stories removed |

@@ -277,7 +277,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 |---|---|---|
 | M0 | 13 | 9 (M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done; M0-03, 06, 07 wait for MySQL; M0-08 skipped;  the three empty root folders wait for the editor window on `admin-panel` to close) |
 | M1 | 13 | 0 |
-| M2 | 5 | 4 (M2-01 to 04) |
+| M2 | 5 | 5 (M2-01 to 05, milestone done) |
 | M3 | 7 | 0 |
 | M4 | 12 | 0 |
 | M5 | 11 | 0 |
@@ -328,3 +328,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | M2-02 done: Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast, Select, Combobox; 28 keyboard-map tests (jsdom) pass; axe clean on 10 overlay stories |
 | 2026-10-02 | M2-03 done: Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge, StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, VisuallyHidden, Ltr, Link; 19 tests; axe clean |
 | 2026-10-02 | M2-04 done: Image, Price, Markdown (allow-list, tokens), RHFField, ImageUpload; 20 tests including the DOC-06.8 §6 renderer test; axe clean |
+| 2026-10-02 | M2-05 done: `test/stories.a11y.test.tsx` runs axe over all 35 stories (a story with a label violation fails `pnpm test`); `@noor/ui` is complete except the pieces later milestones add (submenus, feature components). M2 finished |

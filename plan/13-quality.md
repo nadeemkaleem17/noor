@@ -26,7 +26,7 @@ The acceptance checklists at the end of every doc are the **requirements**; this
 | Unit | Vitest | Pure functions, no I/O | Money helpers and rounding, promo evaluation, pricing computation, state-machine tables, slug/phone normalisation, theme contrast and `themeCss`, cursor encode/decode, masking, permission matrix, Markdown allow-list, CSV escaping | < 10 s per package |
 | Contract | Vitest | `@noor/contract` | Every schema parses its fixture; route table invariants (each route has auth; staff routes have a permission; error codes registered); OpenAPI snapshot | < 10 s |
 | API integration | Vitest + real MySQL 8.4 | `buildApp()` with `app.inject`, one database per test file | Every endpoint: happy path, validation, auth/permission, domain errors; transactions, locking and concurrency; outbox and jobs; audit rows | < 3 min total |
-| Component | Storybook 10 + `@storybook/addon-vitest` (browser mode) + `addon-a11y` | `@noor/ui` and app feature components | Every state story renders; axe passes; keyboard maps (DOC-04b §5); RTL story | < 2 min |
+| Component | Vitest + jsdom + Testing Library + user-event; Storybook portable stories (`composeStories`) + `axe-core` | `@noor/ui` and app feature components | Every story renders and passes axe (`test/stories.a11y.test.tsx`, finds stories with a glob, so a new story is covered with no registration); keyboard maps (DOC-04b §5); RTL story. Colour contrast is not checked here (jsdom has no layout): the token contrast gate covers every token pair, and the Storybook a11y panel covers composed stories in a browser | < 2 min |
 | End-to-end | Playwright (Chromium; WebKit for the smoke set) | Built storefront + admin + API + seeded MySQL | The journeys in §4 | < 6 min |
 | Performance (lab) | Lighthouse CI; bundle-size script | Built storefront, seeded | Budgets of DOC-06.10 §2 | < 4 min |
 | Query plans | Vitest + `EXPLAIN` | Seeded 3,000-product database | The query set in §6.3 uses indexes | < 30 s |
@@ -275,3 +275,4 @@ The 75th percentile per route and day is computed from the buckets. This is the 
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 6). Adds table `web_vitals_daily` (67 tables in total) and `POST /api/v1/client-errors` |
+| 2026-10-02 | M2-05: component test pipeline is jsdom + axe over every story instead of `addon-vitest` browser mode (no browser download; same gate in `pnpm check` and CI); contrast stays with the token gate |
