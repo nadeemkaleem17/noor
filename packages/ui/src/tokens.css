@@ -112,6 +112,7 @@
   --sem-font-body: "Instrument Sans", system-ui, sans-serif;
   --sem-radius-control: 6px; --sem-radius-card: 10px; --sem-radius-media: 8px;
   --control-h: 2.25rem;
+  --control-text: var(--text-base);
   color-scheme: light;
 }
 
@@ -148,6 +149,7 @@
   --sem-radius-control: 6px; --sem-radius-card: 10px; --sem-radius-media: 0;
   --media-ratio: 3/4;
   --control-h: 2.75rem;
+  --control-text: var(--text-md); /* 16px: iOS zooms into smaller inputs */
   color-scheme: light;
 }
 

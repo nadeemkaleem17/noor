@@ -277,7 +277,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 |---|---|---|
 | M0 | 13 | 9 (M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done; M0-03, 06, 07 wait for MySQL; M0-08 skipped;  the three empty root folders wait for the editor window on `admin-panel` to close) |
 | M1 | 13 | 0 |
-| M2 | 5 | 0 |
+| M2 | 5 | 1 (M2-01) |
 | M3 | 7 | 0 |
 | M4 | 12 | 0 |
 | M5 | 11 | 0 |
@@ -324,3 +324,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | M0-10 done: `packages/ui` (tokens.css, cn, contrast, themeCss, 215 tests, Storybook 10 with brand/scheme/direction toolbars and one token story, built and checked in a browser) and `scripts/check-logical.mjs` (engine and 27 tests in `packages/config`) |
 | 2026-10-02 | M0-11 done: RTL spike passes on Base UI (Select needs `alignItemWithTrigger={false}`); results in DOC-04b §8 |
 | 2026-10-02 | M0-12 done: `packages/i18n` (10 tests) and `apps/storefront` skeleton (React Router 8.4, one SSR page in en and ur, CSP and security headers, env validation at boot, 10 tests); I18N spike answered in DOC-03 §9 |
+| 2026-10-02 | M2-01 done: 16 form and action components in `@noor/ui` with stories (default, states, RTL, Dark), axe clean on all 14 stories; keyboard-map interaction tests wait for M2-05 |

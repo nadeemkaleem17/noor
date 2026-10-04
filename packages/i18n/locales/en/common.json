@@ -1,5 +1,9 @@
 {
   "close": "Close",
   "loading": "Loading",
-  "retry": "Try again"
+  "retry": "Try again",
+  "increase": "Increase quantity",
+  "decrease": "Decrease quantity",
+  "maxQuantity": "Maximum quantity reached",
+  "quantity": "Quantity"
 }

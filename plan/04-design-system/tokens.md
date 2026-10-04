@@ -343,3 +343,4 @@ Directional icons (chevrons, arrows, "back") flip with `rtl:-scale-x-100`. Icons
 |---|---|
 | 2026-10-02 | Initial version (Phase 1). Seven colour values changed from the current CSS to pass the contrast gate (§4) |
 | 2026-10-02 | M0-10: `tokens.css` implemented as written, with these changes: the `@theme` block is split (colors, radii, shadows and fonts are `inline` and point at `--sem-*`; text sizes, leading, breakpoints and easing are plain `@theme`); durations are plain `:root` variables; z-index is six `@utility` rules; `--sem-shadow-*` per brand/scheme replaces fixed shadow values; `--control-h` is set per brand and by density. Q-04a-3 confirmed. Contrast gate is a Vitest test, not a script. Presets are all in the contract and `themeCss` is in `@noor/ui/theme` |
+| 2026-10-02 | M2-01: `--control-text` added next to `--control-h` (admin `--text-base`, storefront `--text-md`) |

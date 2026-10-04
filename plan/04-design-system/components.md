@@ -61,7 +61,7 @@ What it replaces: admin `components/ui.jsx`, `Field.jsx`, `Toast.jsx`, `TabBar.j
 | Component | Base | Props (beyond §3) | Notes |
 |---|---|---|---|
 | `Button` | native `<button>` | `variant: 'primary' \| 'secondary' \| 'ghost' \| 'danger' \| 'link'`, `size`, `loading`, `iconStart`, `iconEnd`, `fullWidth`, `type` (default `'button'`) | `primary` = `bg-accent text-on-accent`. One `primary` per view. `link` variant uses `text-accent-text` |
-| `IconButton` | native `<button>` | `label: string` (**required**, becomes `aria-label` and a `Tooltip`), `variant`, `size` | Square; minimum 44 px hit area on storefront even when the icon is 20 px |
+| `IconButton` | native `<button>` | `label: string` (**required**, becomes `aria-label` and `title`), `icon: ReactNode` (required), `variant`, `size` | Square; minimum 44 px hit area on storefront even when the icon is 20 px |
 | `LinkButton` | — | Same as `Button` plus `href` | Renders the app's router link through `render`; external `href` gets `rel="noopener noreferrer"`. Only `http(s):`, `/`, `mailto:`, `tel:` and `https://wa.me/` hrefs render; anything else renders nothing (replaces `safeHref`, storefront `utils/api.js:64-74`) |
 
 ### 4.2 Form controls
@@ -69,18 +69,18 @@ What it replaces: admin `components/ui.jsx`, `Field.jsx`, `Toast.jsx`, `TabBar.j
 | Component | Base | Props | Notes |
 |---|---|---|---|
 | `Field` | Base UI `Field` | `label`, `hint?`, `error?`, `required?`, `children` | Wires `htmlFor`, `aria-describedby`, `aria-invalid`. Every control below is used inside a `Field` (or `RHFField`, DOC-05 §2) |
-| `Input` | native `<input>` | native props, `size`, `invalid`, `prefix?`, `suffix?` | `inputMode` and `autoComplete` are required props for phone, email, name and address fields (DOC-04c §3) |
-| `Textarea` | native | native props, `autoGrow?` | |
-| `NativeSelect` | native `<select>` | `options: {value,label,disabled?}[]`, `placeholder?` | Default select on the storefront: the OS picker is best on Android |
+| `Input` | Base UI `Input` | native props, `size`, `invalid`, `prefix?`, `suffix?` (the border sits on a wrapper when either is given) | `inputMode` and `autoComplete` are required props for phone, email, name and address fields (DOC-04c §3) |
+| `Textarea` | native, through `Field.Control` | native props, `invalid`, `autoGrow?` (CSS `field-sizing`) | Props go on the rendered `<textarea>` (Base UI types `Field.Control` for inputs only) |
+| `NativeSelect` | native `<select>`, through `Field.Control` | `options: {value,label,disabled?}[]`, `placeholder?`, `size`, `invalid` | Default select on the storefront: the OS picker is best on Android |
 | `Select` | Base UI `Select` | `options`, `value`, `onValueChange`, `placeholder` | Admin, or when options need icons/swatches |
 | `Combobox` | Base UI `Combobox` | `options` or `onSearch(query) => Promise<Option[]>`, `value`, `onValueChange`, `multiple?`, `emptyText` | City picker, category picker, product search. Async mode debounces 250 ms |
 | `Checkbox` | Base UI `Checkbox` | `checked`, `onCheckedChange`, `indeterminate?`, `label` | |
 | `RadioGroup` | Base UI `RadioGroup` | `options`, `value`, `onValueChange`, `orientation` | Payment and shipping method pickers use the `card` variant (whole row clickable) |
 | `Switch` | Base UI `Switch` | `checked`, `onCheckedChange`, `label` | Settings that apply immediately. Never inside a form that has a Save button (use `Checkbox`) |
-| `NumberInput` | Base UI `NumberField` | `value: number \| null`, `onValueChange`, `min`, `max`, `step` | Integer by default |
-| `MoneyInput` | `NumberInput` | `value: Money \| null`, `onValueChange(Money \| null)` | User types rupees; the component converts to integer paisa with `Math.round(rupees * 100)` and never exposes a float (ADR-0013). Prefix `Rs.`; `dir="ltr"` |
+| `NumberInput` | Base UI `NumberField` | `value: number \| null`, `onValueChange`, `min`, `max`, `step`, `aria-label` (needed outside a `Field`) | Integer by default |
+| `MoneyInput` | `NumberInput` | `value: Money \| null`, `onValueChange(Money \| null)` | User types rupees; the component converts to integer paisa with `parseRupees` from `@noor/contract` (string arithmetic, no float; `6,990.5` gives `699050`) and never exposes a float (ADR-0013). Text that is not an amount gives `null` and `aria-invalid`. Prefix `currencyLabel` (default `Rs`); `dir="ltr"` |
 | `PhoneInput` | `Input` | `value: string` (E.164, `+923001234567`), `onValueChange` | Accepts `03001234567`, `3001234567`, `+92…`, `0092…`; normalises on blur; `inputMode="tel"`, `autoComplete="tel"`, `dir="ltr"`. Validation schema `PkMobile` lives in `@noor/contract` (F-06) |
-| `QuantityStepper` | Base UI `NumberField` | `value`, `onValueChange`, `min` (default 1), `max` (available stock) | Buttons 44 px; at `max` the plus button is disabled and a `max` message is announced politely |
+| `QuantityStepper` | Base UI `NumberField` | `value`, `onValueChange`, `min` (default 1), `max` (available stock), `label?` (accessible name, default "Quantity") | Buttons 44 px; at `max` the plus button is disabled and a `max` message is announced politely |
 | `OptionChips` | Base UI `ToggleGroup` | `options: {value,label,disabled?,swatch?}[]`, `value`, `onValueChange` | Size and colour pickers on the PDP. A sold-out option is `aria-disabled` with a strike-through but **stays focusable** so "notify me" can attach to it |
 | `ImageUpload` | native file input | `value: MediaRef[]`, `onChange`, `multiple`, `maxFiles`, `accept` | Admin only. Drag-and-drop plus button; shows per-file progress and error; upload itself is injected (`upload: (file) => Promise<MediaRef>`) so the package stays free of data fetching |
 
@@ -265,6 +265,9 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 
 ## 11. Open questions and assumptions
 
+**M2-01 notes.** Built: Button, IconButton, LinkButton, Spinner (needed by Button), Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup (`default` and `card`), Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips; plus `safeHref` (`@noor/ui/safe-href`, 23 tests). Built-in labels use `useTranslation()` from `react-i18next`, so an app (and Storybook) must provide an `I18nextProvider`; keys `loading`, `increase`, `decrease`, `maxQuantity`, `quantity` are in `@noor/i18n` `common`. New token `--control-text` (admin 14 px, storefront 16 px so iOS does not zoom into inputs) sits beside `--control-h`. `IconButton` shows its label as a `title` until Tooltip exists (M2-02). Axe (the engine behind `addon-a11y`) was run over all 14 stories in a browser: zero violations; the CI pipeline for it is M2-05. Interaction tests for the keyboard maps are not written yet (M2-05); behaviour was checked by hand in the browser (MoneyInput, PhoneInput, sold-out chips, stepper limit).
+
+
 | # | Item | Assumption | Revisit trigger |
 |---|---|---|---|
 | Q-04b-1 | Base UI primitive names (`NumberField`, `ToggleGroup`, `Combobox`, `Toast`, `Field`) | Exist in `@base-ui/react` 1.8 as named; not checked against base-ui.com component by component | First build of each component; a missing primitive is hand-built on native elements and noted here |
@@ -280,3 +283,4 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 | 2026-10-02 | Phase 7 consistency review: payment and stock statuses match DOC-09.0 §5 |
 | 2026-10-02 | M0-10: `cn()` configured with the token names (Q-04b-4) |
 | 2026-10-02 | M0-11: RTL spike run, results in §8; Q-04b-2 answered |
+| 2026-10-02 | M2-01: props table aligned with the built components (IconButton `icon`, MoneyInput uses `parseRupees`, QuantityStepper `label`, NumberInput `aria-label`); notes in §11 |

@@ -1,5 +1,7 @@
 import type { Preview } from '@storybook/react-vite'
 import { DirectionProvider } from '@base-ui/react/direction-provider'
+import { I18nextProvider } from 'react-i18next'
+import { createI18n } from '@noor/i18n'
 import '../src/storybook.css'
 
 // Toolbars: brand, color scheme and text direction. Every story can be checked in each combination
@@ -30,9 +32,11 @@ const preview: Preview = {
       root.dir = direction
       root.lang = direction === 'rtl' ? 'ur' : 'en'
       return (
-        <DirectionProvider direction={direction}>
-          <Story />
-        </DirectionProvider>
+        <I18nextProvider i18n={createI18n(direction === 'rtl' ? 'ur' : 'en')}>
+          <DirectionProvider direction={direction}>
+            <Story />
+          </DirectionProvider>
+        </I18nextProvider>
       )
     },
   ],

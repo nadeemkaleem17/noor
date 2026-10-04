@@ -12,7 +12,9 @@
     "./direction": "./src/direction.tsx",
     "./cn": "./src/cn.ts",
     "./contrast": "./src/contrast.ts",
-    "./theme": "./src/theme.ts"
+    "./theme": "./src/theme.ts",
+    "./safe-href": "./src/safe-href.ts",
+    "./*": "./src/components/*.tsx"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
@@ -25,11 +27,14 @@
     "@noor/contract": "workspace:*",
     "@base-ui/react": "~1.8.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "@noor/i18n": "workspace:*",
+    "lucide-react": "~1.48.0"
   },
   "peerDependencies": {
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.15"
   },
   "devDependencies": {
     "@noor/config": "workspace:*",
@@ -47,6 +52,8 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "react-i18next": "^17.0.15",
+    "i18next": "^26.4.2"
   }
 }

@@ -26,9 +26,9 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done. M2-01 done (form controls); M2 runs in parallel, next M2-02 (overlays) |
 | Branch | `chore/M0-01-workspace`, one commit per M0 task, not pushed (`master` is the default branch) |
-| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, Storybook; no components yet), `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
+| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, `safeHref`, Storybook; components in `src/components/`, one file per family, imported as `@noor/ui/<name>`: Button, Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup, Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips, Spinner), `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
