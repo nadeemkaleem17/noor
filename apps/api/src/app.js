@@ -11,17 +11,10 @@ import { registerRoutes, zodValidatorCompiler } from './platform/http/route-regi
 import cookie from '@fastify/cookie'
 import { createLimiter } from './platform/http/rate-limit.js'
 import { clientIp, registerSecurity } from './platform/http/security.js'
-import { createStorage } from './platform/storage.js'
 import { registerLocalStorageRoutes } from './platform/http/storage-routes.js'
-import { createAuditService } from './modules/audit/index.js'
-import { createCatalogService } from './modules/catalog/index.js'
-import { createInventory } from './modules/inventory/index.js'
-import { createSearch } from './modules/search/index.js'
-import { createMediaService } from './modules/media/index.js'
-import { createSettingsService } from './modules/settings/index.js'
-import { createShippingService } from './modules/shipping/index.js'
-import { createAuthorize, createAuthService } from './modules/auth/index.js'
+import { createAuthorize } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
+import { createServices } from './modules/services.js'
 
 /**
  * @typedef {() => Promise<string[]>} Readiness
@@ -50,24 +43,7 @@ export async function buildApp(opts) {
   const table = /** @type {T} */ ((opts.table ?? contractRoutes))
   // the database handle is optional so route-table tests can run without one; auth routes then fail only when they need it
   const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
-  const auth = createAuthService({ db, config })
-  const audit = createAuditService(db)
-  const storage = opts.storage ?? createStorage(config)
-  /** @type {ReturnType<typeof createSettingsService>} */
-  let settings
-  const media = createMediaService({ db, config, storage, inUse: (id) => settings.mediaInUse(id) }) // a file a settings document shows cannot be deleted
-  const shipping = createShippingService({ db })
-  /** @type {ReturnType<typeof createCatalogService>} */
-  let catalog
-  // stock and the catalog know each other: stock tells products to refresh their cached status, products ask stock for levels
-  const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
-  catalog = createCatalogService({
-    db, config, media, stock: inventory.stock, search: createSearch({ db }),
-    deliveryFacts: () => shipping.facts(),
-    notifyEnabled: async () => (await settings.get('store')).value.features.notifyMe,
-    subscribe: (s) => inventory.subscribe(s),
-  })
-  settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
+  const { auth, audit, storage, media, settings, shipping, catalog, inventory } = createServices({ db, config, ...(opts.storage ? { storage: opts.storage } : {}) })
   const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, catalog, inventory })))
 
   const app = Fastify({

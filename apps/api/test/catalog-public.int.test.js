@@ -7,7 +7,7 @@ import { staffUsers } from '../src/db/schema/auth.js'
 import { pages } from '../src/db/schema/content.js'
 import { media } from '../src/db/schema/media.js'
 import { outboxEvents } from '../src/db/schema/platform.js'
-import { collections, products } from '../src/db/schema/products.js'
+import { collections, productSizes, products, variants } from '../src/db/schema/products.js'
 import { stockSubscriptions } from '../src/db/schema/inventory.js'
 import { cities, shippingZones } from '../src/db/schema/shipping.js'
 import { attributes, categories, handleRedirects, sizeCharts, sizeSystemValues, sizeSystems } from '../src/db/schema/taxonomy.js'
@@ -17,6 +17,7 @@ import { createCatalogService } from '../src/modules/catalog/index.js'
 import { createInventory } from '../src/modules/inventory/index.js'
 import { createShippingService, seedShipping } from '../src/modules/shipping/index.js'
 import { app, closeHarness, config, createHarness, makeStaff, signedIn, t } from './support/staff.js'
+import { transaction } from '../src/platform/db.js'
 import { dbAvailable } from './support/db.js'
 
 const REQ = { ip: '10.0.0.1', userAgent: 'vitest', requestId: '0190f2c0-0000-7000-8000-000000000001' }
@@ -192,6 +193,19 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       expect(handles(await json('/products?size=S,L&sort=newest')).sort()).toEqual(['cotton-kurta', 'cotton-kurta-blue'])
       expect(handles(await json('/products?size=l'))).toEqual(['cotton-kurta'])
       expect(handles(await json('/products?size=XXL'))).toEqual([])
+    }, 60_000)
+
+    it('the size index follows stock: a size sold out leaves the filter, restocked comes back', async () => {
+      const mVariant = (await t.db.select().from(variants).where(eq(variants.productId, d.kurtaRed.id))).find((v) => v.sku.endsWith('-M'))
+      const inIndex = async () => (await t.db.select().from(productSizes).where(eq(productSizes.productId, d.kurtaRed.id))).length
+      expect(await inIndex(), 'S, M and L are all sold in sizes').toBe(3)
+      const ask = () => json('/products?size=M&sort=newest').then(handles)
+      expect(await ask()).toEqual(['cotton-kurta-blue'])
+      await transaction(t.db, (tx) => inv.adjust(tx, { variantId: /** @type {NonNullable<typeof mVariant>} */ (mVariant).id, mode: 'set', quantity: 4, reason: 'correction', staffId: ACTOR.staffId }))
+      expect(await ask()).toEqual(['cotton-kurta-blue', 'cotton-kurta'])
+      await transaction(t.db, (tx) => inv.adjust(tx, { variantId: /** @type {NonNullable<typeof mVariant>} */ (mVariant).id, mode: 'set', quantity: 0, reason: 'correction', staffId: ACTOR.staffId }))
+      expect(await ask()).toEqual(['cotton-kurta-blue'])
+      expect(await inIndex(), 'a sold-out size is still a size of the product').toBe(3)
     }, 60_000)
 
     it('attribute filters: values of one attribute are alternatives, attributes are all required', async () => {

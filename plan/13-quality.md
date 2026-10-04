@@ -112,7 +112,7 @@ Flaky tests: a test that fails and passes on retry is quarantined the same day w
 
 Budgets are DOC-06.10 §2. Lighthouse CI runs three times per URL and uses the median, with the reference profile, against: `/`, one category with 300 products, one product with 6 images and 8 variants, `/cart` with 3 lines.
 
-### 6.2 API (measured in integration tests against the seeded 3,000-product, 20,000-order database on CI hardware; they are regression guards, not production promises)
+### 6.2 API (until the order tables exist the seeded database has 3,000 products and 25,000 variants and no orders; listing measured in M1-13, see DOC-10.2 §8; measured in integration tests against the seeded 3,000-product, 20,000-order database on CI hardware; they are regression guards, not production promises)
 
 | Endpoint | p95 budget |
 |---|---|

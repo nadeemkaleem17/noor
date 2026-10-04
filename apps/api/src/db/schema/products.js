@@ -184,6 +184,18 @@ export const variantOptionValues = mysqlTable(
   ],
 )
 
+/** The sizes a product is sold in, derived by recomputeProductCache: one row per size value of an enabled variant. Drives the size filter and facet without joining every variant. */
+export const productSizes = mysqlTable(
+  'product_sizes',
+  { productId: uuid('product_id').notNull(), sizeSystemValueId: uuid('size_system_value_id').notNull(), inStock: boolean('in_stock').notNull() },
+  (t) => [
+    primaryKey({ columns: [t.productId, t.sizeSystemValueId] }),
+    index('product_sizes_value_idx').on(t.sizeSystemValueId, t.inStock, t.productId),
+    foreignKey({ name: 'ps_product_fk', columns: [t.productId], foreignColumns: [products.id] }).onDelete('cascade'),
+    foreignKey({ name: 'ps_size_fk', columns: [t.sizeSystemValueId], foreignColumns: [sizeSystemValues.id] }),
+  ],
+)
+
 export const productAttributeValues = mysqlTable(
   'product_attribute_values',
   {

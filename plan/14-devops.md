@@ -169,15 +169,16 @@ Each app has a committed `.env.example` with names, comments and no real values.
 
 ### 5.2 Seed (`db:seed`)
 
-Idempotent (upserts by natural key); refuses to run when `APP_ENV=production` unless `--base-only`.
+`pnpm --filter @noor/api db:seed [--base-only] [--no-demo] [--perf]`. Idempotent: each layer inserts only what is missing and never overwrites what staff changed; a second run adds nothing. Refuses to run when `APP_ENV=production` unless `--base-only`. It runs with the migration user and prints a JSON summary of what it created.
 
 | Layer | Contents | Environments |
 |---|---|---|
-| Base (`--base-only`) | Roles; `counters` rows (`order_number` 10000, `invoice_<year>`); store settings with name "Rubaya", `storefront-gold` theme, PKR, English; payment method `cod` enabled, others disabled (A-07); required CMS pages with the drafted policy texts (A-09); city master list; default couriers; two shipping zones with placeholder fees flagged "review before launch"; size systems (Women's stitched XS–XXL, Footwear EU 36–41) | All, including production's first deploy |
-| Demo | The product, category, collection, attribute, size-chart, promo, review and order fixtures from `admin-panel/src/contract/fixtures.js`, converted to the new schema; demo images uploaded to the bucket | local, ci, staging |
-| Owner account | `owner:create --email <e>` CLI prompts for a password (or, with `--generate`, prints a random one once). Local seed creates `owner@rubaya.test` and prints the password once | all |
+| Base (`--base-only`) | `counters` rows (`order_number` 10000, `invoice_<year>`); the five settings documents (`store` named "Rubaya", `storefront-gold` theme, PKR, English, `checkout`, `payments` with `cod` on, `home`); menus `main` and `footer`; the five CMS pages with the drafted policy text (four locked); 242 cities and 6 couriers; two placeholder shipping zones named "(review fees before launch)"; two size systems (Women's stitched, Footwear EU); search synonyms | all |
+| Owner account | Local seed creates `owner@rubaya.test` and prints a random password once (never stored in clear). `owner:create --email <e>` is the CLI for any other environment | local, ci, staging |
+| Demo | Built through the real services (so it obeys the publish checks, writes the stock ledger and the audit log): 8 categories, 4 attributes, 24 products with two generated placeholder pictures each (made with `sharp`, processed by the real media pipeline), colourways, a made-to-order bridal line with a custom-size form, 3 collections, store contact details and home content. About 45 seconds. The old `fixtures.js` is not converted: it was built for a different schema and the new data covers every product kind | local, ci, staging |
+| `--perf` | 3,000 more products (`perf-00000`…), about 25,000 variants with sizes, stock, attributes and pictures from a pool of 12 media rows, written with bulk inserts in the shape the services write; seeded random numbers so every run is the same. The 20,000 orders wait for the order tables (M4) | local, ci |
 
-Tests do not depend on the demo seed: each integration test builds its own data with factory helpers (DOC-13).
+Measured on the dev machine (M1-13): the whole `--perf` run (base, owner, demo and 3,000 products, including the search reindex) takes 80 seconds, under the 2-minute budget. Tests do not depend on the demo seed: each integration test builds its own data with factory helpers (DOC-13); `test/seed.int.test.js` runs the real seed on a scratch database.
 
 ## 6. Continuous integration
 

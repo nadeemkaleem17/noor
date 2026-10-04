@@ -71,6 +71,13 @@
       "when": 1791143644316,
       "tag": "0009_search",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1791148534575,
+      "tag": "0010_product_sizes",
+      "breakpoints": true
     }
   ]
 }

@@ -2,13 +2,11 @@
 import { auditHandlers } from './audit/index.js'
 import { authHandlers } from './auth/index.js'
 import { platformSchedule } from '../platform/scheduler.js'
-import { createStorage } from '../platform/storage.js'
 import { catalogHandlers } from './catalog/routes.js'
-import { createInventory, inventoryHandlers } from './inventory/index.js'
-import { createCatalogService } from './catalog/index.js'
-import { createMediaService, mediaHandlers, mediaJobs } from './media/index.js'
-import { createSettingsService } from './settings/index.js'
-import { createSearch, searchEvents, searchJobs } from './search/index.js'
+import { inventoryHandlers } from './inventory/index.js'
+import { mediaHandlers, mediaJobs } from './media/index.js'
+import { searchEvents, searchJobs } from './search/index.js'
+import { createServices } from './services.js'
 import { settingsHandlers } from './settings/routes.js'
 import { shippingHandlers } from './shipping/routes.js'
 
@@ -36,17 +34,12 @@ export const eventHandlers = { ...searchEvents }
  * What the background process runs: job handlers and scheduled jobs of every module. The API (with DEV_INLINE_WORKER) and src/worker.js both start from this.
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, log?: { error: (o: object, msg: string) => void } }} deps
  */
-export function backgroundOf({ db, config, storage = createStorage(config), log }) {
-  const media = createMediaService({ db, config, storage })
-  const settings = createSettingsService({ db, config, media })
-  /** @type {ReturnType<typeof createCatalogService>} */
-  let catalog
-  const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
-  catalog = createCatalogService({ db, config, media, stock: inventory.stock })
+export function backgroundOf({ db, config, storage, log }) {
+  const { media, search, inventory, catalog } = createServices({ db, config, ...(storage ? { storage } : {}) })
   return {
     handlers: {
       ...mediaJobs(media),
-      ...searchJobs(createSearch({ db })),
+      ...searchJobs(search),
       'catalog.publish_scheduled': async () => void (await catalog.products.publishDue()),
       'inventory.expire_reservations': async () => void (await inventory.expireReservations()),
       'inventory.verify': async () => {

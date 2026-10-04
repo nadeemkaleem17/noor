@@ -9,7 +9,7 @@ import { uuidv7 } from '../../platform/ids.js'
 import { readyIds } from '../media/repository.js'
 import { diffOf, record } from '../audit/index.js'
 import { attributeValues, attributes, categories, formSchemas, sizeCharts, sizeSystemValues, sizeSystems } from '../../db/schema/taxonomy.js'
-import { bundleItems, collectionProducts, productAttributeValues, productCategories, productMedia, productOptionValues, productOptions, productRelated, products, variantOptionValues, variants } from '../../db/schema/products.js'
+import { bundleItems, collectionProducts, productAttributeValues, productCategories, productMedia, productOptionValues, productOptions, productRelated, productSizes, products, variantOptionValues, variants } from '../../db/schema/products.js'
 import { actorOf, duplicateKey, isReferenced, productChanged, purge } from './common.js'
 import { allPass, publishChecks } from './product-checks.js'
 import { bestStatus, loadProducts, noStock, variantStatus } from './product-loader.js'
@@ -43,6 +43,24 @@ export async function recomputeProductCache(tx, productId, stock = noStock) {
       stockStatus: bestStatus(enabled.map((v) => variantStatus(v.stockMode, available.get(v.id) ?? 0, low))),
     })
     .where(eq(products.id, productId))
+
+  // the size index: a size is "in stock" when one of its variants can be bought
+  const sizeOf = enabled.length
+    ? await tx
+        .select({ variantId: variantOptionValues.variantId, sizeId: productOptionValues.sizeSystemValueId })
+        .from(variantOptionValues)
+        .innerJoin(productOptionValues, eq(productOptionValues.id, variantOptionValues.optionValueId))
+        .where(inArray(variantOptionValues.variantId, enabled.map((v) => v.id)))
+    : []
+  /** @type {Map<string, boolean>} */
+  const sizes = new Map()
+  for (const { variantId, sizeId } of sizeOf) {
+    if (!sizeId) continue
+    const v = enabled.find((e) => e.id === variantId)
+    sizes.set(sizeId, !!sizes.get(sizeId) || v?.stockMode !== 'counted' || (available.get(variantId) ?? 0) > 0)
+  }
+  await tx.delete(productSizes).where(eq(productSizes.productId, productId))
+  if (sizes.size) await tx.insert(productSizes).values([...sizes].map(([sizeSystemValueId, inStock]) => ({ productId, sizeSystemValueId, inStock })))
 }
 
 /**

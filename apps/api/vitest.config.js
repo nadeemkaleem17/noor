@@ -10,4 +10,4 @@ try {
 
 // Files run one after another: each integration file hashes passwords with Argon2 (19 MiB per hash) and the whole repo's tests
 // already run in parallel under turbo, so parallel files here made the worker processes run out of memory.
-export default defineConfig({ ...base, test: { ...base.test, fileParallelism: false } })
+export default defineConfig({ ...base, test: { ...base.test, fileParallelism: false, hookTimeout: 60_000 } })

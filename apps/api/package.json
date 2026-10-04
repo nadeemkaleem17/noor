@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env src/main.js",
     "start": "node --env-file-if-exists=.env src/main.js",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/lib/tsc.js -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
@@ -15,7 +15,8 @@
     "spike:drizzle": "node --env-file-if-exists=.env spikes/m0-06-drizzle.js",
     "spike:jobs": "node --env-file-if-exists=.env spikes/m0-07-jobs.js",
     "worker": "node --env-file-if-exists=.env src/worker.js",
-    "cli": "node --env-file-if-exists=.env src/cli.js"
+    "cli": "node --env-file-if-exists=.env src/cli.js",
+    "db:seed": "node --env-file-if-exists=.env src/db/seed.js"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",

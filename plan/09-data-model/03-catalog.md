@@ -288,7 +288,11 @@ Index: `variants_product_idx (product_id, sort_order)`.
 
 ### 5.7 `variant_option_values`
 
-`variant_id` + `option_value_id` PK (both FK CASCADE) · index `variant_option_values_value_idx (option_value_id)`. Drives the size facet: products with an enabled, available variant whose option value maps to the requested size label.
+`variant_id` + `option_value_id` PK (both FK CASCADE) · index `variant_option_values_value_idx (option_value_id)`. Used to derive `product_sizes`; the listing no longer joins it (section 5.7a).
+
+### 5.7a `product_sizes` (added in M1-13)
+
+`product_id` + `size_system_value_id` PK · `in_stock` boolean · index `product_sizes_value_idx (size_system_value_id, in_stock, product_id)` · FK `product_id` CASCADE, `size_system_value_id` NO ACTION. **Derived**, written only by `recomputeProductCache` (one row per size value of an enabled variant; `in_stock` when one of its variants can be bought). The size filter and the size facet read this table instead of joining every variant: on the 3,000-product database that join took 400–600 ms. Migration 0010 backfills it from the variants.
 
 ### 5.8 `product_attribute_values`
 
@@ -369,7 +373,7 @@ When a handle changes, the old one is inserted here. If a new entity later takes
 - [ ] After a price change, `price_min_minor`/`price_max_minor`/`compare_at_min_minor` match a fresh aggregate query (property test over random edits).
 - [ ] `EXPLAIN` for the category listing with one attribute filter and `newest` sort uses `product_attribute_values_facet_idx` and a `products_status_*` index, with no full scan of `products` (DOC-13 keeps this query set).
 - [ ] Changing a product handle makes the old URL resolve through `handle_redirects`; creating a new product with that old handle removes the redirect.
-- [ ] The 3,000-product seed (DOC-13 load data) returns a filtered listing page in under 100 ms on the reference database.
+- [x] The 3,000-product seed (DOC-13 load data) returns a filtered listing page in under 100 ms on the reference database. (M1-13, local Windows machine: median 70–150 ms for the whole HTTP call including 8–14 queries run concurrently; the slowest single query is 45 ms; every query uses an index.)
 
 ## 10. Open questions and assumptions
 

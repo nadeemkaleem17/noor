@@ -4,7 +4,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { DomainError } from '../../platform/errors.js'
 import { now } from '../../platform/clock.js'
 import { media as mediaTable } from '../../db/schema/media.js'
-import { attributeValues, attributes, categories } from '../../db/schema/taxonomy.js'
+import { attributeValues, attributes, categories, sizeSystemValues } from '../../db/schema/taxonomy.js'
 import { collections, productMedia, products } from '../../db/schema/products.js'
 
 /** @typedef {import('../../platform/db.js').Executor} Db */
@@ -21,9 +21,6 @@ const FAMILY_HEX = /** @type {Record<string, string>} */ ({
   yellow: '#F1C40F', green: '#2E8B57', blue: '#2F5DA8', purple: '#7D3C98', gold: '#C9A227', silver: '#BFC3C7', multi: '#8E8E8E',
 })
 const humanise = (/** @type {string} */ v) => v.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
-
-/** An enabled variant a customer can buy now: it does not count stock, or it has some left. */
-const AVAILABLE = sql`(v.stock_mode <> 'counted' or exists (select 1 from inventory_levels il where il.variant_id = v.id and il.on_hand - il.reserved > 0))`
 
 /** @param {string} value */
 const toCursor = (value) => Buffer.from(value).toString('base64url')
@@ -118,7 +115,7 @@ export function createListing({ db, media, search, filtersOf }) {
    */
   async function resolve(query) {
     // a wishlist lookup ignores every other filter (DOC-10.2 section 3)
-    if (query.ids?.length) return { query, attrs: /** @type {Map<string, string[]>} */ (new Map()), category: null, collection: null, text: null, known: /** @type {{ id: string }[]} */ ([]) }
+    if (query.ids?.length) return { query, attrs: /** @type {Map<string, string[]>} */ (new Map()), category: null, collection: null, text: null, known: /** @type {{ id: string }[]} */ ([]), sizeIds: /** @type {string[]} */ ([]) }
     const named = new Set(['category', 'collection', 'ids', 'q', 'onlyNew', 'onlySale', 'kind', 'size', 'color', 'inStock', 'priceMin', 'priceMax', 'sort', 'limit', 'cursor', 'facets', 'locale'])
     /** @type {Map<string, string[]>} */
     const attrs = new Map()
@@ -154,7 +151,9 @@ export function createListing({ db, media, search, filtersOf }) {
       collection = { id: row.id }
     }
     const text = query.q ? await search.predicate(query.q) : null
-    return { query, attrs, category, collection, text, known }
+    // size labels to size values once: joined inside the filter, the planner scans every product against every label
+    const sizeIds = query.size?.length ? (await db.select({ id: sizeSystemValues.id }).from(sizeSystemValues).where(inArray(sizeSystemValues.label, query.size))).map((x) => x.id) : []
+    return { query, attrs, category, collection, text, known, sizeIds }
   }
 
   /** @typedef {Awaited<ReturnType<typeof resolve>>} Resolved */
@@ -181,7 +180,7 @@ export function createListing({ db, media, search, filtersOf }) {
       if (q.priceMax !== undefined) out.push(sql`${products.priceMinMinor} <= ${q.priceMax}`)
     }
     if (q.size?.length && skip !== 'size') {
-      out.push(sql`${products.id} in (select v.product_id from variants v join variant_option_values vov on vov.variant_id = v.id join product_option_values pov on pov.id = vov.option_value_id join size_system_values ssv on ssv.id = pov.size_system_value_id where v.enabled = 1 and ssv.label in (${sql.join(q.size.map((/** @type {string} */ s) => sql`${s}`), sql`, `)}) and ${AVAILABLE})`)
+      out.push(r.sizeIds.length ? sql`${products.id} in (select ps.product_id from product_sizes ps where ps.in_stock = 1 and ps.size_system_value_id in (${sql.join(r.sizeIds.map((id) => sql`${id}`), sql`, `)}))` : sql`1 = 0`)
     }
     for (const [code, values] of r.attrs) {
       if (skip === `attr.${code}` || !values.length) continue
@@ -231,19 +230,35 @@ export function createListing({ db, media, search, filtersOf }) {
     /** @type {import('@noor/contract').z.infer<typeof import('@noor/contract').Facet>[]} */
     const out = []
     const rowsOf = select
+    // the counts are independent of each other: all of them go to the database at once
+    const kindsP = rowsOf(sql`select kind as value, count(*) as n from products where ${where(r, 'kind')} group by kind order by n desc, kind`)
+    const sizeCountsP = rowsOf(sql`select ps.size_system_value_id as id, count(*) as n from product_sizes ps where ps.in_stock = 1 and ps.product_id in (select id from products where ${where(r, 'size')}) group by ps.size_system_value_id`)
+    const colorsP = rowsOf(sql`select color_family as value, count(*) as n from products where color_family is not null and ${where(r, 'color')} group by color_family order by n desc, color_family`)
+    const stockP = rowsOf(sql`select count(*) as n from products where stock_status <> 'sold_out' and ${where(r, 'inStock')}`)
 
-    const kinds = await rowsOf(sql`select kind as value, count(*) as n from products where ${where(r, 'kind')} group by kind order by n desc, kind`)
+    const kinds = await kindsP
     out.push({ key: 'kind', label: 'Type', display: 'checkbox', values: kinds.map((k) => ({ value: k.value, label: humanise(k.value), count: Number(k.n), selected: !!q.kind?.includes(k.value) })) })
 
-    const sizes = await rowsOf(sql`select ssv.label as value, min(ssv.sort_order) as ord, count(distinct v.product_id) as n
-      from variants v join variant_option_values vov on vov.variant_id = v.id join product_option_values pov on pov.id = vov.option_value_id join size_system_values ssv on ssv.id = pov.size_system_value_id
-      where v.enabled = 1 and ${AVAILABLE} and v.product_id in (select id from products where ${where(r, 'size')}) group by ssv.label order by ord, ssv.label`)
+    const sizeCounts = await sizeCountsP
+    // counted per size value from the index table, then merged by label (a label can exist in two size systems)
+    const sizeLabels = sizeCounts.length ? await db.select({ id: sizeSystemValues.id, label: sizeSystemValues.label, ord: sizeSystemValues.sortOrder }).from(sizeSystemValues).where(inArray(sizeSystemValues.id, sizeCounts.map((c) => c.id))) : []
+    /** @type {Map<string, { value: string, ord: number, n: number }>} */
+    const merged = new Map()
+    for (const c of sizeCounts) {
+      const l = sizeLabels.find((x) => x.id === c.id)
+      if (!l) continue
+      const m = merged.get(l.label) ?? { value: l.label, ord: Number(l.ord), n: 0 }
+      m.n += Number(c.n)
+      m.ord = Math.min(m.ord, Number(l.ord))
+      merged.set(l.label, m)
+    }
+    const sizes = [...merged.values()].sort((x, y) => x.ord - y.ord || x.value.localeCompare(y.value))
     out.push({ key: 'size', label: 'Size', display: 'buttons', values: sizes.map((s) => ({ value: s.value, label: s.value, count: Number(s.n), selected: !!q.size?.some((/** @type {string} */ x) => x.toLowerCase() === String(s.value).toLowerCase()) })) })
 
-    const colors = await rowsOf(sql`select color_family as value, count(*) as n from products where color_family is not null and ${where(r, 'color')} group by color_family order by n desc, color_family`)
+    const colors = await colorsP
     out.push({ key: 'color', label: 'Colour', display: 'swatch', values: colors.map((c) => ({ value: c.value, label: humanise(c.value), count: Number(c.n), swatch: { hex: [FAMILY_HEX[c.value] ?? '#8E8E8E'] }, selected: !!q.color?.includes(c.value) })) })
 
-    const [stock] = await rowsOf(sql`select count(*) as n from products where stock_status <> 'sold_out' and ${where(r, 'inStock')}`)
+    const [stock] = await stockP
     out.push({ key: 'inStock', label: 'In stock', display: 'checkbox', values: [{ value: '1', label: 'In stock only', count: Number(stock?.n ?? 0), selected: !!q.inStock }] })
 
     // the filters of the category (or of its nearest ancestor that has any); outside a category there are none
@@ -251,15 +266,12 @@ export function createListing({ db, media, search, filtersOf }) {
       const wanted = await filtersOf(r.category.id)
       const defs = wanted.length ? await db.select().from(attributes).where(inArray(attributes.id, wanted.map((w) => w.attributeId))) : []
       const values = defs.length ? await db.select().from(attributeValues).where(inArray(attributeValues.attributeId, defs.map((d) => d.id))).orderBy(asc(attributeValues.sortOrder)) : []
-      for (const w of wanted) {
-        const def = defs.find((d) => d.id === w.attributeId)
-        if (!def || def.type === 'number') continue
-        const counts = new Map(
-          /** @type {{ code: string, n: number }[]} */ (
-            await rowsOf(sql`select av.code as code, count(distinct pav.product_id) as n from product_attribute_values pav join attribute_values av on av.id = pav.value_id
-              where pav.attribute_id = ${def.id} and pav.product_id in (select id from products where ${where(r, `attr.${def.code}`)}) group by av.code`)
-          ).map((c) => [c.code, Number(c.n)]),
-        )
+      const shown = wanted.flatMap((w) => { const def = defs.find((d) => d.id === w.attributeId); return def && def.type !== 'number' ? [{ w, def }] : [] })
+      const countRows = await Promise.all(shown.map(({ def }) =>
+        rowsOf(sql`select av.code as code, count(distinct pav.product_id) as n from product_attribute_values pav join attribute_values av on av.id = pav.value_id
+              where pav.attribute_id = ${def.id} and pav.product_id in (select id from products where ${where(r, `attr.${def.code}`)}) group by av.code`)))
+      for (const [i, { w, def }] of shown.entries()) {
+        const counts = new Map(/** @type {{ code: string, n: number }[]} */ (countRows[i]).map((c) => [c.code, Number(c.n)]))
         const chosen = r.attrs.get(def.code) ?? []
         out.push({
           key: `attr.${def.code}`, label: def.label, display: /** @type {any} */ (def.display), seoIndexable: w.seoIndexable,
@@ -330,14 +342,13 @@ export function createListing({ db, media, search, filtersOf }) {
         if (rows.length > limit && last) next = toCursor(JSON.stringify({ id: last.id, ...Object.fromEntries(keys.map((k) => [k.name, Number(last[`k_${k.name}`])])) }))
       }
 
-      const items = await summariesOf(db, ids, locale)
+      const [items, facets, presets] = await Promise.all([summariesOf(db, ids, locale), query.facets !== false && !query.ids?.length ? facetsOf(r) : null, query.facets !== false && !query.ids?.length ? pricePresets(r) : null])
       if (r.text && total === 0 && !query.cursor) await search.logMiss(query.q)
-      const wantFacets = query.facets !== false && !query.ids?.length
       return {
         items,
         total: Number(total),
         ...(next ? { nextCursor: next } : {}),
-        ...(wantFacets ? { facets: await facetsOf(r), pricePresets: await pricePresets(r) } : {}),
+        ...(facets && presets ? { facets, pricePresets: presets } : {}),
       }
     },
   }
