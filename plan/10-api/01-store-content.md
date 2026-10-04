@@ -15,7 +15,7 @@
 **Governs:** the public endpoints of the `settings` and `shipping` modules that the storefront shell and content pages read.
 **Does not govern:** the admin side of the same data (DOC-10.7).
 
-All endpoints here: auth `public`, bucket `default`, `Cache-Control: public, s-maxage=60, stale-while-revalidate=600`, accept `?locale=`.
+All endpoints here: auth `public`, bucket `default`, `Cache-Control: public, s-maxage=60, stale-while-revalidate=600` (route flag `cache: 'shared'` in the contract), accept `?locale=` (`en` or `ur`; anything else is `400`). `StoreConfigPublic.shipping.freeAboveFrom` and `defaultEta`, and the tokens `{{shipping.freeAbove}}` and `{{shipping.fee}}`, stay empty until the shipping module (M1-07) supplies them.
 
 ## 2. Endpoints
 

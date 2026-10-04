@@ -23,8 +23,9 @@ const DAY = 86_400_000
  * @param {import('../../platform/db.js').Database['db']} deps.db
  * @param {import('../../platform/config.js').Config} deps.config
  * @param {import('../../platform/storage.js').Storage} deps.storage
+ * @param {(mediaId: string) => Promise<boolean>} [deps.inUse] does something outside the database's foreign keys (a settings document) still use this file?
  */
-export function createMediaService({ db, config, storage }) {
+export function createMediaService({ db, config, storage, inUse = async () => false }) {
   /** @param {Staff} a @param {RequestInfo} req */
   const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId })
 
@@ -81,6 +82,16 @@ export function createMediaService({ db, config, storage }) {
       return toInfo(await mustFind(id))
     },
 
+    /** The `Image` of each ready file among `ids`, by id: what settings and content responses embed. @param {string[]} ids */
+    async imagesFor(ids) {
+      /** @type {Record<string, import('@noor/contract').Image>} */
+      const out = {}
+      for (const m of await repo.findMany(db, [...new Set(ids)])) {
+        if (m.status === 'ready' && m.width && m.height) out[m.id] = toImage({ objectKey: m.objectKey, width: m.width, height: m.height, alt: m.alt, lqip: m.lqip }, config.IMG_BASE_URL)
+      }
+      return out
+    },
+
     /** @param {string} id */
     async get(id) {
       return toInfo(await mustFind(id))
@@ -106,6 +117,7 @@ export function createMediaService({ db, config, storage }) {
     /** A file that something references (a product, a banner ...) cannot go: the foreign keys say so. @param {Staff} actor @param {string} id @param {RequestInfo} req */
     async remove(actor, id, req) {
       const m = await mustFind(id)
+      if (await inUse(id)) throw new DomainError('in_use')
       try {
         await transaction(db, async (tx) => {
           await repo.remove(tx, id)

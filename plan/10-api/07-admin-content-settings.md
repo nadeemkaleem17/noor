@@ -19,7 +19,7 @@ All paths under `/api/v1/admin`; auth `staff`; `no-store`. Every write is audite
 
 ## 2. Settings documents
 
-One pair of endpoints per document of DOC-09.9 §2.1. `GET` returns `{ value, version, updatedAt, updatedBy? }`; `PUT` takes `{ value, version }` and returns the same shape.
+One pair of endpoints per document of DOC-09.9 §2.1. `GET` returns `{ value, version, updatedAt?, updatedBy?, images }`; `PUT` takes `{ value, version }` and returns the same shape. A document nobody has saved reads as its default with `version: 0` (no `updatedAt`), and the first `PUT` sends `version: 0`; there is no separate create call. `images` maps each media id used in `value` to its `Image` preview (ready files only), which replaces the per-field `logoLight?: Image` style of the first draft.
 
 | Key | Method & path | Permission | `value` schema | Errors | Notes |
 |---|---|---|---|---|---|
@@ -31,7 +31,7 @@ One pair of endpoints per document of DOC-09.9 §2.1. `GET` returns `{ value, ve
 | `admin.settings.themePresets` | `GET /settings/theme/presets` | `settings:read` | — → `{ items: { id: string, label: string, theme: ThemeTokens }[] }` | — | `storefront-gold`, `monochrome`, `botanical` |
 | `admin.settings.translationStatus` | `GET /settings/translation-status` | `settings:read` | — → `{ ui: { total: int, translated: int }, products: { total: int, translated: int } }` | — | For enabling Urdu (DOC-07.11 §2) |
 
-Schemas `StoreSettings`, `HomeContent`, `PaymentSettings`, `CheckoutSettings` are those of DOC-09.9 §2.1; admin responses add `Image` previews next to each media id (`logoLight?: Image` …).
+Schemas `StoreSettings`, `HomeContent`, `PaymentSettings`, `CheckoutSettings` are those of DOC-09.9 §2.1 (built in `packages/contract/src/settings.js`). `home.i18n.ur` holds Urdu text keyed by the id of what it translates (`notices.<id>`, `heroSlides.<id>`, `promo`, `editorial`, `announcement`, `footerAbout`). Links follow one rule (`isValidLink`: `/path`, `https://`, `mailto:`, `tel:`; plain `http://` is refused on entry); map and social links must be `https://`. The theme contrast gate (`contrastFailures`) lives in `@noor/contract` so the API and the Appearance page run the same code.
 
 Provider credentials are **not** part of `PaymentSettings` and no endpoint reads or writes them (DOC-11 §7).
 

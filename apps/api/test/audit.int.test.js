@@ -2,9 +2,10 @@
 import { eq } from 'drizzle-orm'
 import { generateSync } from 'otplib'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { routes } from '@noor/contract'
+import { routes, themePresets } from '@noor/contract'
 import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
+import { menus, pages, settings } from '../src/db/schema/content.js'
 import { setClock } from '../src/platform/clock.js'
 import { record } from '../src/modules/audit/index.js'
 import { newTotpSecret } from '../src/modules/auth/totp.js'
@@ -21,6 +22,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     setClock(null)
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
+    for (const table of [pages, menus, settings]) await t.db.delete(table)
     await t.db.delete(staffUsers)
   })
 
@@ -237,12 +239,32 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.media.update'] = { prepare: slot, act: ({ b, id }) => b.call('PUT', `/admin/media/${id}`, { body: { alt: 'Green suit' } }) }
     samples['admin.media.delete'] = { prepare: slot, act: ({ b, id }) => b.call('DELETE', `/admin/media/${id}`) }
 
+    /** The five documents, a page and a menu: one sample each. Versions start at 0 because nothing was saved yet. */
+    const docSample = (/** @type {string} */ url, /** @type {unknown} */ value) => ({ prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('PUT', url, { body: { value, version: 0 } }) })
+    samples['admin.settings.updateStore'] = docSample('/admin/settings/store', { brand: { name: 'Rubaya Atelier' }, contact: { socials: [] }, priceDisplay: { showDecimals: false, rounding: 'none' }, orderNumberPrefix: 'RB', locale: { default: 'en', supported: ['en'] }, features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false }, policies: {}, seo: {}, notifications: { staffEmails: [] }, thresholds: { lowStock: 3, highValueCodMinor: 100 } })
+    samples['admin.settings.updateTheme'] = docSample('/admin/settings/theme', themePresets.monochrome)
+    samples['admin.settings.updateCheckout'] = docSample('/admin/settings/checkout', { extraFields: [], marketingConsent: { enabled: true, label: 'Send me offers' } })
+    samples['admin.settings.updatePayments'] = docSample('/admin/settings/payments', { methods: [{ type: 'cod', enabled: true, label: 'Cash', sortOrder: 0 }] })
+    samples['admin.content.updateHome'] = docSample('/admin/content/home', { announcement: { text: 'Sale' }, notices: [], heroSlides: [], promo: { enabled: false }, editorial: { enabled: false }, footer: { about: '' } })
+    samples['admin.menus.update'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('PUT', '/admin/menus/main', { body: { items: [{ label: 'New', href: '/new' }], version: 0 } }) }
+    const page = { title: 'About', slug: 'about', bodyMd: 'Hi', status: 'active' }
+    samples['admin.pages.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/pages', { body: page }) }
+    const withPage = async () => {
+      const s = await signedIn('owner')
+      const r = await s.b.call('POST', '/admin/pages', { body: page })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, id: r.body.id }
+    }
+    samples['admin.pages.update'] = { prepare: withPage, act: ({ b, id }) => b.call('PUT', `/admin/pages/${id}`, { body: { ...page, bodyMd: 'Changed', version: 1 } }) }
+    samples['admin.pages.delete'] = { prepare: withPage, act: ({ b, id }) => b.call('DELETE', `/admin/pages/${id}`) }
+
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
       'admin.auth.requestPasswordReset': 'changes nothing until an email provider exists (DOC-12); only counted by the rate limiter',
       'admin.me.confirmPassword': 'refreshes the 15-minute step-up window of the current session; no data changes',
       'admin.media.createUpload': 'only reserves an upload slot that nobody can see or use; unconfirmed slots are purged after a day',
       'admin.media.confirm': 'starts the check of the own upload of the sender; the outcome is visible as the media status, and a kept file is audited when it is changed or deleted',
+      'admin.pages.preview': 'only renders text with the store tokens filled in; nothing is stored',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }
 

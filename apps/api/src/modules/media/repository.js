@@ -1,4 +1,4 @@
-import { and, eq, isNull, lt } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { media } from '../../db/schema/media.js'
 
 /** @typedef {typeof media.$inferSelect} MediaRow */
@@ -24,3 +24,6 @@ export const staleTickets = (db, before, limit) =>
 
 /** Refused files, kept for a day so the screen can show why. @param {import('../../platform/db.js').Executor} db @param {Date} before @param {number} limit */
 export const oldRejected = (db, before, limit) => db.select().from(media).where(and(eq(media.status, 'rejected'), lt(media.createdAt, before))).limit(limit)
+
+/** @param {import('../../platform/db.js').Executor} db @param {string[]} ids */
+export const findMany = (db, ids) => (ids.length ? db.select().from(media).where(inArray(media.id, ids)) : Promise.resolve([]))

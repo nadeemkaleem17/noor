@@ -18,6 +18,7 @@
  * @property {boolean} [enrolment] - Also reachable from a session that is only allowed to enrol two-factor.
  * @property {boolean} [idempotent] - Requires an Idempotency-Key header (DOC-10.0 section 8).
  * @property {string} [rateLimit] - Rate-limit bucket (DOC-11 section 5.4); `default` when omitted.
+ * @property {'shared'} [cache] - `shared`: `Cache-Control: public, s-maxage=60, stale-while-revalidate=600` (DOC-10.1 section 1). Without it, nothing is said.
  */
 
 /**

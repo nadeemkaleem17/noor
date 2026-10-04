@@ -2,45 +2,9 @@
 // Appearance preview both call themeCss(), so what is previewed is what ships.
 // Every value that reaches the CSS is a validated hex, a looked-up enum value or a fixed font stack: admin-supplied
 // text is never interpolated (prevents CSS injection).
-import { ThemeTokens, themePresets } from '@noor/contract'
-import { MIN_TEXT, contrast, mix } from './contrast'
+import { ThemeTokens, resolveColors, themePresets } from '@noor/contract'
 
-/**
- * @typedef {ThemeTokens['colors']} Colors
- */
-
-/**
- * The colors a theme does not name are derived, as literal hex so the CSS and the contrast gate see the same values.
- * @param {Colors} c
- */
-export function deriveColors(c) {
-  return {
-    surface2: c.surface2 ?? mix(c.fg, c.bg, 4),
-    fgSoft: c.fgSoft ?? mix(c.fg, c.bg, 80),
-    lineStrong: c.lineStrong ?? mix(c.fg, c.bg, 50),
-    accentText: c.accentText ?? (contrast(c.accent, c.bg) >= MIN_TEXT ? c.accent : c.fg),
-    accentSoft: c.accentSoft ?? mix(c.accent, c.bg, 10),
-    onAccent: c.onAccent ?? (contrast('#FFFFFF', c.accent) >= contrast('#000000', c.accent) ? '#FFFFFF' : '#000000'),
-    successSoft: mix(c.success, c.bg, 12),
-    warningSoft: mix(c.warning, c.bg, 12),
-    dangerSoft: mix(c.danger, c.bg, 12),
-  }
-}
-
-/**
- * Every semantic color of a theme, by token name (without the `--sem-` prefix).
- * @param {Colors} c
- * @returns {Record<string, string>}
- */
-export function resolveColors(c) {
-  const d = deriveColors(c)
-  return {
-    bg: c.bg, surface: c.surface, 'surface-2': d.surface2, fg: c.fg, 'fg-soft': d.fgSoft, muted: c.muted,
-    line: c.line, 'line-strong': d.lineStrong, accent: c.accent, 'on-accent': d.onAccent, 'accent-text': d.accentText,
-    'accent-soft': d.accentSoft, sale: c.sale, success: c.success, warning: c.warning, danger: c.danger,
-    'success-soft': d.successSoft, 'warning-soft': d.warningSoft, 'danger-soft': d.dangerSoft, focus: c.focus,
-  }
-}
+export { deriveColors, resolveColors } from '@noor/contract'
 
 const fontStack = /** @type {const} */ ({
   'Playfair Display': '"Playfair Display", Georgia, serif',

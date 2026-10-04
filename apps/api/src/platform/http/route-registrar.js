@@ -154,6 +154,7 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
             clearCookie: (name) => void reply.clearCookie(name, { path: '/' }),
           },
         })
+        if (def.cache === 'shared') void reply.header('cache-control', 'public, s-maxage=60, stale-while-revalidate=600')
         reply.code(status)
         return status === 204 ? reply.send() : out
       },

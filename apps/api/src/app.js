@@ -15,6 +15,7 @@ import { createStorage } from './platform/storage.js'
 import { registerLocalStorageRoutes } from './platform/http/storage-routes.js'
 import { createAuditService } from './modules/audit/index.js'
 import { createMediaService } from './modules/media/index.js'
+import { createSettingsService } from './modules/settings/index.js'
 import { createAuthorize, createAuthService } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
 
@@ -48,8 +49,11 @@ export async function buildApp(opts) {
   const auth = createAuthService({ db, config })
   const audit = createAuditService(db)
   const storage = opts.storage ?? createStorage(config)
-  const media = createMediaService({ db, config, storage })
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media })))
+  /** @type {ReturnType<typeof createSettingsService>} */
+  let settings
+  const media = createMediaService({ db, config, storage, inUse: (id) => settings.mediaInUse(id) }) // a file a settings document shows cannot be deleted
+  settings = createSettingsService({ db, config, media })
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings })))
 
   const app = Fastify({
     logger: loggerOptions(config),

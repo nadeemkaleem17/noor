@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
   ApiError, CursorPage, Enum, Id, Money, PageQuery, PkMobile, ThemeTokens, createClient, csv, defineRoutes, enums,
-  errorCodes, errorStatus, fieldIssueCodes, flag, permissions, toFieldIssues, z, buildPath, buildQuery, money,
+  errorCodes, errorStatus, fieldIssueCodes, flag, permissions, toFieldIssues, z, buildPath, buildQuery, money, contrastFailures, themePresets,
 } from '../src/index.js'
 
 const ID = '0192f5aa-1111-7222-8333-444455556666'
@@ -212,5 +212,17 @@ describe('createClient', () => {
   }
   it('type checks are present', () => {
     expect(typeof typeChecks).toBe('function')
+  })
+})
+
+describe('theme contrast gate', () => {
+  it('passes every preset', () => {
+    for (const [id, theme] of Object.entries(themePresets)) expect(contrastFailures(theme.colors), id).toEqual([])
+  })
+  it('names the failing pairs of a faint theme', () => {
+    const faint = { ...themePresets['storefront-gold'].colors, fg: '#DDDDDD' }
+    const bad = contrastFailures(faint)
+    expect(bad.length).toBeGreaterThan(0)
+    expect(bad).toContainEqual({ pair: 'fg/bg', ratio: expect.any(Number), min: 4.5 })
   })
 })

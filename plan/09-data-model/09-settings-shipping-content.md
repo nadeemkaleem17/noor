@@ -63,6 +63,8 @@ Validation beyond shape, enforced by the service: at least one enabled payment m
 | `updated_by` | char(36) | NULL | | FK → `staff_users.id` SET NULL |
 | `created_at`, `updated_at` | datetime(3) | NN | | |
 
+`page_redirects (old_slug PK varchar(80) bin, page_id FK → pages.id CASCADE)` is the one table added at M1-06: changing a page's slug writes the old slug here, so `content.getPage` can answer `{ redirectTo }`; creating a page with a slug that is an old one removes that redirect. A document that was never saved is not a row: the service reads the default of the schema (version 0) and the first write inserts the row.
+
 Seeded locked pages: `shipping-returns`, `privacy`, `terms`, `contact`; unlocked: `about`.
 
 ### 3.2 `menus`

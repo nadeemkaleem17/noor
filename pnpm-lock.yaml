@@ -108,6 +108,9 @@ importers:
       '@noor/contract':
         specifier: workspace:*
         version: link:../../packages/contract
+      '@noor/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       drizzle-orm:
         specifier: ~0.45.3
         version: 0.45.3(mysql2@3.24.4(@types/node@24.13.6))
