@@ -41,14 +41,14 @@ function* walk(dir) {
   }
 }
 
-/** Scans TypeScript and CSS files under `dirs` (relative to `root`). Old JSX/JS files are not scanned: they migrate file by file (ADR-0002). */
+/** Scans JavaScript and CSS files under `dirs` (relative to `root`). Old JSX/JS files are not scanned: they migrate file by file (ADR-0002). */
 export function scan(root, dirs) {
   const found = []
   for (const d of dirs) {
     const abs = path.join(root, d)
     try { statSync(abs) } catch { continue }
     for (const file of walk(abs)) {
-      if (!/\.(ts|tsx|css)$/.test(file) || /\.(test|spec)\./.test(file) || file.endsWith('.d.ts')) continue
+      if (!/\.(js|jsx|css)$/.test(file) || /\.(test|spec)\./.test(file) || file.endsWith('.d.ts')) continue
       for (const h of findPhysical(readFileSync(file, 'utf8'), file)) found.push({ file: path.relative(root, file), ...h })
     }
   }

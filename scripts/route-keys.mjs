@@ -5,7 +5,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { routes } from '../packages/contract/src/table.ts'
+import { routes } from '../packages/contract/src/table.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const apiDocs = path.join(root, 'plan/10-api')

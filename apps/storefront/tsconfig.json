@@ -7,5 +7,5 @@
     "rootDirs": [".", "./.react-router/types"],
     "paths": { "~/*": ["./app/*"] }
   },
-  "include": ["app", "test", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"]
+  "include": ["app", "test", "react-router.config.js", "vite.config.js", ".react-router/types/**/*"]
 }

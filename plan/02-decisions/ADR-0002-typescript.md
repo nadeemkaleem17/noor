@@ -4,7 +4,7 @@
 |---|---|
 | ID | ADR-0002 |
 | Title | TypeScript migration |
-| Status | Proposed |
+| Status | **Superseded by ADR-0021** (4 Oct 2026: the owner chose JavaScript) |
 | Owner | Tech lead |
 | Last updated | 2026-10-02 |
 | Depends on | DOC-01 (K3, F-15, F-23), ADR-0003 |
@@ -59,3 +59,4 @@ Assumes TypeScript ≥ 5.5 is available. Native-compiler status not researched.
 |---|---|
 | 2026-10-02 | Proposed |
 | 2026-10-02 | M0-02: TypeScript pinned to ~6.0.3 because `typescript-eslint` 8.x supports `<6.1`; TypeScript 7.0 (native compiler) is the revisit trigger noted below, now actionable |
+| 2026-10-04 | Superseded by ADR-0021: the language is JavaScript with JSDoc types; this document is kept for history |

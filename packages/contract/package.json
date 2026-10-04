@@ -6,7 +6,7 @@
   "sideEffects": false,
   "description": "The one shared contract: Zod 4 schemas, money helpers, error codes, route table, typed client. Depends on zod only (plan/02-decisions/ADR-0005).",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.js"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

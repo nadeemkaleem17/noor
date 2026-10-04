@@ -9,12 +9,12 @@
   "description": "Rubaya design system: tokens, theme helpers, contrast gate, components (plan/04-design-system).",
   "exports": {
     "./tokens.css": "./src/tokens.css",
-    "./direction": "./src/direction.tsx",
-    "./cn": "./src/cn.ts",
-    "./contrast": "./src/contrast.ts",
-    "./theme": "./src/theme.ts",
-    "./safe-href": "./src/safe-href.ts",
-    "./*": "./src/components/*.tsx"
+    "./direction": "./src/direction.jsx",
+    "./cn": "./src/cn.js",
+    "./contrast": "./src/contrast.js",
+    "./theme": "./src/theme.js",
+    "./safe-href": "./src/safe-href.js",
+    "./*": "./src/components/*.jsx"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

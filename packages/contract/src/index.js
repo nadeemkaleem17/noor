@@ -1,0 +1,13 @@
+// Public surface of @noor/contract. Apps import `z` from here, never from "zod" (enforced by lint, DOC-03 section 5.3).
+export { z } from 'zod'
+export * from './money.js'
+export * from './phone.js'
+export * from './enums.js'
+export * from './permissions.js'
+export * from './primitives.js'
+export * from './errors.js'
+export * from './pagination.js'
+export * from './routes.js'
+export * from './client.js'
+export * from './table.js'
+export * from './theme-presets.js'

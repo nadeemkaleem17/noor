@@ -24,7 +24,7 @@ Versions are pinned in the root `package.json` (`pnpm.overrides` for shared ones
 | Node | `>=22.22` (`engines`); `.nvmrc` = 24 | dev machine has 24.14 | 22.22 is the React Router v8 floor; newer LTS lines are fine |
 | pnpm | `11.28.3` (`packageManager` field) | 11.28.3 on 30 Sep 2026 | **Not 12** (Rust rewrite, 26 Aug 2026; revisit after 3 months without a lockfile-breaking fix). Installed with `npm i -g pnpm@11.28.3` where `corepack enable` lacks rights |
 | turbo | `^2.11` | 2.11.x, Sep 2026 | `turbo.json` uses `tasks` (the 1.x `pipeline` key is gone) |
-| typescript | `~6.0.3` | 6.0.3 | **Not 7.x** (7.0.2 is the native compiler): `typescript-eslint` supports `<6.1` only (ADR-0002 revisit trigger). Move to 7 when `typescript-eslint` supports it |
+| typescript (dev tool only, ADR-0021) | `~6.0.3` | 6.0.3 | **Not 7.x** (7.0.2 is the native compiler): `typescript-eslint` supports `<6.1` only (ADR-0002 revisit trigger). Move to 7 when `typescript-eslint` supports it |
 | react, react-dom | `^19.2.8` | repo `package.json` | Already installed in both apps |
 | vite | `^8.3` | repo `package.json` | |
 | react-router, @react-router/dev, @react-router/node | `~8.4` | 8.4.0 on 15 Sep 2026 | ESM-only; `react-router-dom` no longer exists; middleware on by default |
@@ -60,7 +60,7 @@ noor/
     i18n/                   @noor/i18n      locales/*.json, formatters
     config/                 @noor/config    tsconfig.base.json, eslint.config.js, vitest preset
   plan/                     this documentation set
-  scripts/                  check-logical.mjs, ts-ratio.mjs
+  scripts/                  check-logical.mjs, route-keys.mjs, setup-env.mjs
   turbo.json  pnpm-workspace.yaml  package.json  .nvmrc
 ```
 
@@ -105,7 +105,7 @@ Root scripts (the only commands a developer or agent needs):
 | `@noor/config` | dev tooling | Runtime code |
 | `apps/*` | any `@noor/*` package | Each other |
 
-Packages are consumed **as TypeScript source** (`"exports": { ".": "./src/index.ts" }`), compiled by the consuming app's Vite. No per-package build step until a package is published outside the repo (it will not be in v1). `@noor/contract` and `@noor/i18n` expose one `index.ts`; `@noor/ui` exposes one entry per component (`@noor/ui/button`) so an app never pulls the whole library through a barrel.
+Packages are consumed **as JavaScript source** (`"exports": { ".": "./src/index.js" }`; `.jsx` for React), bundled by the consuming app's Vite or run directly by Node (ADR-0021). No per-package build step until a package is published outside the repo (it will not be in v1). `@noor/contract` and `@noor/i18n` expose one `index.ts`; `@noor/ui` exposes one entry per component (`@noor/ui/button`) so an app never pulls the whole library through a barrel.
 
 ## 5. App structure
 
@@ -334,3 +334,4 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 | 2026-10-02 | M0-10: Tailwind, Storybook and cn dependencies pinned |
 | 2026-10-02 | M0-12: `M0-I18N-SPIKE` answered (fallback adopted, §9); `remix-i18next` row struck; i18n dependency versions fixed; Q-03-1 answered, Q-03-5 and Q-03-6 added |
 | 2026-10-02 | M2-04: `remark-gfm` added next to `react-markdown`; `react-hook-form` is a peer and dev dependency of `@noor/ui` (for `RHFField`) |
+| 2026-10-04 | ADR-0021: the language is JavaScript with JSDoc; `typescript` is a checker only, packages export `.js`/`.jsx`, `ts-ratio` is gone. Wherever this document says `.ts`/`.tsx` read `.js`/`.jsx` |

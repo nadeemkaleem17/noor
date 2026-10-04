@@ -48,7 +48,7 @@ Docs not yet written are listed in `plan/README.md` §3. **If the doc your task 
 
 | Layer | Choice |
 |---|---|
-| Language | TypeScript, strict. Admin migrates from JSX file by file (ADR-0002) |
+| Language | **JavaScript with JSDoc types** (ADR-0021). No .ts/.tsx; `tsc --checkJs` is the typecheck. Read `.ts` in other docs as `.js`, `.tsx` as `.jsx` |
 | Repo | pnpm workspaces + Turborepo: `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}` |
 | Backend | Node.js 22, Fastify 5 modular monolith (ADR-0016) |
 | Database | MySQL 8.4 + Drizzle ORM, `mysql2` driver (ADR-0008) |

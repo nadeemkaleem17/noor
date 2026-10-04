@@ -88,7 +88,7 @@ flowchart LR
 | M0-10 | `packages/ui` skeleton: Tailwind v4, `tokens.css` with all four verified palettes, `cn`, Storybook 10 with a11y and RTL/dark toolbars, `check-contrast`, `check-logical` | DOC-04a | M0-02 | 2.5 | Both scripts pass; `@theme inline` and `--color-*: initial` confirmed (DOC-04a Q-04a-3) |
 | M0-11 | **RTL spike**: Dialog, Drawer, Menu with submenu, Tabs, Combobox, Select, Tooltip on Base UI under `dir="rtl"` | DOC-04b §8, ADR-0007 | M0-10 | 0.5 | Table in DOC-04b §8 filled; any Radix fallback recorded in ADR-0007 |
 | M0-12 | `apps/storefront` skeleton (React Router 8 framework mode, one SSR page, CSP headers, env validation) + `packages/i18n` (including `formatMoney`, `formatDate`, `formatNumber`; ADR-0013) + **i18n spike** | DOC-03 §5.2, §9–10, DOC-11 §5.3, ADR-0004 | M0-02, M0-10 | 2 | DOC-03 §9 spike result recorded; `curl` shows server-rendered HTML with a translated string |
-| M0-13 | Repo scripts: `route-keys.mjs`, `ts-ratio.mjs`; `dependency-cruiser` rules file for API modules | DOC-10.8 §6, ADR-0002, DOC-08 §5.1 | M0-05 | 0.5 | CI runs all three |
+| M0-13 | Repo scripts: `route-keys.mjs` (`ts-ratio.mjs` was built, then removed by ADR-0021); `dependency-cruiser` rules file for API modules | DOC-10.8 §6, ADR-0002, DOC-08 §5.1 | M0-05 | 0.5 | CI runs all three |
 
 ### M1 — Backend core
 
@@ -330,3 +330,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | M2-04 done: Image, Price, Markdown (allow-list, tokens), RHFField, ImageUpload; 20 tests including the DOC-06.8 §6 renderer test; axe clean |
 | 2026-10-02 | M2-05 done: `test/stories.a11y.test.tsx` runs axe over all 35 stories (a story with a label violation fails `pnpm test`); `@noor/ui` is complete except the pieces later milestones add (submenus, feature components). M2 finished |
 | 2026-10-02 | M0-03 partly done in its no-Docker form: env and SQL scripts exist; the database users are not created yet (needs the MySQL administrator password) and the `pnpm dev` readiness check waits for M0-06 |
+| 2026-10-04 | **Language change (ADR-0021):** the owner chose JavaScript over TypeScript; all code built in M0 and M2 was converted to JavaScript with JSDoc types (113 files). `pnpm typecheck` is `tsc --checkJs`. Checks all still green (contract 53, i18n 10, api 24, config 32, ui 307, storefront 10 tests). In every task row, `.ts`/`.tsx` means `.js`/`.jsx` |

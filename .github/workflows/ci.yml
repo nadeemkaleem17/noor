@@ -27,7 +27,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # typecheck + lint + tests for every workspace, then the TypeScript-share check
+      # typecheck + lint + tests for every workspace, then the physical-direction check
       - run: pnpm check
       # every route in the contract must be described in plan/10-api
       - run: pnpm route-keys --check

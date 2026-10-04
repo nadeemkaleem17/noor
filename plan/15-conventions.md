@@ -24,7 +24,7 @@
 | React component file | `PascalCase.tsx`, one exported component | `ProductTable.tsx` |
 | `@noor/ui` component file | `kebab-case.tsx` (matches the export path) | `quantity-stepper.tsx` |
 | Hook | `useCamelCase.ts` | `useCartUi.ts` |
-| Other TypeScript | `kebab-case.ts` | `query-client.ts`, `theme.server.ts` |
+| Other JavaScript | `kebab-case.js` | `query-client.ts`, `theme.server.ts` |
 | Storefront route module | lower-case, as listed in `routes.ts` | `routes/product.tsx` |
 | Server-only file (storefront) | `.server.ts` suffix | `catalog.server.ts` |
 | Test | next to the file, `.test.ts(x)` | `money.test.ts` |
@@ -154,7 +154,6 @@ Rules: at least one approving review from a human; the author merges; a PR that 
 | Unit and component tests | `pnpm test` | DOC-13 |
 | Logical-properties scan | `node scripts/check-logical.mjs` | DOC-04a §10 |
 | Contrast gate | `node packages/ui/scripts/check-contrast.mjs` | DOC-04a §9 |
-| Admin TS ratio does not decrease | `node scripts/ts-ratio.mjs` | ADR-0002 |
 | OpenAPI snapshot unchanged or updated | part of `pnpm test` in `@noor/contract` | ADR-0005 |
 | Build | `pnpm build` | — |
 
@@ -232,3 +231,4 @@ Rules: at least one approving review from a human; the author merges; a PR that 
 |---|---|
 | 2026-10-02 | Initial version (Phase 1) |
 | 2026-10-02 | Phase 7 consistency review: example route key exists in DOC-10 |
+| 2026-10-04 | ADR-0021: JavaScript with JSDoc; `.ts`/`.tsx` names in this document mean `.js`/`.jsx`; the TS-ratio gate is removed |

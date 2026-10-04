@@ -19,7 +19,7 @@ Index of every architecture decision record (ADR) and the single place where res
 | ADR | Decision | Status | Resolves |
 |---|---|---|---|
 | [0001](ADR-0001-build-vs-adopt.md) | Build a modular-monolith commerce backend; borrow Medusa's patterns, not its code | Proposed | K8, F-09 |
-| [0002](ADR-0002-typescript.md) | Strict TypeScript for all new code; admin migrated incrementally | Proposed | K3, F-15, F-23 |
+| [0002](ADR-0002-typescript.md) | ~~Strict TypeScript for all new code~~ (superseded by 0021) | Superseded | K3, F-15, F-23 |
 | [0003](ADR-0003-monorepo.md) | pnpm workspaces + Turborepo | Proposed | K2, K3 |
 | [0004](ADR-0004-storefront-rendering.md) | Storefront on React Router v8 framework mode, SSR + CDN caching | Proposed | K7 |
 | [0005](ADR-0005-api-and-contract.md) | REST + OpenAPI, one Zod 4 contract package | Proposed | K2, F-14, F-15 |
@@ -38,6 +38,7 @@ Index of every architecture decision record (ADR) and the single place where res
 | [0018](ADR-0018-i18n-rtl.md) | English at launch, Urdu/RTL-ready from day one | Proposed | F-14, F-21, F-22 |
 | [0019](ADR-0019-hosting-baseline.md) | Single-region container host + managed MySQL + CDN | Proposed | F-19 |
 | [0020](ADR-0020-order-and-inventory-consistency.md) | Server-side pricing, idempotent order creation, stock reservation, sequence order numbers | Proposed | K9, K10, K11, F-01…F-03 |
+| [0021](ADR-0021-javascript-with-jsdoc.md) | JavaScript with JSDoc types (supersedes 0002) | Accepted | Owner decision |
 
 Status values: **Proposed** (this phase), **Accepted** (you approve), **Superseded by ADR-xxxx**.
 

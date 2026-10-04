@@ -1,3 +1,3 @@
-import { base } from '@noor/config/eslint'
+import { base, browser } from '@noor/config/eslint'
 
-export default [...base, { ignores: ['storybook-static/**'] }]
+export default [...base, ...browser, { ignores: ['storybook-static/**'] }]

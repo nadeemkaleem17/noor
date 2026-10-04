@@ -28,13 +28,15 @@ Everything is built and run **locally** first. Production is a separate, later p
 |---|---|
 | Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done, M0-03 partly (scripts exist, database users not created) (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done. M2 (design system) done: `@noor/ui` components, stories and the axe gate. M1 (backend core) needs the database first: blocked on MySQL (M0-03/06/07); the next unblocked work is M5 storefront screens that only need the contract, or M3 admin shell pieces that do not call the API |
 | Branch | `chore/M0-01-workspace`, one commit per M0 task, not pushed (`master` is the default branch) |
-| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, `safeHref`, Storybook; components in `src/components/`, one file per family, imported as `@noor/ui/<name>`: Button, Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup, Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips, Spinner, Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast, Select, Combobox, Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge/StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, Link, Ltr, VisuallyHidden, Image, Price, Markdown, RHFField (in field.tsx), ImageUpload). Every story is axe-checked by `test/stories.a11y.test.tsx` (add a story file and it is covered). Component tests: `packages/ui/test/*.test.tsx` use jsdom + Testing Library via `test/dom.tsx` (`renderUi`); put `// @vitest-environment jsdom` at the top of such a file, `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
+| New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, `safeHref`, Storybook; components in `src/components/`, one file per family, imported as `@noor/ui/<name>`: Button, Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup, Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips, Spinner, Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast, Select, Combobox, Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge/StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, Link, Ltr, VisuallyHidden, Image, Price, Markdown, RHFField (in field.jsx), ImageUpload). Every story is axe-checked by `test/stories.a11y.test.jsx` (add a story file and it is covered). Component tests: `packages/ui/test/*.test.jsx` use jsdom + Testing Library via `test/dom.tsx` (`renderUi`); put `// @vitest-environment jsdom` at the top of such a file, `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
 - **Database setup (waiting on the owner):** `node scripts/setup-env.mjs` has run (`.env` files and `.data/mysql-init.sql` exist). The owner chose to **install MySQL 8.4** (2 Oct 2026; the installed 8.0 is not used). After installing, run `mysql -u root -p < .data/mysql-init.sql` once; if 8.4 listens on a port other than 3306, change the two URLs in `apps/api/.env`. Then continue with M0-06.
 - **No Docker, by decision.** Local MySQL 8.4 is to be installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work). Use `STORAGE_DRIVER=local`, `IMAGE_TRANSFORM=none`; spike M0-08 (MinIO/imgproxy) is skipped.
-- `typescript` is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
+- **Writing JavaScript here:** types are JSDoc (`@param`, `@returns`, `@type`, `@template`, `@typedef`; Zod shapes via `z.infer`). Relative imports in Node-run code (`packages/contract`, `packages/i18n`, `apps/api`, `scripts`) need the `.js` extension; Vite code does not. A multi-line JSDoc right after `return` breaks the return (wrap in parentheses). Tuple rest params: `@param {Args<..>} args` without `...`. A converter that did the TS to JS change is not kept; the details are in ADR-0021.
+- On Windows pnpm can leave a broken `jsdom` link inside a `vitest` folder in `node_modules/.pnpm` (jsdom tests then fail with "Cannot find package"): delete that link and recreate it as a junction to `node_modules/.pnpm/jsdom@*/node_modules/jsdom`.
+- `typescript` (dev tool only) is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
 - **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).
 - `pnpm` was installed with `npm i -g pnpm@11.28.3` (`corepack enable` needs administrator rights here).
 
@@ -44,7 +46,7 @@ Open items on this machine:
 apps/admin/          old admin dashboard, moved from admin-panel/ (React 19, Vite 8, JSX, Radix, zod 3).
                      Rebuilt screen by screen from milestone M3; do not add features to the old code.
 legacy/mock-api/     old in-memory Express API. Only here so the old admin runs. Deleted at M7.
-apps/storefront/     new customer site (React Router 8, SSR; routes in app/routes.ts; `~/` = app/; env in .env, see .env.example).
+apps/storefront/     new customer site (React Router 8, SSR; routes in app/routes.js; `~/` = app/; env in .env, see .env.example).
 legacy/storefront/   old customer site. Reference only; no lint script (old lint errors, frozen); it is rewritten as apps/storefront (M5). Deleted at M7.
 plan/                the documentation set
 package.json  pnpm-workspace.yaml  turbo.json
@@ -61,7 +63,7 @@ pnpm test         # vitest: apps/admin, apps/api, packages/config, packages/cont
 pnpm --filter @noor/api start   # API on 127.0.0.1:3000 (needs NODE_ENV, APP_ENV, ADMIN_ORIGIN; see apps/api/.env.example)
 pnpm lint
 pnpm build
-pnpm check        # typecheck + lint + test + TypeScript-share check + physical-direction (RTL) check
+pnpm check        # typecheck (tsc --checkJs) + lint + test + physical-direction (RTL) check
 pnpm --filter @noor/storefront dev     # new storefront on :5174 (the old legacy/storefront also uses 5174: run one)
 pnpm --filter @noor/storefront build && pnpm --filter @noor/storefront start   # production server: CSP header is sent only here
 pnpm --filter @noor/ui storybook   # component workshop on :6006 (toolbars: brand, scheme, direction)
@@ -76,7 +78,8 @@ Env files (gitignored, already present): `legacy/mock-api/.env` (`ADMIN_KEY=dev-
 
 | Area | Decision |
 |---|---|
-| Backend | Node.js, Fastify 5 modular monolith, TypeScript |
+| Language | **JavaScript with JSDoc types** (ADR-0021). No `.ts`/`.tsx`, no TypeScript syntax. `tsc --checkJs` is the typecheck (`pnpm typecheck`) |
+| Backend | Node.js, Fastify 5 modular monolith, plain JavaScript run by Node (no build, no tsx) |
 | Database | MySQL 8.4 + Drizzle ORM (`mysql2`). Order and invoice numbers from a `counters` table |
 | Jobs / search | Own `jobs` table + outbox in MySQL; InnoDB `FULLTEXT` + synonyms |
 | Contract | One Zod 4 package shared by all apps; REST under `/api/v1`; OpenAPI generated |

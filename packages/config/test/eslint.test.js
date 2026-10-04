@@ -28,37 +28,36 @@ const lint = async (file, code) => {
 
 describe('shared ESLint config', () => {
   it('rejects a cross-feature import and allows the same feature', async () => {
-    expect(await lint('src/features/cart/a.ts', "import { x } from '@/features/orders/x'\nexport { x }")).toContain('no-restricted-imports')
-    expect(await lint('src/features/cart/a.ts', "import { x } from '@/features/cart/x'\nexport { x }")).not.toContain('no-restricted-imports')
+    expect(await lint('src/features/cart/a.js', "import { x } from '@/features/orders/x'\nexport { x }")).toContain('no-restricted-imports')
+    expect(await lint('src/features/cart/a.js', "import { x } from '@/features/cart/x'\nexport { x }")).not.toContain('no-restricted-imports')
   })
 
   it('rejects direct primitive and zod imports in apps', async () => {
-    expect(await lint('src/a.ts', "import * as D from '@base-ui/react'\nexport { D }")).toContain('no-restricted-imports')
-    expect(await lint('src/a.ts', "import { z } from 'zod'\nexport { z }")).toContain('no-restricted-imports')
+    expect(await lint('src/a.js', "import * as D from '@base-ui/react'\nexport { D }")).toContain('no-restricted-imports')
+    expect(await lint('src/a.js', "import { z } from 'zod'\nexport { z }")).toContain('no-restricted-imports')
   })
 
   it('rejects features/ imports from lib/', async () => {
-    expect(await lint('src/lib/a.ts', "import { x } from '../features/cart/x'\nexport { x }")).toContain('no-restricted-imports')
+    expect(await lint('src/lib/a.js', "import { x } from '../features/cart/x'\nexport { x }")).toContain('no-restricted-imports')
   })
 
-  it('rejects any, ts-ignore and non-null assertions', async () => {
-    expect(await lint('src/a.ts', 'export const a: any = 1')).toContain('@typescript-eslint/no-explicit-any')
-    expect(await lint('src/a.ts', '// @ts-ignore\nexport const a: number = "x"')).toContain('@typescript-eslint/ban-ts-comment')
-    expect(await lint('src/a.ts', 'export const a = (m: Map<string, number>) => m.get("k")!')).toContain('@typescript-eslint/no-non-null-assertion')
-    expect(await lint('src/a.test.ts', 'export const a = (m: Map<string, number>) => m.get("k")!')).not.toContain('@typescript-eslint/no-non-null-assertion')
+  it('rejects ts-ignore and an undescribed ts-expect-error (types are JSDoc, but tsc still reads these comments)', async () => {
+    expect(await lint('src/a.js', '// @ts-ignore\nexport const a = 1')).toContain('@typescript-eslint/ban-ts-comment')
+    expect(await lint('src/a.js', '// @ts-expect-error\nexport const a = 1')).toContain('@typescript-eslint/ban-ts-comment')
+    expect(await lint('src/a.js', '// @ts-expect-error the schema is stricter than this call\nexport const a = 1')).not.toContain('@typescript-eslint/ban-ts-comment')
   })
 
-  it('rejects process.env outside platform/config.ts', async () => {
-    expect(await lint('src/a.ts', 'export const a = process.env.X')).toContain('no-restricted-properties')
-    expect(await lint('src/platform/config.ts', 'export const a = process.env.X')).not.toContain('no-restricted-properties')
+  it('rejects process.env outside platform/config.js', async () => {
+    expect(await lint('src/a.js', 'export const a = process.env.X')).toContain('no-restricted-properties')
+    expect(await lint('src/platform/config.js', 'export const a = process.env.X')).not.toContain('no-restricted-properties')
   })
 
   it('requires a task id on TODO comments', async () => {
-    expect(await lint('src/a.ts', '// TODO fix later\nexport const a = 1')).toContain('noor/todo-needs-task-id')
-    expect(await lint('src/a.ts', '// TODO(M2-031): fix later\nexport const a = 1')).not.toContain('noor/todo-needs-task-id')
+    expect(await lint('src/a.js', '// TODO fix later\nexport const a = 1')).toContain('noor/todo-needs-task-id')
+    expect(await lint('src/a.js', '// TODO(M2-031): fix later\nexport const a = 1')).not.toContain('noor/todo-needs-task-id')
   })
 
   it('rejects .only in tests', async () => {
-    expect(await lint('src/a.test.ts', "const it = { only: (_n: string, _f: () => void) => {} }\nit.only('x', () => {})")).toContain('no-restricted-syntax')
+    expect(await lint('src/a.test.js', "const it = { only: () => {} }\nit.only('x', () => {})")).toContain('no-restricted-syntax')
   })
 })

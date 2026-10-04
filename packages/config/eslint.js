@@ -20,7 +20,7 @@ const todoNeedsTaskId = {
   },
 }
 
-/** TypeScript + JavaScript baseline for every workspace (ADR-0002, DOC-15). */
+/** JavaScript baseline for every workspace: types are JSDoc, checked by tsc --checkJs (ADR-0021). */
 export const base = [
   { ignores: ['**/dist/**', '**/build/**', '**/.turbo/**', '**/node_modules/**'] },
   js.configs.recommended,
@@ -37,12 +37,12 @@ export const base = [
     },
   },
   // Tests may use non-null assertions (ADR-0002).
-  { files: ['**/*.test.{ts,tsx}'], rules: { '@typescript-eslint/no-non-null-assertion': 'off' } },
+  { files: ['**/*.test.{js,jsx}'], rules: { '@typescript-eslint/no-non-null-assertion': 'off' } },
 ]
 
-/** Only the API's config.ts may read process.env (plan/08-backend-architecture.md section 12). */
+/** Only the API's config.js may read process.env (plan/08-backend-architecture.md section 12). */
 export const noProcessEnv = [
-  { files: ['**/*.{ts,tsx,js}'], ignores: ['**/platform/config.ts'], rules: { 'no-restricted-properties': ['error', { object: 'process', property: 'env', message: 'Read configuration through platform/config.ts.' }] } },
+  { files: ['**/*.{js,jsx}'], ignores: ['**/platform/config.js'], rules: { 'no-restricted-properties': ['error', { object: 'process', property: 'env', message: 'Read configuration through platform/config.js.' }] } },
 ]
 
 // ESLint flat config does not merge options of the same rule across entries: a later `no-restricted-imports`
@@ -75,3 +75,6 @@ export const appRules = ({ alias = '@', featuresDir = 'src/features', cwd = proc
       }),
     })),
 ]
+
+/** Browser globals (`document`, `window`, `fetch`) for code that runs in a browser or jsdom: @noor/ui and the storefront. */
+export const browser = [{ languageOptions: { globals: { ...globals.browser } } }]
