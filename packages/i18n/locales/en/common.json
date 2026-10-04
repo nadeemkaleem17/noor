@@ -13,5 +13,50 @@
   "noResults": "No results",
   "searching": "Searching",
   "notifications": "Notifications",
-  "remove": "Remove {label}"
+  "remove": "Remove {label}",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page {n}",
+  "pagination": "Pagination",
+  "breadcrumb": "Breadcrumb",
+  "loadMore": "Load more",
+  "showing": "Showing {shown} of {total}",
+  "pause": "Pause",
+  "play": "Play",
+  "previousSlide": "Previous slide",
+  "nextSlide": "Next slide",
+  "was": "was",
+  "status": {
+    "order": {
+      "pending": "Pending",
+      "pending_confirmation": "Awaiting confirmation",
+      "confirmed": "Confirmed",
+      "dispatched": "Dispatched",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "payment": {
+      "unpaid": "Unpaid",
+      "deposit_paid": "Deposit paid",
+      "paid": "Paid",
+      "refund_due": "Refund due",
+      "partially_refunded": "Partly refunded",
+      "refunded": "Refunded"
+    },
+    "product": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "stock": {
+      "in_stock": "In stock",
+      "low_stock": "Low stock",
+      "sold_out": "Sold out",
+      "made_to_order": "Made to order",
+      "preorder": "Pre-order"
+    }
+  },
+  "slideOf": "{n} of {total}"
 }

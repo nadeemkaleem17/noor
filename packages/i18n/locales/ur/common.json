@@ -13,5 +13,50 @@
   "noResults": "کوئی نتیجہ نہیں",
   "searching": "تلاش جاری ہے",
   "notifications": "اطلاعات",
-  "remove": "{label} ہٹائیں"
+  "remove": "{label} ہٹائیں",
+  "previous": "پچھلا",
+  "next": "اگلا",
+  "page": "صفحہ {n}",
+  "pagination": "صفحات",
+  "breadcrumb": "راستہ",
+  "loadMore": "مزید دیکھیں",
+  "showing": "{total} میں سے {shown} دکھائے جا رہے ہیں",
+  "pause": "روکیں",
+  "play": "چلائیں",
+  "previousSlide": "پچھلی سلائیڈ",
+  "nextSlide": "اگلی سلائیڈ",
+  "was": "پہلے",
+  "status": {
+    "order": {
+      "pending": "زیر التوا",
+      "pending_confirmation": "تصدیق کا منتظر",
+      "confirmed": "تصدیق شدہ",
+      "dispatched": "روانہ",
+      "delivered": "پہنچ گیا",
+      "cancelled": "منسوخ",
+      "returned": "واپس"
+    },
+    "payment": {
+      "unpaid": "ادائیگی باقی",
+      "deposit_paid": "ایڈوانس ادا",
+      "paid": "ادا شدہ",
+      "refund_due": "رقم واپسی باقی",
+      "partially_refunded": "جزوی رقم واپس",
+      "refunded": "رقم واپس"
+    },
+    "product": {
+      "draft": "مسودہ",
+      "scheduled": "مقررہ",
+      "active": "فعال",
+      "archived": "محفوظ شدہ"
+    },
+    "stock": {
+      "in_stock": "دستیاب",
+      "low_stock": "کم اسٹاک",
+      "sold_out": "ختم",
+      "made_to_order": "آرڈر پر تیار",
+      "preorder": "پری آرڈر"
+    }
+  },
+  "slideOf": "{total} میں سے {n}"
 }
