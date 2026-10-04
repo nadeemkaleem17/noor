@@ -490,6 +490,11 @@ export function createSettingsService({ db, config, media, shippingFacts = async
       return { items: (await repo.activePages(db)).map((p) => ({ slug: p.slug, title: p.title, updatedAt: p.updatedAt.toISOString() })) }
     },
 
+    /** Units at or below which a variant reads "low stock". */
+    async lowStock() {
+      return (await readValue('store')).value.thresholds.lowStock
+    },
+
     /** Is this media still used by a settings document? Checked before a file is deleted. @param {string} mediaId */
     async mediaInUse(mediaId) {
       for (const key of /** @type {const} */ (['store', 'home'])) {

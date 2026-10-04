@@ -113,6 +113,8 @@ Movement = { id: Id, variantId: Id, sku: string, productTitle: string, delta: in
              reason: MovementReason, note?: string, orderNumber?: string, staffName?: string, createdAt: IsoDate }
 ```
 
+Built at M1-10 (`packages/contract/src/inventory.js`, `apps/api/src/modules/inventory`). `admin.inventory.adjust` answers `stock_below_reserved` with `reserved`, `variant_unavailable` for a variant that does not count stock, and `validation_failed` (`note` / `required`) for `damaged` and `other` without a note; an adjustment that changes nothing writes no movement and no audit entry. `orderNumber` of a movement stays absent until orders exist. `admin.products.create` also takes `initialStock: [{ variantKey, quantity }]` (counted variants only; written as `initial` movements), and a read of a product shows `onHand` and `reserved` for its counted variants. `catalog.subscribeBackInStock` (public) is built with the public catalog (M1-12) on top of `inventory.subscribe`.
+
 ## 5. Categories
 
 | Key | Method & path | Permission | Request | Response | Errors |

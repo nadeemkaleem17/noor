@@ -177,6 +177,10 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
     if (input.madeToOrder && input.madeToOrder.leadMinDays > input.madeToOrder.leadMaxDays) issues.push(issue('madeToOrder.leadMinDays', 'too_big'))
     if (input.bundleProductIds?.length && input.kind !== 'bundle') issues.push(issue('bundleProductIds', 'invalid_format'))
     if (input.badges && new Set(input.badges).size !== input.badges.length) issues.push(issue('badges', 'not_unique'))
+    for (const [i, row] of (/** @type {{ initialStock?: { variantKey: string, quantity: number }[] }} */ (input).initialStock ?? []).entries()) {
+      const v = input.variants.find((x) => x.key === row.variantKey)
+      if (!v || v.stockMode !== 'counted') issues.push(issue(`initialStock.${i}.variantKey`, 'invalid_format'))
+    }
     input.media.forEach((m, i) => {
       if (m.optionValueKey && !valueKeys.has(m.optionValueKey)) issues.push(issue(`media.${i}.optionValueKey`, 'invalid_format'))
     })
@@ -328,6 +332,8 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
 
     /** @type {Map<string, string>} */
     const valueIdByKey = new Map()
+    /** @type {Map<string, string>} */
+    const variantIdByKey = new Map()
     for (const [oi, o] of input.options.entries()) {
       const optionId = o.id ?? uuidv7()
       const cols = { name: o.name, role: o.role, display: o.display, sizeSystemId: o.sizeSystemId ?? null, sortOrder: oi, i18n: o.i18n?.ur?.name ? { ur: { name: o.i18n.ur.name } } : null }
@@ -356,6 +362,7 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
     if (staying.length) await tx.update(variants).set({ sku: sql`concat('~', right(${variants.id}, 8))`, optionKey: sql`concat('~', ${variants.id})` }).where(inArray(variants.id, staying))
     for (const [i, v] of input.variants.entries()) {
       const variantId = v.id ?? uuidv7()
+      variantIdByKey.set(v.key, variantId)
       const valueIds = v.optionValueKeys.map((k) => /** @type {string} */ (valueIdByKey.get(k)))
       const cols = {
         sku: v.sku.toUpperCase(),
@@ -401,6 +408,7 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
     if (input.bundleProductIds?.length) await tx.insert(bundleItems).values(input.bundleProductIds.map((childProductId, i) => ({ bundleProductId: id, childProductId, sortOrder: i })))
     await tx.delete(productRelated).where(eq(productRelated.productId, id))
     if (input.relatedIds?.length) await tx.insert(productRelated).values(input.relatedIds.map((relatedProductId, i) => ({ productId: id, relatedProductId, sortOrder: i })))
+    return { variantIdByKey }
   }
 
   /**
@@ -435,7 +443,10 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
           await taxonomy.dropRedirect(tx, 'product', input.handle)
           await tx.insert(products).values({ id: productId, ...cols, publishedAt, version: 1, createdAt: at, updatedAt: at })
         }
-        await writeParts(tx, productId, input, at)
+        const { variantIdByKey } = await writeParts(tx, productId, input, at)
+        await stock.ensureLevels?.(tx, [...variantIdByKey.values()])
+        const initial = (/** @type {{ initialStock?: { variantKey: string, quantity: number }[] }} */ (input).initialStock ?? []).map((r) => ({ variantId: /** @type {string} */ (variantIdByKey.get(r.variantKey)), quantity: r.quantity }))
+        if (!existing && initial.length) await stock.initial?.(tx, initial, actor.staffId)
         await recomputeProductCache(tx, productId, stock)
         const after = (await load(tx, [productId]))[0]
         await record(tx, { ...actorOf(actor, req), action: existing ? 'product.updated' : 'product.created', entityType: 'product', entityId: productId, entityLabel: input.handle, diff: diffOf(auditView(before), auditView(after)) })
@@ -466,6 +477,10 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
 
   return {
     recompute: (/** @type {Db} */ tx, /** @type {string} */ productId) => recomputeProductCache(tx, productId, stock),
+    /** After stock moved: the cached stock status of these products. */
+    async recomputeMany(/** @type {Db} */ tx, /** @type {string[]} */ ids) {
+      for (const id of ids) await recomputeProductCache(tx, id, stock)
+    },
     load: (/** @type {Db} */ x, /** @type {string[]} */ ids) => load(x, ids),
     rowsOf,
     get: (/** @type {string} */ id) => view(db, id),

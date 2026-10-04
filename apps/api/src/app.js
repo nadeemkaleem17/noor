@@ -15,6 +15,7 @@ import { createStorage } from './platform/storage.js'
 import { registerLocalStorageRoutes } from './platform/http/storage-routes.js'
 import { createAuditService } from './modules/audit/index.js'
 import { createCatalogService } from './modules/catalog/index.js'
+import { createInventory } from './modules/inventory/index.js'
 import { createMediaService } from './modules/media/index.js'
 import { createSettingsService } from './modules/settings/index.js'
 import { createShippingService } from './modules/shipping/index.js'
@@ -55,9 +56,13 @@ export async function buildApp(opts) {
   let settings
   const media = createMediaService({ db, config, storage, inUse: (id) => settings.mediaInUse(id) }) // a file a settings document shows cannot be deleted
   const shipping = createShippingService({ db })
-  const catalog = createCatalogService({ db, config, media })
+  /** @type {ReturnType<typeof createCatalogService>} */
+  let catalog
+  // stock and the catalog know each other: stock tells products to refresh their cached status, products ask stock for levels
+  const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
+  catalog = createCatalogService({ db, config, media, stock: inventory.stock })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, catalog })))
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, catalog, inventory })))
 
   const app = Fastify({
     logger: loggerOptions(config),

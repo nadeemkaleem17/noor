@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { auditRoutes, authRoutes } from './auth.js'
 import { contentPublicRoutes, contentRoutes } from './content.js'
+import { inventoryRoutes } from './inventory.js'
 import { mediaRoutes } from './media.js'
 import { settingsPublicRoutes, settingsRoutes } from './settings.js'
 import { shippingRoutes } from './shipping.js'
@@ -44,6 +45,7 @@ export const routes = defineRoutes({
   ...shippingRoutes,
   ...taxonomyRoutes,
   ...productRoutes,
+  ...inventoryRoutes,
   // DOC-10.1
   'shipping.listCities': {
     method: 'GET', path: '/shipping/cities', auth: 'public', cache: 'shared',

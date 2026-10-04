@@ -19,7 +19,7 @@ try {
 
 const log = pino(/** @type {import('pino').LoggerOptions} */ (loggerOptions(config) || { level: 'silent' }))
 const { pool, db } = createAppDatabase(config)
-const background = startBackground({ db, ...backgroundOf({ db, config }), eventHandlers: {}, log })
+const background = startBackground({ db, ...backgroundOf({ db, config, log }), eventHandlers: {}, log })
 log.info('worker started')
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

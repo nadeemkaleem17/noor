@@ -6,6 +6,7 @@ import { Slug } from './content.js'
 import { Enum } from './enums.js'
 import { Money } from './money.js'
 import { Page, PageQuery } from './pagination.js'
+import { InitialStock } from './inventory.js'
 import { Id, Image, IsoDate, Swatch } from './primitives.js'
 import { defineRoutes } from './routes.js'
 
@@ -206,7 +207,7 @@ export const productRoutes = defineRoutes({
     body: ProductInput, response: z.strictObject({ checks: z.array(PublishCheck) }),
   },
   'admin.products.get': { method: 'GET', path: '/admin/products/:id', auth: 'staff', permission: 'products:read', params: IdParams, response: AdminProduct },
-  'admin.products.create': { method: 'POST', path: '/admin/products', auth: 'staff', permission: 'products:write', status: 201, body: ProductInput, response: AdminProduct },
+  'admin.products.create': { method: 'POST', path: '/admin/products', auth: 'staff', permission: 'products:write', status: 201, body: ProductInput.safeExtend({ initialStock: InitialStock.optional() }), response: AdminProduct },
   'admin.products.update': { method: 'PUT', path: '/admin/products/:id', auth: 'staff', permission: 'products:write', params: IdParams, body: ProductInput.safeExtend({ version: z.int().min(1) }), response: AdminProduct },
   'admin.products.delete': { method: 'DELETE', path: '/admin/products/:id', auth: 'staff', permission: 'products:delete', params: IdParams, status: 204, response: z.undefined() },
   'admin.products.duplicate': { method: 'POST', path: '/admin/products/:id/duplicate', auth: 'staff', permission: 'products:write', params: IdParams, status: 201, response: AdminProduct },

@@ -8,6 +8,7 @@ import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { collections, products } from '../src/db/schema/products.js'
+import { reservations } from '../src/db/schema/inventory.js'
 import { attributes, categories, formSchemas, sizeCharts, sizeSystems } from '../src/db/schema/taxonomy.js'
 import { uuidv7 } from '../src/platform/ids.js'
 import { setClock } from '../src/platform/clock.js'
@@ -27,6 +28,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
     await t.db.delete(collections)
+    await t.db.delete(reservations)
+    await t.migrate.pool.query('DELETE FROM inventory_movements')
     await t.db.delete(products)
     for (const table of [pages, menus, settings, shippingZones, couriers]) await t.db.delete(table)
     await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City']))
@@ -358,6 +361,10 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.products.update'] = { prepare: withProduct, act: ({ b, product, categoryId }) => b.call('PUT', `/admin/products/${product.id}`, { body: { ...productBody(categoryId), title: 'Changed', variants: [{ ...productBody(categoryId).variants[0], id: product.variants[0].id }], version: 1 } }) }
     samples['admin.products.delete'] = { prepare: withProduct, act: ({ b, product }) => b.call('DELETE', `/admin/products/${product.id}`) }
     samples['admin.products.duplicate'] = { prepare: withProduct, act: ({ b, product }) => b.call('POST', `/admin/products/${product.id}/duplicate`) }
+    samples['admin.inventory.adjust'] = {
+      prepare: withProduct,
+      act: ({ b, product }) => b.call('POST', '/admin/inventory/adjustments', { body: { variantId: product.variants[0].id, mode: 'add', quantity: 5, reason: 'restock' } }),
+    }
     const collectionBody = { title: 'Eid drop', handle: 'eid-drop', status: 'draft', featured: false, productIds: [] }
     samples['admin.collections.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/collections', { body: collectionBody }) }
     const withCollection = async () => {

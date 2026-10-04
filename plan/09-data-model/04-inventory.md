@@ -87,6 +87,8 @@ Back-in-stock alerts (`features.notifyMe`).
 
 Rows are deleted 7 days after `notified_at`, or 90 days after creation if never notified (DOC-11 §8.1).
 
+Built at M1-10 (`apps/api/src/db/schema/inventory.js`, migration 0008). `reservations.order_id`, `reservations.order_line_id` and `inventory_movements.order_id` are plain columns until the orders tables exist; M4's migration adds the foreign keys. A variant that has ledger rows cannot be deleted (`inventory_movements.variant_id` is RESTRICT), so removing it from a product is `409 in_use`. Level rows are created with a counted variant (`ensureLevels`, also on demand), and `lowStock` comes from the store setting `thresholds.lowStock`.
+
 ## 3. Operations (all inside the caller's transaction)
 
 | Operation | Called by | Steps |
@@ -94,7 +96,7 @@ Rows are deleted 7 days after `notified_at`, or 90 days after creation if never 
 | `reserve(tx, lines)` | `orders.createOrder` | 1. Expand bundle lines to child variants. 2. **Aggregate quantity per variant** across all lines. 3. `SELECT … FROM inventory_levels WHERE variant_id IN (…) ORDER BY variant_id FOR UPDATE`. 4. For each: if `on_hand − reserved < qty` → throw `insufficient_stock` with `{ variantId, available }` (nothing written). 5. `UPDATE … SET reserved = reserved + qty`. 6. Insert `reservations` |
 | `release(tx, orderId)` | cancel; reservation expiry | Lock the variants (ascending); `reserved −= quantity` for each `active` reservation; set them `released`. No movement (on-hand never changed) |
 | `commit(tx, orderId)` | dispatch | Lock; `on_hand −= q`, `reserved −= q`; reservations → `committed`; insert `sale` movements (`delta = −q`) |
-| `restock(tx, orderId, lines)` | return | Lock; per returned unit: restock → `on_hand += q` + `return_restock` movement; not restocked → the `return_damaged` pair |
+| `restock(tx, orderId, lines)` (`lines`: `{ variantId, quantity, restock }`) | return | Lock; per returned unit: restock → `on_hand += q` + `return_restock` movement; not restocked → the `return_damaged` pair |
 | `adjust(tx, variantId, mode, qty, reason, note, staff)` | admin | Lock; compute the delta (`add`, `remove`, `set`); reject if the result would make `on_hand < reserved` (`stock_below_reserved`, with the reserved count); update; insert the movement |
 | `editReserved(tx, orderId, changes)` | order edit before dispatch | Release the old quantities and reserve the new ones in one locked pass |
 

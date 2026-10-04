@@ -32,6 +32,8 @@ admin.formSchemas.delete
 admin.formSchemas.get
 admin.formSchemas.list
 admin.formSchemas.update
+admin.inventory.adjust
+admin.inventory.listMovements
 admin.links.search
 admin.me.changePassword
 admin.me.confirmPassword

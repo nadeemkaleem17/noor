@@ -12,6 +12,9 @@ import { bundleItems, collectionProducts, collections, productAttributeValues, p
  * @typedef {object} Stock
  * @property {(db: Db, variantIds: string[]) => Promise<Map<string, number>>} available units that can be sold now, by variant
  * @property {() => Promise<number>} lowStockThreshold at or below this many, a variant is "low stock"
+ * @property {(db: Db, variantIds: string[]) => Promise<Map<string, { onHand: number, reserved: number }>>} [levels] counted variants' on hand and reserved
+ * @property {(tx: Db, variantIds: string[]) => Promise<void>} [ensureLevels] gives every counted variant among them a level row
+ * @property {(tx: Db, rows: { variantId: string, quantity: number }[], staffId: string) => Promise<void>} [initial] the first quantities of a new product
  */
 /** @type {Stock} */
 export const noStock = {
@@ -71,6 +74,7 @@ export async function loadProducts(db, ids, { media, stock }) {
   const images = await media.imagesFor(links.map((l) => l.mediaId))
   const mediaAlt = links.length ? await db.select({ id: mediaTable.id, alt: mediaTable.alt }).from(mediaTable).where(inArray(mediaTable.id, links.map((l) => l.mediaId))) : []
   const available = await stock.available(db, variantIds)
+  const levels = (await stock.levels?.(db, variantIds)) ?? null
   const low = await stock.lowStockThreshold()
   const attrById = new Map(attrs.map((a) => [a.id, a]))
 
@@ -98,6 +102,7 @@ export async function loadProducts(db, ids, { media, stock }) {
         maxPerOrder: v.maxPerOrder,
         enabled: v.enabled,
         stockStatus: variantStatus(v.stockMode, available.get(v.id) ?? 0, low),
+        ...(levels && v.stockMode === 'counted' ? { onHand: levels.get(v.id)?.onHand ?? 0, reserved: levels.get(v.id)?.reserved ?? 0 } : {}),
         hasOrders: false, // ponytail: order lines arrive with orders (M4); the foreign key already refuses deleting a variant they use
       }
     })
