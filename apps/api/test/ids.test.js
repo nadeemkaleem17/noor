@@ -7,13 +7,13 @@ describe('uuidv7', () => {
   })
 
   it('carries the timestamp in the first 48 bits', () => {
-    const ms = Date.UTC(2026, 9, 4, 12, 0, 0, 123) + 1_000_000 // far ahead so the monotonic clock does not interfere
+    const ms = Date.now() + 1_000_000 // ahead of anything made so far, so the monotonic clock does not interfere
     const id = uuidv7(ms)
     expect(parseInt(id.replace(/-/g, '').slice(0, 12), 16)).toBe(ms)
   })
 
   it('sorts in creation order, also within one millisecond', () => {
-    const ms = Date.now() + 5_000_000
+    const ms = Date.now() + 5_000_000_000
     const ids = Array.from({ length: 5000 }, () => uuidv7(ms))
     expect([...ids].sort()).toEqual(ids)
     expect(new Set(ids).size).toBe(ids.length)

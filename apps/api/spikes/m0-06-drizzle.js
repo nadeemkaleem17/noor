@@ -4,6 +4,7 @@
 import { execFileSync } from 'node:child_process'
 import { readdirSync } from 'node:fs'
 import path from 'node:path'
+import { isDeepStrictEqual } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import { eq, sql } from 'drizzle-orm'
 import { createDatabase, transaction } from '../src/platform/db.js'
@@ -46,7 +47,8 @@ await check('json column round-trips objects and arrays', async () => {
   const data = { a: 1, nested: { list: [1, 'x', null] }, text: 'روبایا' }
   await db.insert(spikeItems).values({ name: 'js', qty: 1, data })
   const [row] = await db.select().from(spikeItems).where(eq(spikeItems.name, 'js'))
-  assert(JSON.stringify(row?.data) === JSON.stringify(data), `read back ${JSON.stringify(row?.data)}`)
+  // MySQL stores JSON with its own key order (shorter keys first), so compare the structure, not the text
+  assert(isDeepStrictEqual(row?.data, data), `read back ${JSON.stringify(row?.data)}`)
 })
 
 await check('table-level CHECK is created and enforced', async () => {
@@ -54,7 +56,9 @@ await check('table-level CHECK is created and enforced', async () => {
   try {
     await db.insert(spikeItems).values({ name: 'neg', qty: -1 })
   } catch (e) {
-    rejected = /** @type {{ errno?: number }} */ (e).errno === 3819 || /check/i.test(String(e))
+    // Drizzle wraps the driver error: the MySQL error (3819 = check constraint violated) is in `cause`
+    const cause = /** @type {{ cause?: { errno?: number } }} */ (e).cause
+    rejected = cause?.errno === 3819
   }
   assert(rejected, 'a negative qty was accepted')
 })
@@ -87,23 +91,31 @@ await check('SELECT ... FOR UPDATE SKIP LOCKED via .for("update", { skipLocked: 
 })
 
 await check('deadlock (error 1213) is retried by transaction() and both sides finish', async () => {
+  // lock by primary key: a lookup on an unindexed column scans, and under REPEATABLE READ a scan locks every row it passes
   await db.insert(spikeItems).values([{ name: 'dA', qty: 0 }, { name: 'dB', qty: 0 }])
+  const rows0 = await db.select({ id: spikeItems.id, name: spikeItems.name }).from(spikeItems).where(sql`${spikeItems.name} IN ('dA','dB')`)
+  const idA = rows0.find((r) => r.name === 'dA')?.id ?? 0
+  const idB = rows0.find((r) => r.name === 'dB')?.id ?? 0
   let attempts = 0
+  let met = false
   /** @type {(() => void)[]} */
   const waiting = []
   const barrier = () =>
     new Promise((resolve) => {
       waiting.push(() => resolve(undefined))
-      if (waiting.length === 2) waiting.splice(0).forEach((f) => f())
+      if (waiting.length === 2) {
+        met = true
+        waiting.splice(0).forEach((f) => f())
+      }
     })
-  const run = (/** @type {string} */ first, /** @type {string} */ second) =>
+  const run = (/** @type {number} */ first, /** @type {number} */ second) =>
     transaction(db, async (tx) => {
       attempts++
-      await tx.select().from(spikeItems).where(eq(spikeItems.name, first)).for('update')
-      if (attempts <= 2) await barrier() // only the first round meets in the middle
-      await tx.update(spikeItems).set({ qty: sql`${spikeItems.qty} + 1` }).where(eq(spikeItems.name, second))
+      await tx.select().from(spikeItems).where(eq(spikeItems.id, first)).for('update')
+      if (!met) await barrier() // only the first round meets in the middle, so the retry can finish
+      await tx.update(spikeItems).set({ qty: sql`${spikeItems.qty} + 1` }).where(eq(spikeItems.id, second))
     })
-  await Promise.all([run('dA', 'dB'), run('dB', 'dA')])
+  await Promise.all([run(idA, idB), run(idB, idA)])
   const rows = await db.select({ name: spikeItems.name, qty: spikeItems.qty }).from(spikeItems).where(sql`${spikeItems.name} IN ('dA','dB')`)
   assert(rows.every((r) => r.qty === 1), `quantities ${JSON.stringify(rows)}`)
   assert(attempts >= 3, `no retry happened (attempts ${attempts})`)

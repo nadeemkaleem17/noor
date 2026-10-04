@@ -40,6 +40,9 @@ describe('withRetry', () => {
     expect(isRetryable({ code: 'ER_LOCK_WAIT_TIMEOUT' })).toBe(true)
     expect(isRetryable({ errno: 1062 })).toBe(false)
     expect(isRetryable(null)).toBe(false)
+    // Drizzle 0.45 wraps driver errors; the MySQL error is the cause (found by spike M0-06)
+    expect(isRetryable(Object.assign(new Error('Failed query'), { cause: deadlock }))).toBe(true)
+    expect(isRetryable(Object.assign(new Error('Failed query'), { cause: { errno: 1062 } }))).toBe(false)
   })
 })
 

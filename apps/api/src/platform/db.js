@@ -27,7 +27,9 @@ export const createAppDatabase = (config) => createDatabase(config.DATABASE_URL,
  * @returns {boolean}
  */
 export function isRetryable(error) {
-  const e = /** @type {{ errno?: number; code?: string; } | null} */ (error)
+  const e = /** @type {{ errno?: number; code?: string; cause?: unknown } | null} */ (error)
+  // Drizzle wraps the driver error in a DrizzleQueryError and keeps the original as `cause`
+  if (e?.cause && isRetryable(e.cause)) return true
   return e?.errno === 1213 || e?.errno === 1205 || e?.code === 'ER_LOCK_DEADLOCK' || e?.code === 'ER_LOCK_WAIT_TIMEOUT'
 }
 
