@@ -91,6 +91,8 @@ AdminCity = { id: Id, name: string, province: string, aliases: string[], isMajor
 Courier = { id: Id, name: string, trackingUrlPattern?: string, trackingRequired: boolean, enabled: boolean, sortOrder: int }
 ```
 
+Built at M1-07 (`packages/contract/src/shipping.js`, `apps/api/src/modules/shipping`). `ZoneInput.methods` has 1 to 4 entries and at least one enabled; a method with an `id` is updated, one without is created, one left out is deleted, and the array order is the display order. A change that would leave no city in a zone with an enabled method (while there was one before) is `422 no_deliverable_city`; an empty store may still be set up zone by zone. `openCarts` is always 0 until the cart module exists. `quote` is a service function, not a route: `shipping.quote(db, { cityId, methodId?, amountAfterDiscount })` returns the zone, method, fee (zero at or above the method's `freeAbove`), ETA and `codAllowed`, or throws `city_not_served`.
+
 ## 6. Example
 
 ```http

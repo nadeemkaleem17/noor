@@ -22,12 +22,13 @@ afterEach(async () => {
 })
 
 describe('real route table', () => {
-  it('serves the public route with a request id and a parsed response', async () => {
+  it('answers with a request id on every response', async () => {
     const app = await make()
-    const res = await app.inject('/api/v1/shipping/cities')
+    const res = await app.inject('/healthz')
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ items: [] })
     expect(res.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
+    expect((await app.inject({ url: '/healthz', headers: { 'x-request-id': 'req-from-the-edge-1' } })).headers['x-request-id']).toBe('req-from-the-edge-1')
+    expect((await app.inject({ url: '/healthz', headers: { 'x-request-id': '<script>' } })).headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
   })
 
   it('denies the staff route by default (no session exists yet)', async () => {

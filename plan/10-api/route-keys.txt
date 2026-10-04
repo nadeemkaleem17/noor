@@ -9,6 +9,9 @@ admin.auth.resetPassword
 admin.auth.verifyTwoFactor
 admin.content.getHome
 admin.content.updateHome
+admin.couriers.create
+admin.couriers.list
+admin.couriers.update
 admin.links.search
 admin.me.changePassword
 admin.me.confirmPassword
@@ -45,6 +48,15 @@ admin.settings.updateCheckout
 admin.settings.updatePayments
 admin.settings.updateStore
 admin.settings.updateTheme
+admin.shipping.createCity
+admin.shipping.createZone
+admin.shipping.deleteZone
+admin.shipping.listCities
+admin.shipping.listZones
+admin.shipping.matchCities
+admin.shipping.updateCity
+admin.shipping.updateZone
+admin.shipping.zoneImpact
 admin.staff.clearLock
 admin.staff.deactivate
 admin.staff.get

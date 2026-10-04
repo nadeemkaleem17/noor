@@ -54,10 +54,9 @@ describe('response headers', () => {
     expect((await prod.inject('/api/v1/shipping/cities')).headers['strict-transport-security']).toBe('max-age=31536000; includeSubDomains')
   })
 
-  it('admin responses are never cached; public ones say what their route flag says', async () => {
+  it('admin responses are never cached; the health check says nothing (the shared-cache flag is tested with the routes that use it)', async () => {
     const app = await make({ config })
     expect((await app.inject('/api/v1/admin/system')).headers['cache-control']).toBe('no-store')
-    expect((await app.inject('/api/v1/shipping/cities')).headers['cache-control']).toBe('public, s-maxage=60, stale-while-revalidate=600') // route flag cache: shared
     expect((await app.inject('/healthz')).headers['cache-control']).toBeUndefined()
   })
 

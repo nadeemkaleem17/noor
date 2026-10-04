@@ -5,19 +5,20 @@ import { platformSchedule } from '../platform/scheduler.js'
 import { createStorage } from '../platform/storage.js'
 import { createMediaService, mediaHandlers, mediaJobs } from './media/index.js'
 import { settingsHandlers } from './settings/routes.js'
+import { shippingHandlers } from './shipping/routes.js'
 
-// ponytail: shipping.listCities is a placeholder until M1-07; admin.system.info grows with the job queue numbers (M1-01 added the tables).
+// ponytail: admin.system.info grows with the job queue numbers (M1-01 added the tables).
 /**
  * @param {import('../platform/config.js').Config} config
- * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService> }} deps
+ * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService> }} deps
  * @returns {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>}
  */
-export const appHandlers = (config, { auth, audit, media, settings }) => ({
+export const appHandlers = (config, { auth, audit, media, settings, shipping }) => ({
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (authHandlers(auth, config))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (auditHandlers(audit))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (mediaHandlers(media))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (settingsHandlers(settings))),
-  'shipping.listCities': async () => ({ items: [] }),
+  ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (shippingHandlers(shipping))),
   'admin.system.info': async () => ({ environment: config.APP_ENV, version: config.APP_VERSION, queue: { pending: 0, dead: 0 } }),
 })
 

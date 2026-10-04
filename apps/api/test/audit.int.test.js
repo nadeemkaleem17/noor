@@ -1,11 +1,12 @@
 // M1-03: the audit trail is append-only at the database, readable through the API with masking, and every admin mutation writes to it.
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { generateSync } from 'otplib'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { routes, themePresets } from '@noor/contract'
 import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
+import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { setClock } from '../src/platform/clock.js'
 import { record } from '../src/modules/audit/index.js'
 import { newTotpSecret } from '../src/modules/auth/totp.js'
@@ -22,7 +23,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     setClock(null)
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
-    for (const table of [pages, menus, settings]) await t.db.delete(table)
+    for (const table of [pages, menus, settings, shippingZones, couriers]) await t.db.delete(table)
+    await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City']))
     await t.db.delete(staffUsers)
   })
 
@@ -258,12 +260,47 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.pages.update'] = { prepare: withPage, act: ({ b, id }) => b.call('PUT', `/admin/pages/${id}`, { body: { ...page, bodyMd: 'Changed', version: 1 } }) }
     samples['admin.pages.delete'] = { prepare: withPage, act: ({ b, id }) => b.call('DELETE', `/admin/pages/${id}`) }
 
+    const method = { label: 'Standard', fee: { amount: 25000, currency: 'PKR' }, etaMinDays: 3, etaMaxDays: 5, codAllowed: true, enabled: true }
+    const zoneBody = { name: 'Everywhere', cityIds: [], methods: [method] }
+    const withZone = async () => {
+      const s = await signedIn('owner')
+      const r = await s.b.call('POST', '/admin/shipping/zones', { body: zoneBody })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, id: r.body.id }
+    }
+    samples['admin.shipping.createZone'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/shipping/zones', { body: zoneBody }) }
+    samples['admin.shipping.updateZone'] = { prepare: withZone, act: ({ b, id }) => b.call('PUT', `/admin/shipping/zones/${id}`, { body: { ...zoneBody, name: 'Renamed', version: 1 } }) }
+    samples['admin.shipping.deleteZone'] = { prepare: withZone, act: ({ b, id }) => b.call('DELETE', `/admin/shipping/zones/${id}`) }
+    samples['admin.shipping.createCity'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/shipping/cities', { body: { name: 'Newtown', province: 'Punjab' } }) }
+    samples['admin.shipping.updateCity'] = {
+      prepare: async () => {
+        const s = await signedIn('owner')
+        const r = await s.b.call('POST', '/admin/shipping/cities', { body: { name: 'Oldtown', province: 'Sindh' } })
+        await t.migrate.db.delete(auditLog)
+        return { ...s, id: r.body.id }
+      },
+      act: ({ b, id }) => b.call('PUT', `/admin/shipping/cities/${id}`, { body: { name: 'Oldtown City', province: 'Sindh' } }),
+    }
+    const courier = { name: 'BlueEx', trackingRequired: true, enabled: true }
+    samples['admin.couriers.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/couriers', { body: courier }) }
+    samples['admin.couriers.update'] = {
+      prepare: async () => {
+        const s = await signedIn('owner')
+        const r = await s.b.call('POST', '/admin/couriers', { body: { ...courier, name: 'Swift' } })
+        await t.migrate.db.delete(auditLog)
+        return { ...s, id: r.body.id }
+      },
+      act: ({ b, id }) => b.call('PUT', `/admin/couriers/${id}`, { body: { ...courier, name: 'Swift', enabled: false } }),
+    }
+
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
       'admin.auth.requestPasswordReset': 'changes nothing until an email provider exists (DOC-12); only counted by the rate limiter',
       'admin.me.confirmPassword': 'refreshes the 15-minute step-up window of the current session; no data changes',
       'admin.media.createUpload': 'only reserves an upload slot that nobody can see or use; unconfirmed slots are purged after a day',
       'admin.media.confirm': 'starts the check of the own upload of the sender; the outcome is visible as the media status, and a kept file is audited when it is changed or deleted',
+      'admin.shipping.zoneImpact': 'a read-only preview of a zone change; nothing is stored',
+      'admin.shipping.matchCities': 'a read-only lookup of pasted city names; nothing is stored',
       'admin.pages.preview': 'only renders text with the store tokens filled in; nothing is stored',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }

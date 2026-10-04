@@ -92,6 +92,8 @@ erDiagram
 
 ### 4.1 `cities`
 
+The seed list (`apps/api/src/modules/shipping/cities.js`, 242 cities, 11 of them major) is added by `seedShipping(db)`, which only inserts names that are missing.
+
 | Column | Type | Null | Default | Notes |
 |---|---|---|---|---|
 | `id` | char(36) | NN | | PK |
@@ -147,7 +149,7 @@ Index: `shipping_methods_zone_idx (zone_id, enabled, sort_order)`. Deleting a me
 | `enabled` | boolean | NN | true | |
 | `sort_order` | int | NN | 0 | |
 
-Seed: TCS, Leopards, M&P, Trax, PostEx (tracking required, patterns left empty until verified in DOC-12), Own rider (tracking not required).
+Seed (`apps/api/src/modules/shipping/seed.js`, called by the base seed): TCS, Leopards, M&P, Trax, PostEx (tracking required, patterns left empty until verified in DOC-12), Own rider (tracking not required).
 
 ## 5. Rules
 
