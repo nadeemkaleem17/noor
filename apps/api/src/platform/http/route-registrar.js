@@ -3,6 +3,8 @@
 // handler, or a handler without a route, stops startup.
 import { z } from '@noor/contract'
 import { DomainError, RequestValidationError } from '../errors.js'
+import { createLimiter } from './rate-limit.js'
+import { clientIp } from './security.js'
 
 export const API_PREFIX = '/api/v1'
 
@@ -78,8 +80,9 @@ const IdempotencyKey = z.uuid()
  * @param {T} table
  * @param {Handlers<T>} handlers
  * @param {Authorize} [authorize]
+ * @param {import('./rate-limit.js').Limiter} [limiter]
  */
-export function registerRoutes(app, table, handlers, authorize = denyStaff) {
+export function registerRoutes(app, table, handlers, authorize = denyStaff, limiter = createLimiter()) {
   const keys = Object.keys(table)
   const have = new Set(Object.keys(handlers))
   const missing = keys.filter((k) => !have.has(k))
@@ -87,6 +90,9 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff) {
   if (missing.length || extra.length) {
     throw new Error(`Route table and handlers disagree. Routes without a handler: [${missing.join(', ')}]. Handlers without a route: [${extra.join(', ')}]`)
   }
+
+  const unknownBucket = Object.entries(table).find(([, d]) => d.rateLimit && !limiter.has(d.rateLimit))
+  if (unknownBucket) throw new Error(`Route ${unknownBucket[0]} names the rate-limit bucket "${unknownBucket[1].rateLimit}", which does not exist (platform/http/rate-limit.js)`)
 
   for (const [key, def] of /** @type {[string, import('@noor/contract').RouteDef][]} */ (Object.entries(table))) {
     const status = def.status ?? 200
@@ -104,18 +110,32 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff) {
         ...(status === 204 ? {} : { response: { [status]: def.response } }),
       },
       config: { routeKey: key, auth: def.auth, permission: def.permission, rateLimit: def.rateLimit },
+      // Who is asking and how often, decided before the body is read or validated: a stranger gets 401 whatever they send (section 4.2)
+      onRequest: async (req, reply) => {
+        const staff = def.auth === 'staff' || def.auth === 'staff-any' || def.auth === 'staff-pending'
+        const ip = clientIp(req)
+        /** @type {Awaited<ReturnType<typeof limiter.consume>>} */
+        let shown
+        if (staff) {
+          const actor = await authorize(req, def)
+          if (!actor) {
+            await limiter.consume('default', 'ip', ip) // a flood of unauthenticated requests costs a session lookup each
+            throw new DomainError('unauthenticated')
+          }
+          if (def.permission && !actor.permissions.has(def.permission)) throw new DomainError('forbidden')
+          ;(/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor = actor
+          shown = await limiter.consume(def.rateLimit ?? 'admin', 'staff', actor.staffId)
+        } else {
+          shown = await limiter.consume(def.rateLimit ?? 'default', 'ip', ip)
+        }
+        if (shown) void reply.header('ratelimit-limit', shown.limit).header('ratelimit-remaining', shown.remaining).header('ratelimit-reset', shown.reset)
+      },
       preHandler: async (req) => {
         if (def.idempotent) {
           const k = req.headers['idempotency-key']
           if (typeof k !== 'string' || !IdempotencyKey.safeParse(k).success) {
             throw new DomainError('validation_failed', { issues: [{ path: 'Idempotency-Key', code: k === undefined ? 'required' : 'invalid_format' }] })
           }
-        }
-        if (def.auth === 'staff' || def.auth === 'staff-any' || def.auth === 'staff-pending') {
-          const actor = await authorize(req, def)
-          if (!actor) throw new DomainError('unauthenticated')
-          if (def.permission && !actor.permissions.has(def.permission)) throw new DomainError('forbidden')
-          ;(/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor = actor
         }
       },
       handler: async (req, reply) => {
@@ -126,7 +146,7 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff) {
           actor: (/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor ?? null,
           requestId: req.id,
           http: {
-            ip: req.ip,
+            ip: clientIp(req),
             userAgent: String(req.headers['user-agent'] ?? ''),
             /** @param {string} name @param {string} value @param {import('@fastify/cookie').CookieSerializeOptions} options */
             setCookie: (name, value, options) => void reply.setCookie(name, value, options),

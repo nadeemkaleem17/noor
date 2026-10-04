@@ -3,7 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { generateSync } from 'otplib'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { permissions } from '@noor/contract'
+import { permissions, routes } from '@noor/contract'
 import { auditLog } from '../src/db/schema/audit.js'
 import { authTokens, loginAttempts, recoveryCodes, sessions, staffUsers } from '../src/db/schema/auth.js'
 import { advanceClock, now, setClock } from '../src/platform/clock.js'
@@ -306,27 +306,37 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
   })
 
   describe('roles and permissions', () => {
-    /** Calls every GET admin route that needs only an id we can invent, as each role. */
-    const probes = /** @type {[string, string, import('@noor/contract').Permission][]} */ ([
-      ['admin.roles.list', '/admin/roles', 'staff:read'],
-      ['admin.staff.list', '/admin/staff', 'staff:read'],
-      ['admin.system.info', '/admin/system', 'settings:manage'],
-    ])
+    /** Every route of the contract that names a permission, with the path filled in by an id that does not exist. */
+    const guarded = Object.entries(routes)
+      .filter(([, r]) => r.auth === 'staff')
+      .map(([key, r]) => ({ key, method: r.method, url: r.path.replace(/:w+/g, '0190f2c0-0000-7000-8000-0000000000ff'), needs: /** @type {import('@noor/contract').Permission} */ (/** @type {{ permission?: string }} */ (r).permission) }))
 
-    it('each staff route answers 200 or 403 exactly as the matrix says, for every role', async () => {
+    it('the matrix test below covers every permissioned route, and every permission exists', () => {
+      expect(guarded.length).toBeGreaterThan(10)
+      for (const g of guarded) expect(permissions, g.key).toContain(g.needs)
+    })
+
+    it('route x role: every role is refused (403 forbidden) exactly where the matrix withholds the permission, and never elsewhere', async () => {
       for (const { role, permissions: granted } of roleList()) {
         const { b } = await signedIn(role)
-        for (const [, url, needs] of probes) {
-          const res = await b.call('GET', url)
-          expect(res.status, `${role} ${url}`).toBe(granted.includes(needs) ? 200 : 403)
+        for (const g of guarded) {
+          const res = await b.call(g.method, g.url, g.method === 'GET' || g.method === 'DELETE' ? {} : { body: {} })
+          if (granted.includes(g.needs)) expect([401, res.body?.code === 'forbidden' ? 403 : 0], `${role} ${g.key}: allowed, got ${res.status} ${res.body?.code}`).not.toContain(res.status)
+          else expect([res.status, res.body?.code], `${role} ${g.key} should be forbidden`).toEqual([403, 'forbidden'])
         }
         await t.db.delete(staffUsers)
       }
-    }, 180_000)
+    }, 240_000)
 
-    it('every permission named by a route exists in the matrix vocabulary', () => {
-      for (const [, , p] of probes) expect(permissions).toContain(p)
-    })
+    it('route x stranger: every staff-class route answers 401 to someone with no session, whatever the body', async () => {
+      const staffClass = Object.entries(routes).filter(([, r]) => r.auth === 'staff' || r.auth === 'staff-any' || r.auth === 'staff-pending')
+      expect(staffClass.length).toBeGreaterThan(25)
+      const nobody = browser('10.7.7.7')
+      for (const [key, r] of staffClass) {
+        const res = await nobody.call(r.method, r.path.replace(/:w+/g, '0190f2c0-0000-7000-8000-0000000000ff'), r.method === 'GET' || r.method === 'DELETE' ? {} : { body: { nonsense: true } })
+        expect([key, res.status]).toEqual([key, 401])
+      }
+    }, 60_000)
 
     it('the roles list equals the matrix in code and marks 2FA requirements', async () => {
       const { b } = await signedIn('owner')

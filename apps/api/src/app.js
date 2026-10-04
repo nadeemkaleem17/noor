@@ -5,10 +5,12 @@ import Fastify, { LogController } from 'fastify'
 import swagger from '@fastify/swagger'
 import { jsonSchemaTransform, serializerCompiler } from 'fastify-type-provider-zod'
 import { routes as contractRoutes } from '@noor/contract'
-import { DomainError, errorHandler, sendProblem, toProblem } from './platform/errors.js'
+import { errorHandler, sendProblem, toProblem } from './platform/errors.js'
 import { loggerOptions } from './platform/logger.js'
-import { API_PREFIX, registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
+import { registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
 import cookie from '@fastify/cookie'
+import { createLimiter } from './platform/http/rate-limit.js'
+import { clientIp, registerSecurity } from './platform/http/security.js'
 import { createAuditService } from './modules/audit/index.js'
 import { createAuthorize, createAuthService } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
@@ -72,18 +74,12 @@ export async function buildApp(opts) {
 
   await app.register(cookie)
 
-  app.addHook('onRequest', async (req, reply) => {
-    void reply.header('x-request-id', req.id)
-    if (req.url.startsWith(`${API_PREFIX}/admin/`)) {
-      void reply.header('cache-control', 'no-store')
-      // CSRF, first line of defence (plan/11-security-auth.md section 5.1): every state change must come from the admin site
-      if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.headers.origin !== config.ADMIN_ORIGIN) throw new DomainError('csrf_failed')
-    }
-  })
+  registerSecurity(app, config)
+  app.addHook('onRequest', async (req, reply) => void reply.header('x-request-id', req.id))
   app.addHook('onResponse', async (req, reply) => {
     if (req.url === '/healthz' || req.url === '/readyz') return
     // route pattern, never the raw URL: query strings can hold phone numbers and search text
-    req.log.info({ method: req.method, route: req.routeOptions.url, status: reply.statusCode, durationMs: Math.round(reply.elapsedTime), ip: req.ip }, 'request')
+    req.log.info({ method: req.method, route: req.routeOptions.url, status: reply.statusCode, durationMs: Math.round(reply.elapsedTime), ip: clientIp(req) }, 'request')
   })
 
   app.setErrorHandler(errorHandler(config))
@@ -95,6 +91,6 @@ export async function buildApp(opts) {
     return failing.length ? reply.code(503).send({ ok: false, failing }) : { ok: true }
   })
 
-  registerRoutes(app, table, handlers, opts.authorize ?? (db ? createAuthorize({ db, config, auth }) : undefined))
+  registerRoutes(app, table, handlers, opts.authorize ?? (db ? createAuthorize({ db, config, auth }) : undefined), createLimiter({ db }))
   return app
 }

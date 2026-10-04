@@ -38,6 +38,8 @@ flowchart LR
   W --> S3
 ```
 
+The internal key is the `INTERNAL_KEY` variable of the API and `API_INTERNAL_KEY` of the storefront (one generated secret, `scripts/setup-env.mjs`); it is compared in constant time. The forwarded address is the first entry of `X-Forwarded-For` and must be a valid IP, otherwise the socket address is used. The storefront must therefore **set** that header to the visitor's address, not append to a client-supplied one.
+
 The API's public routes are also reachable from the internet (the admin SPA needs the same host). They are safe to expose: they accept no trusted money or identity from the caller (ADR-0020). The internal key only decides **whose IP is rate-limited**: with a valid key the API uses the forwarded client IP; without it, the socket IP.
 
 ## 3. Staff authentication
@@ -223,7 +225,7 @@ Analytics or payment hosts are added to these policies only by the DOC-12 change
 
 ### 5.4 Rate limits
 
-Buckets are named in the contract (`rateLimit: 'checkout'`); values live in `platform/http/rate-limit.ts`. Key = client IP (forwarded IP when the internal key is valid) unless stated. Responses: `429 rate_limited` with `Retry-After`.
+Buckets are named in the contract (`rateLimit: 'checkout'`); values live in `apps/api/src/platform/http/rate-limit.js` (a test pins them to this table). Key = client IP (forwarded IP when the internal key is valid) unless stated. Responses: `429 rate_limited` with `Retry-After` (and the problem's `retryAfter`); every limited response carries `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`. The registrar applies the `ip` and `staff` rules to every request; a rule that counts something only its module knows (cart id, phone, order number, token) is applied by that module with `limiter.consume(bucket, by, subject)`. An unauthenticated request to a staff route is counted against `default` by IP. `login` is counted by the auth service from `login_attempts`, which also escalates to a lock.
 
 | Bucket | Routes | Limit | Store |
 |---|---|---|---|
@@ -236,9 +238,9 @@ Buckets are named in the contract (`rateLimit: 'checkout'`); values live in `pla
 | `notify` | Back-in-stock subscribe | 10 / hour / IP, 3 / day / phone | database |
 | `review` | Review submit | 5 / hour / IP | memory |
 | `login` | §3.2 | 5 / 15 min / email, 20 / 15 min / IP | database |
-| `admin` | All other admin routes | 600 / min / session | memory |
-| `adminExport` | Exports, bulk | 10 / min / session | memory |
-| `upload` | `admin.media.createUpload` | 60 / min / session | memory |
+| `admin` | All other admin routes | 600 / min / staff member | memory |
+| `adminExport` | Exports, bulk | 10 / min / staff member | memory |
+| `upload` | `admin.media.createUpload` | 60 / min / staff member | memory |
 
 In-memory buckets are per API instance (DOC-08 Q-08-6); the database-backed ones are the abuse-relevant ones and hold across instances. `trust proxy` is configured with the exact proxy hop count from config (F-19), never `true`.
 

@@ -16,6 +16,8 @@ const Env = z.object({
   DATABASE_URL: z.string().refine((v) => v.startsWith('mysql://'), 'must start with mysql://'),
   /** Migration user: DDL and data. Used only by db:migrate, db:seed and the retention job. */
   DATABASE_MIGRATION_URL: z.string().refine((v) => v.startsWith('mysql://'), 'must start with mysql://'),
+  /** Shared secret of the storefront server (X-Internal-Key). Only a request carrying it may say which client address to rate-limit. */
+  INTERNAL_KEY: z.string().min(32).optional(),
   /** Connections per process. */
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
   /** 32 random bytes, base64: encrypts staff TOTP secrets (AES-256-GCM). */

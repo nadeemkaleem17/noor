@@ -89,6 +89,7 @@ export function errorHandler(config) {
 
     if (err instanceof DomainError) {
       if (warnCodes.has(err.code)) req.log.warn({ code: err.code }, 'request refused')
+      if (typeof err.details.retryAfter === 'number') void reply.header('retry-after', err.details.retryAfter)
       return sendProblem(reply, toProblem(err.code, requestId, { details: err.details, ...(err.message !== err.code ? { detail: err.message } : {}) }))
     }
     if (err instanceof RequestValidationError) {
