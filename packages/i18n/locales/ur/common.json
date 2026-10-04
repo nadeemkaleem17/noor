@@ -5,5 +5,13 @@
   "increase": "مقدار بڑھائیں",
   "decrease": "مقدار کم کریں",
   "maxQuantity": "زیادہ سے زیادہ مقدار پوری ہو گئی",
-  "quantity": "مقدار"
+  "quantity": "مقدار",
+  "cancel": "منسوخ کریں",
+  "confirm": "تصدیق کریں",
+  "typeToConfirm": "تصدیق کے لیے \"{text}\" لکھیں",
+  "dismiss": "ہٹائیں",
+  "noResults": "کوئی نتیجہ نہیں",
+  "searching": "تلاش جاری ہے",
+  "notifications": "اطلاعات",
+  "remove": "{label} ہٹائیں"
 }

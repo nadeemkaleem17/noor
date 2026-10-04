@@ -5,5 +5,13 @@
   "increase": "Increase quantity",
   "decrease": "Decrease quantity",
   "maxQuantity": "Maximum quantity reached",
-  "quantity": "Quantity"
+  "quantity": "Quantity",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "typeToConfirm": "Type \"{text}\" to confirm",
+  "dismiss": "Dismiss",
+  "noResults": "No results",
+  "searching": "Searching",
+  "notifications": "Notifications",
+  "remove": "Remove {label}"
 }

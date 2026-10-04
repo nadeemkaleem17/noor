@@ -24,12 +24,12 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@noor/contract": "workspace:*",
     "@base-ui/react": "~1.8.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.7.0",
+    "@noor/contract": "workspace:*",
     "@noor/i18n": "workspace:*",
-    "lucide-react": "~1.48.0"
+    "clsx": "^2.1.1",
+    "lucide-react": "~1.48.0",
+    "tailwind-merge": "^3.7.0"
   },
   "peerDependencies": {
     "react": "^19.2.8",
@@ -42,18 +42,22 @@
     "@storybook/react-vite": "~10.6.0",
     "@tailwindcss/node": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "eslint": "^10.10.0",
+    "i18next": "^26.4.2",
+    "jsdom": "^30.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.15",
     "storybook": "~10.6.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",
-    "vitest": "^5.0.1",
-    "react-i18next": "^17.0.15",
-    "i18next": "^26.4.2"
+    "vitest": "^5.0.1"
   }
 }
