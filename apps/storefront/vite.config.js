@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   for (const [key, value] of Object.entries(loadEnv(mode, process.cwd(), ''))) process.env[key] ??= value
   return {
     server: { port: 5174, strictPort: true },
+    // the `~/` alias of tsconfig.json: without this the dev server cannot find `~/lib/...` (the production build resolves it by itself)
+    resolve: { tsconfigPaths: true },
     plugins: [tailwindcss(), reactRouter(), babel({ presets: [reactCompilerPreset()] })],
   }
 })
