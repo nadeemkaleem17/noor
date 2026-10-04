@@ -32,6 +32,7 @@ Everything is built and run **locally** first. Production is a separate, later p
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
+- **Database setup:** `node scripts/setup-env.mjs` has run (`.env` files and `.data/mysql-init.sql` exist). Still to do by the owner: `"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < .data/mysql-init.sql`. The installed server is MySQL **8.0** (the plan says 8.4); decide whether that is acceptable before M0-06.
 - **No Docker, by decision.** Local MySQL 8.4 is installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work). Use `STORAGE_DRIVER=local`, `IMAGE_TRANSFORM=none`; spike M0-08 (MinIO/imgproxy) is skipped.
 - `typescript` is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
 - **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).

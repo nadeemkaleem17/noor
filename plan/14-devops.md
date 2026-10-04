@@ -102,6 +102,8 @@ volumes: { mysql-data: {}, minio-data: {} }
 
 ### 3.4 Without Docker
 
+**This is the setup used locally (decision of 2 Oct 2026: no Docker).** `node scripts/setup-env.mjs` creates `apps/api/.env` and `apps/storefront/.env` from the `.env.example` files (it replaces `__NAME__` tokens with generated secrets, keeps earlier secrets in `.data/local-secrets.json`, never overwrites an existing `.env`) and writes `.data/mysql-init.sql` from `infra/mysql/init/01-users.sql`. Run that SQL once as the MySQL administrator: `mysql -u root -p < .data/mysql-init.sql`. It creates the databases `rubaya` and `rubaya_test`, and the users `rubaya_app` and `rubaya_migrate` with the generated passwords. The MySQL installed on this machine is **8.0** (service `MySQL80`), not 8.4; see DOC-02 for what 8.4 adds, and DOC-08 §18 for the spike that checks what the code needs.
+
 Install MySQL 8.4 natively (the MySQL Installer on Windows; XAMPP ships MariaDB, which is **not** supported, ADR-0008). Create the database and the two users with `infra/mysql/init/01-users.sql`. Set `IMAGE_TRANSFORM=none` and `STORAGE_DRIVER=local` in `apps/api/.env`: media is then written under `apps/api/.data/media` and renditions are pre-generated with `sharp` (DOC-08 §11 fallback). `STORAGE_DRIVER=local` is refused at boot unless `NODE_ENV=development`. Emails are written to the console.
 
 ## 4. Configuration
@@ -327,3 +329,4 @@ Each is a short checklist kept in `plan/runbooks/` when production exists; the c
 | 2026-10-02 | Initial version (Phase 4). Production sections specified but unscheduled per README A-08 |
 | 2026-10-02 | Phase 5: `TRACKING_KEY` added to §4.1 |
 | 2026-10-02 | M0-01: Docker is not installed on the development machine (Q-14-2) |
+| 2026-10-02 | M0-03 (no-Docker form): `scripts/setup-env.mjs`, `scripts/lib/env-file.mjs` (4 tests), `infra/mysql/init/01-users.sql`, DB variables in `apps/api/.env.example`. Not done: the readiness check in `pnpm dev` (needs the db pool, M0-06) and running the SQL (needs the administrator password) |

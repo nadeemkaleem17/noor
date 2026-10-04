@@ -329,3 +329,4 @@ Updated by the PR that finishes a task.
 | 2026-10-02 | M2-03 done: Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge, StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, VisuallyHidden, Ltr, Link; 19 tests; axe clean |
 | 2026-10-02 | M2-04 done: Image, Price, Markdown (allow-list, tokens), RHFField, ImageUpload; 20 tests including the DOC-06.8 §6 renderer test; axe clean |
 | 2026-10-02 | M2-05 done: `test/stories.a11y.test.tsx` runs axe over all 35 stories (a story with a label violation fails `pnpm test`); `@noor/ui` is complete except the pieces later milestones add (submenus, feature components). M2 finished |
+| 2026-10-02 | M0-03 partly done in its no-Docker form: env and SQL scripts exist; the database users are not created yet (needs the MySQL administrator password) and the `pnpm dev` readiness check waits for M0-06 |
