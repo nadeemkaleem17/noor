@@ -122,17 +122,19 @@ All variables are read once by `platform/config.ts` (DOC-08 §12). "Secret" valu
 | `DB_POOL_SIZE` | `10` | | Per process. 2 API + 1 worker = 30 connections; keep under the provider's limit |
 | `ADMIN_ORIGIN` | `http://localhost:5173` | | Exact origin for CORS and CSRF |
 | `STOREFRONT_ORIGIN` | `http://localhost:5174` | | Links in notifications, preview links |
-| `INTERNAL_API_KEY` | generated | yes | Storefront → API |
+| `INTERNAL_KEY` | generated | yes | Storefront → API |
 | `TRUST_PROXY_HOPS` | `0` | | Number of proxies in front of the API (F-19) |
 | `DATA_ENCRYPTION_KEY` | generated (32 bytes base64) | yes | TOTP secrets |
 | `PREVIEW_SIGNING_KEY` | generated | yes | |
 | `TRACKING_KEY` | generated (32 bytes base64) | yes | Order tracking tokens (DOC-10.3 §4). Never rotated routinely |
 | `SESSION_COOKIE_NAME` | `__Host-rb_admin` | | DOC-11 §3.4 |
-| `STORAGE_DRIVER` | `s3` | | `s3` / `local` (development only) |
+| `STORAGE_DRIVER` | `s3` | | `s3` / `local` (development only). Only `local` is built yet; the API refuses `local` when `NODE_ENV=production` |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | `http://localhost:9000`, `auto`, `rubaya-media` | | |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | `minio`, `minio12345` | yes | |
 | `S3_FORCE_PATH_STYLE` | `true` | | MinIO needs it |
-| `IMAGE_TRANSFORM` | `imgproxy` | | `imgproxy` / `none` |
+| `LOCAL_STORAGE_DIR` | `.data/storage` | | Folder of the `local` driver |
+| `API_PUBLIC_URL` | `http://localhost:3000` | | The API as a browser reaches it; the `local` driver's upload links point here |
+| `IMAGE_TRANSFORM` | `imgproxy` | | `imgproxy` / `none`. Only `none` is built (the API serves generated sizes at `/img`); imgproxy comes with deployment |
 | `IMG_BASE_URL` | `http://localhost:8080` | | Public base of the image host |
 | `IMG_SIGNING_KEY`, `IMG_SIGNING_SALT` | generated hex | yes | Shared with imgproxy |
 | `CDN_PURGE_URL`, `CDN_PURGE_TOKEN` | empty | yes | Empty = purge jobs are no-ops |
@@ -142,7 +144,7 @@ All variables are read once by `platform/config.ts` (DOC-08 §12). "Secret" valu
 
 ### 4.2 Storefront and admin
 
-Storefront (`apps/storefront/.env`): `API_INTERNAL_URL`, `INTERNAL_API_KEY`, `PUBLIC_SITE_URL`, `PUBLIC_IMG_URL`, `PREVIEW_SIGNING_KEY`, `APP_ENV`, `PORT` (DOC-03 §10).
+Storefront (`apps/storefront/.env`): `API_INTERNAL_URL`, `API_INTERNAL_KEY` (the same value as the API's `INTERNAL_KEY`), `PUBLIC_SITE_URL`, `PUBLIC_IMG_URL`, `PREVIEW_SIGNING_KEY`, `APP_ENV`, `PORT` (DOC-03 §10).
 Admin (`apps/admin/.env`): `VITE_API_URL` only.
 
 Each app has a committed `.env.example` with names, comments and no real values. `scripts/setup-env.mjs` is the only supported way to create local `.env` files.
@@ -282,7 +284,7 @@ Each is a short checklist kept in `plan/runbooks/` when production exists; the c
 | R-3 | Risky migration (large table, long lock) | Test on a staging copy with production-size data → schedule after 2 am PKT → announce → run with the migration user → watch replication/locks → verify → note duration |
 | R-4 | Migration failed halfway | Do not re-run blindly. Read the failed statement → because each file holds one change and is re-runnable, fix the cause and re-run; if the file is wrong, add a corrective migration → never edit the applied file |
 | R-5 | Restore the database | Declare the incident → stop `api` and `worker` (maintenance page from the CDN) → point-in-time restore to a new instance at the chosen timestamp → run `db:migrate` → repoint `DATABASE_URL` → start services → smoke test → reconcile orders placed after the restore point from notification logs and courier records |
-| R-6 | Rotate a secret | Add the new value alongside the old where dual keys are supported (`INTERNAL_API_KEY`, `DATA_ENCRYPTION_KEY` key ids) → deploy → remove the old → for database passwords: create new user/password, deploy, drop the old |
+| R-6 | Rotate a secret | Add the new value alongside the old where dual keys are supported (`INTERNAL_KEY`, `DATA_ENCRYPTION_KEY` key ids) → deploy → remove the old → for database passwords: create new user/password, deploy, drop the old |
 | R-7 | Jobs stuck or dead-lettered | Check worker logs by job type → fix the cause → `cli jobs:retry <id>` or `--type <type>` → confirm the queue drains; if notifications were skipped, staff resend from the order page |
 | R-8 | Sale / drop day | 48 h before: freeze deploys; load-test the listing and checkout path at 3× expected peak (DOC-13); confirm DB connection headroom; raise API instances to 3; verify CDN cache hit ratio. During: watch lock wait time, 5xx rate, queue latency, order rate; no schema changes. After: scale back, review metrics against ADR-0020's revisit trigger |
 | R-9 | Database unreachable | `/readyz` fails → host stops routing → CDN serves stale cached pages (`stale-while-revalidate`, `stale-if-error`) for catalog browsing; checkout shows the 503 state (DOC-06.1 §6) → check provider status → fail over or restore (R-5) |

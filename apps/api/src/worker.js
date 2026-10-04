@@ -4,6 +4,7 @@ import pino from 'pino'
 import { createAppDatabase } from './platform/db.js'
 import { loggerOptions } from './platform/logger.js'
 import { startBackground } from './platform/runtime.js'
+import { backgroundOf } from './modules/index.js'
 
 let config
 try {
@@ -18,8 +19,7 @@ try {
 
 const log = pino(/** @type {import('pino').LoggerOptions} */ (loggerOptions(config) || { level: 'silent' }))
 const { pool, db } = createAppDatabase(config)
-// ponytail: module handlers and event handlers are registered here as modules are built
-const background = startBackground({ db, handlers: {}, eventHandlers: {}, log })
+const background = startBackground({ db, ...backgroundOf({ db, config }), eventHandlers: {}, log })
 log.info('worker started')
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

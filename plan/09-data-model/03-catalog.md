@@ -61,6 +61,7 @@ erDiagram
 | `i18n` | json | NULL | | `{ ur: { alt } }` |
 | `reject_reason` | varchar(100) | NULL | | |
 | `uploaded_by` | char(36) | NULL | | FK → `staff_users.id` ON DELETE SET NULL; NULL for customer review photos |
+| `confirmed_at` | datetime(3) | NULL | | Set by `admin.media.confirm`. A `pending` row with no `confirmed_at` is an upload slot nobody used: `media.cleanup` removes it with its object after 24 h (added at M1-05) |
 | `created_at` | datetime(3) | NN | | |
 
 Indexes: `media_status_idx (status, created_at)` (cleanup of stale `pending`). A media row is deleted only when no table references it (FKs are `RESTRICT`); the object is removed by a job after the row.

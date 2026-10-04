@@ -211,9 +211,14 @@ describe('config', () => {
     expect(vars).toContain('DATABASE_MIGRATION_URL (required)')
   })
   it('applies safe defaults and freezes the result', () => {
-    const c = parseConfig({ NODE_ENV: 'production', APP_ENV: 'production', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv })
+    const c = parseConfig({ NODE_ENV: 'test', APP_ENV: 'production', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv })
     expect(c).toMatchObject({ HOST: '127.0.0.1', PORT: 3000, TRUST_PROXY_HOPS: 0, LOG_LEVEL: 'info' })
     expect(Object.isFrozen(c)).toBe(true)
+  })
+  it('refuses to start a production process on local file storage (DOC-14 section 6)', () => {
+    const env = { NODE_ENV: 'production', APP_ENV: 'production', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }
+    expect(() => parseConfig(env)).toThrow("STORAGE_DRIVER (local storage is for development only)")
+    expect(parseConfig({ ...env, NODE_ENV: 'development' }).STORAGE_DRIVER).toBe('local')
   })
 })
 

@@ -4,6 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { DomainError } from '../errors.js'
 import { API_PREFIX } from './route-registrar.js'
+import { DEV_UPLOAD_PREFIX } from './storage-routes.js'
 
 const sha256 = (/** @type {string} */ s) => createHash('sha256').update(s).digest()
 
@@ -37,7 +38,8 @@ export function registerSecurity(app, config) {
     void reply.header('content-security-policy', "default-src 'none'; frame-ancestors 'none'")
     if (hsts) void reply.header('strict-transport-security', 'max-age=31536000; includeSubDomains')
 
-    if (!req.url.startsWith(adminPrefix)) return // public routes are called by the storefront server: no CORS headers, no cookies
+    // the admin site (and, in development, its uploads to the local storage link) is the only browser caller; public routes are called by the storefront server
+    if (!req.url.startsWith(adminPrefix) && !req.url.startsWith(DEV_UPLOAD_PREFIX)) return
     void reply.header('cache-control', 'no-store').header('vary', 'Origin')
     const origin = req.headers.origin
     if (origin === config.ADMIN_ORIGIN) {

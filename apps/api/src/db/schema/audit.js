@@ -1,5 +1,5 @@
-// The audit trail (plan/09-data-model/02-auth-audit.md section 2.6). Append-only: the app database user is granted INSERT and SELECT only
-// on this table once the privilege split lands (M1-03); no code path updates or deletes a row.
+// The audit trail (plan/09-data-model/02-auth-audit.md section 2.6). Append-only: triggers (migration 0002) refuse UPDATE and DELETE for every
+// database user but the migration user; no code path updates or deletes a row.
 import { enums } from '@noor/contract'
 import { check, index, json, mysqlTable, varchar } from 'drizzle-orm/mysql-core'
 import { binVarchar, utc, uuid } from '../types.js'

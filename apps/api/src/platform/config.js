@@ -26,8 +26,20 @@ const Env = z.object({
   SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{3,40}$/).default('__Host-rb_admin'),
   /** Run the job worker, outbox relay and scheduler inside the API process (local development only). */
   DEV_INLINE_WORKER: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
+  /** Where files live. Only `local` (a folder, development only) exists yet; the S3 driver comes with deployment (plan/14-devops.md). */
+  STORAGE_DRIVER: z.enum(['local']).default('local'),
+  LOCAL_STORAGE_DIR: z.string().min(1).default('.data/storage'),
+  /** Public address of this API as a browser reaches it: the local driver's upload links point here. */
+  API_PUBLIC_URL: z.url().default('http://localhost:3000'),
+  /** Public base of the image host. With IMAGE_TRANSFORM=none the API itself serves it at /img (local driver). */
+  IMG_BASE_URL: z.url().default('http://localhost:3000/img'),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
   APP_VERSION: z.string().default('dev'),
+}).superRefine((env, ctx) => {
+  // plan/14-devops.md section 6: a production process never keeps files on its own disk
+  if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
+    ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for development only' })
+  }
 })
 
 /**
@@ -55,7 +67,7 @@ export function parseConfig(env) {
   throw new ConfigError(
     r.error.issues.map((i) => {
       const name = String(i.path[0])
-      return `${name} (${env[name] === undefined ? 'required' : i.message})`
+      return `${name} (${env[name] === undefined && i.code !== 'custom' ? 'required' : i.message})`
     }),
   )
 }

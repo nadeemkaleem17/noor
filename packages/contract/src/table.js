@@ -2,6 +2,7 @@
 // Task M0-05 starts it with two real routes from DOC-10 (one public, one staff); every milestone adds more.
 import { z } from 'zod'
 import { auditRoutes, authRoutes } from './auth.js'
+import { mediaRoutes } from './media.js'
 import { defineRoutes } from './routes.js'
 import { Id, IsoDate } from './primitives.js'
 
@@ -30,6 +31,7 @@ export const SystemInfo = z.strictObject({
 export const routes = defineRoutes({
   ...authRoutes,
   ...auditRoutes,
+  ...mediaRoutes,
   // DOC-10.1
   'shipping.listCities': {
     method: 'GET', path: '/shipping/cities', auth: 'public',

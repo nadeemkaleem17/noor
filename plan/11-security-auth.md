@@ -279,7 +279,7 @@ Written by `audit.record(tx, …)` inside the mutating transaction (ADR-0012). E
 |---|---|---|
 | `DATABASE_URL` (app user), `DATABASE_MIGRATION_URL` (DDL user) | Host secret store / `.env` locally | On staff departure with access; yearly |
 | `DATA_ENCRYPTION_KEY` (32 bytes, base64) for TOTP secrets | Host secret store | Versioned: ciphertext is prefixed with a key id so a new key can be introduced and old data re-encrypted by a CLI command |
-| `INTERNAL_API_KEY` (storefront → API) | Both services' secret stores | Yearly or on suspicion; two keys accepted during rotation |
+| `INTERNAL_KEY` (storefront → API) | Both services' secret stores | Yearly or on suspicion; two keys accepted during rotation |
 | `IMG_SIGNING_KEY`, `IMG_SIGNING_SALT` | API and imgproxy | Yearly |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | API, worker, imgproxy (read-only key for imgproxy) | Yearly |
 | `PREVIEW_SIGNING_KEY` (product preview links) | API, storefront | Yearly |

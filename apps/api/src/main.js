@@ -2,6 +2,7 @@ import { buildApp } from './app.js'
 import { ConfigError, loadConfig } from './platform/config.js'
 import { createAppDatabase, databaseReadiness } from './platform/db.js'
 import { startBackground } from './platform/runtime.js'
+import { backgroundOf } from './modules/index.js'
 
 let config
 try {
@@ -18,9 +19,8 @@ const { pool, db } = createAppDatabase(config)
 const app = await buildApp({ config, db, readiness: databaseReadiness(pool) })
 app.addHook('onClose', async () => pool.end())
 
-// ponytail: no module has handlers or events yet; modules add theirs here as they are built (M1-02 onward)
 if (config.DEV_INLINE_WORKER) {
-  const background = startBackground({ db, handlers: {}, eventHandlers: {}, log: app.log })
+  const background = startBackground({ db, ...backgroundOf({ db, config }), eventHandlers: {}, log: app.log })
   app.addHook('onClose', async () => background.stop())
 }
 

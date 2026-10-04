@@ -227,10 +227,22 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       },
     }
 
+    /** A pending upload slot, which is all the alt-text and delete routes need. */
+    const slot = async () => {
+      const s = await signedIn('catalog')
+      const r = await s.b.call('POST', '/admin/media/uploads', { body: { filename: 'a.jpg', contentType: 'image/jpeg', bytes: 100 } })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, id: r.body.mediaId }
+    }
+    samples['admin.media.update'] = { prepare: slot, act: ({ b, id }) => b.call('PUT', `/admin/media/${id}`, { body: { alt: 'Green suit' } }) }
+    samples['admin.media.delete'] = { prepare: slot, act: ({ b, id }) => b.call('DELETE', `/admin/media/${id}`) }
+
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
       'admin.auth.requestPasswordReset': 'changes nothing until an email provider exists (DOC-12); only counted by the rate limiter',
       'admin.me.confirmPassword': 'refreshes the 15-minute step-up window of the current session; no data changes',
+      'admin.media.createUpload': 'only reserves an upload slot that nobody can see or use; unconfirmed slots are purged after a day',
+      'admin.media.confirm': 'starts the check of the own upload of the sender; the outcome is visible as the media status, and a kept file is audited when it is changed or deleted',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }
 

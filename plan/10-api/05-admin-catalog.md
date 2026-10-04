@@ -77,15 +77,15 @@ Stock quantities are **not** part of `ProductInput` (DOC-07.3 §7.1); `initialSt
 
 | Key | Method & path | Permission | Request | Response | Errors | Notes |
 |---|---|---|---|---|---|---|
-| `admin.media.createUpload` | `POST /media/uploads` | `products:write` or `content:write` or `settings:write` | B: `{ filename: string, contentType: string, bytes: int }` | 200 `{ mediaId: Id, uploadUrl: string, headers: Record<string,string>, expiresAt: IsoDate }` | `validation_failed` (type not JPEG/PNG/WebP/AVIF/MP4/SVG, or over the size limit) | Bucket `upload`. Presigned `PUT`, 10 minutes |
-| `admin.media.confirm` | `POST /media/:id/confirm` | same | — | 200 `MediaInfo` (`status: 'pending'`) | `not_found` | Enqueues `media.process` |
-| `admin.media.get` | `GET /media/:id` | same | — | 200 `MediaInfo` | `not_found` | Polled until `ready` or `rejected` |
-| `admin.media.update` | `PUT /media/:id` | same | B: `{ alt: string, i18n?: { ur?: { alt?: string } } }` | 200 `MediaInfo` | — | Default alt |
-| `admin.media.delete` | `DELETE /media/:id` | same | — | 204 | `in_use` | |
+| `admin.media.createUpload` | `POST /admin/media/uploads` | `content:write` (the roles that have `products:write`, `content:write` or `settings:write` are the same three: owner, manager, catalog) | B: `{ filename: string, contentType: string, bytes: int }` | 200 `{ mediaId: Id, uploadUrl: string, headers: Record<string,string>, expiresAt: IsoDate }` | `validation_failed` (`contentType` not JPEG/PNG/WebP/AVIF: `invalid_format`; `bytes` over 10 MB: `too_big`, zero: `too_small`). SVG and MP4 are not accepted yet (DOC-08 section 11) | Bucket `upload`. Presigned `PUT`, 10 minutes |
+| `admin.media.confirm` | `POST /admin/media/:id/confirm` | `content:write` | — | 200 `MediaInfo` (`status: 'pending'`) | `not_found`, `validation_failed` (`upload` / `required`: nothing was uploaded yet) | Enqueues `media.process`; calling it again changes nothing |
+| `admin.media.get` | `GET /admin/media/:id` | `content:read` | — | 200 `MediaInfo` | `not_found` | Polled until `ready` or `rejected` |
+| `admin.media.update` | `PUT /admin/media/:id` | `content:write` | B: `{ alt: string, i18n?: { ur?: { alt?: string } } }` | 200 `MediaInfo` | — | Default alt |
+| `admin.media.delete` | `DELETE /admin/media/:id` | `content:write` | — | 204 | `in_use` | |
 
 ```ts
 MediaInfo = { id: Id, kind: 'image' | 'video', status: MediaStatus, rejectReason?: string,
-              image?: Image, width?: int, height?: int, bytes: int, alt: string, createdAt: IsoDate }
+              image?: Image, width?: int, height?: int, bytes: int, alt: string, i18n?: { ur?: { alt?: string } }, createdAt: IsoDate }
 ```
 
 ## 4. Inventory

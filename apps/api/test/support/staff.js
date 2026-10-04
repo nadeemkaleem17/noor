@@ -1,5 +1,8 @@
 // Shared by the HTTP-level integration tests: an app on a scratch database, a browser that keeps the session cookie and CSRF token,
 // and helpers that create and sign in staff. Used by auth.int.test.js and audit.int.test.js.
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { generateSync } from 'otplib'
 import { buildApp } from '../../src/app.js'
 import { now } from '../../src/platform/clock.js'
@@ -21,9 +24,11 @@ export const ORIGIN = 'http://localhost:5173'
 export const COOKIE = 'rb_admin_dev'
 export const PASSWORD = 'correct horse battery staple'
 const KEY = Buffer.alloc(32, 5).toString('base64')
+/** Files written by the media tests; removed by closeHarness. */
+export const storageDir = mkdtempSync(path.join(tmpdir(), 'rubaya-test-storage-'))
 export const config = parseConfig({
   NODE_ENV: 'test', APP_ENV: 'local', ADMIN_ORIGIN: ORIGIN, LOG_LEVEL: 'silent', SESSION_COOKIE_NAME: COOKIE, DATA_ENCRYPTION_KEY: KEY,
-  DATABASE_URL: 'mysql://x:y@h/d', DATABASE_MIGRATION_URL: 'mysql://x:y@h/d',
+  DATABASE_URL: 'mysql://x:y@h/d', DATABASE_MIGRATION_URL: 'mysql://x:y@h/d', LOCAL_STORAGE_DIR: storageDir,
 })
 export const sealer = createSealer(KEY)
 
@@ -106,4 +111,5 @@ export async function createHarness() {
 export async function closeHarness() {
   await app?.close()
   await t?.drop()
+  rmSync(storageDir, { recursive: true, force: true })
 }

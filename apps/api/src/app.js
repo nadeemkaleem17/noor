@@ -11,7 +11,10 @@ import { registerRoutes, zodValidatorCompiler } from './platform/http/route-regi
 import cookie from '@fastify/cookie'
 import { createLimiter } from './platform/http/rate-limit.js'
 import { clientIp, registerSecurity } from './platform/http/security.js'
+import { createStorage } from './platform/storage.js'
+import { registerLocalStorageRoutes } from './platform/http/storage-routes.js'
 import { createAuditService } from './modules/audit/index.js'
+import { createMediaService } from './modules/media/index.js'
 import { createAuthorize, createAuthService } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
 
@@ -27,6 +30,7 @@ import { appHandlers } from './modules/index.js'
  * @property {import('./platform/http/route-registrar.js').Handlers<T>} [handlers]
  * @property {import('./platform/http/route-registrar.js').Authorize} [authorize]
  * @property {import('./platform/db.js').Database['db']} [db] the application database handle (the app user)
+ * @property {import('./platform/storage.js').Storage} [storage] default: the driver named in the config
  * @property {Readiness} [readiness] - Database reachable and migrations at head. M0-06 supplies the real check; until then nothing can fail.
  */
 
@@ -43,7 +47,9 @@ export async function buildApp(opts) {
   const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
   const auth = createAuthService({ db, config })
   const audit = createAuditService(db)
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit })))
+  const storage = opts.storage ?? createStorage(config)
+  const media = createMediaService({ db, config, storage })
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media })))
 
   const app = Fastify({
     logger: loggerOptions(config),
@@ -84,6 +90,8 @@ export async function buildApp(opts) {
 
   app.setErrorHandler(errorHandler(config))
   app.setNotFoundHandler((req, reply) => sendProblem(reply, toProblem('not_found', req.id)))
+  // after the error handler: a plugin inherits the handler that exists when it is registered
+  if (storage.driver === 'local') await registerLocalStorageRoutes(app, { storage })
 
   app.get('/healthz', async () => ({ ok: true }))
   app.get('/readyz', async (_req, reply) => {
