@@ -9,7 +9,11 @@
     "start": "node --env-file-if-exists=.env src/main.js",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=.env src/db/migrate.js",
+    "spike:drizzle": "node --env-file-if-exists=.env spikes/m0-06-drizzle.js",
+    "spike:jobs": "node --env-file-if-exists=.env spikes/m0-07-jobs.js"
   },
   "dependencies": {
     "@fastify/swagger": "~9.9.0",

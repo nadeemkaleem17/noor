@@ -24,3 +24,5 @@ uploads/
 *.zip
 storybook-static/
 .react-router/
+# drizzle spike output
+apps/api/.data/
