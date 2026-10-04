@@ -9,7 +9,7 @@ import { attributes, formSchemas, handleRedirects, sizeCharts, sizeSystems } fro
 import { uuidv7 } from '../src/platform/ids.js'
 import { createCatalogService } from '../src/modules/catalog/index.js'
 import { noUsage } from '../src/modules/catalog/common.js'
-import { closeHarness, createHarness, signedIn, t } from './support/staff.js'
+import { closeHarness, config, createHarness, signedIn, t } from './support/staff.js'
 import { dbAvailable } from './support/db.js'
 
 const REQ = { ip: '10.0.0.1', userAgent: 'vitest', requestId: '0190f2c0-0000-7000-8000-000000000001' }
@@ -116,7 +116,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       const kid = (await b.call('POST', '/admin/categories', { body: category('kid', { parentId: a.id }) })).body
       const withKids = await b.call('DELETE', `/admin/categories/${a.id}`)
       expect([withKids.status, withKids.body.code, withKids.body.usedBy]).toEqual([409, 'in_use', { children: 1, products: 0 }])
-      const stocked = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, categoryPrimary: async () => 3 } })
+      const stocked = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, categoryPrimary: async () => 3 } })
       await expect(stocked.categories.remove({ staffId: user.id, name: 'x', role: 'owner' }, kid.id, REQ)).rejects.toMatchObject({ code: 'in_use', details: { usedBy: { children: 0, products: 3 } } })
       expect((await b.call('DELETE', `/admin/categories/${kid.id}`)).status).toBe(204)
       expect((await b.call('DELETE', `/admin/categories/${a.id}`)).status).toBe(204)
@@ -129,7 +129,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       const top = (await b.call('POST', '/admin/categories', { body: category('top', { attributes: [{ attributeId: attr.id, seoIndexable: false, required: true }] }) })).body
       const mid = (await b.call('POST', '/admin/categories', { body: category('mid', { parentId: top.id }) })).body
       const leaf = (await b.call('POST', '/admin/categories', { body: category('leaf', { parentId: mid.id }) })).body
-      const svc = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, categoryProducts: async (ids) => new Map(ids.map((id) => [id, id === top.id ? 7 : 0])) } })
+      const svc = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, categoryProducts: async (ids) => new Map(ids.map((id) => [id, id === top.id ? 7 : 0])) } })
       expect((await svc.categories.list()).items.find((c) => c.id === top.id)?.productCount).toBe(7)
       expect(await svc.categories.effectiveFilters(leaf.id)).toEqual([{ attributeId: attr.id, seoIndexable: false, required: true }])
       const other = (await b.call('POST', '/admin/attributes', { body: attribute('occasion') })).body
@@ -181,7 +181,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       expect((await b.call('PUT', `/admin/attributes/${made.id}`, { body: { ...attribute('other'), values: edited.body.values.map((/** @type {{ id: string, code: string, label: string }} */ x) => ({ id: x.id, code: x.code, label: x.label })) } })).body.issues).toEqual([{ path: 'code', code: 'invalid_format' }])
       expect((await b.call('PUT', `/admin/attributes/${made.id}`, { body: { ...attribute('fabric', { type: 'color', display: 'swatch' }), values: [{ code: 'a', label: 'A', swatch: { hex: ['#000000'] } }] } })).body.issues).toEqual([{ path: 'type', code: 'invalid_format' }])
       expect((await b.call('PUT', `/admin/attributes/${made.id}`, { body: { ...attribute('fabric'), values: [{ id: a.id, code: 'renamed', label: 'A' }, { code: 'z', label: 'Z' }] } })).body.issues).toEqual([{ path: 'values.0.code', code: 'invalid_format' }])
-      const busy = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, valueProducts: async (id) => (id === v.id ? 4 : 0) } })
+      const busy = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, valueProducts: async (id) => (id === v.id ? 4 : 0) } })
       const blocked = busy.attributes.update({ staffId: user.id, name: 'x', role: 'owner' }, made.id, { ...attribute('fabric'), values: [{ id: a.id, code: 'a', label: 'A' }] }, REQ)
       await expect(blocked).rejects.toMatchObject({ code: 'in_use', details: { values: [{ id: v.id, code: 'b', usedByProducts: 4 }] } })
       const kept = (await b.call('GET', '/admin/attributes')).body.items[0].values
@@ -197,7 +197,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       expect((await b.call('POST', `/admin/attributes/${made.id}/values/${a.id}/merge`, { body: { intoValueId: other.values[0].id } })).status).toBe(404)
       expect((await b.call('POST', `/admin/attributes/${made.id}/values/${uuidv7()}/merge`, { body: { intoValueId: v.id } })).status).toBe(404)
       const moved = /** @type {string[][]} */ ([])
-      const svc = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, moveValue: async (_tx, from, into) => void moved.push([from, into]) } })
+      const svc = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, moveValue: async (_tx, from, into) => void moved.push([from, into]) } })
       await svc.attributes.mergeValue({ staffId: user.id, name: 'x', role: 'owner' }, made.id, a.id, v.id, REQ)
       expect(moved).toEqual([[a.id, v.id]])
       expect((await b.call('GET', '/admin/attributes')).body.items.find((/** @type {{ id: string }} */ x) => x.id === made.id).values.map((/** @type {{ id: string }} */ x) => x.id)).toEqual([v.id])
@@ -213,7 +213,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       const listed = await b.call('DELETE', `/admin/attributes/${made.id}`)
       expect([listed.status, listed.body.code, listed.body.usedBy]).toEqual([409, 'in_use', { products: 0, categories: 1 }])
       await b.call('PUT', `/admin/categories/${cat.id}`, { body: { ...category('top'), version: 1 } })
-      const stocked = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, attributeProducts: async () => 9 } })
+      const stocked = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, attributeProducts: async () => 9 } })
       await expect(stocked.attributes.remove({ staffId: user.id, name: 'x', role: 'owner' }, made.id, REQ)).rejects.toMatchObject({ code: 'in_use', details: { usedBy: { products: 9, categories: 0 } } })
       expect((await b.call('DELETE', `/admin/attributes/${made.id}`)).status).toBe(204)
     }, 60_000)
@@ -234,7 +234,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
       expect((await b.call('POST', '/admin/size-systems', { body: system("Women's", ['S']) })).body.issues).toEqual([{ path: 'name', code: 'not_unique' }])
       expect((await b.call('POST', '/admin/size-systems', { body: system('Dup', ['S', 's']) })).body.issues).toEqual([{ path: 'values.1.label', code: 'not_unique' }])
       expect((await b.call('PUT', `/admin/size-systems/${made.body.id}`, { body: { name: 'X', values: [{ id: uuidv7(), label: 'S' }] } })).status).toBe(400)
-      const busy = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, sizeValueVariants: async (id) => (id === l.id ? 5 : 0), sizeSystemOptions: async () => 2 } })
+      const busy = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, sizeValueVariants: async (id) => (id === l.id ? 5 : 0), sizeSystemOptions: async () => 2 } })
       const a = { staffId: user.id, name: 'x', role: 'owner' }
       await expect(busy.sizes.updateSystem(a, made.body.id, { name: "Women's", values: [{ id: xs.id, label: 'XS' }] }, REQ)).rejects.toMatchObject({ code: 'in_use', details: { values: [{ id: l.id, label: 'L', usedByVariants: 5 }].map((x) => expect.objectContaining(x)) } })
       await expect(busy.sizes.removeSystem(a, made.body.id, REQ)).rejects.toMatchObject({ code: 'in_use', details: { usedBy: { options: 2 } } })
@@ -303,7 +303,7 @@ describe.skipIf(!dbAvailable)('catalog structure (MySQL, through HTTP)', () => {
     it('a form in use may gain fields but never lose one, and cannot be deleted', async () => {
       const { b, user } = await signedIn('catalog')
       const made = (await b.call('POST', '/admin/form-schemas', { body: form() })).body
-      const used = createCatalogService({ db: t.db, media: noMedia, usage: { ...noUsage, formSchemaProducts: async () => 2 } })
+      const used = createCatalogService({ db: t.db, config, media: noMedia, usage: { ...noUsage, formSchemaProducts: async () => 2 } })
       const a = { staffId: user.id, name: 'x', role: 'owner' }
       const grown = { ...form(), fields: [...made.fields, { key: 'hip', label: 'Hip', type: 'number', required: false }], version: 1 }
       expect((await used.sizes.updateForm(a, made.id, grown, REQ)).fields).toHaveLength(3)

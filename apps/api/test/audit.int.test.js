@@ -7,7 +7,9 @@ import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
-import { attributes, formSchemas, sizeCharts, sizeSystems } from '../src/db/schema/taxonomy.js'
+import { collections, products } from '../src/db/schema/products.js'
+import { attributes, categories, formSchemas, sizeCharts, sizeSystems } from '../src/db/schema/taxonomy.js'
+import { uuidv7 } from '../src/platform/ids.js'
 import { setClock } from '../src/platform/clock.js'
 import { record } from '../src/modules/audit/index.js'
 import { newTotpSecret } from '../src/modules/auth/totp.js'
@@ -24,6 +26,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     setClock(null)
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
+    await t.db.delete(collections)
+    await t.db.delete(products)
     for (const table of [pages, menus, settings, shippingZones, couriers]) await t.db.delete(table)
     await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City']))
     for (let i = 0; i < 4; i++) await t.migrate.pool.query('DELETE c FROM categories c LEFT JOIN categories k ON k.parent_id = c.id WHERE k.id IS NULL')
@@ -329,6 +333,42 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.formSchemas.update'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/form-schemas', { body: form })).body.id }), ({ b, id }) => b.call('PUT', `/admin/form-schemas/${id}`, { body: { ...form, title: 'Custom 2', version: 1 } }))
     samples['admin.formSchemas.delete'] = withSetup(async (b) => ({ id: (await b.call('POST', '/admin/form-schemas', { body: form })).body.id }), ({ b, id }) => b.call('DELETE', `/admin/form-schemas/${id}`))
 
+    // ---- products and collections ----
+    const productBody = (/** @type {string} */ categoryId, /** @type {string} */ handle = 'lawn-suit') => ({
+      handle, status: 'draft', kind: 'accessory', title: 'Lawn suit', primaryCategoryId: categoryId, categoryIds: [], attributes: [], media: [], options: [],
+      variants: [{ key: 'v', sku: handle.toUpperCase(), optionValueKeys: [], price: { amount: 500000, currency: 'PKR' }, stockMode: 'counted', maxPerOrder: 10, enabled: true }],
+    })
+    const withProduct = async () => {
+      const s = await signedIn('owner')
+      const categoryId = uuidv7()
+      await t.db.insert(categories).values({ id: categoryId, handle: 'women', name: 'Women', createdAt: new Date(), updatedAt: new Date() })
+      const r = await s.b.call('POST', '/admin/products', { body: productBody(categoryId) })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, categoryId, product: r.body }
+    }
+    samples['admin.products.create'] = {
+      prepare: async () => {
+        const s = await signedIn('owner')
+        const categoryId = uuidv7()
+        await t.db.insert(categories).values({ id: categoryId, handle: 'women', name: 'Women', createdAt: new Date(), updatedAt: new Date() })
+        return { ...s, categoryId }
+      },
+      act: ({ b, categoryId }) => b.call('POST', '/admin/products', { body: productBody(categoryId) }),
+    }
+    samples['admin.products.update'] = { prepare: withProduct, act: ({ b, product, categoryId }) => b.call('PUT', `/admin/products/${product.id}`, { body: { ...productBody(categoryId), title: 'Changed', variants: [{ ...productBody(categoryId).variants[0], id: product.variants[0].id }], version: 1 } }) }
+    samples['admin.products.delete'] = { prepare: withProduct, act: ({ b, product }) => b.call('DELETE', `/admin/products/${product.id}`) }
+    samples['admin.products.duplicate'] = { prepare: withProduct, act: ({ b, product }) => b.call('POST', `/admin/products/${product.id}/duplicate`) }
+    const collectionBody = { title: 'Eid drop', handle: 'eid-drop', status: 'draft', featured: false, productIds: [] }
+    samples['admin.collections.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/collections', { body: collectionBody }) }
+    const withCollection = async () => {
+      const s = await signedIn('owner')
+      const r = await s.b.call('POST', '/admin/collections', { body: collectionBody })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, id: r.body.id }
+    }
+    samples['admin.collections.update'] = { prepare: withCollection, act: ({ b, id }) => b.call('PUT', `/admin/collections/${id}`, { body: { ...collectionBody, title: 'Eid', version: 1 } }) }
+    samples['admin.collections.delete'] = { prepare: withCollection, act: ({ b, id }) => b.call('DELETE', `/admin/collections/${id}`) }
+
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
       'admin.auth.requestPasswordReset': 'changes nothing until an email provider exists (DOC-12); only counted by the rate limiter',
@@ -337,6 +377,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       'admin.media.confirm': 'starts the check of the own upload of the sender; the outcome is visible as the media status, and a kept file is audited when it is changed or deleted',
       'admin.shipping.zoneImpact': 'a read-only preview of a zone change; nothing is stored',
       'admin.shipping.matchCities': 'a read-only lookup of pasted city names; nothing is stored',
+      'admin.products.checks': 'runs the publish checks on a document that may not be saved; nothing is stored',
+      'admin.products.previewLink': 'signs a link that expires in 15 minutes; it changes no data',
       'admin.pages.preview': 'only renders text with the store tokens filled in; nothing is stored',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }

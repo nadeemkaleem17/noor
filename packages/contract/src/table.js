@@ -6,6 +6,7 @@ import { contentPublicRoutes, contentRoutes } from './content.js'
 import { mediaRoutes } from './media.js'
 import { settingsPublicRoutes, settingsRoutes } from './settings.js'
 import { shippingRoutes } from './shipping.js'
+import { productRoutes } from './products.js'
 import { taxonomyRoutes } from './taxonomy.js'
 import { defineRoutes } from './routes.js'
 import { Id, IsoDate } from './primitives.js'
@@ -42,6 +43,7 @@ export const routes = defineRoutes({
   ...contentPublicRoutes,
   ...shippingRoutes,
   ...taxonomyRoutes,
+  ...productRoutes,
   // DOC-10.1
   'shipping.listCities': {
     method: 'GET', path: '/shipping/cities', auth: 'public', cache: 'shared',

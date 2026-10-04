@@ -177,7 +177,7 @@ A draft can be saved with any of these failing; the failures are listed with lin
 | Validation errors | Field issues map to fields; the first one is focused; the section list marks sections with errors |
 | Unsaved changes | Sticky bar + navigation guard (DOC-04c §3) |
 | Create | `/products/new` shows the same form with kind and category first; Save creates and redirects to `/products/:id` |
-| Duplicate | Copies everything except handle (gets `-copy`), SKUs (blank), stock (0) and status (draft) |
+| Duplicate | Copies everything except handle (gets `-copy`), SKUs (get the suffix `-COPY`, since SKUs must stay unique), stock (0) and status (draft) |
 | Delete | Allowed only for products with no order lines; otherwise the action is replaced by Archive with an explanation. `ConfirmDialog` names the product |
 | View | Opens `/p/:handle` on the storefront; for non-active products opens a preview URL with a signed, short-lived token (`admin.products.previewLink`) |
 | Activity | A collapsed "History" card lists this product's audit entries (DOC-07.13) |

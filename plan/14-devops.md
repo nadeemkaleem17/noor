@@ -133,6 +133,7 @@ All variables are read once by `platform/config.ts` (DOC-08 §12). "Secret" valu
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | `minio`, `minio12345` | yes | |
 | `S3_FORCE_PATH_STYLE` | `true` | | MinIO needs it |
 | `LOCAL_STORAGE_DIR` | `.data/storage` | | Folder of the `local` driver |
+| `STOREFRONT_URL` | `http://localhost:5174` | | Public address of the storefront: product preview links point here |
 | `API_PUBLIC_URL` | `http://localhost:3000` | | The API as a browser reaches it; the `local` driver's upload links point here |
 | `IMAGE_TRANSFORM` | `imgproxy` | | `imgproxy` / `none`. Only `none` is built (the API serves generated sizes at `/img`); imgproxy comes with deployment |
 | `IMG_BASE_URL` | `http://localhost:8080` | | Public base of the image host |

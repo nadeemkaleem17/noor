@@ -4,6 +4,7 @@ import { authHandlers } from './auth/index.js'
 import { platformSchedule } from '../platform/scheduler.js'
 import { createStorage } from '../platform/storage.js'
 import { catalogHandlers } from './catalog/routes.js'
+import { createCatalogService } from './catalog/index.js'
 import { createMediaService, mediaHandlers, mediaJobs } from './media/index.js'
 import { settingsHandlers } from './settings/routes.js'
 import { shippingHandlers } from './shipping/routes.js'
@@ -29,8 +30,13 @@ export const appHandlers = (config, { auth, audit, media, settings, shipping, ca
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage }} deps
  */
 export function backgroundOf({ db, config, storage = createStorage(config) }) {
+  const media = createMediaService({ db, config, storage })
+  const catalog = createCatalogService({ db, config, media })
   return {
-    handlers: { ...mediaJobs(createMediaService({ db, config, storage })) },
-    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }], // daily, 03:00 PKT
+    handlers: {
+      ...mediaJobs(media),
+      'catalog.publish_scheduled': async () => void (await catalog.products.publishDue()),
+    },
+    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }], // media daily at 03:00 PKT; scheduled products every minute
   }
 }

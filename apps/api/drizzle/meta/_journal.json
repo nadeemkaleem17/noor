@@ -50,6 +50,13 @@
       "when": 1791133425610,
       "tag": "0006_taxonomy",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1791134512870,
+      "tag": "0007_products",
+      "breakpoints": true
     }
   ]
 }

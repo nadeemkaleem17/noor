@@ -1,11 +1,13 @@
 // Handlers for the catalog structure routes of the contract (plan/10-api/05 sections 5 and 7).
 const staff = (/** @type {unknown} */ actor) => /** @type {import('./common.js').Staff} */ (actor)
+/** The signed-in staff member, with whether they may publish (products:publish). */
+const publisher = (/** @type {unknown} */ actor) => ({ ...staff(actor), canPublish: /** @type {{ permissions: ReadonlySet<string> }} */ (actor).permissions.has('products:publish') })
 
 /**
  * @param {ReturnType<typeof import('./service.js').createCatalogService>} catalog
  * @returns {Partial<import('../../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>>}
  */
-export function catalogHandlers({ categories, attributes, sizes }) {
+export function catalogHandlers({ categories, attributes, sizes, products, collections }) {
   /** @param {{ ip: string, userAgent: string }} http @param {string} requestId */
   const info = (http, requestId) => ({ ip: http.ip, userAgent: http.userAgent, requestId })
 
@@ -51,6 +53,26 @@ export function catalogHandlers({ categories, attributes, sizes }) {
     'admin.formSchemas.update': async ({ actor, params, body, http, requestId }) => sizes.updateForm(staff(actor), params.id, body, info(http, requestId)),
     'admin.formSchemas.delete': async ({ actor, params, http, requestId }) => {
       await sizes.removeForm(staff(actor), params.id, info(http, requestId))
+    },
+
+    'admin.products.list': async ({ query }) => products.list(query),
+    'admin.products.checkSku': async ({ query }) => products.skuAvailable(query.sku, query.exceptVariantId),
+    'admin.products.checks': async ({ body }) => products.checks(body),
+    'admin.products.get': async ({ params }) => products.get(params.id),
+    'admin.products.create': async ({ actor, body, http, requestId }) => products.save(publisher(actor), null, body, info(http, requestId)),
+    'admin.products.update': async ({ actor, params, body, http, requestId }) => products.save(publisher(actor), params.id, body, info(http, requestId)),
+    'admin.products.delete': async ({ actor, params, http, requestId }) => {
+      await products.remove(staff(actor), params.id, info(http, requestId))
+    },
+    'admin.products.duplicate': async ({ actor, params, http, requestId }) => products.duplicate(publisher(actor), params.id, info(http, requestId)),
+    'admin.products.previewLink': async ({ params }) => products.previewLink(params.id),
+
+    'admin.collections.list': async ({ query }) => collections.list(query),
+    'admin.collections.get': async ({ params }) => collections.get(params.id),
+    'admin.collections.create': async ({ actor, body, http, requestId }) => collections.create(staff(actor), body, info(http, requestId)),
+    'admin.collections.update': async ({ actor, params, body, http, requestId }) => collections.update(staff(actor), params.id, body, info(http, requestId)),
+    'admin.collections.delete': async ({ actor, params, http, requestId }) => {
+      await collections.remove(staff(actor), params.id, info(http, requestId))
     },
   }
 }

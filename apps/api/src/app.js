@@ -55,7 +55,7 @@ export async function buildApp(opts) {
   let settings
   const media = createMediaService({ db, config, storage, inUse: (id) => settings.mediaInUse(id) }) // a file a settings document shows cannot be deleted
   const shipping = createShippingService({ db })
-  const catalog = createCatalogService({ db, media })
+  const catalog = createCatalogService({ db, config, media })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
   const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, catalog })))
 

@@ -17,6 +17,11 @@ admin.categories.delete
 admin.categories.list
 admin.categories.reorder
 admin.categories.update
+admin.collections.create
+admin.collections.delete
+admin.collections.get
+admin.collections.list
+admin.collections.update
 admin.content.getHome
 admin.content.updateHome
 admin.couriers.create
@@ -52,6 +57,15 @@ admin.pages.get
 admin.pages.list
 admin.pages.preview
 admin.pages.update
+admin.products.checkSku
+admin.products.checks
+admin.products.create
+admin.products.delete
+admin.products.duplicate
+admin.products.get
+admin.products.list
+admin.products.previewLink
+admin.products.update
 admin.roles.list
 admin.settings.getCheckout
 admin.settings.getPayments

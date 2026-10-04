@@ -73,6 +73,19 @@ AdminProductRow = { id: Id, handle: string, title: string, colorwayLabel?: strin
 
 Stock quantities are **not** part of `ProductInput` (DOC-07.3 §7.1); `initialStock` exists only on create.
 
+Built at M1-09 (`packages/contract/src/products.js`, `apps/api/src/modules/catalog/products.js`, `collections.js`). What differs from, or is left out of, the table above:
+
+- **Not built yet:** `admin.products.bulk`, `.export`, `.importPreview`, `.importApply` (they come with the product screens, M3-03), the `hasIssues` list filter and the `quantity` sort (stock is M1-10; the row still carries `hasIssues`), and `initialStock` on create and `onHand`/`reserved` on a variant (inventory, M1-10). Until inventory exists nothing counted is available, so a counted variant reads `sold_out`; made-to-order and preorder variants read as such. The seam is `stock` in `createCatalogService` (`available()`, `lowStockThreshold()`).
+- **Keys:** an option value's and a variant's `key` is the client's name for it inside one document; a read returns the id as the key, so an admin read can be sent back unchanged. Variants and options are matched by `id`; labels and SKUs may swap places in one save.
+- **Rules enforced on save:** one value of each option per variant and no repeated combination; SKUs are upper-cased and unique across the catalog; `compareAt` above `price`; `preorderShipsAt` exactly for preorder; a bundle has one variant and 0-6 non-bundle children; `madeToOrder` only for kind `made_to_order`; a `styleId` needs a colourway and refuses a `color` option; a `custom` size value needs the product's custom-size form; pictures must be ready media; attribute values must belong to their attribute (`boolean`: exactly one of yes/no, `number`: `number` given). All problems of a document come back together as `issues`.
+- **Permissions:** `products:write` for drafts. Saving with, or from, a status other than `draft` (going live, scheduling, archiving, editing a live product) also needs `products:publish`, else `403`. A save as `active` or `scheduled` whose checks fail is `409 publish_checks_failed` with `checks` listing the failures. The checks are: `basics`, `images`, `image_alt`, `variant_enabled`, `variant_sku_price`, `components` (unstitched), `lead_time` (made to order), `bundle_children`, `compare_at`, `required_attributes`.
+- **Duplicate:** the copy is a draft, handle `<handle>-copy` (`-copy-2` ...), and SKUs get the suffix `-COPY` (`-COPY2` ...) because a blank SKU would break uniqueness.
+- **Preview link:** `<STOREFRONT_URL>/p/<handle>?preview=<id>.<expiry>.<signature>`, HMAC with a key derived from `DATA_ENCRYPTION_KEY`, 15 minutes. `verifyPreview(token)` returns the product id for the public catalog routes (M1-12).
+- **Derived columns** (`price_min/max`, `compare_at_min`, `stock_status`) are written only by `recomputeProductCache`, in the same transaction as every save. Job `catalog.publish_scheduled` runs every minute and publishes scheduled products that are due and still pass their checks.
+- **Delete:** `409 in_use` for a product that is a bundle's child (and, once orders exist, one with order lines).
+- **Collections:** membership is only in `collection_products`; a fourth featured collection is `400 validation_failed` (`featured`/`too_big`) with `featured: [{ id, title }]`, and `replaceFeaturedId` makes room.
+- **Who uses what:** the structure screens' product counts (category `productCount`, `usedByProducts`, size `usedByVariants`, chart and form `usedBy`) are real now (`catalog/usage.js`); merging attribute values moves products.
+
 ## 3. Media
 
 | Key | Method & path | Permission | Request | Response | Errors | Notes |

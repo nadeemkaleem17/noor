@@ -48,4 +48,4 @@ export const isReferenced = (e) => (cause(e).cause?.errno ?? cause(e).errno) ===
 export const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId })
 
 /** Tells the storefront which cached pages to drop. @param {import('../../platform/db.js').Executor} tx @param {string[]} tags @param {string} requestId */
-export const purge = (tx, tags, requestId) => emit(tx, { type: 'catalog.updated', payload: { tags }, requestId })
+export const purge = (tx, tags, requestId) => emit(tx, { type: 'catalog.updated', payload: { tags }, ...(requestId ? { requestId } : {}) })

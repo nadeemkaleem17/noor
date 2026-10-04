@@ -33,6 +33,8 @@ const Env = z.object({
   API_PUBLIC_URL: z.url().default('http://localhost:3000'),
   /** Public base of the image host. With IMAGE_TRANSFORM=none the API itself serves it at /img (local driver). */
   IMG_BASE_URL: z.url().default('http://localhost:3000/img'),
+  /** Public address of the storefront: preview links point here. */
+  STOREFRONT_URL: z.url().default('http://localhost:5174'),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
   APP_VERSION: z.string().default('dev'),
 }).superRefine((env, ctx) => {
