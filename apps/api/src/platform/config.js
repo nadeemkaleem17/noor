@@ -18,6 +18,10 @@ const Env = z.object({
   DATABASE_MIGRATION_URL: z.string().refine((v) => v.startsWith('mysql://'), 'must start with mysql://'),
   /** Connections per process. */
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
+  /** 32 random bytes, base64: encrypts staff TOTP secrets (AES-256-GCM). */
+  DATA_ENCRYPTION_KEY: z.string().refine((v) => /^[A-Za-z0-9+/]{43}=$/.test(v) && Buffer.from(v, 'base64').length === 32, 'must be 32 bytes in base64'),
+  /** Staff session cookie name. Production uses the __Host- prefix (needs HTTPS). */
+  SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{3,40}$/).default('__Host-rb_admin'),
   /** Run the job worker, outbox relay and scheduler inside the API process (local development only). */
   DEV_INLINE_WORKER: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
   /** Git SHA of the running build, shown to owners in admin.system.info. */

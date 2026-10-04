@@ -48,7 +48,7 @@ The API's public routes are also reachable from the internet (the admin SPA need
 |---|---|
 | Hash | Argon2id via `@node-rs/argon2`: memory 19,456 KiB, iterations 2, parallelism 1 (the OWASP Password Storage Cheat Sheet minimum). Parameters are stored in the hash string; on a successful login with weaker stored parameters the hash is upgraded |
 | Length | 12–128 characters. No composition rules (no forced symbols) |
-| Blocklist | Rejected if in the bundled list of the 10,000 most common passwords or if it contains the user's email local part or the store name |
+| Blocklist | Rejected if it (or its letters with leading and trailing digits and symbols removed, so `Sunshine2026!!` becomes `sunshine`) is in the bundled list of the 10,000 most common passwords (`modules/auth/common-passwords.txt`, from SecLists, MIT), if it uses 3 or fewer distinct characters or starts with a keyboard run, or if it contains the user's email local part (4+ characters) or the store name. The API answers `password_too_weak` with a `reason` (`too_short`, `too_long`, `common`, `repetitive`, `contains_name`) |
 | Storage | Hash only. Never logged, never returned, never emailed |
 | Change | Requires the current password; ends all other sessions |
 | Reset | Single-use token (32 random bytes, stored hashed), valid 60 minutes; using it ends all sessions. Issued by email when a provider exists (DOC-12), otherwise by an owner from the staff screen (DOC-07.12 §4) |
@@ -401,3 +401,4 @@ Reviewed before each release that touches auth, orders, payments or uploads.
 | 2026-10-02 | Phase 7 consistency review: route key for the `search` bucket |
 | 2026-10-02 | M0-02: the 7-day `minimumReleaseAge` gate (§10) blocked a 4-day-old `typescript-eslint`; the response was to pin the previous release, not to weaken the gate (works as intended) |
 | 2026-10-02 | M0-05: `pnpm` blocks dependency install scripts by default (section 10); `esbuild` is on the allow-list in `pnpm-workspace.yaml` (`allowBuilds`), the only entry so far |
+| 2026-10-04 | M1-02: sign-in, sessions, TOTP, recovery codes, invites, resets and staff management implemented as written; 34 HTTP-level integration tests. Origin check runs for every non-GET `/admin` request (also login); the CSRF double-submit applies to full and enrolment sessions, not to the 5-minute pending session |

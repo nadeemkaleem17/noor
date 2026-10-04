@@ -15,7 +15,7 @@ try {
 }
 
 const { pool, db } = createAppDatabase(config)
-const app = await buildApp({ config, readiness: databaseReadiness(pool) })
+const app = await buildApp({ config, db, readiness: databaseReadiness(pool) })
 app.addHook('onClose', async () => pool.end())
 
 // ponytail: no module has handlers or events yet; modules add theirs here as they are built (M1-02 onward)

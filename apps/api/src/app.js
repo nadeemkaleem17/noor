@@ -5,9 +5,11 @@ import Fastify, { LogController } from 'fastify'
 import swagger from '@fastify/swagger'
 import { jsonSchemaTransform, serializerCompiler } from 'fastify-type-provider-zod'
 import { routes as contractRoutes } from '@noor/contract'
-import { errorHandler, sendProblem, toProblem } from './platform/errors.js'
+import { DomainError, errorHandler, sendProblem, toProblem } from './platform/errors.js'
 import { loggerOptions } from './platform/logger.js'
-import { registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
+import { API_PREFIX, registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
+import cookie from '@fastify/cookie'
+import { createAuthorize, createAuthService } from './modules/auth/index.js'
 import { appHandlers } from './modules/index.js'
 
 /**
@@ -21,6 +23,7 @@ import { appHandlers } from './modules/index.js'
  * @property {T} [table]
  * @property {import('./platform/http/route-registrar.js').Handlers<T>} [handlers]
  * @property {import('./platform/http/route-registrar.js').Authorize} [authorize]
+ * @property {import('./platform/db.js').Database['db']} [db] the application database handle (the app user)
  * @property {Readiness} [readiness] - Database reachable and migrations at head. M0-06 supplies the real check; until then nothing can fail.
  */
 
@@ -33,7 +36,10 @@ const requestIdPattern = /^[A-Za-z0-9-]{8,64}$/
 export async function buildApp(opts) {
   const { config } = opts
   const table = /** @type {T} */ ((opts.table ?? contractRoutes))
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config)))
+  // the database handle is optional so route-table tests can run without one; auth routes then fail only when they need it
+  const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
+  const auth = createAuthService({ db, config })
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth })))
 
   const app = Fastify({
     logger: loggerOptions(config),
@@ -62,8 +68,15 @@ export async function buildApp(opts) {
     transform: jsonSchemaTransform,
   })
 
+  await app.register(cookie)
+
   app.addHook('onRequest', async (req, reply) => {
     void reply.header('x-request-id', req.id)
+    if (req.url.startsWith(`${API_PREFIX}/admin/`)) {
+      void reply.header('cache-control', 'no-store')
+      // CSRF, first line of defence (plan/11-security-auth.md section 5.1): every state change must come from the admin site
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.headers.origin !== config.ADMIN_ORIGIN) throw new DomainError('csrf_failed')
+    }
   })
   app.addHook('onResponse', async (req, reply) => {
     if (req.url === '/healthz' || req.url === '/readyz') return
@@ -80,6 +93,6 @@ export async function buildApp(opts) {
     return failing.length ? reply.code(503).send({ ok: false, failing }) : { ok: true }
   })
 
-  registerRoutes(app, table, handlers, opts.authorize)
+  registerRoutes(app, table, handlers, opts.authorize ?? (db ? createAuthorize({ db, config, auth }) : undefined))
   return app
 }

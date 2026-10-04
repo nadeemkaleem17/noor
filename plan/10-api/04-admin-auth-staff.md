@@ -99,6 +99,8 @@ AuditEntry = { id: Id, at: IsoDate, actorType: ActorType, actorId?: Id, actorLab
 
 No create, update or delete route exists for audit entries.
 
+**Contract additions (M1-02).** Two route flags were added to the contract: `stepUp` (the route needs a password confirmation within 15 minutes, else `403 step_up_required`) and `enrolment` (also reachable from a session that may only enrol two-factor: `admin.me.get`, `confirmPassword`, `twoFactor.begin`, `twoFactor.enable`). A new auth class `staff-any` means "any signed-in staff member, no permission" and is used by `logout` and every `admin.me.*` route; the strict rule "a staff route names a permission" still holds for `staff`. The half-finished sessions answer other routes with `403 two_factor_required`.
+
 ## 6. Example
 
 ```http
@@ -137,3 +139,4 @@ Set-Cookie: __Host-rb_admin=…; Path=/; HttpOnly; Secure; SameSite=Lax
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 5, part 2) |
+| 2026-10-04 | M1-02 built. Behaviour fixed while building: (1) clearing a lock (`admin.staff.clearLock`) also forgets that email's failed attempts, otherwise the next try would re-lock; (2) `admin.auth.requestPasswordReset` only counts the request (5 per 15 min per IP) because no email provider exists; owners issue reset links from the staff screen; (3) the first 2FA code check uses the application clock, so tests can freeze time; (4) a role change, deactivation, password reset and 2FA reset end that person's sessions; (5) `inviteLink` and `resetLink` are always returned (no provider), at most once |

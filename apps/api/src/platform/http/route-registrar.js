@@ -11,6 +11,7 @@ export const API_PREFIX = '/api/v1'
  * @typedef {object} Actor
  * @property {string} staffId
  * @property {ReadonlySet<import('@noor/contract').Permission>} permissions
+ * @property {string} [name]
  */
 
 /**
@@ -25,8 +26,18 @@ const denyStaff = /** @type {Authorize} */ (async () => null)
  * @property {R extends { params: infer P extends z.ZodType; } ? z.output<P> : undefined} params
  * @property {R extends { query: infer Q extends z.ZodType; } ? z.output<Q> : undefined} query
  * @property {R extends { body: infer B extends z.ZodType; } ? z.output<B> : undefined} body
- * @property {R extends { auth: 'staff'; } ? Actor : null} actor
+ * @property {R extends { auth: 'staff' | 'staff-any' | 'staff-pending'; } ? Actor : null} actor
  * @property {string} requestId
+ * @property {HttpInfo} http
+ */
+
+/**
+ * What a handler may use of the HTTP exchange besides its validated input: the client, and cookies.
+ * @typedef {object} HttpInfo
+ * @property {string} ip
+ * @property {string} userAgent
+ * @property {(name: string, value: string, options: import('@fastify/cookie').CookieSerializeOptions) => void} setCookie
+ * @property {(name: string) => void} clearCookie
  */
 
 /**
@@ -99,8 +110,8 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff) {
             throw new DomainError('validation_failed', { issues: [{ path: 'Idempotency-Key', code: k === undefined ? 'required' : 'invalid_format' }] })
           }
         }
-        if (def.auth === 'staff' || def.auth === 'staff-pending') {
-          const actor = def.auth === 'staff' ? await authorize(req, def) : null
+        if (def.auth === 'staff' || def.auth === 'staff-any' || def.auth === 'staff-pending') {
+          const actor = await authorize(req, def)
           if (!actor) throw new DomainError('unauthenticated')
           if (def.permission && !actor.permissions.has(def.permission)) throw new DomainError('forbidden')
           ;(/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor = actor
@@ -113,6 +124,14 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff) {
           body: req.body,
           actor: (/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor ?? null,
           requestId: req.id,
+          http: {
+            ip: req.ip,
+            userAgent: String(req.headers['user-agent'] ?? ''),
+            /** @param {string} name @param {string} value @param {import('@fastify/cookie').CookieSerializeOptions} options */
+            setCookie: (name, value, options) => void reply.setCookie(name, value, options),
+            /** @param {string} name */
+            clearCookie: (name) => void reply.clearCookie(name, { path: '/' }),
+          },
         })
         reply.code(status)
         return status === 204 ? reply.send() : out

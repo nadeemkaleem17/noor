@@ -14,6 +14,8 @@
  * @property {import('zod').z.ZodType} [body]
  * @property {import('zod').z.ZodType} response
  * @property {200 | 201 | 202 | 204} [status]
+ * @property {boolean} [stepUp] - Needs a password confirmation within the last 15 minutes (DOC-11 section 3.4).
+ * @property {boolean} [enrolment] - Also reachable from a session that is only allowed to enrol two-factor.
  * @property {boolean} [idempotent] - Requires an Idempotency-Key header (DOC-10.0 section 8).
  * @property {string} [rateLimit] - Rate-limit bucket (DOC-11 section 5.4); `default` when omitted.
  */
@@ -23,7 +25,7 @@
  * @typedef {Shape &
  * (
  * | { auth: 'staff'; permission: import('./permissions.js').Permission; }
- * | { auth: 'public' | 'cart' | 'order-token' | 'staff-pending' | 'webhook'; permission?: never; }
+ * | { auth: 'public' | 'cart' | 'order-token' | 'staff-pending' | 'staff-any' | 'webhook'; permission?: never; }
  * )} RouteDef
  */
 

@@ -5,7 +5,8 @@ import { buildApp } from '../src/app.js'
 import { ConfigError, parseConfig } from '../src/platform/config.js'
 import { DomainError } from '../src/platform/errors.js'
 
-const dbEnv = { DATABASE_URL: 'mysql://app:pw@localhost:3306/rubaya', DATABASE_MIGRATION_URL: 'mysql://migrate:pw@localhost:3306/rubaya' }
+const dbEnv = {
+  DATA_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'), DATABASE_URL: 'mysql://app:pw@localhost:3306/rubaya', DATABASE_MIGRATION_URL: 'mysql://migrate:pw@localhost:3306/rubaya' }
 const config = /** @type {import('../src/platform/config.js').Config} */ (parseConfig({ NODE_ENV: 'test', APP_ENV: 'ci', ADMIN_ORIGIN: 'http://localhost:5173', LOG_LEVEL: 'silent', ...dbEnv }))
 const apps = /** @type {Awaited<ReturnType<typeof buildApp>>[]} */ ([])
 /**

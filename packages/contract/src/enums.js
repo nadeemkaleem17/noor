@@ -80,5 +80,8 @@ export const Enum = /** @type {Schemas} */ (/** @type {unknown} */ (Object.fromE
  * @typedef {EnumValue<'staffRole'>} StaffRole
  */
 /**
+ * @typedef {EnumValue<'staffStatus'>} StaffStatus
+ */
+/**
  * @typedef {EnumValue<'locale'>} Locale
  */

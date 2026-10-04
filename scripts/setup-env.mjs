@@ -1,7 +1,7 @@
 // Creates the local .env files and the MySQL init script (DOC-14 section 3.3, native MySQL, no Docker).
 // Safe to rerun: an existing .env is never touched, and secrets already generated are reused (.data/local-secrets.json).
 //   node scripts/setup-env.mjs
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { fillTokens } from './lib/env-file.mjs'
@@ -20,7 +20,20 @@ for (const app of ['apps/api', 'apps/storefront']) {
   const target = path.join(root, app, '.env')
   if (!existsSync(example)) continue
   if (existsSync(target)) {
-    kept.push(`${app}/.env`)
+    // an existing .env is never changed, but variables added to the example since are appended (with generated secrets)
+    const have = new Set([...readFileSync(target, 'utf8').matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]))
+    const wanted = readFileSync(example, 'utf8').split('\n')
+    const missing = []
+    for (let i = 0; i < wanted.length; i++) {
+      const name = /^([A-Z][A-Z0-9_]*)=/.exec(wanted[i] ?? '')?.[1]
+      if (name && !have.has(name)) missing.push(...(wanted[i - 1]?.startsWith('#') ? [wanted[i - 1]] : []), wanted[i])
+    }
+    if (missing.length) {
+      const filled = fillTokens(missing.join('\n'), secrets)
+      secrets = filled.secrets
+      appendFileSync(target, (readFileSync(target, 'utf8').endsWith('\n') ? '' : '\n') + filled.text + '\n')
+      created.push(`${app}/.env (added ${missing.filter((l) => !l.startsWith('#')).length} new variable(s))`)
+    } else kept.push(`${app}/.env`)
     continue
   }
   const filled = fillTokens(readFileSync(example, 'utf8'), secrets)
