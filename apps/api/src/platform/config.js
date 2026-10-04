@@ -18,6 +18,8 @@ const Env = z.object({
   DATABASE_MIGRATION_URL: z.string().refine((v) => v.startsWith('mysql://'), 'must start with mysql://'),
   /** Connections per process. */
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
+  /** Run the job worker, outbox relay and scheduler inside the API process (local development only). */
+  DEV_INLINE_WORKER: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
   APP_VERSION: z.string().default('dev'),
 })

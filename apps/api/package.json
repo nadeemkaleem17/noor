@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env src/db/migrate.js",
     "spike:drizzle": "node --env-file-if-exists=.env spikes/m0-06-drizzle.js",
-    "spike:jobs": "node --env-file-if-exists=.env spikes/m0-07-jobs.js"
+    "spike:jobs": "node --env-file-if-exists=.env spikes/m0-07-jobs.js",
+    "worker": "node --env-file-if-exists=.env src/worker.js"
   },
   "dependencies": {
     "@fastify/swagger": "~9.9.0",
@@ -21,7 +22,8 @@
     "drizzle-orm": "~0.45.3",
     "fastify": "^5.12.5",
     "fastify-type-provider-zod": "^7.0.0",
-    "mysql2": "^3.24.4"
+    "mysql2": "^3.24.4",
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "@noor/config": "workspace:*",

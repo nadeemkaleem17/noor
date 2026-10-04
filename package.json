@@ -13,8 +13,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run typecheck lint test && node scripts/check-logical.mjs",
-    "route-keys": "node scripts/route-keys.mjs"
+    "check": "turbo run typecheck lint test --concurrency=3 && node scripts/check-logical.mjs",
+    "route-keys": "node scripts/route-keys.mjs",
+    "postinstall": "node scripts/fix-pnpm-links.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.0"

@@ -14,3 +14,8 @@ export const uuid = /** @type {typeof customType<{ data: string }>} */ (customTy
 
 /** UTC `datetime(3)`; set by the application clock, never by a database default (DOC-09.0 section 2). */
 export const utc = (/** @type {string} */ name) => datetime(name, { fsp: 3 })
+
+/** Fixed-length hex text (hashes) in `ascii_bin`. */
+export const binChar = /** @type {typeof customType<{ data: string; config: { length: number }; configRequired: false }>} */ (customType)({
+  dataType: (config) => `char(${config?.length ?? 64}) character set ascii collate ascii_bin`,
+})

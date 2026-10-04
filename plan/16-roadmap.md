@@ -276,7 +276,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 | Milestone | Tasks | Done |
 |---|---|---|
 | M0 | 13 | 12 (all but M0-08, which is skipped with Docker; M0-03, M0-06 and M0-07 finished 4 Oct 2026) |
-| M1 | 13 | 0 |
+| M1 | 13 | 1 (M1-01) |
 | M2 | 5 | 5 (M2-01 to 05, milestone done) |
 | M3 | 7 | 0 |
 | M4 | 12 | 0 |
@@ -333,3 +333,4 @@ Updated by the PR that finishes a task.
 | 2026-10-04 | **Language change (ADR-0021):** the owner chose JavaScript over TypeScript; all code built in M0 and M2 was converted to JavaScript with JSDoc types (113 files). `pnpm typecheck` is `tsc --checkJs`. Checks all still green (contract 53, i18n 10, api 24, config 32, ui 307, storefront 10 tests). In every task row, `.ts`/`.tsx` means `.js`/`.jsx` |
 | 2026-10-04 | M0-06 and M0-07 prepared without a database: Drizzle schema for outbox_events, jobs, jobs_dead, counters (`apps/api/src/db/schema/platform.js`, first migration generated offline, `ascii_bin` columns via a custom type because Drizzle 0.45 has no per-column collation), `platform/{db,ids,jobs}.js` (pool, deadlock retry, UUIDv7, claim/complete/fail with `.for('update', { skipLocked: true })`), spike scripts `spike:drizzle` and `spike:jobs`. They run once MySQL and the database users exist |
 | 2026-10-04 | **M0 done.** MySQL 8.4.11 set up on port 3307; the platform migration applied; M0-06 (9/9) and M0-07 (7/7) pass and are recorded in DOC-08 §18. Bug found by M0-06: Drizzle wraps MySQL errors, hiding deadlocks from the retry helper (fixed, tested). Next: M1 (backend core), starting with M1-01 |
+| 2026-10-04 | M1-01 done: `platform/{clock,cache,outbox,jobs,worker,scheduler,runtime,idempotency,rate-limit,counters}.js`, tables `idempotency_keys` and `rate_limit_hits`, `src/worker.js`. 61 API tests (26 against real MySQL: two workers never run a job twice, deadlock-free claiming, crash takeover, outbox atomicity, idempotency replay/mismatch/in-progress/takeover, 50 concurrent order numbers without a gap, rolled-back numbers return, rate-limit windows, hashed subjects). Next: M1-02 (auth) |

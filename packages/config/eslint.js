@@ -42,7 +42,7 @@ export const base = [
 
 /** Only the API's config.js may read process.env (plan/08-backend-architecture.md section 12). */
 export const noProcessEnv = [
-  { files: ['**/*.{js,jsx}'], ignores: ['**/platform/config.js', '**/drizzle.config.js', '**/spikes/**'], rules: { 'no-restricted-properties': ['error', { object: 'process', property: 'env', message: 'Read configuration through platform/config.js.' }] } },
+  { files: ['**/*.{js,jsx}'], ignores: ['**/platform/config.js', '**/drizzle.config.js', '**/spikes/**', '**/test/**', '**/vitest.config.js'], rules: { 'no-restricted-properties': ['error', { object: 'process', property: 'env', message: 'Read configuration through platform/config.js.' }] } },
 ]
 
 // ESLint flat config does not merge options of the same rule across entries: a later `no-restricted-imports`

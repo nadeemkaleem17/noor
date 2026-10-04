@@ -6,6 +6,13 @@ import mysql from 'mysql2/promise'
  * @typedef {ReturnType<typeof createDatabase>} Database
  */
 
+/** @typedef {Parameters<Parameters<Database['db']['transaction']>[0]>[0]} Transaction */
+
+/**
+ * Anything a query can run on: the pool's `db` or a transaction. Repositories take one of these as their first argument.
+ * @typedef {Pick<Database['db'], 'select' | 'insert' | 'update' | 'delete'>} Executor
+ */
+
 /**
  * `datetime(3)` columns are UTC (ADR-0008), so the driver must not shift them into the server's zone.
  * @param {string} url
@@ -58,26 +65,27 @@ export async function withRetry(fn, { attempts = 3, sleep = /** @param {number} 
 }
 
 /**
- * A service opens a transaction with this, never with `db.transaction` directly.
+ * A service opens a transaction with this, never with `db.transaction` directly: it retries on deadlock.
  * @template T
  * @param {Database['db']} db
- * @param {Parameters<Database['db']['transaction']>[0] extends (tx: infer Tx) => Promise<infer _R> ? (tx: Tx) => Promise<T> : never} fn
+ * @param {(tx: Transaction) => Promise<T>} fn
+ * @param {Parameters<Database['db']['transaction']>[1]} [config]
+ * @returns {Promise<T>}
  */
-export const transaction = (db, fn) =>
-  withRetry(() => db.transaction(fn))
+export const transaction = (db, fn, config) => withRetry(() => db.transaction(fn, config))
+
+
 
 /**
  * `/readyz`: the database answers a trivial query.
  * @param {Database['pool']} pool
  * @returns {import('../app.js').Readiness}
  */
-export const databaseReadiness =
-  (pool) =>
-  async () => {
-    try {
-      await pool.query('SELECT 1')
-      return []
-    } catch {
-      return ['database']
-    }
+export const databaseReadiness = (pool) => async () => {
+  try {
+    await pool.query('SELECT 1')
+    return []
+  } catch {
+    return ['database']
   }
+}

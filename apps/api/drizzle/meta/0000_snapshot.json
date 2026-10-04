@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9fa09bcd-bb56-4eb9-916a-d9de0f8bce64",
+  "id": "02f90b10-5dc7-4349-8c46-efae249a6458",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "counters": {
@@ -34,6 +34,93 @@
       },
       "uniqueConstraints": {},
       "checkConstraint": {}
+    },
+    "idempotency_keys": {
+      "name": "idempotency_keys",
+      "columns": {
+        "scope": {
+          "name": "scope",
+          "type": "varchar(40) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "char(36) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "char(64) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "response_status": {
+          "name": "response_status",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "response_body": {
+          "name": "response_body",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idempotency_keys_expires_idx": {
+          "name": "idempotency_keys_expires_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "idempotency_keys_scope_key_pk": {
+          "name": "idempotency_keys_scope_key_pk",
+          "columns": [
+            "scope",
+            "key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "idempotency_keys_status_chk": {
+          "name": "idempotency_keys_status_chk",
+          "value": "`idempotency_keys`.`status` IN ('in_progress', 'done')"
+        }
+      }
     },
     "jobs": {
       "name": "jobs",
@@ -129,7 +216,6 @@
         "jobs_claim_idx": {
           "name": "jobs_claim_idx",
           "columns": [
-            "locked_at",
             "run_at"
           ],
           "isUnique": false
@@ -312,6 +398,62 @@
           "name": "outbox_events_id",
           "columns": [
             "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "rate_limit_hits": {
+      "name": "rate_limit_hits",
+      "columns": {
+        "bucket": {
+          "name": "bucket",
+          "type": "varchar(24) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "varchar(100) character set ascii collate ascii_bin",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "rate_limit_hits_window_idx": {
+          "name": "rate_limit_hits_window_idx",
+          "columns": [
+            "window_start"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "rate_limit_hits_bucket_subject_window_start_pk": {
+          "name": "rate_limit_hits_bucket_subject_window_start_pk",
+          "columns": [
+            "bucket",
+            "subject",
+            "window_start"
           ]
         }
       },

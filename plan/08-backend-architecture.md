@@ -254,10 +254,10 @@ Payload rule: ids and the minimum needed to act, never a copy of the entity (han
 `jobs(id, type, payload json, unique_key, run_at, attempts, max_attempts, locked_at, locked_by, last_error, created_at)`, unique index on `unique_key`, index on `(locked_at, run_at)`.
 
 ```sql
--- claim (worker, in a short transaction)
+-- claim (worker, in a short transaction run at READ COMMITTED; times are passed in from the app clock)
 SELECT id FROM jobs
- WHERE run_at <= NOW(3) AND (locked_at IS NULL OR locked_at < NOW(3) - INTERVAL 10 MINUTE)
- ORDER BY run_at LIMIT 10
+ WHERE run_at <= ? AND (locked_at IS NULL OR locked_at < ?)
+ ORDER BY run_at, id LIMIT 10
  FOR UPDATE SKIP LOCKED;
 UPDATE jobs SET locked_at = NOW(3), locked_by = ?, attempts = attempts + 1 WHERE id IN (…);
 ```
@@ -265,7 +265,7 @@ UPDATE jobs SET locked_at = NOW(3), locked_by = ?, attempts = attempts + 1 WHERE
 | Rule | Detail |
 |---|---|
 | Polling | Every 1 s when the last poll found work, backing off to 5 s when idle |
-| Concurrency | 5 jobs at a time per worker |
+| Concurrency | 5 jobs at a time per worker. The claim runs at `READ COMMITTED` and `jobs_claim_idx` is on `run_at` so the scan follows the `ORDER BY`: with the old index and `REPEATABLE READ`, MySQL locked every due row before `LIMIT`, and the second worker got almost nothing (M0-07 saw 990/10; after the fix 500/500 and 36 % faster) |
 | Success | Row deleted |
 | Failure | `run_at = now + min(2^attempts × 15 s, 1 h)`, `last_error` stored (message only, no payload), lock cleared |
 | Dead letter | At `max_attempts` (8) the row moves to `jobs_dead` and an audit entry `job_failed` is written (DOC-07.2 "Failed jobs", DOC-07.13) |
@@ -394,7 +394,7 @@ Results are recorded in §18. A failed spike changes this document before any mo
 |---|---|---|---|
 | Q-08-1 | Drizzle `mysql-core` supports `.for('update', { skipLocked: true })` and table-level `check()` in 0.45 | **Answered (M0-06, MySQL 8.4.11): yes to both**, no `sql` fallback needed. Full result below | — |
 | Q-08-1a | **M0-06 result** (`pnpm --filter @noor/api spike:drizzle`, 9/9 checks on MySQL 8.4.11, drizzle-orm 0.45.3, drizzle-kit 0.31.11) | `datetime(3)` keeps milliseconds, stored as UTC with `timezone: 'Z'` on the pool. `json` round-trips objects, arrays and Urdu text, but MySQL **reorders object keys** (shorter first), so never compare JSON by text. Table `CHECK` is generated and enforced (error 3819). `ascii_bin` columns compare exactly. `.for('update', { skipLocked: true })` works. Deadlock retry works (3 attempts for 2 transactions). A counters row lock gives gap-free numbers across 30 concurrent callers. A second `drizzle-kit generate` finds no drift. **Four things to know:** (1) Drizzle has no per-column collation, so `ascii_bin` ids and codes use a `customType` (`src/db/types.js`). (2) Drizzle wraps driver errors in `DrizzleQueryError`; the MySQL error (`errno`) is in `cause`, and `isRetryable` unwraps it (a real bug the spike found: without it a deadlock was never retried). (3) A `WHERE` on an unindexed column under REPEATABLE READ locks every row it scans, so lock by primary key or indexed key (the spike's first deadlock test hung for this reason). (4) `drizzle-kit` is 0.31.x while `drizzle-orm` is 0.45.x: separate version lines | M1 adds more tables |
-| Q-08-1b | **M0-07 result** (`spike:jobs`, 7/7) | Dedupe: two jobs with one `unique_key` leave one row. 1,000 jobs across two worker processes: every job ran exactly once, queue empty, 9.4 s (worker A took 990, B took 10: B started later, so this proves no double run under overlap, not an even split). A crashed worker leaves its 10 jobs locked; they are not taken over before the lock timeout and are run exactly once after it (the spike used 2 s instead of 10 min). Uses `claim()` in `src/platform/jobs.js` as written | Throughput matters (ADR-0009 trigger 50 jobs/s) |
+| Q-08-1b | **M0-07 result** (`spike:jobs`, 7/7) | Dedupe: two jobs with one `unique_key` leave one row. 1,000 jobs across two worker processes: every job ran exactly once, queue empty, 9.4 s (A=990 B=10 at first; that split was the claim-lock problem described in section 9.1, fixed in M1-01 (now 500/500)). A crashed worker leaves its 10 jobs locked; they are not taken over before the lock timeout and are run exactly once after it (the spike used 2 s instead of 10 min). Uses `claim()` in `src/platform/jobs.js` as written | Throughput matters (ADR-0009 trigger 50 jobs/s) |
 | Q-08-2 | `fastify-type-provider-zod` major to pin | **Answered (M0-API-SPIKE-1): v7** with Zod 4.6.5 | — |
 | Q-08-3 | imgproxy current version, AVIF support in the open-source build, URL signing details | Not researched in this phase | `M0-API-SPIKE-4`; fallback is ADR-0011 option B |
 | Q-08-4 | `@fastify/swagger` output for Zod 4 schemas | Works through the type provider's JSON-schema transform | `M0-API-SPIKE-1`; fallback: build OpenAPI directly with `z.toJSONSchema` |
@@ -410,3 +410,4 @@ Results are recorded in §18. A failed spike changes this document before any mo
 | 2026-10-02 | M0-05 / spike 1 done: registrar, error handler, config, logger, OpenAPI snapshot. Findings: (1) a custom validator compiler is used because the provider's flattens Zod issues; (2) Fastify 5.12 deprecates `disableRequestLogging` and `requestIdLogLabel`: use `logController`; (3) `trustProxy` is a function `(addr, hop) => hop < N` (Fastify's types omit the numeric form); (4) the redact path `*.code` also hid error codes in logs, replaced by `*.promoCode`; (5) the `db.ts` pool moves to M0-06 (spike 3) with Drizzle |
 | 2026-10-04 | Spikes 2 and 3 are written (`apps/api/spikes`) but not yet run. Offline findings: `drizzle-kit generate` (0.31.11, not 0.45.x: kit and orm have separate version lines) emits `datetime(3)`, `json`, indexes and `character set ascii collate ascii_bin` correctly from the schema; Drizzle 0.45.3 `mysql-core` has `.for('update', { skipLocked: true })` and a table-level `check()`, but **no per-column collation option**, so exact-match columns use a `customType` (Q-08-1 partly answered) |
 | 2026-10-04 | Spikes 2 and 3 run on MySQL 8.4.11 and recorded in §18 (Q-08-1a, Q-08-1b): all checks pass; one bug found and fixed (Drizzle error wrapping hid deadlocks from the retry helper) |
+| 2026-10-04 | M1-01: platform modules built (clock, cache, outbox emit + relay, job worker, scheduler, idempotency, rate-limit buckets, counters). Claim query changed to READ COMMITTED with an index on `run_at` (§9.1). Idempotency stores domain refusals and replays them; an unexpected failure forgets the key. Background loops start inside the API when `DEV_INLINE_WORKER=1`, or as `pnpm --filter @noor/api worker` |

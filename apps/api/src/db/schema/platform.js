@@ -1,6 +1,7 @@
 // Outbox, jobs, dead jobs and counters (plan/09-data-model/01-platform.md sections 2.1-2.4).
-import { bigint, index, int, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
-import { binVarchar, utc, uuid } from '../types.js'
+import { sql } from 'drizzle-orm'
+import { bigint, check, index, int, json, mysqlTable, primaryKey, smallint, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { binChar, binVarchar, utc, uuid } from '../types.js'
 
 export const outboxEvents = mysqlTable(
   'outbox_events',
@@ -30,7 +31,7 @@ export const jobs = mysqlTable(
     lastError: varchar('last_error', { length: 500 }),
     createdAt: utc('created_at').notNull(),
   },
-  (t) => [uniqueIndex('jobs_unique_key_uq').on(t.uniqueKey), index('jobs_claim_idx').on(t.lockedAt, t.runAt), index('jobs_type_idx').on(t.type)],
+  (t) => [uniqueIndex('jobs_unique_key_uq').on(t.uniqueKey), index('jobs_claim_idx').on(t.runAt), index('jobs_type_idx').on(t.type)],
 )
 
 export const jobsDead = mysqlTable(
@@ -54,3 +55,29 @@ export const counters = mysqlTable('counters', {
   name: binVarchar('name', { length: 32 }).primaryKey(), // order_number, invoice_2026, ...
   value: bigint('value', { mode: 'number' }).notNull(), // last issued value
 })
+
+export const idempotencyKeys = mysqlTable(
+  'idempotency_keys',
+  {
+    scope: binVarchar('scope', { length: 40 }).notNull(), // route key, e.g. orders.create
+    key: uuid('key').notNull(), // client UUID
+    requestHash: binChar('request_hash', { length: 64 }).notNull(), // SHA-256 of the canonical request body
+    status: binVarchar('status', { length: 16 }).notNull(), // in_progress | done
+    responseStatus: smallint('response_status'),
+    responseBody: json('response_body'), // sensitive: holds the order tracking token
+    createdAt: utc('created_at').notNull(),
+    expiresAt: utc('expires_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.scope, t.key] }), index('idempotency_keys_expires_idx').on(t.expiresAt), check('idempotency_keys_status_chk', sql`${t.status} IN ('in_progress', 'done')`)],
+)
+
+export const rateLimitHits = mysqlTable(
+  'rate_limit_hits',
+  {
+    bucket: binVarchar('bucket', { length: 24 }).notNull(),
+    subject: binVarchar('subject', { length: 100 }).notNull(), // ip:<addr>, phone:<sha256 prefix> ... never a clear phone or email
+    windowStart: utc('window_start').notNull(),
+    count: int('count').notNull().default(1),
+  },
+  (t) => [primaryKey({ columns: [t.bucket, t.subject, t.windowStart] }), index('rate_limit_hits_window_idx').on(t.windowStart)],
+)

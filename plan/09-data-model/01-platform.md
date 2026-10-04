@@ -46,7 +46,7 @@ Indexes: `outbox_events_unprocessed_idx (processed_at, id)`. The relay reads `WH
 | `last_error` | varchar(500) | NULL | | Message only |
 | `created_at` | datetime(3) | NN | | |
 
-Indexes: `jobs_claim_idx (locked_at, run_at)`, `jobs_type_idx (type)`.
+Indexes: `jobs_claim_idx (run_at)`, `jobs_type_idx (type)`. (Changed at M1-01 from `(locked_at, run_at)`: the claim query orders by `run_at, id`, and an index that does not match the order makes MySQL read and lock every due row before applying `LIMIT`, which starved the second worker. See DOC-08 section 9.1.)
 
 ### 2.3 `jobs_dead`
 
@@ -145,3 +145,4 @@ Indexes: `exports_requested_idx (requested_by, created_at)`, `exports_expires_id
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 5, part 1) |
+| 2026-10-04 | M1-01: `jobs_claim_idx` is `(run_at)`; tables `idempotency_keys` (hash column `ascii_bin`, status CHECK) and `rate_limit_hits` (extra index `rate_limit_hits_window_idx (window_start)` for the cleanup) built; `exports` waits for `staff_users` (M1-02) |
