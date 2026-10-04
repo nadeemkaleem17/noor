@@ -26,19 +26,17 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done. M2 (design system) done: `@noor/ui` components, stories and the axe gate. M1 (backend core) needs the database first: blocked on MySQL (M0-03/06/07); the next unblocked work is M5 storefront screens that only need the contract, or M3 admin shell pieces that do not call the API |
+| Roadmap position | Milestone **M0 Foundation**: M0-01, 02, 04, 05, 09, 10, 11, 12, 13 done, M0-03 partly (scripts exist, database users not created) (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). Next: **M0-06** (Drizzle on MySQL spike) once MySQL is installed; then M0-03 and M0-07. Everything else in M0 is done. M2 (design system) done: `@noor/ui` components, stories and the axe gate. M1 (backend core) needs the database first: blocked on MySQL (M0-03/06/07); the next unblocked work is M5 storefront screens that only need the contract, or M3 admin shell pieces that do not call the API |
 | Branch | `chore/M0-01-workspace`, one commit per M0 task, not pushed (`master` is the default branch) |
 | New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, `safeHref`, Storybook; components in `src/components/`, one file per family, imported as `@noor/ui/<name>`: Button, Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup, Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips, Spinner, Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast, Select, Combobox, Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge/StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, Link, Ltr, VisuallyHidden, Image, Price, Markdown, RHFField (in field.tsx), ImageUpload). Every story is axe-checked by `test/stories.a11y.test.tsx` (add a story file and it is covered). Component tests: `packages/ui/test/*.test.tsx` use jsdom + Testing Library via `test/dom.tsx` (`renderUi`); put `// @vitest-environment jsdom` at the top of such a file, `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
 | Running today | The old admin against the old mock API |
 
 Open items on this machine:
-- **Database setup:** `node scripts/setup-env.mjs` has run (`.env` files and `.data/mysql-init.sql` exist). Still to do by the owner: `"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < .data/mysql-init.sql`. The installed server is MySQL **8.0** (the plan says 8.4); decide whether that is acceptable before M0-06.
-- **No Docker, by decision.** Local MySQL 8.4 is installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work). Use `STORAGE_DRIVER=local`, `IMAGE_TRANSFORM=none`; spike M0-08 (MinIO/imgproxy) is skipped.
+- **Database setup (waiting on the owner):** `node scripts/setup-env.mjs` has run (`.env` files and `.data/mysql-init.sql` exist). The owner chose to **install MySQL 8.4** (2 Oct 2026; the installed 8.0 is not used). After installing, run `mysql -u root -p < .data/mysql-init.sql` once; if 8.4 listens on a port other than 3306, change the two URLs in `apps/api/.env`. Then continue with M0-06.
+- **No Docker, by decision.** Local MySQL 8.4 is to be installed natively (plan/14-devops.md §3.4; XAMPP's MariaDB does not work). Use `STORAGE_DRIVER=local`, `IMAGE_TRANSFORM=none`; spike M0-08 (MinIO/imgproxy) is skipped.
 - `typescript` is pinned `~6.0.3` and `typescript-eslint` `~8.70.1`: pnpm's 7-day release-age gate refuses newer ones. Do not disable the gate; pin an older release.
 - **Node 24.14** is installed (the plan pinned 22.22; `engines` is `>=22.22`, `.nvmrc` says 24).
 - `pnpm` was installed with `npm i -g pnpm@11.28.3` (`corepack enable` needs administrator rights here).
-- Three empty folders `admin-panel/`, `ecommerce-website/`, `mock-api/` may remain at the root: they are locked by
-  old dev servers still running. Stop those terminals, then delete the three folders.
 
 ## Layout
 
