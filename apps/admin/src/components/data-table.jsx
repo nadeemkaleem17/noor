@@ -258,7 +258,7 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
                           ))}
                           {rowActions ? (
                             <Td>
-                              <Menu align="end" trigger={<IconButton label={`Actions for ${rowLabel(row)}`} icon={<Ellipsis aria-hidden className="size-5" />} />} items={rowActions(row)} />
+                              {rowActions(row).length > 0 ? <Menu align="end" trigger={<IconButton label={`Actions for ${rowLabel(row)}`} icon={<Ellipsis aria-hidden className="size-5" />} />} items={rowActions(row)} /> : null}
                             </Td>
                           ) : null}
                         </tr>

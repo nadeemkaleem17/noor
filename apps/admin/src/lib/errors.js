@@ -10,6 +10,9 @@ const messages = /** @type {Record<string, string>} */ ({
   unavailable: 'The server is not reachable. Try again in a moment.',
   publish_checks_failed: 'This product is not ready to publish. The checks beside the form say what is missing.',
   in_use: 'This is used elsewhere, so it cannot be removed.',
+  last_owner: 'The last active owner cannot be demoted or deactivated. Make someone else an owner first.',
+  email_taken: 'Someone with this email is already on the staff list.',
+  action_not_allowed: 'You are not allowed to do that to this person.',
   csrf_failed: 'Your session needs a refresh. Reload the page.',
 })
 
