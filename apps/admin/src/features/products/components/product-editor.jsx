@@ -20,12 +20,14 @@ import { toBody, toForm } from '../form-values'
 import { BasicsSection } from './basics-section'
 import { ChecksCard } from './checks-card'
 import { DetailsSection } from './details-section'
+import { OptionsVariantsSection } from './options-variants-section'
 import { OrganisationCard } from './organisation-card'
 import { SeoSection } from './seo-section'
 import { StatusCard } from './status-card'
 
 const sections = [
   ['basics', 'Basics'],
+  ['variants', 'Options and variants'],
   ['details', 'Details'],
   ['seo', 'Search and address'],
 ]
@@ -70,7 +72,7 @@ function ProductForm({ product }) {
 
   /** @param {number} [version] the version to save over; the stored one by default */
   async function save(version = product?.version) {
-    const body = /** @type {never} */ ({ ...toBody(form.getValues()), ...(version ? { version } : {}) })
+    const body = /** @type {never} */ ({ ...toBody(form.getValues(), { create: isNew }), ...(version ? { version } : {}) })
     try {
       const saved = product ? await update.mutateAsync({ id: product.id, body }) : await create.mutateAsync(body)
       form.reset(toForm(saved))
@@ -144,6 +146,7 @@ function ProductForm({ product }) {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-4">
             <BasicsSection suggestHandle={isNew} />
+            <OptionsVariantsSection isNew={isNew} />
             <DetailsSection />
             <SeoSection published={published} />
           </div>

@@ -32,13 +32,17 @@ export function toForm(product) {
 const variantBody = (variant) => Object.fromEntries(Object.entries(variant).filter(([k]) => !['stockStatus', 'onHand', 'reserved', 'hasOrders'].includes(k)))
 
 /**
- * The document the API accepts: no empty strings or objects, none of the read-only parts.
- * @param {Record<string, any>} values
+ * The document the API accepts: no empty strings or objects, none of the read-only parts. A new product also sends its opening stock, as the contract's .
+ * @param {Record<string, any>} values @param {{ create?: boolean; }} [options]
  */
-export function toBody(values) {
-  return prune({
-    ...values,
-    media: (values.media ?? []).map((/** @type {object} */ m) => Object.fromEntries(Object.entries(m).filter(([k]) => k !== 'image'))),
-    variants: (values.variants ?? []).map(variantBody),
+export function toBody(values, { create = false } = {}) {
+  const { initialStock = {}, ...document } = values
+  const body = prune({
+    ...document,
+    media: (document.media ?? []).map((/** @type {object} */ m) => Object.fromEntries(Object.entries(m).filter(([k]) => k !== 'image'))),
+    variants: (document.variants ?? []).map(variantBody),
   })
+  if (!create) return body
+  const opening = (document.variants ?? []).flatMap((/** @type {{ key: string; }} */ v) => (initialStock[v.key] > 0 ? [{ variantKey: v.key, quantity: Number(initialStock[v.key]) }] : []))
+  return opening.length ? { ...body, initialStock: opening } : body
 }
