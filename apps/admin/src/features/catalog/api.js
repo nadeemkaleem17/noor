@@ -35,3 +35,18 @@ export function useCategoryMutations() {
     }),
   }
 }
+
+export function useAttributeMutations() {
+  const refresh = useRefresh()
+  const done = () => refresh(catalogKeys.attributes)
+  return {
+    create: useMutation({ mutationFn: (/** @type {never} */ body) => api('admin.attributes.create', { body }), onSuccess: done }),
+    update: useMutation({ mutationFn: (/** @type {{ id: string; body: never; }} */ v) => api('admin.attributes.update', { params: { id: v.id }, body: v.body }), onSuccess: done }),
+    remove: useMutation({ mutationFn: (/** @type {string} */ id) => api('admin.attributes.delete', { params: { id } }), onSuccess: done }),
+    /** Moves every product from one value to another, so the first can be deleted. */
+    merge: useMutation({
+      mutationFn: (/** @type {{ id: string; valueId: string; intoValueId: string; }} */ v) => api('admin.attributes.mergeValue', { params: { id: v.id, valueId: v.valueId }, body: { intoValueId: v.intoValueId } }),
+      onSuccess: done,
+    }),
+  }
+}
