@@ -160,10 +160,20 @@ function BankCard({ value }) {
   )
 }
 
-/** A method with nothing behind it yet: shown, but it cannot be turned on until its integration is installed. @param {{ type: PaymentMethod; value: any; configured: boolean; }} props */
+/** A method with nothing behind it yet is shown but cannot be turned on until its integration is installed. @param {{ type: PaymentMethod; value: any; configured: boolean; }} props */
 function OtherCard({ type, value, configured }) {
   const save = useSavePayments()
   const method = methodOf(value, type)
+  if (!configured) {
+    return (
+      <SectionCard id={type} title={defaults[type]}>
+        <p className="flex items-center gap-2 text-sm text-muted">
+          <Badge>Not connected</Badge>
+          Available when the integration is installed. Provider keys are never entered here: they live in the server's configuration.
+        </p>
+      </SectionCard>
+    )
+  }
   const schema = z.strictObject({ enabled: z.boolean(), label: M.label, description: M.description })
   return (
     <SettingsCard
@@ -174,19 +184,12 @@ function OtherCard({ type, value, configured }) {
       toValue={(f) => ({ enabled: f.enabled, label: f.label, description: f.description?.trim() || undefined })}
       save={(v) => save.mutateAsync((latest) => withMethod(latest, type, /** @type {any} */ (v)))}
     >
-      {(form, writable) =>
-        configured ? (
-          <>
-            <EnabledSwitch form={form} writable={writable} locked={isLastOn(value, type)} label={`Accept ${defaults[type].toLowerCase()}`} />
-            <WordingFields form={form} writable={writable} />
-          </>
-        ) : (
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <Badge>Not connected</Badge>
-            Available when the integration is installed. Provider keys are never entered here: they live in the server's configuration.
-          </p>
-        )
-      }
+      {(form, writable) => (
+        <>
+          <EnabledSwitch form={form} writable={writable} locked={isLastOn(value, type)} label={`Accept ${defaults[type].toLowerCase()}`} />
+          <WordingFields form={form} writable={writable} />
+        </>
+      )}
     </SettingsCard>
   )
 }

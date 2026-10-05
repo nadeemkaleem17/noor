@@ -97,13 +97,13 @@ There is **no** "reset all data" in the admin. Development resets use `pnpm --fi
 
 ## 6. Acceptance checklist
 
-- [ ] The appearance preview and the storefront produce the same CSS for the same theme (shared function, unit test).
-- [ ] A theme with `#C9A227` text on `#FBF8F3` cannot be saved; the panel names the failing pair and ratio.
-- [ ] An uploaded SVG logo containing `<script>` is stored without it.
-- [ ] Changing the WhatsApp number changes every `wa.me` link on the storefront after the cache purge.
-- [ ] Turning "Reviews" off removes reviews from the PDP and the Reviews item from the admin sidebar.
-- [ ] An export larger than 1,000 rows completes as a job and its link stops working after 24 h.
-- [ ] No reset or delete-all control exists.
+- [x] The appearance preview and the storefront produce the same CSS for the same theme (shared function, unit test). (`appearance.test.jsx` compares the preview style with `themeCss`, the function the storefront uses.)
+- [x] A theme with `#C9A227` text on `#FBF8F3` cannot be saved; the panel names the failing pair and ratio. (Test; Save is disabled and the API refuses it too.)
+- [ ] An uploaded SVG logo containing `<script>` is stored without it. (Images only are accepted today, so an SVG is refused outright; the sanitiser question is Q-07.11-2.)
+- [ ] Changing the WhatsApp number changes every `wa.me` link on the storefront after the cache purge. (Admin side done: stored as digits; the storefront links come with M5.)
+- [ ] Turning "Reviews" off removes reviews from the PDP and the Reviews item from the admin sidebar. (The switch is saved; the PDP and the sidebar item follow with the reviews screens, M6.)
+- [ ] An export larger than 1,000 rows completes as a job and its link stops working after 24 h. (The Data screen shows backup and queue status; the exports and the job list wait for the endpoints, M4-10.)
+- [x] No reset or delete-all control exists. (`data.test.jsx`.)
 
 ## 7. Open questions and assumptions
 
@@ -119,3 +119,4 @@ There is **no** "reset all data" in the admin. Development resets use `pnpm --fi
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-05 | M3-06 built (`apps/admin/src/features/settings`): store settings as nine independent cards (each saves the latest document with only its own keys), appearance (live preview with `themeCss`, contrast panel that blocks Save, presets, "Fix the button text"), data (read-only backup and queue status; exports list not built: no endpoints until M4-10) |

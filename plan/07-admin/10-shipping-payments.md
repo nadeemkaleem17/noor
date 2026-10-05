@@ -116,13 +116,13 @@ Deposit behaviour note (read-only help text): "While only cash on delivery is en
 
 ## 6. Acceptance checklist
 
-- [ ] The checkout city list equals the union of zone cities after a save (integration test).
-- [ ] Adding a city already in another zone offers "Move here" and never duplicates it.
-- [ ] Changing a fee changes the storefront quote for a new cart and leaves an existing order's shipping fee unchanged.
-- [ ] Disabling the only payment method is refused with an explanation.
-- [ ] An order above the COD limit cannot select COD on the storefront (`cod_limit_exceeded`).
-- [ ] The dispatch dialog lists exactly the enabled couriers; a tracking URL pattern without `{tracking}` is rejected.
-- [ ] No input on these screens accepts or displays a provider secret.
+- [ ] The checkout city list equals the union of zone cities after a save (integration test). (Server side only; not an admin UI item.)
+- [x] Adding a city already in another zone offers "Move here" and never duplicates it. (`shipping.test.jsx`; the picker also says which zone a city is in.)
+- [ ] Changing a fee changes the storefront quote for a new cart and leaves an existing order's shipping fee unchanged. (Storefront and orders: M4/M5.)
+- [x] Disabling the only payment method is refused with an explanation. (The switch of the last method that is on is locked with the reason; the API also answers `no_payment_method`.)
+- [ ] An order above the COD limit cannot select COD on the storefront (`cod_limit_exceeded`). (The limit is saved here; the check is in checkout, M4.)
+- [ ] The dispatch dialog lists exactly the enabled couriers; a tracking URL pattern without `{tracking}` is rejected. (The courier list and the `{tracking}` rule are here; the dispatch dialog is M4.)
+- [x] No input on these screens accepts or displays a provider secret. (Not-connected methods show a note and no fields.)
 
 ## 7. Open questions and assumptions
 
@@ -138,3 +138,4 @@ Deposit behaviour note (read-only help text): "While only cash on delivery is en
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-05 | M3-06 built: shipping (zones list, zone drawer with a city picker, "Move here", paste a list and the server's impact count before a change; city master list with other spellings; couriers; dispatch promise and low-stock threshold in the store document) and payments (one card per method saved on its own, the last method that is on cannot be switched off, bank transfer needs every account detail, checkout order with up/down, "Customers can pay with" banner). The high-value COD threshold lives in the store document and is saved with the COD card only when changed. "0 open orders" in the impact text is fixed until orders exist (M4); open carts are 0 from the API until the cart module. |
