@@ -2,6 +2,8 @@
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
 import { Database, FileText, Folders, Gauge, Home, Layers, List, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
+const products = () => import('@/routes/products')
+
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
 
@@ -27,7 +29,7 @@ export const screens = [
   { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: soon },
   { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, lazy: soon },
 
-  { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: soon },
+  { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: products },
   { path: '/products/new', title: 'New product', permission: 'products:write', lazy: soon },
   { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: soon },
   { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: soon },

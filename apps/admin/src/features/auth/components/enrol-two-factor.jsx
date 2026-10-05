@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FormError } from '@/components/form-error'
 import { QrCode } from '@/components/qr-code'
+import { downloadBlob } from '@/lib/download'
 import { useBeginTwoFactor, useConfirmPassword, useEnableTwoFactor } from '../api'
 import { CodeForm } from '../schemas'
 
@@ -41,7 +42,7 @@ export function EnrolTwoFactor({ onDone }) {
           <Button variant="secondary" size="sm" onClick={() => void navigator.clipboard?.writeText(codes.join('\n'))}>
             Copy
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => download(codes)}>
+          <Button variant="secondary" size="sm" onClick={() => downloadBlob('rubaya-recovery-codes.txt', new Blob([`${codes.join('\n')}\n`], { type: 'text/plain' }))}>
             Download .txt
           </Button>
         </div>
@@ -97,12 +98,3 @@ export function EnrolTwoFactor({ onDone }) {
   )
 }
 
-/** @param {string[]} codes */
-function download(codes) {
-  const url = URL.createObjectURL(new Blob([`${codes.join('\n')}\n`], { type: 'text/plain' }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'rubaya-recovery-codes.txt'
-  a.click()
-  URL.revokeObjectURL(url)
-}

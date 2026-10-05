@@ -46,6 +46,8 @@ One component used by every list. Screens pass configuration; they never build a
 | `empty` | `{ title, body?, action? }` | For the unfiltered-empty case |
 | `cardBelow` | breakpoint | Orders use `md` (DOC-07.5) |
 
+**As built (M3-02):** `components/data-table.jsx` does not use TanStack Table (Q-07.14-2: with the server doing sort, filter and paging, the library would only have kept selection and column visibility, which are a few lines of state; no dependency was added). Column widths by dragging, the card layout (`cardBelow`, with Orders), the `async` filter and a "jump to page" box are not built; the footer uses the shared `Pagination` (previous, numbers, next). Rows are not virtualised: 100 plain rows render without delay, and `VirtualRows` stays in DOC-05 §2 for a table that needs it. The old text follows.
+
 Built on TanStack Table v9 (`useTable` with explicitly registered features via `tableFeatures`, per the v9 announcement) for column definitions, visibility, sizing and row selection. Sorting, filtering and pagination are **server-side**: the table is told the current state from the URL and reports changes; it never sorts or filters rows itself. The body is virtualized (`VirtualRows`, DOC-05 §2) when the page size is 100.
 
 ## 3. URL state (every list)
@@ -157,14 +159,14 @@ select rows ──► bar appears: "3 selected  [Publish] [Archive] [⋯]  ✕ c
 
 ## 8. Acceptance checklist
 
-- [ ] Every list screen is a `DataTable`; `grep -rn "<table" apps/admin/src/features` matches only print views and the size-chart grid.
-- [ ] Reloading any list URL restores search, filters, sort, page, page size and open drawer.
-- [ ] Network panel: a bulk action on 30 rows is exactly one request.
-- [ ] "Select all 2,310 matching" sends the filter, not 2,310 ids, and completes as a job with a result toast.
-- [ ] A mixed result keeps the failed rows selected and lists their reasons.
-- [ ] With 100 rows per page the body is virtualized and arrow-key row navigation still works.
-- [ ] An exported cell containing `=HYPERLINK(...)` opens as text in a spreadsheet.
-- [ ] Sort headers expose `aria-sort`; the result count change is announced.
+- [x] (so far) Every list screen is a `DataTable`; (Products is the first, M3-02) `grep -rn "<table" apps/admin/src/features` matches only print views and the size-chart grid.
+- [x] Reloading any list URL restores search, filters, sort, page, page size and open drawer. (Tested; also seen on the real product list. No screen has a drawer yet.)
+- [x] Network panel: a bulk action on 30 rows is exactly one request. (Tested with a fake action: `data-table.test.jsx`. No bulk endpoint exists yet; `admin.products.bulk` comes with M3-03.)
+- [x] "Select all 2,310 matching" sends the filter, not 2,310 ids, and completes as a job with a result toast. (Tested with a fake action and job; `admin.jobs.get` is not built yet.)
+- [x] A mixed result keeps the failed rows selected and lists their reasons.
+- [ ] With 100 rows per page the body is virtualized and arrow-key row navigation still works. **Dropped for now**: not virtualised, see section 2; keyboard use is the native one (Tab through links, checkboxes and buttons). Arrow-key row navigation arrives with DOC-07.15.
+- [ ] An exported cell containing `=HYPERLINK(...)` opens as text in a spreadsheet. (Server side: arrives with the export endpoints. `DataTable` already downloads a `download` outcome and reports a job that ends in an export.)
+- [x] Sort headers expose `aria-sort`; the result count change is announced. (`role="status"` line, tested for aria-sort.)
 
 ## 9. Open questions and assumptions
 
@@ -179,3 +181,4 @@ select rows ──► bar appears: "3 selected  [Publish] [Archive] [⋯]  ✕ c
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3). Resolves DOC-05 Q-05-1 as far as the announcement allows |
+| 2026-10-05 | M3-02 built: `DataTable`, URL state (`lib/list-params.js`), filters (select, multi, boolean, date range) with chips, selection, bulk bar, failures dialog, job polling, column visibility in prefs. No TanStack Table, no virtualisation (section 2) |

@@ -7,6 +7,8 @@ const Prefs = z.object({
   theme: z.enum(['light', 'dark', 'system']).catch('system'),
   sidebarCollapsed: z.boolean().catch(false),
   density: z.enum(['comfortable', 'compact']).catch('comfortable'),
+  /** Columns a person hid, per table id. */
+  tables: z.record(z.string(), z.object({ hidden: z.array(z.string()) })).catch({}),
 })
 /** @typedef {z.infer<typeof Prefs>} Prefs */
 
@@ -53,3 +55,6 @@ export const usePrefs = () =>
     },
     () => state,
   )
+
+/** @param {string} tableId @param {string[]} hidden */
+export const setHiddenColumns = (tableId, hidden) => setPrefs({ tables: { ...state.tables, [tableId]: { hidden } } })

@@ -1,9 +1,11 @@
 // Test helpers: the whole router with a fake API behind `fetch`.
 import { createStaffI18n } from '@noor/i18n/staff'
 import { DirectionProvider } from '@noor/ui/direction'
+import { ToastProvider } from '@noor/ui/toast'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Suspense } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { vi } from 'vitest'
@@ -65,6 +67,27 @@ export function resetApp() {
 /** @param {string} path */
 export function renderApp(path) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
+  const user = userEvent.setup()
+  render(
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={createStaffI18n()}>
+        <DirectionProvider direction="ltr">
+          <RouterProvider router={router} />
+        </DirectionProvider>
+      </I18nextProvider>
+    </QueryClientProvider>,
+  )
+  return { router, user }
+}
+
+/**
+ * Mounts a component inside the providers and a memory router, with the session answered by a fake API (for `useCan`).
+ * @param {import('react').ReactNode} element
+ * @param {{ path?: string; permissions?: import('@noor/contract').Permission[]; }} [options]
+ */
+export function renderWithApp(element, { path = '/', permissions = ['products:read'] } = {}) {
+  fakeApi({ 'GET /admin/me': () => json(200, me({ permissions })) })
+  const router = createMemoryRouter([{ path: '*', element: <ToastProvider><Suspense fallback={null}>{element}</Suspense></ToastProvider> }], { initialEntries: [path] })
   const user = userEvent.setup()
   render(
     <QueryClientProvider client={queryClient}>
