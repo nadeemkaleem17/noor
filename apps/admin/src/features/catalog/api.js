@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { routes } from '@noor/contract'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { catalogKeys } from '@/lib/catalog'
 
@@ -67,3 +68,38 @@ function useStructureMutations(base, key) {
 export const useSizeSystemMutations = () => useStructureMutations('admin.sizeSystems', catalogKeys.sizeSystems)
 export const useSizeChartMutations = () => useStructureMutations('admin.sizeCharts', catalogKeys.sizeCharts)
 export const useFormSchemaMutations = () => useStructureMutations('admin.formSchemas', catalogKeys.formSchemas)
+
+export const collectionKeys = {
+  all: ['collections'],
+  list: (/** @type {object} */ params) => ['collections', 'list', params],
+  detail: (/** @type {string} */ id) => ['collections', 'detail', id],
+}
+
+/** The address of the collection list is parsed with the route's own query schema. */
+export const collectionListSchema = routes['admin.collections.list'].query
+
+export const collectionQueries = {
+  /** @param {object} params parsed from the address with `collectionListSchema` */
+  list: (params) => queryOptions({ queryKey: collectionKeys.list(params), queryFn: ({ signal }) => api('admin.collections.list', { query: /** @type {never} */ (params), signal }) }),
+  detail: (/** @type {string} */ id) => queryOptions({ queryKey: collectionKeys.detail(id), queryFn: ({ signal }) => api('admin.collections.get', { params: { id }, signal }) }),
+}
+
+export function useCollectionMutations() {
+  const queryClient = useQueryClient()
+  /** @param {{ id: string; }} saved */
+  const remember = (saved) => {
+    queryClient.setQueryData(collectionKeys.detail(saved.id), saved)
+    void queryClient.invalidateQueries({ queryKey: ['collections', 'list'] })
+  }
+  return {
+    create: useMutation({ mutationFn: (/** @type {never} */ body) => api('admin.collections.create', { body }), onSuccess: remember }),
+    update: useMutation({ mutationFn: (/** @type {{ id: string; body: never; }} */ v) => api('admin.collections.update', { params: { id: v.id }, body: v.body }), onSuccess: remember }),
+    remove: useMutation({
+      mutationFn: (/** @type {string} */ id) => api('admin.collections.delete', { params: { id } }),
+      onSuccess: (_, id) => {
+        queryClient.removeQueries({ queryKey: collectionKeys.detail(id) })
+        void queryClient.invalidateQueries({ queryKey: ['collections', 'list'] })
+      },
+    }),
+  }
+}

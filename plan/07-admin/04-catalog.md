@@ -117,7 +117,7 @@ Measurement tables shown in the storefront size guide (DOC-06.4 §4, DOC-06.8 §
 | Notes | ≤ 400 |
 | Used by | Read-only count of products, linking to the filtered product list |
 
-Delete chart: products using it lose the link after confirmation showing the count.
+Delete chart: **blocked while any product uses it** (as built: the API answers `in_use` with the product count; the earlier idea of letting products lose the link was dropped, like for custom-size forms).
 
 ### 5.3 Custom-size forms
 
@@ -142,13 +142,13 @@ The checkout-fields form (`StoreConfig.checkout.fields`) is edited in settings (
 
 ## 7. Acceptance checklist
 
-- [ ] Deleting a category that is some product's primary category is blocked and shows the count.
-- [ ] Reordering a category updates the storefront menu fallback order after the cache purge.
-- [ ] Setting a category's "Filters shown" changes the facets on its storefront listing, in the same order.
-- [ ] An attribute key cannot be edited after creation (field read-only, API rejects).
-- [ ] Pasting a 5 × 4 block from a spreadsheet fills a size-chart table.
-- [ ] A fourth featured collection triggers the replace prompt.
-- [ ] Every drawer here restores from its URL after a reload.
+- [x] Deleting a category that is some product's primary category is blocked and shows the count. (`categories.test.jsx`)
+- [ ] Reordering a category updates the storefront menu fallback order after the cache purge. (The screen saves the order at once and undoes it if the server refuses; the storefront side waits for M5.)
+- [ ] Setting a category's "Filters shown" changes the facets on its storefront listing, in the same order. (The drawer saves the ordered list with Indexable and Required flags; the facets are served by the API from M1-12; the storefront side waits for M5-03.)
+- [x] An attribute key cannot be edited after creation (field read-only, API rejects). (Type is fixed too.)
+- [x] Pasting a 5 × 4 block from a spreadsheet fills a size-chart table. (`pasteBlock`, and a paste into the grid.)
+- [x] A fourth featured collection triggers the replace prompt. (The API names the three; the dialog sends `replaceFeaturedId`.)
+- [x] Every drawer here restores from its URL after a reload. (`?edit=` and `?new=`; the sizes tab is `?tab=`.)
 
 ## 8. Open questions and assumptions
 
@@ -163,3 +163,4 @@ The checkout-fields form (`StoreConfig.checkout.fields`) is edited in settings (
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-05 | M3-04 built (`features/catalog`): categories tree (expand, reorder, drawer with filters, image, SEO, delete reasons), attributes (drawer, merge, fixed key and type), sizes (systems, charts with a spreadsheet-like grid and paste, custom-size forms with preview), collections (list as `DataTable`, editor page with ordered members, featured-replace prompt). The lists that are not paged (categories, attributes, size lists) are plain tables, not `DataTable`. **Not built**: Urdu fields, a tree Combobox for the parent (native select with paths), bulk remove of collection members, "used by" links that filter the product list by chart or form, and a stale-write dialog for collections (a message says to reload) |
