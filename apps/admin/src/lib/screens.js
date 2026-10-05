@@ -3,6 +3,8 @@
 import { Database, FileText, Folders, Gauge, Home, Layers, List, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
+const product = () => import('@/routes/product')
+const productNew = () => import('@/routes/product-new')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -30,8 +32,8 @@ export const screens = [
   { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, lazy: soon },
 
   { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: products },
-  { path: '/products/new', title: 'New product', permission: 'products:write', lazy: soon },
-  { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: soon },
+  { path: '/products/new', title: 'New product', permission: 'products:write', lazy: productNew },
+  { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: product },
   { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: soon },
   { path: '/collections', title: 'Collections', permission: 'catalog:read', group: 'Catalog', icon: Layers, lazy: soon },
   { path: '/collections/:id', title: 'Collection', permission: 'catalog:read', lazy: soon },

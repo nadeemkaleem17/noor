@@ -100,3 +100,37 @@ export function renderWithApp(element, { path = '/', permissions = ['products:re
   )
   return { router, user }
 }
+
+const now = '2026-10-05T10:00:00.000Z'
+export const ids2 = { product: '0194f1b2-7c3a-7000-8000-0000000000a1', cat: '0194f1b2-7c3a-7000-8000-0000000000c1', cat2: '0194f1b2-7c3a-7000-8000-0000000000c2' }
+
+/** @param {Record<string, unknown>} [over] */
+export const productFixture = (over = {}) => ({
+  id: ids2.product,
+  handle: 'cotton-kurta',
+  status: 'draft',
+  kind: 'stitched',
+  title: 'Cotton Kurta',
+  primaryCategoryId: ids2.cat,
+  categoryIds: [],
+  attributes: [],
+  media: [],
+  options: [],
+  variants: [],
+  badges: [],
+  version: 3,
+  createdAt: now,
+  updatedAt: now,
+  siblings: [],
+  collections: [],
+  checks: [],
+  ...over,
+})
+
+export const categoriesAnswer = () =>
+  json(200, {
+    items: [
+      { id: ids2.cat, name: 'Women', handle: 'women', parentId: null, visible: true, attributes: [], sortOrder: 0, productCount: 2, version: 1 },
+      { id: ids2.cat2, name: 'Stitched', handle: 'stitched', parentId: ids2.cat, visible: true, attributes: [], sortOrder: 0, productCount: 1, version: 1 },
+    ],
+  })
