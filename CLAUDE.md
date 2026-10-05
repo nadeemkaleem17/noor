@@ -26,7 +26,7 @@ Everything is built and run **locally** first. Production is a separate, later p
 
 | | |
 |---|---|
-| Roadmap position | Milestone **M0 Foundation**: all of M0 done (M0-08 skipped) (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). M1-01 (platform), M1-02 (auth) and M1-03 (audit), M1-04 (security plumbing) and M1-05 (media, local storage) and M1-06 (settings, pages, menus) and M1-07 (shipping) and M1-08 (catalog structure) and M1-09 (products, collections) and M1-10 (inventory) and M1-11 (search) and M1-12 (public catalog) and M1-13 (seed) done: **M1 is complete**. Next: **M3-01** (admin shell; M2 design system is done) |
+| Roadmap position | Milestone **M0 Foundation**: all of M0 done (M0-08 skipped) (CI never run: needs a GitHub push). M0-03, M0-06, M0-07 need native MySQL 8.4 (no Docker). M1-01 (platform), M1-02 (auth) and M1-03 (audit), M1-04 (security plumbing) and M1-05 (media, local storage) and M1-06 (settings, pages, menus) and M1-07 (shipping) and M1-08 (catalog structure) and M1-09 (products, collections) and M1-10 (inventory) and M1-11 (search) and M1-12 (public catalog) and M1-13 (seed) done: **M1 is complete**. M3-01 (admin shell: sign-in, shell, permissions) done. Next: **M3-02** (DataTable) |
 | Branch | `chore/M0-01-workspace`, one commit per M0 task, not pushed (`master` is the default branch) |
 | New code | `packages/config`, `packages/contract`, `apps/api` (Fastify skeleton), `packages/ui` (tokens.css, `cn`, contrast gate, `themeCss`, `DirectionProvider`, `safeHref`, Storybook; components in `src/components/`, one file per family, imported as `@noor/ui/<name>`: Button, Field, Input, Textarea, NativeSelect, Checkbox, RadioGroup, Switch, NumberInput, MoneyInput, PhoneInput, QuantityStepper, OptionChips, Spinner, Dialog, Drawer, ConfirmDialog, Popover, Menu, Tooltip, Toast, Select, Combobox, Tabs, Accordion, Breadcrumb, Pagination, LoadMore, Badge/StatusBadge, Card, Skeleton, EmptyState, ErrorState, Table, Carousel, Link, Ltr, VisuallyHidden, Image, Price, Markdown, RHFField (in field.jsx), ImageUpload). Every story is axe-checked by `test/stories.a11y.test.jsx` (add a story file and it is covered). Component tests: `packages/ui/test/*.test.jsx` use jsdom + Testing Library via `test/dom.tsx` (`renderUi`); put `// @vitest-environment jsdom` at the top of such a file, `packages/i18n` (en/ur catalogs, `createI18n`, `formatMoney/Date/Number`), `apps/storefront` (React Router 8 skeleton: one page, en + `/ur`) |
 | Backend platform | `apps/api/src/platform/`: `db.js` (pool, `transaction()` retries deadlocks, `Executor` type for pool-or-tx), `clock.js` (`now()`, freeze in tests), `jobs.js` + `worker.js` (queue), `outbox.js` (`emit(tx, ..)`, relay), `scheduler.js`, `idempotency.js`, `rate-limit.js`, `counters.js`, `cache.js`, `ids.js` (UUIDv7), `runtime.js` (starts relay + scheduler + worker). Schema in `src/db/schema/platform.js`; migrations in `apps/api/drizzle` (`pnpm --filter @noor/api db:generate` then `db:migrate`). Integration tests are `*.int.test.js` and use a scratch database per file; they skip with a warning if MySQL is not running |
@@ -40,7 +40,8 @@ Everything is built and run **locally** first. Production is a separate, later p
 | Search | `apps/api/src/modules/search/`: `createSearch({ db }).run({ q, where })` is the one text-search query (FULLTEXT, synonyms, SKU first, miss log). Events `product.updated` and `catalog.structure_changed` start the reindex jobs; the event-to-job map is `eventHandlers` in `src/modules/index.js`, used by `main.js` and `worker.js` |
 | Public catalog | `apps/api/src/modules/catalog/public.js` and `public-listing.js` (handlers in `public-routes.js`): the one listing query builder serves items, total and facets; handlers get `limit(bucket, by, subject)` and `http.setHeader()` from the route registrar |
 | Seed | `pnpm --filter @noor/api db:seed [--base-only] [--no-demo] [--perf]` (code in `apps/api/src/seed/`: base, owner, demo, perf; entry `runSeed`). Idempotent; never overwrites staff edits; production accepts only `--base-only`. Base = settings, pages, menus, shipping, size systems, synonyms, counters. Owner `owner@rubaya.test` with a random password printed once. Demo = 24 products with generated pictures, built through the real services (~45 s). `--perf` adds 3,000 products / 25,000 variants (80 s in all, no orders until M4). `modules/services.js` `createServices({ db, config })` wires every service for the app, the worker and the seed. `product_sizes` (derived by `recomputeProductCache`) serves the size filter and facet |
-| Running today | The old admin against the old mock API |
+| Admin | `apps/admin/src`: `app/router.jsx` (lazy routes; `routes` exported for tests), `lib/` (`api` typed client + CSRF, `session` with `useMe`/`useCan`/`requireMe`/`useLogout`, `screens.js` = every URL with permission and sidebar group, `prefs`, `safe-next`), `components/` (app shell, sidebar, top bar, `PageHeader`, `AppLink`, `FormError`), `features/auth/` (sign-in, code, invite, reset, forced two-step set-up), `routes/` (thin lazy modules; unbuilt screens use `soon.jsx`). Tests: `src/test/app.jsx` mounts the real router over a fake `fetch` (`fakeApi`). Initial JS: `node scripts/admin-initial-js.mjs login` after a build (206.8 kB vs the 200 kB budget). Real API: owner `owner@rubaya.test` (password from the seed run), forced set-up asks for an authenticator code |
+| Running today | `pnpm dev` = new admin (:5173) + real API (:3000, start MySQL first: `mysqld --defaults-file="C:/ProgramData/MySQL/MySQL Server 8.4/my.ini"`). The old admin runs with `pnpm --filter @noor/admin dev:old` (:5175) against `legacy/mock-api` |
 
 Open items on this machine:
 - **Database:** MySQL **8.4.11** runs on **127.0.0.1:3307** as a plain process (not yet a Windows service; start/install command in plan/14-devops.md section 3.4). Root password: `.data/mysql-root.txt` (gitignored). Databases `rubaya`, `rubaya_test`; users `rubaya_app` and `rubaya_migrate` (passwords in `apps/api/.env`). If the process is not running, start it first, then `pnpm --filter @noor/api db:migrate`. Spikes: `spike:drizzle`, `spike:jobs`.
@@ -54,8 +55,8 @@ Open items on this machine:
 ## Layout
 
 ```
-apps/admin/          old admin dashboard, moved from admin-panel/ (React 19, Vite 8, JSX, Radix, zod 3).
-                     Rebuilt screen by screen from milestone M3; do not add features to the old code.
+apps/admin/          the new admin (src/, M3-01 on). apps/admin/old/ is the old dashboard (React 19, Vite 8, JSX, Radix, zod 3, react-router-dom 6),
+                     kept runnable (`dev:old`) until its screens are rebuilt in M3; do not add features to it.
 legacy/mock-api/     old in-memory Express API. Only here so the old admin runs. Deleted at M7.
 apps/storefront/     new customer site (React Router 8, SSR; routes in app/routes.js; `~/` = app/; env in .env, see .env.example).
 legacy/storefront/   old customer site. Reference only; no lint script (old lint errors, frozen); it is rewritten as apps/storefront (M5). Deleted at M7.
@@ -63,13 +64,13 @@ plan/                the documentation set
 package.json  pnpm-workspace.yaml  turbo.json
 ```
 
-Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}`; all exist now (admin is still the old code).
+Target layout (plan/03-frontend-architecture.md §3): `apps/{api,admin,storefront}`, `packages/{contract,ui,i18n,config}`; all exist now.
 
 ## Commands (repo root)
 
 ```
 pnpm install
-pnpm dev          # old admin (:5173) + legacy mock API (:3000)
+pnpm dev          # new admin (:5173) + real API (:3000); needs MySQL running
 pnpm test         # vitest: apps/admin, apps/api, packages/config, packages/contract
 pnpm --filter @noor/api start   # API on 127.0.0.1:3000 (needs NODE_ENV, APP_ENV, ADMIN_ORIGIN; see apps/api/.env.example)
 pnpm lint
@@ -112,7 +113,7 @@ Env files (gitignored, already present): `legacy/mock-api/.env` (`ADMIN_KEY=dev-
 - Cite the finding id (`F-xx`, `K-x`) in any change that fixes an audit item.
 - Do not commit or push unless asked. Never push to `master` directly.
 
-## The old admin (`apps/admin/src`), until it is replaced
+## The old admin (`apps/admin/old/src`), until it is replaced
 
 - `lib/db.js` is its only data layer (localStorage, or the mock API when `VITE_API_URL` is set); pages use
   `hooks/useCollection.js` (`useCollection(name)`, `useSingleton(name)`).

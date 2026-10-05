@@ -6,7 +6,8 @@
   "sideEffects": false,
   "description": "Rubaya translations (en, ur) and Intl formatters: money, date, number (plan/03-frontend-architecture.md section 9, ADR-0018). No React.",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./staff": "./src/staff.js"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

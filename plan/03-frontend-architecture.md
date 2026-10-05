@@ -136,6 +136,8 @@ apps/admin/src/
   index.css               @import "@noor/ui/tokens.css"; data-brand is set in index.html
 ```
 
+As built in M3-01: `lib/` also holds the session (`useMe`, `useCan`, `requireMe`, `useLogout`) and `screens.js` (every URL, its permission and sidebar group), because `components/` may not import `features/` or `app/`; the shell is a lazy route; the router is `app/router.jsx` and exports `routes` so tests can mount it in a memory router. The staff i18n instance is `@noor/i18n/staff` (English, no ICU).
+
 ### 5.2 Storefront (`apps/storefront`)
 
 ```

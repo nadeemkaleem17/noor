@@ -1,21 +1,11 @@
-import js from '@eslint/js'
-import globals from 'globals'
+import { base, browser, appRules } from '@noor/config/eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{js,jsx}'],
-    extends: [
-      js.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
-    ],
-    languageOptions: {
-      globals: globals.browser,
-      parserOptions: { ecmaFeatures: { jsx: true } },
-    },
-  },
-])
+// old/ has its own config (old/eslint.config.js) and is not held to these rules.
+export default [
+  { ignores: ['dist/**', 'old/**'] },
+  ...base,
+  ...browser,
+  reactHooks.configs.flat.recommended,
+  ...appRules({ alias: '@', featuresDir: 'src/features', cwd: import.meta.dirname }),
+]

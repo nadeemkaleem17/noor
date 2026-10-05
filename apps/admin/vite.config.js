@@ -1,16 +1,12 @@
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import { reactCompilerPreset } from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
+// The admin SPA (plan/03-frontend-architecture.md section 5.1). `@/` is src/.
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] })
-  ],
-  // Tests always exercise the localStorage data layer. Without this, a developer's .env.local
-  // (VITE_API_URL) would point the test suite at a running API and reset/overwrite its data.
-  test: {
-    env: { VITE_API_URL: '', VITE_ADMIN_KEY: '' },
-  },
+  server: { port: 5173, strictPort: true },
+  resolve: { tsconfigPaths: true },
+  plugins: [tailwindcss(), react(), babel({ presets: [reactCompilerPreset()] })],
 })

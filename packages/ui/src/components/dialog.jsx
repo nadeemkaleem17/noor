@@ -18,7 +18,7 @@ import { backdrop, modalSurface } from './overlay-styles'
  * @property {boolean} [dismissible] - false: Esc, the backdrop and the close button do not close it (use for a step that must be finished). Default true.
  * @property {string} [closeLabel]
  * @property {import('react').ReactNode} [children]
- * @property {'center' | 'end'} [placement] - Used by Drawer.
+ * @property {'center' | 'end' | 'start'} [placement] - Used by Drawer.
  */
 
 const widths = /** @type {const} */ ({ sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' })
@@ -32,6 +32,11 @@ const edge =
   'fixed w-full transition-transform duration-(--dur-modal) data-[ending-style]:duration-(--dur-modal-close) ' +
   'max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[85dvh] max-md:rounded-t-card max-md:data-[starting-style]:translate-y-full max-md:data-[ending-style]:translate-y-full ' +
   'md:inset-y-0 md:end-0 md:data-[starting-style]:ltr:translate-x-full md:data-[starting-style]:rtl:-translate-x-full md:data-[ending-style]:ltr:translate-x-full md:data-[ending-style]:rtl:-translate-x-full'
+
+// The navigation drawer: the inline-start edge at every width.
+const startEdge =
+  'fixed inset-y-0 start-0 w-72 max-w-[85vw] transition-transform duration-(--dur-modal) data-[ending-style]:duration-(--dur-modal-close) ' +
+  'data-[starting-style]:ltr:-translate-x-full data-[starting-style]:rtl:translate-x-full data-[ending-style]:ltr:-translate-x-full data-[ending-style]:rtl:translate-x-full'
 
 /**
  * @param {DialogProps} props
@@ -53,7 +58,7 @@ export function Dialog({ open, defaultOpen, onOpenChange, trigger, title, descri
       {trigger ? <BaseDialog.Trigger render={trigger} /> : null}
       <BaseDialog.Portal>
         <BaseDialog.Backdrop className={backdrop} />
-        <BaseDialog.Popup className={cn(modalSurface, 'flex flex-col', widths[size], placement === 'center' ? centre : edge)}>
+        <BaseDialog.Popup className={cn(modalSurface, 'flex flex-col', placement === 'start' ? null : widths[size], placement === 'center' ? centre : placement === 'start' ? startEdge : edge)}>
           <div className="flex items-start gap-4 border-b border-line p-4">
             <div className="flex-1">
               <BaseDialog.Title className="font-heading text-lg">{title}</BaseDialog.Title>

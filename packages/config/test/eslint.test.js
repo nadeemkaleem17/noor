@@ -37,6 +37,10 @@ describe('shared ESLint config', () => {
     expect(await lint('src/a.js', "import { z } from 'zod'\nexport { z }")).toContain('no-restricted-imports')
   })
 
+  it('allows the react-hook-form zod resolver, which the forms need', async () => {
+    expect(await lint('src/a.js', "import { zodResolver } from '@hookform/resolvers/zod'\nexport { zodResolver }")).not.toContain('no-restricted-imports')
+  })
+
   it('rejects features/ imports from lib/', async () => {
     expect(await lint('src/lib/a.js', "import { x } from '../features/cart/x'\nexport { x }")).toContain('no-restricted-imports')
   })

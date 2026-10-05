@@ -67,6 +67,14 @@ export const DrawerOpen = /** @type {Story} */ ({
   ),
 })
 
+export const DrawerStart = /** @type {Story} */ ({
+  render: () => (
+    <Drawer defaultOpen side="start" title="Menu">
+      {dialogBody}
+    </Drawer>
+  ),
+})
+
 export const ConfirmDialogs = /** @type {Story} */ ({
   render: () => (
     <div className="flex flex-wrap gap-3">

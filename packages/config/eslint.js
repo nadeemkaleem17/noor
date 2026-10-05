@@ -49,7 +49,7 @@ export const noProcessEnv = [
 // replaces an earlier one. So every path gets ONE complete list: the shared patterns plus its own.
 const shared = [
   { group: ['@base-ui/*', '@radix-ui/*'], message: 'Import primitives only through @noor/ui.' },
-  { group: ['zod', 'zod/*'], message: 'Import z and schemas from @noor/contract.' },
+  { group: ['zod', 'zod/*', '!@hookform/resolvers/zod'], message: 'Import z and schemas from @noor/contract.' },
 ]
 const restrict = (...extra) => ({ 'no-restricted-imports': ['error', { patterns: [...shared, ...extra] }] })
 

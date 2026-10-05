@@ -1,0 +1,56 @@
+// Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
+// A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
+import { Database, FileText, Folders, Gauge, Home, Layers, List, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+
+/** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
+const soon = () => import('@/routes/soon')
+
+/**
+ * @typedef {object} Screen
+ * @property {string} path
+ * @property {string} title
+ * @property {import('@noor/contract').Permission} [permission] - without one, any signed-in user may open it
+ * @property {'Overview' | 'Sales' | 'Catalog' | 'Content' | 'Settings'} [group] - in the sidebar under this heading
+ * @property {import('react').ComponentType<{ className?: string; 'aria-hidden'?: boolean; }>} [icon]
+ * @property {() => Promise<object>} lazy
+ */
+
+/** @type {Screen[]} */
+export const screens = [
+  { path: '/', title: 'Dashboard', permission: 'dashboard:read', group: 'Overview', icon: Gauge, lazy: soon },
+
+  { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, lazy: soon },
+  { path: '/orders/new', title: 'New order', permission: 'orders:edit', lazy: soon },
+  { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: soon },
+  { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: soon },
+  { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: soon },
+  { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: soon },
+  { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, lazy: soon },
+
+  { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: soon },
+  { path: '/products/new', title: 'New product', permission: 'products:write', lazy: soon },
+  { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: soon },
+  { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: soon },
+  { path: '/collections', title: 'Collections', permission: 'catalog:read', group: 'Catalog', icon: Layers, lazy: soon },
+  { path: '/collections/:id', title: 'Collection', permission: 'catalog:read', lazy: soon },
+  { path: '/attributes', title: 'Attributes', permission: 'catalog:read', group: 'Catalog', icon: Tags, lazy: soon },
+  { path: '/sizes', title: 'Sizes & charts', permission: 'catalog:read', group: 'Catalog', icon: Ruler, lazy: soon },
+
+  { path: '/content/home', title: 'Home page', permission: 'content:read', group: 'Content', icon: Home, lazy: soon },
+  { path: '/content/pages', title: 'Pages', permission: 'content:read', group: 'Content', icon: FileText, lazy: soon },
+  { path: '/content/pages/:id', title: 'Page', permission: 'content:read', lazy: soon },
+  { path: '/content/menus', title: 'Menus', permission: 'content:read', group: 'Content', icon: List, lazy: soon },
+
+  { path: '/settings/store', title: 'Store', permission: 'settings:read', group: 'Settings', icon: Store, lazy: soon },
+  { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: soon },
+  { path: '/settings/shipping', title: 'Shipping', permission: 'settings:read', group: 'Settings', icon: Truck, lazy: soon },
+  { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: soon },
+  { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: soon },
+  { path: '/staff/:id', title: 'Staff member', permission: 'staff:read', lazy: soon },
+  { path: '/audit', title: 'Audit log', permission: 'audit:read', group: 'Settings', icon: ScrollText, lazy: soon },
+  { path: '/settings/data', title: 'Data', permission: 'settings:manage', group: 'Settings', icon: Database, lazy: soon },
+
+  { path: '/account', title: 'My account', lazy: soon },
+]
+
+export const groups = /** @type {const} */ (['Overview', 'Sales', 'Catalog', 'Content', 'Settings'])

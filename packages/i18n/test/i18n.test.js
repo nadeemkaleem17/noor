@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createI18n, dirOf, formatDate, formatMoney, formatNumber, intlTag, isLocale, supportedLocales } from '../src/index.js'
+import { createStaffI18n } from '../src/staff.js'
 
 /**
  * @param {string} s
@@ -79,5 +80,22 @@ describe('formatNumber and formatDate', () => {
     // 19:30 UTC on 31 Dec is already 1 Jan in Karachi (UTC+5)
     expect(formatDate('2026-12-31T19:30:00Z', 'en')).toBe('01-Jan-2027')
     expect(formatDate('2026-12-31T19:30:00Z', 'en', { timeStyle: 'short' })).toMatch(/12:30/)
+  })
+})
+
+describe('the staff instance (no ICU)', () => {
+  /** Every string leaf of a catalog with its dotted key. @param {Record<string, unknown>} bundle @param {string} [prefix] @returns {string[]} */
+  const keysOf = (bundle, prefix = '') =>
+    Object.entries(bundle).flatMap(([k, v]) => (typeof v === 'string' ? [prefix + k] : keysOf(/** @type {Record<string, unknown>} */ (v), `${prefix}${k}.`)))
+
+  it('gives the same English text as the full instance for every common and errors key', () => {
+    const full = createI18n('en')
+    const staff = createStaffI18n()
+    const args = { label: 'Size', text: 'DELETE', n: 2, total: 9, shown: 3, count: 4 }
+    for (const ns of ['common', 'errors']) {
+      for (const key of keysOf(/** @type {Record<string, unknown>} */ (full.getResourceBundle('en', ns)))) {
+        expect(staff.t(key, { ns, ...args }), `${ns}:${key}`).toBe(full.t(key, { ns, ...args }))
+      }
+    }
   })
 })

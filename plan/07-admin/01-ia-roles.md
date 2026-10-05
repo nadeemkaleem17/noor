@@ -178,12 +178,12 @@ Old URLs redirect client-side: `/pages` → `/content/pages`, `/menus` → `/con
 
 ## 9. Acceptance checklist
 
-- [ ] Every row of §2 exists as a lazy route; initial JS ≤ 200 kB gzip (ADR-0015).
+- [ ] Every row of §2 exists as a lazy route (done in M3-01: `src/lib/screens.js` plus the sign-in routes; the screens themselves are placeholders until their tasks); initial JS ≤ 200 kB gzip (ADR-0015). **Not met yet: the sign-in screen loads 206.8 kB** (`node scripts/admin-initial-js.mjs login`; react-dom 68, react-router 30, zod 27, i18next 12, Base UI parts, react-hook-form 13, contract 13, TanStack Query 10). Levers if it must go lower: split the route table so the client carries only the routes it calls, or drop `tailwind-merge` from `cn`.
 - [ ] A `viewer` user sees no create, edit, delete or bulk control anywhere (Playwright walks every list screen).
-- [ ] Visiting any app URL signed out redirects to `/login?next=…` and returns there after sign-in.
-- [ ] `?next=https://evil.example` is ignored.
-- [ ] `grep -rnE "role ===|role ==" apps/admin/src` returns nothing.
-- [ ] Sidebar is keyboard-operable, announces the current page, and works collapsed.
+- [x] Visiting any app URL signed out redirects to `/login?next=…` and returns there after sign-in. (`router.test.jsx`)
+- [x] `?next=https://evil.example` is ignored. (`safe-next.test.js`, `router.test.jsx`)
+- [x] `grep -rnE "role ===|role ==" apps/admin/src` returns nothing.
+- [x] Sidebar is keyboard-operable, announces the current page, and works collapsed. (Links are native `NavLink`s with `aria-current="page"`; collapsed items keep their text for screen readers and show a Tooltip. Opening the user menu with a real mouse click was not seen working in the Browser pane, whose window was hidden; the jsdom test opens it.)
 
 ## 10. Open questions and assumptions
 
@@ -200,3 +200,4 @@ Old URLs redirect client-side: `/pages` → `/content/pages`, `/menus` → `/con
 | 2026-10-02 | Initial version (Phase 3). Supersedes DOC-04c Q-04c-2: orders screens work at 360 px |
 | 2026-10-02 | Phase 4: permission list aligned with the DOC-11 matrix (`orders:note`, `customers:anonymise`) |
 | 2026-10-02 | Phase 7 consistency review: route key `admin.me.get` |
+| 2026-10-05 | M3-01 built: shell, sign-in, code, reset, invite and forced set-up screens. Password reset by email stays the "ask the owner" page (no email provider yet). Badges, the command palette and the "viewer sees no controls" walk wait for their screens. The old admin lives in `apps/admin/old/` (`dev:old`) until it is replaced |

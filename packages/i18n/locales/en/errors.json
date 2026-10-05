@@ -18,5 +18,6 @@
   "handle_invalid": "Use lowercase letters, numbers and dashes",
   "sku_invalid": "Enter a valid SKU",
   "code_invalid": "Enter a valid code",
-  "not_unique": "This value is already used"
+  "not_unique": "This value is already used",
+  "passwords_differ": "The two passwords do not match"
 }

@@ -135,6 +135,8 @@ Budgets are DOC-06.10 §2. Lighthouse CI runs three times per URL and uses the m
 
 Initial JavaScript ≤ 200 kB gzip (ADR-0015); each lazy route chunk ≤ 120 kB; a 100-row table scrolls at 60 fps on a mid-range laptop (manual check when `DataTable` changes); a 100-variant product form types without perceptible lag (React Profiler: no commit over 16 ms while typing in one field).
 
+Measured in M3-01: `node scripts/admin-initial-js.mjs [route]` after `pnpm --filter @noor/admin build` prints the gzipped initial JavaScript for a first visit to a route (default `login`). Sign-in: 206.8 kB, over the 200 kB budget (see DOC-07.1 §9 for the breakdown).
+
 ### 6.5 Load testing
 
 Not part of local development. It is a production-phase task before the first sale/drop (runbook R-8, DOC-14): a scripted load of the listing → PDP → cart → checkout path at 3× the expected peak (A-03: about 2,000 concurrent sessions, 1,500 orders in a day) against staging, watching lock waits, error rate and queue latency. The concurrency correctness is already proven locally by the integration tests (ADR-0020 acceptance).
