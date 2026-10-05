@@ -17,20 +17,28 @@ import { messageFor } from '@/lib/errors'
 import { useCan } from '@/lib/session'
 import { productQueries, useProductMutations } from '../api'
 import { toBody, toForm } from '../form-values'
+import { AttributesSection } from './attributes-section'
 import { BasicsSection } from './basics-section'
 import { ChecksCard } from './checks-card'
+import { ColourwaySection } from './colourway-section'
 import { DetailsSection } from './details-section'
+import { KindSection } from './kind-section'
 import { MediaSection } from './media-section'
 import { OptionsVariantsSection } from './options-variants-section'
 import { OrganisationCard } from './organisation-card'
+import { RelatedSection } from './related-section'
 import { SeoSection } from './seo-section'
 import { StatusCard } from './status-card'
 
 const sections = [
   ['basics', 'Basics'],
   ['media', 'Media'],
+  ['kind', 'Type-specific'],
   ['variants', 'Options and variants'],
+  ['attributes', 'Attributes'],
   ['details', 'Details'],
+  ['colourway', 'Colourway'],
+  ['related', 'Related'],
   ['seo', 'Search and address'],
 ]
 
@@ -151,8 +159,12 @@ function ProductForm({ product }) {
           <div className="space-y-4">
             <BasicsSection suggestHandle={isNew} />
             <MediaSection onBusyChange={setUploading} />
+            <KindSection productId={product?.id} />
             <OptionsVariantsSection isNew={isNew} />
+            <AttributesSection />
             <DetailsSection />
+            <ColourwaySection siblings={product?.siblings ?? []} />
+            <RelatedSection productId={product?.id} />
             <SeoSection published={published} />
           </div>
           <aside className="space-y-4" aria-label="Product settings">

@@ -41,6 +41,8 @@ export const problem = (status, code, extra = {}) => json(status, { title: code,
  * @param {Record<string, (request: { body: any; headers: Headers; }) => Response>} table
  */
 export function fakeApi(table) {
+  // the catalog lookups every product screen reads; a test overrides the ones it cares about
+  table = { "GET /admin/attributes": () => json(200, { items: [] }), "GET /admin/size-systems": () => json(200, { items: [] }), "GET /admin/size-charts": () => json(200, { items: [] }), "GET /admin/form-schemas": () => json(200, { items: [] }), ...table }
   /** @type {string[]} */
   const calls = []
   vi.stubGlobal(

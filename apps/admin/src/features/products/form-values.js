@@ -36,7 +36,11 @@ const variantBody = (variant) => Object.fromEntries(Object.entries(variant).filt
  * @param {Record<string, any>} values @param {{ create?: boolean; }} [options]
  */
 export function toBody(values, { create = false } = {}) {
-  const { initialStock = {}, ...document } = values
+  const { initialStock = {}, ...document } = { ...values }
+  // a colourway only means something inside a style
+  if (!document.styleId) delete document.colorway
+  // an unticked checkbox that was never touched is "no"
+  if (document.madeToOrder && document.madeToOrder.returnable === undefined) document.madeToOrder = { ...document.madeToOrder, returnable: false }
   const body = prune({
     ...document,
     media: (document.media ?? []).map((/** @type {object} */ m) => Object.fromEntries(Object.entries(m).filter(([k]) => k !== 'image'))),

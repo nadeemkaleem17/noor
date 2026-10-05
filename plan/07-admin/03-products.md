@@ -197,14 +197,14 @@ A draft can be saved with any of these failing; the failures are listed with lin
 
 ## 12. Acceptance checklist
 
-- [ ] One test product per kind can be created, published and viewed on the storefront with its kind-specific blocks (DOC-06.4 §5).
-- [ ] Adding a size value generates only the new variants and keeps existing SKUs, prices and stock.
-- [ ] Two editors saving the same product: the second gets the stale-write dialog.
-- [ ] Selling a unit while the editor is open, then saving, does not change stock.
-- [ ] "Remove 5" with 3 unreserved units is rejected with the reserved explanation.
-- [ ] Publishing with a missing alt text is blocked and the check links to the image.
-- [ ] A 200-row variant table scrolls smoothly (virtualized) and remains keyboard-navigable.
-- [ ] An uploaded `.jpg` that is really HTML is rejected at `confirm`.
+- [ ] One test product per kind can be created, published and viewed on the storefront with its kind-specific blocks (DOC-06.4 §5). (Editor side done in M3-03: every kind has its section; the storefront half waits for M5-04.)
+- [x] Adding a size value generates only the new variants and keeps existing SKUs, prices and stock. (`variants.test.js`, `variants-editor.test.jsx`)
+- [x] Two editors saving the same product: the second gets the stale-write dialog. (Reload their version; Overwrite with mine only with `products:publish`.)
+- [x] Selling a unit while the editor is open, then saving, does not change stock. (By construction: stock is not in the saved document, `toBody` drops it; adjustments go through their own dialog.)
+- [x] "Remove 5" with 3 unreserved units is rejected with the reserved explanation. (Dialog shows the server's `stock_below_reserved`.)
+- [x] Publishing with a missing alt text is blocked and the check links to the image. (The Checks card lists the server's checks with a Fix link that focuses the field; the save is refused by the API.)
+- [ ] A 200-row variant table scrolls smoothly (virtualized) and remains keyboard-navigable. **Dropped**: a product has at most 100 variants and the table is plain rows (same decision as DOC-07.14 section 2).
+- [x] An uploaded `.jpg` that is really HTML is rejected at `confirm`. (Server: M1-05. The editor shows the server's reason under the file.)
 
 ## 13. Open questions and assumptions
 
@@ -222,3 +222,4 @@ A draft can be saved with any of these failing; the failures are listed with lin
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
 | 2026-10-02 | Phase 7 consistency review: kind and badge values match DOC-09.0 §5 |
+| 2026-10-05 | M3-03 built (`features/products`): list with thumbnails, category filter and row actions; editor with basics, media, type-specific sections, options and variants, attributes, details, colourway, related products, search and address, status, organisation and live publish checks; save with version, stale-write dialog, unsaved guard, duplicate, delete, archive, preview link; stock adjustment dialog. **Not built**: bulk actions, CSV export and import (endpoints `admin.products.bulk`, `.export`, `.importPreview`, `.importApply` do not exist), Urdu fields, drag reordering of pictures (buttons instead), per-file upload progress bar, video, the `hasIssues` and collection list filters, the History card, and a tree Combobox for categories (a native select with paths). Collections are edited on the collection screens (M3-04) |

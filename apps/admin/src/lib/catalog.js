@@ -38,3 +38,16 @@ export function categoryOptions(categories) {
   walk('', [])
   return out
 }
+
+/**
+ * The attributes a product in `categoryId` is described by: the category's own filters, or those of its nearest ancestor that has any (plan/09-data-model/03-catalog.md).
+ * @param {{ id: string; parentId?: string | null; attributes: { attributeId: string; required: boolean; }[]; }[]} categories
+ * @param {string} categoryId
+ */
+export function attributesOf(categories, categoryId) {
+  const byId = new Map(categories.map((c) => [c.id, c]))
+  for (let c = byId.get(categoryId), hops = 0; c && hops < 10; c = c.parentId ? byId.get(c.parentId) : undefined, hops++) {
+    if (c.attributes.length > 0) return c.attributes
+  }
+  return []
+}

@@ -8,6 +8,7 @@ const messages = /** @type {Record<string, string>} */ ({
   step_up_required: 'Confirm your password to continue.',
   stale_write: 'Someone else changed this. Reload and try again.',
   unavailable: 'The server is not reachable. Try again in a moment.',
+  publish_checks_failed: 'This product is not ready to publish. The checks beside the form say what is missing.',
   in_use: 'This is used elsewhere, so it cannot be removed.',
   csrf_failed: 'Your session needs a refresh. Reload the page.',
 })

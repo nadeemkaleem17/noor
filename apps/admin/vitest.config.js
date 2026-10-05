@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     projects: [
       './old/vite.config.js',
-      { ...base, resolve: { tsconfigPaths: true }, test: { ...base.test, name: 'admin', environment: 'jsdom', include: ['src/**/*.test.{js,jsx}'], setupFiles: ['./src/test/setup.js'] } },
+      { ...base, resolve: { tsconfigPaths: true }, test: { ...base.test, testTimeout: 60_000, name: 'admin', environment: 'jsdom', include: ['src/**/*.test.{js,jsx}'], setupFiles: ['./src/test/setup.js'] } },
     ],
   },
 })

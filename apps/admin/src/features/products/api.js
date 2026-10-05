@@ -1,6 +1,7 @@
 import { routes } from '@noor/contract'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { toBody, toForm } from './form-values'
 
 export const productKeys = {
   all: ['products'],
@@ -42,6 +43,14 @@ export function useProductMutations() {
         queryClient.removeQueries({ queryKey: productKeys.detail(id) })
         void queryClient.invalidateQueries({ queryKey: productKeys.lists() })
       },
+    }),
+    /** Archive: read the stored product, change only its status, save it with the version just read. */
+    archive: useMutation({
+      mutationFn: async (/** @type {string} */ id) => {
+        const doc = await queryClient.fetchQuery({ ...productQueries.detail(id), staleTime: 0 })
+        return api('admin.products.update', { params: { id }, body: /** @type {never} */ ({ ...toBody(toForm(doc)), status: 'archived', version: doc.version }) })
+      },
+      onSuccess: remember,
     }),
     previewLink: useMutation({ mutationFn: (/** @type {string} */ id) => api('admin.products.previewLink', { params: { id } }) }),
   }

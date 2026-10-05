@@ -25,6 +25,8 @@ function OptionRow({ index, onRemove }) {
   const role = useWatch({ control, name: `${base}.role` })
   const systemId = useWatch({ control, name: `${base}.sizeSystemId` })
   const styleId = useWatch({ control, name: 'styleId' })
+  const kind = useWatch({ control, name: 'kind' })
+  const customForm = useWatch({ control, name: 'customSizeSchemaId' })
   const values = /** @type {any[]} */ (useWatch({ control, name: `${base}.values` }) ?? [])
   const variants = /** @type {any[]} */ (useWatch({ control, name: 'variants' }) ?? [])
   const values$ = useFieldArray({ control, name: `${base}.values`, keyName: 'rid' })
@@ -38,7 +40,13 @@ function OptionRow({ index, onRemove }) {
       if (s.id === size.id) return on ? [have ?? { key: newKey(), label: s.label, kind: 'standard', sizeSystemValueId: s.id }] : []
       return have ? [have] : []
     })
-    setValue(`${base}.values`, next, { shouldDirty: true, shouldValidate: true })
+    setValue(`${base}.values`, [...next, ...current.filter((v) => v.kind === 'custom')], { shouldDirty: true, shouldValidate: true })
+  }
+
+  /** The "Custom" size of a made-to-order product: it has no counted stock and opens the custom-size form. @param {boolean} on */
+  const toggleCustom = (on) => {
+    const current = /** @type {any[]} */ (getValues(`${base}.values`) ?? [])
+    setValue(`${base}.values`, on ? [...current, { key: 'custom', label: 'Custom', kind: 'custom' }] : current.filter((v) => v.kind !== 'custom'), { shouldDirty: true, shouldValidate: true })
   }
 
   return (
@@ -82,6 +90,7 @@ function OptionRow({ index, onRemove }) {
               })}
             </fieldset>
           ) : null}
+          {kind === 'made_to_order' && customForm ? <Checkbox label="Include a Custom size (opens the custom-size form)" checked={values.some((v) => v.kind === 'custom')} onCheckedChange={toggleCustom} /> : null}
         </>
       ) : (
         <div className="space-y-2">
