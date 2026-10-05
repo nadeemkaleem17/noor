@@ -14,6 +14,7 @@ export const settingsKeys = {
 
 export const storeQuery = queryOptions({ queryKey: settingsKeys.store, queryFn: ({ signal }) => api('admin.settings.getStore', { signal }) })
 export const checkoutQuery = queryOptions({ queryKey: settingsKeys.checkout, queryFn: ({ signal }) => api('admin.settings.getCheckout', { signal }) })
+export const paymentsQuery = queryOptions({ queryKey: settingsKeys.payments, queryFn: ({ signal }) => api('admin.settings.getPayments', { signal }) })
 export const translationQuery = queryOptions({ queryKey: settingsKeys.translation, queryFn: ({ signal }) => api('admin.settings.translationStatus', { signal }) })
 
 /**
@@ -41,6 +42,18 @@ export function useSaveCheckout() {
       return api('admin.settings.updateCheckout', { body: /** @type {never} */ ({ value, version: latest.version }) })
     },
     onSuccess: (doc) => queryClient.setQueryData(settingsKeys.checkout, doc),
+  })
+}
+
+/** Saves the payments document with a change to its latest value: `change` gets the value just read and returns the new one. */
+export function useSavePayments() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (/** @type {(latest: any) => Record<string, unknown>} */ change) => {
+      const latest = await queryClient.fetchQuery({ ...paymentsQuery, staleTime: 0 })
+      return api('admin.settings.updatePayments', { body: /** @type {never} */ ({ value: change(latest.value), version: latest.version }) })
+    },
+    onSuccess: (doc) => queryClient.setQueryData(settingsKeys.payments, doc),
   })
 }
 

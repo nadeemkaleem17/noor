@@ -19,6 +19,7 @@ const menus = () => import('@/routes/menus')
 const settingsStore = () => import('@/routes/settings-store')
 const settingsAppearance = () => import('@/routes/settings-appearance')
 const settingsShipping = () => import('@/routes/settings-shipping')
+const settingsPayments = () => import('@/routes/settings-payments')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -64,7 +65,7 @@ export const screens = [
   { path: '/settings/store', title: 'Store', permission: 'settings:read', group: 'Settings', icon: Store, lazy: settingsStore },
   { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: settingsAppearance },
   { path: '/settings/shipping', title: 'Shipping', permission: 'settings:read', group: 'Settings', icon: Truck, lazy: settingsShipping },
-  { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: soon },
+  { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: settingsPayments },
   { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: soon },
   { path: '/staff/:id', title: 'Staff member', permission: 'staff:read', lazy: soon },
   { path: '/audit', title: 'Audit log', permission: 'audit:read', group: 'Settings', icon: ScrollText, lazy: soon },
