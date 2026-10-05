@@ -3,7 +3,6 @@ import { Button, IconButton } from '@noor/ui/button'
 import { ConfirmDialog } from '@noor/ui/confirm-dialog'
 import { ErrorState } from '@noor/ui/error-state'
 import { RHFField } from '@noor/ui/field'
-import { ImageUpload } from '@noor/ui/image-upload'
 import { Input } from '@noor/ui/input'
 import { NativeSelect } from '@noor/ui/native-select'
 import { Spinner } from '@noor/ui/spinner'
@@ -16,6 +15,7 @@ import { useRef, useState } from 'react'
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form'
 import { useBlocker } from 'react-router'
 import { LinkInput } from '@/components/link-input'
+import { PictureField } from '@/components/picture-field'
 import { PageHeader } from '@/components/page-header'
 import { SectionCard } from '@/components/section-card'
 import { StaleWriteDialog } from '@/components/stale-write-dialog'
@@ -24,7 +24,6 @@ import { env } from '@/lib/env'
 import { messageFor } from '@/lib/errors'
 import { contractResolver, prune } from '@/lib/form'
 import { useCan } from '@/lib/session'
-import { uploadErrorText, uploadImage } from '@/lib/upload'
 import { contentKeys, homeQuery, useSaveHome } from '../api'
 
 const newId = () => `i${Math.random().toString(36).slice(2, 10)}`
@@ -34,26 +33,20 @@ const GOOD_WIDTH = 1600
 const text = (field) => ({ ...field, value: field.value ?? '' })
 
 /**
- * One picture: upload, preview, remove. Pictures narrower than the home page wants are accepted with a warning.
+ * A picture of the home page. Pictures narrower than the page wants are accepted with a warning.
  * @param {{ mediaId: string | undefined; src: string | undefined; onPick: (img: { id: string; src: string; } | null) => void; label: string; disabled: boolean; }} props
  */
 function Picture({ mediaId, src, onPick, label, disabled }) {
   const toast = useToast()
   return (
-    <ImageUpload
-      value={mediaId && src ? [{ id: mediaId, src, alt: '' }] : []}
-      maxFiles={disabled ? 0 : 1}
+    <PictureField
+      mediaId={mediaId}
+      src={src}
+      onPick={onPick}
       label={label}
-      onChange={(list) => {
-        const last = list.at(-1)
-        onPick(last ? { id: last.id, src: last.src } : null)
-      }}
-      upload={async (file) => {
-        const uploaded = await uploadImage(file)
-        if ((uploaded.width ?? GOOD_WIDTH) < GOOD_WIDTH) toast.push({ title: `${file.name} is narrower than ${GOOD_WIDTH} pixels; a wider picture looks sharper on large screens.`, tone: 'warning' })
-        return uploaded
-      }}
-      describeError={uploadErrorText}
+      disabled={disabled}
+      limits={{ goodSide: GOOD_WIDTH }}
+      onWarn={(note) => toast.push({ title: note.replace('long side', 'wide'), tone: 'warning' })}
     />
   )
 }

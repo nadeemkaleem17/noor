@@ -23,15 +23,18 @@ async function sizeOf(file) {
 /**
  * @param {File} file
  * @param {(note: string) => void} [warn] - told about a picture that is allowed but smaller than it should be
+ * @param {{ minSide?: number; goodSide?: number; }} [limits] - a logo or favicon is smaller than a product picture
  * @returns {Promise<{ id: string; src: string; alt: string; width?: number; height?: number; }>}
  */
-export async function uploadImage(file, warn) {
+export async function uploadImage(file, warn, limits = {}) {
+  const floor = limits.minSide ?? minSide
+  const good = limits.goodSide ?? goodSide
   if (!(/** @type {readonly string[]} */ (uploadTypes)).includes(file.type)) throw new UploadError('Only JPEG, PNG, WebP and AVIF pictures can be used.')
   if (file.size > maxUploadBytes) throw new UploadError('This picture is larger than 10 MB.')
   const { width, height } = await sizeOf(file)
   const longSide = Math.max(width, height)
-  if (longSide < minSide) throw new UploadError(`This picture is only ${longSide} pixels on its long side; use at least ${minSide}.`)
-  if (longSide < goodSide) warn?.(`${file.name} is ${longSide} pixels on its long side; ${goodSide} or more looks better.`)
+  if (longSide < floor) throw new UploadError(`This picture is only ${longSide} pixels on its long side; use at least ${floor}.`)
+  if (longSide < good) warn?.(`${file.name} is ${longSide} pixels on its long side; ${good} or more looks better.`)
 
   const slot = await api('admin.media.createUpload', { body: { filename: file.name, contentType: /** @type {never} */ (file.type), bytes: file.size } })
   const put = await fetch(slot.uploadUrl, { method: 'PUT', headers: slot.headers, body: file })
