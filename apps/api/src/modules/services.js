@@ -4,6 +4,7 @@ import { createStorage } from '../platform/storage.js'
 import { createAuditService } from './audit/index.js'
 import { createAuthService } from './auth/index.js'
 import { createCatalogService } from './catalog/index.js'
+import { createCustomersService } from './customers/index.js'
 import { createInventory } from './inventory/index.js'
 import { createMediaService } from './media/index.js'
 import { createSearch } from './search/index.js'
@@ -23,6 +24,7 @@ export function createServices({ db, config, storage = createStorage(config) }) 
   let catalog
   const media = createMediaService({ db, config, storage, inUse: (id) => settings.mediaInUse(id) })
   const shipping = createShippingService({ db })
+  const customers = createCustomersService({ db })
   const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
   catalog = createCatalogService({
     db, config, media, stock: inventory.stock, search,
@@ -31,5 +33,5 @@ export function createServices({ db, config, storage = createStorage(config) }) 
     subscribe: (s) => inventory.subscribe(s),
   })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
-  return { auth, audit, storage, search, media, shipping, inventory, catalog, settings }
+  return { auth, audit, storage, search, media, shipping, customers, inventory, catalog, settings }
 }

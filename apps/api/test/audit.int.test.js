@@ -6,6 +6,7 @@ import { routes, themePresets } from '@noor/contract'
 import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
+import { customers } from '../src/db/schema/customers.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { collections, products } from '../src/db/schema/products.js'
 import { reservations } from '../src/db/schema/inventory.js'
@@ -27,6 +28,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     setClock(null)
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
+    await t.db.delete(customers)
     await t.db.delete(collections)
     await t.db.delete(reservations)
     await t.migrate.pool.query('DELETE FROM inventory_movements')
@@ -291,6 +293,16 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       },
       act: ({ b, id }) => b.call('PUT', `/admin/shipping/cities/${id}`, { body: { name: 'Oldtown City', province: 'Sindh' } }),
     }
+    const withCustomer = async () => {
+      const s = await signedIn('owner')
+      const id = uuidv7()
+      const at = new Date()
+      await t.db.insert(customers).values({ id, phone: '+923001234567', name: 'Sana Malik', createdAt: at, updatedAt: at })
+      return { ...s, id }
+    }
+    samples['admin.customers.update'] = { prepare: withCustomer, act: ({ b, id }) => b.call('PUT', `/admin/customers/${id}`, { body: { name: 'Sana Malik', noCod: true, noCodReason: 'Refused twice', vip: false, marketingConsent: false, version: 1 } }) }
+    samples['admin.customers.addNote'] = { prepare: withCustomer, act: ({ b, id }) => b.call('POST', `/admin/customers/${id}/notes`, { body: { body: 'Call after 5pm' } }) }
+    samples['admin.customers.anonymise'] = { prepare: withCustomer, act: ({ b, id }) => b.call('POST', `/admin/customers/${id}/anonymise`, { body: { confirm: '4567' } }) }
     const courier = { name: 'BlueEx', trackingRequired: true, enabled: true }
     samples['admin.couriers.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/couriers', { body: courier }) }
     samples['admin.couriers.update'] = {

@@ -78,6 +78,13 @@
       "when": 1791148534575,
       "tag": "0010_product_sizes",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1791199879626,
+      "tag": "0011_customers",
+      "breakpoints": true
     }
   ]
 }

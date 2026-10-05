@@ -75,11 +75,11 @@ It uses the same server pricing, stock reservation and promo validation as the s
 
 ## 7. Acceptance checklist
 
-- [ ] An order from a new phone creates a customer; a second order from the same phone in a different format (`0300…` vs `+92300…`) attaches to the same customer.
-- [ ] Flagging No COD shows the marker on that customer's next order.
-- [ ] A staff-created order reserves stock and prices exactly like a storefront order with the same cart.
-- [ ] Export without `customers:export` is not offered and the endpoint returns 403; a permitted export appears in the audit log.
-- [ ] Anonymising a customer removes their name and phone from delivered orders and from search.
+- [x] An order from a new phone creates a customer; a second order from the same phone in a different format (`0300…` vs `+92300…`) attaches to the same customer. (M4-01: `customers.upsertByPhone(tx, ..)` inside the order's transaction; `customers.int.test.js` covers three phone formats, the latest name and city, and six orders at once. The order that calls it is M4-04.)
+- [ ] Flagging No COD shows the marker on that customer's next order. (M4-01 stores the flag and `findByPhone` returns it; the marker on the order is M4-04/05.)
+- [ ] A staff-created order reserves stock and prices exactly like a storefront order with the same cart. (M4-10.)
+- [ ] Export without `customers:export` is not offered and the endpoint returns 403; a permitted export appears in the audit log. (The export route waits for the jobs and exports table, M4-10; the permission exists.)
+- [ ] Anonymising a customer removes their name and phone from delivered orders and from search. (M4-01 does the customer row: name, phone placeholder, email, city, notes, consent; counts and amounts stay; audited, and the number can be used by a new customer. Orders in a final status are cleared through the `orders.anonymise` hook, which M4-04 fills; search holds no customers yet.)
 
 ## 8. Open questions and assumptions
 
@@ -95,3 +95,4 @@ It uses the same server pricing, stock reservation and promo validation as the s
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
 | 2026-10-02 | Phase 4: anonymise permission named per DOC-11 |
+| 2026-10-05 | M4-01 built (`apps/api/src/modules/customers`): list, detail, lookup by phone, update (flags need a reason for No COD), add-only notes, anonymise (owner, step-up, last four digits typed, refused while an order is open). Audit entries never hold a name, email or phone (the trail cannot be rewritten): a changed name or email is recorded only as "(changed)". |

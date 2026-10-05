@@ -309,4 +309,5 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 
 | Date | Change |
 |---|---|
+| 2026-10-05 | M4-01: `customers` and `customer_notes` built (migration 0011). `applyOrderChange` adds signed amounts in one SQL statement (so changes at the same time are all kept; `firstOrderAt` is the least and `lastOrderAt` the greatest order time). The caller (M4-05) decides the deltas: a cancel is `orders -1, cancelled +1`. `createCustomersService({ db, orders })` takes an `orders` view (`openCount`, `addresses`, `anonymise`) that is empty until M4-04. The derived-counter acceptance item waits for orders. |
 | 2026-10-02 | Initial version (Phase 5, part 1). Splits the glossary's single payment status into order-level `payment_status` and per-payment `payment_state` |
