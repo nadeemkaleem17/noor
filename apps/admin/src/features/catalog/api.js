@@ -50,3 +50,20 @@ export function useAttributeMutations() {
     }),
   }
 }
+
+/** Size systems, size charts and custom-size forms share one shape of mutations. @param {string} base a route key prefix, for example `admin.sizeSystems` @param {readonly string[]} key */
+function useStructureMutations(base, key) {
+  const refresh = useRefresh()
+  const done = () => refresh(key)
+  // the key is built from the prefix, so the typed client cannot check it here; the three callers pass real route prefixes
+  const call = /** @type {(key: string, input: object) => Promise<any>} */ (/** @type {unknown} */ (api))
+  return {
+    create: useMutation({ mutationFn: (/** @type {object} */ body) => call(`${base}.create`, { body }), onSuccess: done }),
+    update: useMutation({ mutationFn: (/** @type {{ id: string; body: object; }} */ v) => call(`${base}.update`, { params: { id: v.id }, body: v.body }), onSuccess: done }),
+    remove: useMutation({ mutationFn: (/** @type {string} */ id) => call(`${base}.delete`, { params: { id } }), onSuccess: done }),
+  }
+}
+
+export const useSizeSystemMutations = () => useStructureMutations('admin.sizeSystems', catalogKeys.sizeSystems)
+export const useSizeChartMutations = () => useStructureMutations('admin.sizeCharts', catalogKeys.sizeCharts)
+export const useFormSchemaMutations = () => useStructureMutations('admin.formSchemas', catalogKeys.formSchemas)

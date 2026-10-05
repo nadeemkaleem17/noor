@@ -7,6 +7,7 @@ const product = () => import('@/routes/product')
 const productNew = () => import('@/routes/product-new')
 const categories = () => import('@/routes/categories')
 const attributes = () => import('@/routes/attributes')
+const sizes = () => import('@/routes/sizes')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -40,7 +41,7 @@ export const screens = [
   { path: '/collections', title: 'Collections', permission: 'catalog:read', group: 'Catalog', icon: Layers, lazy: soon },
   { path: '/collections/:id', title: 'Collection', permission: 'catalog:read', lazy: soon },
   { path: '/attributes', title: 'Attributes', permission: 'catalog:read', group: 'Catalog', icon: Tags, lazy: attributes },
-  { path: '/sizes', title: 'Sizes & charts', permission: 'catalog:read', group: 'Catalog', icon: Ruler, lazy: soon },
+  { path: '/sizes', title: 'Sizes & charts', permission: 'catalog:read', group: 'Catalog', icon: Ruler, lazy: sizes },
 
   { path: '/content/home', title: 'Home page', permission: 'content:read', group: 'Content', icon: Home, lazy: soon },
   { path: '/content/pages', title: 'Pages', permission: 'content:read', group: 'Content', icon: FileText, lazy: soon },
