@@ -30,7 +30,7 @@ One form, sections as cards, one Save. A "Preview storefront" link opens `/` in 
 | Editorial band | Enabled, image + alt, eyebrow, heading, text, button text, button link | Same |
 | Footer | About text (≤ 300) | Phone, email, address and socials come from store settings (DOC-07.11), not from here |
 
-Link fields use one `LinkField` component: a `Combobox` offering internal targets (categories, collections, products, CMS pages, `/new`, `/sale`) and accepting a typed URL; it validates with the same rule as the storefront (`/…`, `https://…`, `mailto:`, `tel:`, `https://wa.me/…`) so an invalid link is rejected here instead of silently hidden there.
+Link fields use one component, `LinkInput` (`components/link-input.jsx`, built in M3-05 as a text field with the browser's own suggestion list instead of a `Combobox`; the contract's link rule runs in each form's resolver): it offers internal targets (categories, collections, products, CMS pages, `/new`, `/sale`) and accepting a typed URL; it validates with the same rule as the storefront (`/…`, `https://…`, `mailto:`, `tel:`, `https://wa.me/…`) so an invalid link is rejected here instead of silently hidden there.
 
 ## 3. CMS pages
 
@@ -103,13 +103,13 @@ Two fixed menus: **Main** (`main`) and **Footer** (`footer`). No others can be c
 
 ## 6. Acceptance checklist
 
-- [ ] The Markdown preview and the storefront page render identical HTML for the same body (shared component, snapshot test).
-- [ ] A hero slide with a link but no button text cannot be saved.
-- [ ] `javascript:alert(1)` is rejected by `LinkField`.
-- [ ] Changing the store phone (DOC-07.11) changes the resolved token in the page preview.
-- [ ] A menu item whose category was hidden shows "Target not live".
-- [ ] Required pages have no Delete and no Draft option.
-- [ ] Saving the home form updates the storefront home within the cache window (tag purge verified in an integration test).
+- [ ] The Markdown preview and the storefront page render identical HTML for the same body (shared component, snapshot test). (The editor previews with `@noor/ui/markdown` after the server resolved the tokens; the storefront page and the snapshot test come with M5.)
+- [x] A hero slide with a link but no button text cannot be saved.
+- [x] `javascript:alert(1)` is rejected by `LinkInput` (home form and menus).
+- [ ] Changing the store phone (DOC-07.11) changes the resolved token in the page preview. (The preview calls `admin.pages.preview`, which resolves from the stored settings; seen with the seeded phone. Waits for the store settings screen, M3-06, to change it.)
+- [x] A menu item whose category was hidden shows "Target not live". (From the API's `targetLive`.)
+- [x] Required pages have no Delete and no Draft option. (Seen on the real contact page.)
+- [ ] Saving the home form updates the storefront home within the cache window (tag purge verified in an integration test). (Server side: M1-06. The form saves the whole document with its version.)
 
 ## 7. Open questions and assumptions
 
@@ -125,3 +125,4 @@ Two fixed menus: **Main** (`main`) and **Footer** (`footer`). No others can be c
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-05 | M3-05 built (`features/content`): home form (announcement, notices, hero slides with 4:5 and 16:7 crop preview, promo and editorial bands, footer), pages list and editor (Write/Preview through the server, token and image insertion, locked pages), menus (two menus, indent and outdent, limits, "Target not live"). Not built: Urdu fields, a `Combobox` for links, drag reordering, a hard 1600 px minimum for hero pictures (a warning below it; 800 px is the floor for all pictures), a stale dialog that reloads the home form field by field (it reloads the whole document) |

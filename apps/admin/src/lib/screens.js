@@ -15,6 +15,7 @@ const contentHome = () => import('@/routes/content-home')
 const pages = () => import('@/routes/pages')
 const page = () => import('@/routes/page')
 const pageNew = () => import('@/routes/page-new')
+const menus = () => import('@/routes/menus')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -55,7 +56,7 @@ export const screens = [
   { path: '/content/pages', title: 'Pages', permission: 'content:read', group: 'Content', icon: FileText, lazy: pages },
   { path: '/content/pages/new', title: 'New page', permission: 'content:write', lazy: pageNew },
   { path: '/content/pages/:id', title: 'Page', permission: 'content:read', lazy: page },
-  { path: '/content/menus', title: 'Menus', permission: 'content:read', group: 'Content', icon: List, lazy: soon },
+  { path: '/content/menus', title: 'Menus', permission: 'content:read', group: 'Content', icon: List, lazy: menus },
 
   { path: '/settings/store', title: 'Store', permission: 'settings:read', group: 'Settings', icon: Store, lazy: soon },
   { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: soon },
