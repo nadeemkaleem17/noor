@@ -8,7 +8,7 @@ import { useToast } from '@noor/ui/toast'
 import { ArrowDown, ArrowUp, Star, Trash2 } from 'lucide-react'
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form'
 import { SectionCard } from '@/components/section-card'
-import { uploadErrorText, uploadImage } from '../upload'
+import { uploadErrorText, uploadImage } from '@/lib/upload'
 
 const roles = enums.mediaRole.map((v) => ({ value: v, label: v.replace(/^./, (c) => c.toUpperCase()) }))
 const maxImages = 12

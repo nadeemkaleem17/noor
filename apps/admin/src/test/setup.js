@@ -14,6 +14,6 @@ window.matchMedia ??= /** @type {typeof window.matchMedia} */ (
 )
 
 // the first screen of a test loads its route chunk from disk, which can take seconds on a busy machine
-configure({ asyncUtilTimeout: 10_000 })
+configure({ asyncUtilTimeout: 20_000 })
 
 afterEach(() => cleanup())

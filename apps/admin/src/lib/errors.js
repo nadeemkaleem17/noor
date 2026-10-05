@@ -28,6 +28,26 @@ export function messageFor(error) {
   return messages[error.code] ?? 'Something went wrong. Please try again.'
 }
 
+const nouns = /** @type {Record<string, [string, string]>} */ ({
+  children: ['child category', 'child categories'],
+  products: ['product', 'products'],
+  categories: ['category', 'categories'],
+  options: ['product option', 'product options'],
+})
+
+/**
+ * Why something cannot be deleted, from the server's `in_use` details: "It is used by 3 products and 2 categories, so it cannot be deleted." Falls back to the plain message.
+ * @param {unknown} error
+ */
+export function inUseText(error) {
+  if (!(error instanceof ApiError) || error.code !== 'in_use') return messageFor(error)
+  const used = /** @type {Record<string, number> | undefined} */ (error.details.usedBy)
+  const parts = Object.entries(used ?? {})
+    .filter(([, n]) => n > 0)
+    .map(([what, n]) => `${n} ${(nouns[what] ?? [what, what])[n === 1 ? 0 : 1]}`)
+  return parts.length ? `It is used by ${parts.join(' and ')}, so it cannot be deleted.` : 'It is used elsewhere, so it cannot be deleted.'
+}
+
 /** @param {unknown} reason */
 function passwordReason(reason) {
   return typeof reason === 'string' && reason ? `That password is not strong enough: ${reason.replace(/_/g, ' ')}.` : 'That password is not strong enough.'

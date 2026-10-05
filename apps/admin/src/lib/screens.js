@@ -5,6 +5,7 @@ import { Database, FileText, Folders, Gauge, Home, Layers, List, Package, Palett
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
 const productNew = () => import('@/routes/product-new')
+const categories = () => import('@/routes/categories')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -34,7 +35,7 @@ export const screens = [
   { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: products },
   { path: '/products/new', title: 'New product', permission: 'products:write', lazy: productNew },
   { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: product },
-  { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: soon },
+  { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: categories },
   { path: '/collections', title: 'Collections', permission: 'catalog:read', group: 'Catalog', icon: Layers, lazy: soon },
   { path: '/collections/:id', title: 'Collection', permission: 'catalog:read', lazy: soon },
   { path: '/attributes', title: 'Attributes', permission: 'catalog:read', group: 'Catalog', icon: Tags, lazy: soon },
