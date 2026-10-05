@@ -17,6 +17,7 @@ const page = () => import('@/routes/page')
 const pageNew = () => import('@/routes/page-new')
 const menus = () => import('@/routes/menus')
 const settingsStore = () => import('@/routes/settings-store')
+const settingsAppearance = () => import('@/routes/settings-appearance')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -60,7 +61,7 @@ export const screens = [
   { path: '/content/menus', title: 'Menus', permission: 'content:read', group: 'Content', icon: List, lazy: menus },
 
   { path: '/settings/store', title: 'Store', permission: 'settings:read', group: 'Settings', icon: Store, lazy: settingsStore },
-  { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: soon },
+  { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: settingsAppearance },
   { path: '/settings/shipping', title: 'Shipping', permission: 'settings:read', group: 'Settings', icon: Truck, lazy: soon },
   { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: soon },
   { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: soon },
