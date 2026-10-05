@@ -186,6 +186,14 @@ describe('ImageUpload', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
+  it('says why a file failed when asked to, and reports when it is busy', async () => {
+    const busy = vi.fn()
+    const { user } = renderUi(<ImageUpload value={[]} onChange={() => {}} onBusyChange={busy} describeError={(e) => (e instanceof Error ? `Too small: ${e.message}` : undefined)} upload={() => Promise.reject(new Error('600 px'))} />)
+    await user.upload(screen.getByLabelText('Drop images here or choose files'), file('a.png'))
+    expect((await screen.findByRole('alert')).textContent).toBe('Too small: 600 px')
+    expect(busy.mock.calls).toEqual([[true], [false]])
+  })
+
   it('hides the drop area when full and removes an image', async () => {
     const onChange = vi.fn()
     const { user } = renderUi(<ImageUpload value={[media('a.png')]} onChange={onChange} upload={vi.fn()} />)

@@ -23,6 +23,8 @@ import { Spinner } from './spinner'
  * @property {string} [accept] - MIME types the picker offers. The server still checks the real file type.
  * @property {string} [label]
  * @property {string} [className]
+ * @property {(error: unknown) => string | undefined} [describeError] - The sentence shown under a failed file; the generic message when it returns nothing.
+ * @property {(busy: boolean) => void} [onBusyChange] - Called with true while any file is being sent and false when none is, so a form can hold its Save button.
  */
 
 /**
@@ -36,13 +38,14 @@ import { Spinner } from './spinner'
  * @template {UploadedImage} T
  * @param {Props<T>} props
  */
-export function ImageUpload({ value, onChange, upload, multiple = false, maxFiles = multiple ? 10 : 1, accept = 'image/jpeg,image/png,image/webp,image/avif', label, className }) {
+export function ImageUpload({ value, onChange, upload, multiple = false, maxFiles = multiple ? 10 : 1, accept = 'image/jpeg,image/png,image/webp,image/avif', label, className, describeError, onBusyChange }) {
   const { t } = useTranslation()
   const inputId = useId()
   const current = useRef(value)
   current.current = value
   const [pending, setPending] = useState(/** @type {Pending[]} */ ([]))
   const [over, setOver] = useState(false)
+  const sending = useRef(0)
   const room = maxFiles - value.length
 
   /**
@@ -52,14 +55,17 @@ export function ImageUpload({ value, onChange, upload, multiple = false, maxFile
     for (const file of files.slice(0, Math.max(room, 0))) {
       const key = `${file.name}-${file.size}-${crypto.randomUUID()}`
       setPending((p) => [...p, { key, name: file.name }])
+      if (sending.current++ === 0) onBusyChange?.(true)
       try {
         const done = await upload(file)
         // read the latest list: several uploads finish in any order
         onChange([...current.current, done])
         current.current = [...current.current, done]
         setPending((p) => p.filter((x) => x.key !== key))
-      } catch {
-        setPending((p) => p.map((x) => (x.key === key ? { ...x, error: t('uploadFailed') } : x)))
+      } catch (error) {
+        setPending((p) => p.map((x) => (x.key === key ? { ...x, error: describeError?.(error) ?? t('uploadFailed') } : x)))
+      } finally {
+        if (--sending.current === 0) onBusyChange?.(false)
       }
     }
   }

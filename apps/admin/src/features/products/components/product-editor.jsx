@@ -20,6 +20,7 @@ import { toBody, toForm } from '../form-values'
 import { BasicsSection } from './basics-section'
 import { ChecksCard } from './checks-card'
 import { DetailsSection } from './details-section'
+import { MediaSection } from './media-section'
 import { OptionsVariantsSection } from './options-variants-section'
 import { OrganisationCard } from './organisation-card'
 import { SeoSection } from './seo-section'
@@ -27,6 +28,7 @@ import { StatusCard } from './status-card'
 
 const sections = [
   ['basics', 'Basics'],
+  ['media', 'Media'],
   ['variants', 'Options and variants'],
   ['details', 'Details'],
   ['seo', 'Search and address'],
@@ -59,6 +61,7 @@ function ProductForm({ product }) {
   const dirty = Object.keys(form.formState.dirtyFields).length > 0
   const [stale, setStale] = useState(/** @type {{ currentVersion: number; } | null} */ (null))
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [uploading, setUploading] = useState(false) // a picture is still being sent: saving now would lose it
   const leaving = useRef(false) // set once a save has moved the person on, so the unsaved-changes guard stays out of the way
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !leaving.current && currentLocation.pathname !== nextLocation.pathname)
 
@@ -72,6 +75,7 @@ function ProductForm({ product }) {
 
   /** @param {number} [version] the version to save over; the stored one by default */
   async function save(version = product?.version) {
+    if (uploading) return
     const body = /** @type {never} */ ({ ...toBody(form.getValues(), { create: isNew }), ...(version ? { version } : {}) })
     try {
       const saved = product ? await update.mutateAsync({ id: product.id, body }) : await create.mutateAsync(body)
@@ -98,7 +102,7 @@ function ProductForm({ product }) {
     setStale(null)
   }
 
-  const saving = create.isPending || update.isPending
+  const saving = create.isPending || update.isPending || uploading
   const published = product?.status === 'active'
   const items = product
     ? [
@@ -146,6 +150,7 @@ function ProductForm({ product }) {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-4">
             <BasicsSection suggestHandle={isNew} />
+            <MediaSection onBusyChange={setUploading} />
             <OptionsVariantsSection isNew={isNew} />
             <DetailsSection />
             <SeoSection published={published} />

@@ -51,7 +51,7 @@ export function fakeApi(table) {
       calls.push(key)
       const handler = table[key]
       if (!handler) throw new Error(`unexpected API call: ${key}`)
-      return handler({ body: init?.body ? JSON.parse(String(init.body)) : undefined, headers: new Headers(init?.headers) })
+      return handler({ body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined, headers: new Headers(init?.headers) })
     }),
   )
   return calls
