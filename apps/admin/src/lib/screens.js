@@ -21,6 +21,7 @@ const settingsAppearance = () => import('@/routes/settings-appearance')
 const settingsShipping = () => import('@/routes/settings-shipping')
 const settingsPayments = () => import('@/routes/settings-payments')
 const settingsData = () => import('@/routes/settings-data')
+const account = () => import('@/routes/account')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -72,7 +73,7 @@ export const screens = [
   { path: '/audit', title: 'Audit log', permission: 'audit:read', group: 'Settings', icon: ScrollText, lazy: soon },
   { path: '/settings/data', title: 'Data', permission: 'settings:manage', group: 'Settings', icon: Database, lazy: settingsData },
 
-  { path: '/account', title: 'My account', lazy: soon },
+  { path: '/account', title: 'My account', lazy: account },
 ]
 
 export const groups = /** @type {const} */ (['Overview', 'Sales', 'Catalog', 'Content', 'Settings'])

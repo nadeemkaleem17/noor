@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
 import { api } from '@/lib/api'
 import { meKey } from '@/lib/session'
@@ -36,5 +36,40 @@ export function useContinueAfterSignIn() {
     if (result.next === 'enrol_two_factor') return navigate(`/enrol-2fa${query}`)
     queryClient.removeQueries({ queryKey: meKey })
     return navigate(next ?? '/', { replace: true })
+  }
+}
+
+// ---- my account (plan/07-admin/12-staff-roles.md section 6)
+
+export const sessionsQuery = queryOptions({ queryKey: ['account', 'sessions'], queryFn: ({ signal }) => api('admin.me.sessions.list', { signal }) })
+
+/** The signed-in user changed (name, two-step sign-in): read it again. */
+export function useRefreshMe() {
+  const queryClient = useQueryClient()
+  return () => queryClient.invalidateQueries({ queryKey: meKey })
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (/** @type {string} */ name) => api('admin.me.update', { body: { name } }),
+    onSuccess: (me) => queryClient.setQueryData(meKey, me),
+  })
+}
+
+export function useChangePassword() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (/** @type {{ currentPassword: string; newPassword: string; }} */ body) => api('admin.me.changePassword', { body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionsQuery.queryKey }), // other sessions were ended
+  })
+}
+
+export function useSessionMutations() {
+  const queryClient = useQueryClient()
+  const refresh = () => queryClient.invalidateQueries({ queryKey: sessionsQuery.queryKey })
+  return {
+    revoke: useMutation({ mutationFn: (/** @type {string} */ id) => api('admin.me.sessions.revoke', { params: { id } }), onSuccess: refresh }),
+    revokeOthers: useMutation({ mutationFn: () => api('admin.me.sessions.revokeOthers'), onSuccess: refresh }),
   }
 }
