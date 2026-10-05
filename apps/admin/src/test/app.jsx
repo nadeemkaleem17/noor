@@ -38,7 +38,7 @@ export const problem = (status, code, extra = {}) => json(status, { title: code,
 
 /**
  * Replaces `fetch` with a table of `"METHOD /path"` answers (paths relative to /api/v1). Anything not in the table fails the test.
- * @param {Record<string, (request: { body: any; headers: Headers; }) => Response>} table
+ * @param {Record<string, (request: { body: any; headers: Headers; url: URL; }) => Response>} table
  */
 export function fakeApi(table) {
   // the catalog lookups every product screen reads; a test overrides the ones it cares about
@@ -53,7 +53,7 @@ export function fakeApi(table) {
       calls.push(key)
       const handler = table[key]
       if (!handler) throw new Error(`unexpected API call: ${key}`)
-      return handler({ body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined, headers: new Headers(init?.headers) })
+      return handler({ body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined, headers: new Headers(init?.headers), url })
     }),
   )
   return calls

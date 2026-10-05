@@ -111,13 +111,13 @@ Guard rails (enforced by the API, reflected in the UI by hiding or disabling wit
 
 ## 8. Acceptance checklist
 
-- [ ] An invite link works once, expires after 7 days, and cannot be used after "Resend invite" issued a new one.
-- [ ] An owner or manager without 2FA can reach nothing but the enrolment screen after signing in.
-- [ ] Demoting or deactivating the last owner is refused with an explanation.
-- [ ] Changing a user's role ends that user's sessions (their next request returns 401).
-- [ ] Recovery codes are displayed once; reloading the page does not show them again.
-- [ ] "Sign out all other sessions" leaves the current session working.
-- [ ] The permissions table shown in the UI is rendered from `admin.roles.list`, not from a constant in the client.
+- [ ] An invite link works once, expires after 7 days, and cannot be used after "Resend invite" issued a new one. (Server rules, M1-02; the screen shows the link once and "Resend invite" says the old one stops working.)
+- [x] An owner or manager without 2FA can reach nothing but the enrolment screen after signing in. (Router loader redirects to `/enrol-2fa`, M3-01; `enrol.test.jsx`.)
+- [x] Demoting or deactivating the last owner is refused with an explanation. (`staff.test.jsx`: the server's `last_owner` is explained and the dialog stays open.)
+- [ ] Changing a user's role ends that user's sessions (their next request returns 401). (Server rule; the edit dialog warns about it.)
+- [x] Recovery codes are displayed once; reloading the page does not show them again. (`RecoveryCodes`: Done waits for the tick; nothing keeps the codes after the dialog closes.)
+- [ ] "Sign out all other sessions" leaves the current session working. (The button calls `admin.me.sessions.revokeOthers`; the "This device" row has no sign-out.)
+- [x] The permissions table shown in the UI is rendered from `admin.roles.list`, not from a constant in the client. (`staff.test.jsx`.)
 
 ## 9. Open questions and assumptions
 
@@ -134,3 +134,4 @@ Guard rails (enforced by the API, reflected in the UI by hiding or disabling wit
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
 | 2026-10-02 | Phase 4: role summaries aligned with the DOC-11 matrix |
+| 2026-10-05 | M3-07 built: `/account` (profile, password, two-step with recovery codes, sessions, preferences in this browser: theme and density; "default orders tab" waits for the orders screens), `/staff` and `/staff/:id` (list with role and status filters, invite, edit, reset password or two-step, sign out everywhere, unlock, deactivate and reactivate, permissions table from `admin.roles.list`). Sensitive calls go through `useStepUp`: when the server answers `step_up_required` the password dialog opens and the call is repeated. No role names are checked in the client; your own row has no actions (use My account), and the server refuses the rest (`action_not_allowed`, `last_owner`). Invite and reset links are shown once with a copy button |

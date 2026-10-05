@@ -63,12 +63,12 @@ A collapsed "History" card on entity screens lists the 10 newest audit entries f
 
 ## 7. Acceptance checklist
 
-- [ ] Changing a product price creates one entry whose detail shows `price` before and after and nothing unrelated.
-- [ ] A failed sign-in appears under the Security preset with the email attempted and the IP, and no password.
-- [ ] A role change entry shows old and new role, actor and target.
-- [ ] No request from the admin can modify or delete an audit entry (API has no such route; test asserts 404/405).
-- [ ] A user without `audit:read` sees no History cards and gets the 403 state on `/audit`.
-- [ ] Filters and the open entry restore from the URL.
+- [x] Changing a product price creates one entry whose detail shows `price` before and after and nothing unrelated. (Entries of real product saves show only the changed fields; `audit.test.jsx` shows money as rupees with the paisa on hover.)
+- [x] A failed sign-in appears under the Security preset with the email attempted and the IP, and no password. (Seen in the browser: category `security`, the email tried, the IP; no password.)
+- [ ] A role change entry shows old and new role, actor and target. (The server writes `staff.role_changed` with the diff; not yet looked at in the browser.)
+- [x] No request from the admin can modify or delete an audit entry (API has no such route; test asserts 404/405). (Append-only at the database and no route, M1-03; the screen has no control.)
+- [x] A user without `audit:read` sees no History cards and gets the 403 state on `/audit`. (`audit.test.jsx`.)
+- [x] Filters and the open entry restore from the URL. (`audit.test.jsx`.)
 
 ## 8. Open questions and assumptions
 
@@ -83,3 +83,4 @@ A collapsed "History" card on entity screens lists the 10 newest audit entries f
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-05 | M3-07 built (`features/audit`, `components/history-panel.jsx`): list newest first with a "Load more" (cursor) instead of a virtualised body (see DOC-07.14), presets Everything / Security / Money, kind-of-thing, date range and search filters in the address, entry drawer (`?entry=`) with before and after, History panels on product, page, collection and the store, appearance and payments settings. Not built: the "Failed jobs" preset (no job entries yet), export CSV (waits for exports, M4-10), word diff of long text and thumbnails for images (values show as text), History cards on order, customer and promo screens (those screens come in M4) |
