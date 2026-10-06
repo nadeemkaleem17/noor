@@ -1,12 +1,12 @@
 import { defaultLocale, isLocale } from '@noor/i18n'
 
 /**
- * `/` is English, `/ur` is Urdu. `/en` duplicates `/` and any other value is not a page, so both are 404 (plan/03 section 8).
- * @param {{ locale?: string; }} params
+ * `/` is English and `/ur` is Urdu; the routes themselves have no language segment, so `/en`, `/fr` and the like are ordinary unknown addresses and get the shop's 404 page
+ * (plan/03 section 8, plan/06-storefront/01-sitemap.md section 2).
+ * @param {string} pathname
  * @returns {import('@noor/i18n').Locale}
  */
-export function localeFromParams(params) {
-  if (params.locale === undefined) return defaultLocale
-  if (params.locale !== defaultLocale && isLocale(params.locale)) return params.locale
-  throw new Response('Not Found', { status: 404 })
+export function localeOfPath(pathname) {
+  const first = pathname.split('/')[1] ?? ''
+  return first !== defaultLocale && isLocale(first) ? first : defaultLocale
 }

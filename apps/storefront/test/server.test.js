@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { cacheControl } from '../app/lib/cache'
 import { parseEnv } from '../app/lib/env.server'
-import { localeFromParams } from '../app/lib/locale'
+import { localeOfPath } from '../app/lib/locale'
 import { makeNonce, securityHeaders } from '../app/lib/security.server'
 
 const goodEnv = { API_INTERNAL_URL: 'http://localhost:3000', PUBLIC_SITE_URL: 'http://localhost:5174', PUBLIC_IMG_URL: 'http://localhost:3000/img' }
@@ -18,25 +18,17 @@ describe('parseEnv', () => {
   })
 })
 
-describe('localeFromParams', () => {
-  /**
-   * @param {{ locale?: string; }} p
-   */
-  const status = (p) => {
-    try {
-      localeFromParams(p)
-    } catch (e) {
-      return (/** @type {Response} */ (e)).status
-    }
-    return 200
-  }
-  it('maps the optional prefix to a locale', () => {
-    expect(localeFromParams({})).toBe('en')
-    expect(localeFromParams({ locale: 'ur' })).toBe('ur')
+describe('localeOfPath', () => {
+  it('reads the language from the first segment: none is English, /ur is Urdu', () => {
+    expect(localeOfPath('/')).toBe('en')
+    expect(localeOfPath('/new')).toBe('en')
+    expect(localeOfPath('/ur')).toBe('ur')
+    expect(localeOfPath('/ur/c/lawn')).toBe('ur')
   })
-  it('404s the default-locale prefix and unknown prefixes', () => {
-    expect(status({ locale: 'en' })).toBe(404)
-    expect(status({ locale: 'fr' })).toBe(404)
+  it('treats /en and unknown first segments as ordinary addresses (the router answers them with the 404 page)', () => {
+    expect(localeOfPath('/en/new')).toBe('en')
+    expect(localeOfPath('/fr/new')).toBe('en')
+    expect(localeOfPath('/urdu')).toBe('en')
   })
 })
 
@@ -45,7 +37,7 @@ describe('securityHeaders', () => {
   it('builds the DOC-11 5.3 storefront CSP with the request nonce', () => {
     const csp = securityHeaders(opts)['Content-Security-Policy']
     expect(csp).toContain("script-src 'self' 'nonce-abc'")
-    expect(csp).toContain("style-src 'self' 'nonce-abc'")
+    expect(csp).toContain("style-src 'self';") // the theme block is allowed by its hash (shell-lib.test.js), never by a nonce
     expect(csp).toContain('img-src \'self\' https://img.rubaya.pk data:')
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("object-src 'none'")

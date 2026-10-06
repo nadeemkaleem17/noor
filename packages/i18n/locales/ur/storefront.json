@@ -6,5 +6,42 @@
   },
   "language": {
     "switch": "English"
+  },
+  "shell": {
+    "skip": "مرکزی مواد پر جائیں",
+    "menu": "مینو",
+    "menuClose": "مینو بند کریں",
+    "navLabel": "مرکزی",
+    "footerNavLabel": "فوٹر",
+    "new": "نیا",
+    "sale": "سیل",
+    "search": "تلاش",
+    "searchLabel": "دکان میں تلاش کریں",
+    "searchPlaceholder": "جوڑا، کپڑا یا کچھ بھی تلاش کریں…",
+    "searchSubmit": "تلاش کریں",
+    "cart": "ٹوکری",
+    "wishlist": "پسندیدہ",
+    "announcementDismiss": "یہ اطلاع بند کریں",
+    "showLinks": "{name}: لنکس دکھائیں",
+    "whatsapp": "واٹس ایپ پر ہم سے بات کریں",
+    "footerShop": "خریداری",
+    "footerContact": "رابطہ",
+    "footerPayments": "ادائیگی کے طریقے",
+    "rights": "© {year} {brand}",
+    "language": "زبان"
+  },
+  "notFound": {
+    "title": "یہ صفحہ نہیں ملا",
+    "body": "لنک پرانا ہو سکتا ہے، یا یہ جوڑا ختم ہو چکا ہو۔",
+    "browse": "یا یہ دیکھیں",
+    "home": "ہوم"
+  },
+  "error": {
+    "title": "ابھی یہ صفحہ نہیں دکھایا جا سکتا",
+    "body": "براہ کرم کچھ دیر بعد دوبارہ کوشش کریں۔ اگر مسئلہ رہے تو واٹس ایپ پر پیغام بھیجیں۔",
+    "reload": "دوبارہ کوشش کریں"
+  },
+  "stub": {
+    "soon": "یہ صفحہ تیار کیا جا رہا ہے۔"
   }
 }

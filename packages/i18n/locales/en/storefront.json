@@ -6,5 +6,42 @@
   },
   "language": {
     "switch": "اردو"
+  },
+  "shell": {
+    "skip": "Skip to main content",
+    "menu": "Menu",
+    "menuClose": "Close menu",
+    "navLabel": "Main",
+    "footerNavLabel": "Footer",
+    "new": "New",
+    "sale": "Sale",
+    "search": "Search",
+    "searchLabel": "Search the shop",
+    "searchPlaceholder": "Search for a dress, a fabric…",
+    "searchSubmit": "Search",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "announcementDismiss": "Dismiss this notice",
+    "showLinks": "{name}: show links",
+    "whatsapp": "Chat with us on WhatsApp",
+    "footerShop": "Shop",
+    "footerContact": "Contact",
+    "footerPayments": "We accept",
+    "rights": "© {year} {brand}",
+    "language": "Language"
+  },
+  "notFound": {
+    "title": "We can't find that page",
+    "body": "The link may be old, or the piece may have sold out and gone.",
+    "browse": "Or have a look at",
+    "home": "Home"
+  },
+  "error": {
+    "title": "We can't show this page right now",
+    "body": "Please try again in a moment. If it keeps happening, message us on WhatsApp.",
+    "reload": "Try again"
+  },
+  "stub": {
+    "soon": "This page is being built."
   }
 }

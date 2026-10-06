@@ -167,12 +167,12 @@ Product handle changes: when staff change a handle, the API keeps the old one in
 
 ## 8. Acceptance checklist
 
-- [ ] Every row in §2 responds with the stated `Cache-Control` (integration test iterating the table).
-- [ ] `curl -s /` contains no `Set-Cookie` and no cart count.
-- [ ] Each redirect in §4 returns 301 to the stated target.
-- [ ] With JavaScript disabled: navigation links, search, the cart link and all L/S pages work.
-- [ ] Keyboard: skip link, menu open/close with `Enter`/`Esc`, focus returns to the menu button.
-- [ ] `/ur` returns 404 while `ur` is not in `locale.supported`.
+- [x] Every row in §2 responds with the stated `Cache-Control` (integration test iterating the table). (`apps/storefront/test/shell.server.test.js`: the built app against a stand-in API; every row but `sitemap.xml` and `robots.txt`, which come with M5-10. The pages themselves are placeholders until their own tasks.)
+- [x] `curl -s /` contains no `Set-Cookie` and no cart count. (same test.)
+- [x] Each redirect in §4 returns 301 to the stated target. (same test: thirteen cases, and an unknown old product id is a 404.)
+- [x] With JavaScript disabled: navigation links, search, the cart link and all L/S pages work. (The links, the search link, the cart link and the footer are in the server HTML. On a phone the menu is a drawer and needs JavaScript; the footer menu and the search page still work.)
+- [x] Keyboard: skip link, menu open/close with `Enter`/`Esc`, focus returns to the menu button. (The skip link is the first element. Open and close, Esc and returning focus to the button are the `Drawer` of `@noor/ui` (tested there); focus returning to the Menu button was also seen in the browser pane.)
+- [x] `/ur` returns 404 while `ur` is not in `locale.supported`. (Same test, and with Urdu on `/ur` is Urdu, right to left.)
 
 ## 9. Open questions and assumptions
 
@@ -186,6 +186,7 @@ Product handle changes: when staff change a handle, the API keeps the old one in
 
 | Date | Change |
 |---|---|
+| 2026-10-07 | M5-01 built (`apps/storefront/app/features/layout/`, `lib/redirects.js`, `lib/nav.js`, `lib/shell.server.js`). Differences from this document: (1) **The shell data is loaded by the root loader**, not by `_shell`: the theme goes in the head of the document, which only the root can write. `_shell.jsx` is only the frame (skip link, announcement, header, `<main id="main">`, footer, WhatsApp button). The 301 rules of section 4 and the 404 for `/ur` also run there, before anything else. (2) **Languages are two copies of the route list**, English and `prefix('ur', ...)`, each route with an id of its own (`home`, `home-ur`); an optional `:locale?` segment read `/no/such/page` as the language "no". `/en` and every other first segment are ordinary unknown addresses and get the shop's 404 page. (3) The browser is sent only what the frame needs, already processed: the navigation (menu addresses checked with `safeHref`, the fallback New, categories, Sale), the notices, the footer text and the settings, never the raw menus or the theme object. (4) **CSP:** the theme `<style>` is allowed by its SHA-256 hash (computed in `entry.server.jsx` from what the root loader returned), and `style-src` has no nonce at all; scripts still carry a per-request nonce, which a CDN would have to replace by hashes (DOC-11 section 5.3, revisit at M7). (5) `ThemeTokens` has no `header.layout` or `header.sticky`, so the header is always sticky with the logo at the start. (6) The menu: every item is a real link; one with children also has a button that opens a panel on click; on a phone the drawer holds them in groups. The search icon is a link to `/search` that, with JavaScript, opens the search field under the header. (7) The announcement and notices change every six seconds unless the visitor rests on one or prefers less motion; closing one stores its id in the session cookie `nc_dismissed`, which only the browser reads (the page is the same for everyone and cached). (8) `/product/:id` finds the handle with one plain request that reads only `handle`, not the whole product. (9) Not built yet: the cart and wishlist counts (M5-05, M5-08), the sitemap and robots (M5-10), the "archived product that sold" 404 with other products (M5-04), the canonical-query redirect on listings (the helper `canonicalQuery` exists and is tested; M5-03 uses it). The pages other than home are placeholders that answer with the right cache class. |
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Phase 5 part 2: route keys, parameter names and error codes in this document are provisional where they differ from DOC-10; DOC-10 is authoritative and Phase 7 reconciles the names |
 | 2026-10-02 | Phase 7 consistency review: route key `content.getHome`, camelCase listing params, table name `handle_redirects` (now match DOC-10 and DOC-09) |

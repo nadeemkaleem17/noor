@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { PassThrough } from 'node:stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
 import { isbot } from 'isbot'
@@ -20,7 +21,10 @@ const env = getEnv()
 export default function handleRequest(request, status, headers, context) {
   const nonce = makeNonce()
   const path = new URL(request.url).pathname
-  const security = securityHeaders({ nonce, imgOrigin: new URL(env.PUBLIC_IMG_URL).origin, production: import.meta.env.PROD, path })
+  // the hash of the theme block the root loader asked for (what the CSP allows as the page's one inline style)
+  const theme = /** @type {{ themeCss?: string } | undefined} */ (context.staticHandlerContext.loaderData?.root)?.themeCss
+  const themeHash = theme ? createHash('sha256').update(theme).digest('base64') : undefined
+  const security = securityHeaders({ nonce, imgOrigin: new URL(env.PUBLIC_IMG_URL).origin, production: import.meta.env.PROD, path, themeHash })
   for (const [name, value] of Object.entries(security)) headers.set(name, value)
 
   return new Promise((resolve, reject) => {

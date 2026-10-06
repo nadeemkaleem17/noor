@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto'
 export const makeNonce = () => randomBytes(16).toString('base64')
 
 /**
- * @param {{ nonce: string; imgOrigin: string; production: boolean; path: string; }} opts
+ * @param {{ nonce: string; imgOrigin: string; production: boolean; path: string; themeHash?: string | undefined; }} opts `themeHash` is the SHA-256 (base64) of the inline theme style
  * @returns {Record<string, string>}
  */
 export function securityHeaders(opts) {
@@ -24,7 +24,8 @@ export function securityHeaders(opts) {
     headers['Content-Security-Policy'] = [
       "default-src 'self'",
       `script-src 'self' 'nonce-${opts.nonce}'`,
-      `style-src 'self' 'nonce-${opts.nonce}'`,
+      // the theme is the one inline style, allowed by its hash: a page that a CDN keeps cannot carry a per-visitor nonce
+      `style-src 'self'${opts.themeHash ? ` 'sha256-${opts.themeHash}'` : ''}`,
       `img-src 'self' ${opts.imgOrigin} data:`,
       "font-src 'self'",
       "connect-src 'self'",
