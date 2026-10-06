@@ -12,6 +12,8 @@ export const cartByToken = async (db, tokenHash) => (await db.select().from(cart
 /** Serialises changes to one cart: two taps on "add" at once are applied one after the other. @param {Db} db @param {string} tokenHash */
 export const lockCartByToken = async (db, tokenHash) => (await db.select().from(carts).where(eq(carts.tokenHash, tokenHash)).for('update'))[0]
 /** @param {Db} db @param {string} id */
+export const deleteCart = (db, id) => db.delete(carts).where(eq(carts.id, id))
+/** @param {Db} db @param {string} id */
 export const cartById = async (db, id) => (await db.select().from(carts).where(eq(carts.id, id)))[0]
 /** @param {Db} db @param {typeof carts.$inferInsert} row */
 export const insertCart = (db, row) => db.insert(carts).values(row)
@@ -36,7 +38,7 @@ export async function variantsWithProduct(db, ids) {
   if (!ids.length) return []
   return db
     .select({
-      id: variants.id, productId: variants.productId, priceMinor: variants.priceMinor, compareAtMinor: variants.compareAtMinor, stockMode: variants.stockMode,
+      id: variants.id, sku: variants.sku, productId: variants.productId, priceMinor: variants.priceMinor, compareAtMinor: variants.compareAtMinor, stockMode: variants.stockMode,
       maxPerOrder: variants.maxPerOrder, enabled: variants.enabled, optionKey: variants.optionKey,
       status: products.status, handle: products.handle, title: products.title, kind: products.kind, customSizeSchemaId: products.customSizeSchemaId,
       mtoLeadMinDays: products.mtoLeadMinDays, mtoLeadMaxDays: products.mtoLeadMaxDays, mtoDepositBps: products.mtoDepositBps,

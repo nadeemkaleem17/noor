@@ -29,7 +29,7 @@ const DAY = 86_400_000
 /**
  * @param {object} deps
  * @param {import('../../platform/db.js').Database['db']} deps.db
- * @param {() => Promise<number>} deps.lowStockThreshold at or below this many units a variant is "low stock" (settings `thresholds.lowStock`)
+ * @param {(x?: Db) => Promise<number>} deps.lowStockThreshold at or below this many units a variant is "low stock" (settings `thresholds.lowStock`)
  * @param {(tx: Db, productIds: string[]) => Promise<void>} [deps.onChanged] called inside the transaction with the products whose stock changed (they recompute their cached stock status)
  */
 export function createInventory({ db, lowStockThreshold, onChanged = async () => {} }) {
@@ -276,7 +276,7 @@ export function createInventory({ db, lowStockThreshold, onChanged = async () =>
             diff: { onHand: [r.before, r.onHand] }, reason: `${input.reason}${input.note ? `: ${input.note}` : ''}`.slice(0, 500), ip: req.ip, userAgent: req.userAgent, requestId: req.requestId,
           })
         }
-        const low = await lowStockThreshold()
+        const low = await lowStockThreshold(tx)
         return { variantId: r.variantId, onHand: r.onHand, reserved: r.reserved, available: r.available, stockStatus: variantStatus(v?.stockMode ?? 'counted', r.available, low) }
       })
     },

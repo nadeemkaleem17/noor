@@ -11,7 +11,7 @@ import { bundleItems, collectionProducts, collections, productAttributeValues, p
  * What stock says about the shop's variants. Inventory arrives with M1-10; until then nothing counted is available.
  * @typedef {object} Stock
  * @property {(db: Db, variantIds: string[]) => Promise<Map<string, number>>} available units that can be sold now, by variant
- * @property {() => Promise<number>} lowStockThreshold at or below this many, a variant is "low stock"
+ * @property {(x?: Db) => Promise<number>} lowStockThreshold at or below this many, a variant is "low stock". Pass the transaction you hold: the pool may be taken by other transactions waiting for you
  * @property {(db: Db, variantIds: string[]) => Promise<Map<string, { onHand: number, reserved: number }>>} [levels] counted variants' on hand and reserved
  * @property {(tx: Db, variantIds: string[]) => Promise<void>} [ensureLevels] gives every counted variant among them a level row
  * @property {(tx: Db, rows: { variantId: string, quantity: number }[], staffId: string) => Promise<void>} [initial] the first quantities of a new product

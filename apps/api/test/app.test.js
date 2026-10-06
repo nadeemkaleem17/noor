@@ -6,6 +6,7 @@ import { ConfigError, parseConfig } from '../src/platform/config.js'
 import { DomainError } from '../src/platform/errors.js'
 
 const dbEnv = {
+  TRACKING_KEY: 'k'.repeat(40),
   DATA_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'), DATABASE_URL: 'mysql://app:pw@localhost:3306/rubaya', DATABASE_MIGRATION_URL: 'mysql://migrate:pw@localhost:3306/rubaya' }
 const config = /** @type {import('../src/platform/config.js').Config} */ (parseConfig({ NODE_ENV: 'test', APP_ENV: 'ci', ADMIN_ORIGIN: 'http://localhost:5173', LOG_LEVEL: 'silent', ...dbEnv }))
 const apps = /** @type {Awaited<ReturnType<typeof buildApp>>[]} */ ([])
@@ -220,6 +221,14 @@ describe('config', () => {
     const env = { NODE_ENV: 'production', APP_ENV: 'production', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }
     expect(() => parseConfig(env)).toThrow("STORAGE_DRIVER (local storage is for development only)")
     expect(parseConfig({ ...env, NODE_ENV: 'development' }).STORAGE_DRIVER).toBe('local')
+  })
+  it('needs a tracking key outside local development and CI', () => {
+    const withoutKey = { ...dbEnv, TRACKING_KEY: undefined }
+    const base = { NODE_ENV: 'development', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...withoutKey }
+    expect(() => parseConfig({ ...base, APP_ENV: 'production' })).toThrow('TRACKING_KEY')
+    expect(() => parseConfig({ ...base, APP_ENV: 'staging' })).toThrow('TRACKING_KEY')
+    expect(parseConfig({ ...base, APP_ENV: 'local' }).TRACKING_KEY).toBeUndefined()
+    expect(() => parseConfig({ ...base, APP_ENV: 'production', TRACKING_KEY: 'too short' })).toThrow('TRACKING_KEY')
   })
   it('keeps two-step sign-in required unless the process is local or CI', () => {
     const base = { NODE_ENV: 'development', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }

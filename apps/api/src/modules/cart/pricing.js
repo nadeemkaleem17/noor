@@ -5,11 +5,13 @@ import { mulInt, sub } from '@noor/contract'
 import { evaluatePromo } from '../promotions/evaluate.js'
 
 /**
- * @typedef {{ methodId: string, label: string, fee: number, etaMinDays: number, etaMaxDays: number, codAllowed: boolean, freeAboveMinor: number | null }} PricedOption
+ * @typedef {{ methodId: string, label: string, fee: number, waivable: number, etaMinDays: number, etaMaxDays: number, codAllowed: boolean, freeAboveMinor: number | null }} PricedOption
  * @typedef {object} PricedLineInput
  * @property {string} id the cart line
  * @property {string} productId
  * @property {string} variantId
+ * @property {string} [sku] passed through for an order's snapshot
+ * @property {string} [imageMediaId] passed through for an order's snapshot
  * @property {string} handle
  * @property {string} title
  * @property {string} variantLabel
@@ -106,6 +108,8 @@ export function priceCart({ lines, promo, at, shipping, payments, customer }) {
     options = shipping.options.map((o) => ({
       methodId: o.methodId,
       label: o.label,
+      // `waivable` is what the fee would be without a free-shipping code: what the code saves the customer
+      waivable: o.freeAboveMinor !== null && net >= o.freeAboveMinor ? 0 : o.feeMinor,
       fee: freeShippingPromo || (o.freeAboveMinor !== null && net >= o.freeAboveMinor) ? 0 : o.feeMinor,
       etaMinDays: o.etaMinDays,
       etaMaxDays: o.etaMaxDays,
@@ -127,10 +131,11 @@ export function priceCart({ lines, promo, at, shipping, payments, customer }) {
   const total = net + shippingFee
 
   // ---- step 8: deposits on made-to-order lines
-  const depositDue = priced.reduce((s, p, i) => {
+  const lineDeposits = priced.map((p, i) => {
     const bps = p.l.madeToOrder?.depositBps
-    return bps ? s + ceilBps(sub(p.subtotal, discountOf(i)), bps) : s
-  }, 0)
+    return bps ? ceilBps(sub(p.subtotal, discountOf(i)), bps) : 0
+  })
+  const depositDue = lineDeposits.reduce((a, b) => a + b, 0)
 
   // ---- step 9: payment options (once the delivery is known, because the total and the method decide)
   const paymentOptions =
@@ -193,6 +198,9 @@ export function priceCart({ lines, promo, at, shipping, payments, customer }) {
     seenUpdates: priced.filter((p) => p.l.unitMinor !== p.l.seenUnitMinor).map((p) => ({ lineId: p.l.id, unitMinor: p.l.unitMinor })),
     /** What an order stores per line. */
     lineDiscounts,
+    lineDeposits,
+    /** What a free-shipping code saved: the fee the chosen method would have charged. */
+    shippingWaivedMinor: freeShippingPromo && chosen ? chosen.waivable : 0,
     promoId: promoShown && promo ? promo.id : undefined,
     freeShippingPromo,
   }

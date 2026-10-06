@@ -134,6 +134,11 @@ export function createCustomersService({ db, orders = noOrders }) {
 
     findByPhone,
 
+    /** The customer ticked the marketing box at checkout. Never switched off from here: only staff or the customer can take consent back. @param {Db} tx @param {string} id @param {string} note */
+    async recordConsent(tx, id, note) {
+      await repo.update(tx, id, { marketingConsent: true, consentNote: note, updatedAt: now() })
+    },
+
     /** @param {Parameters<typeof repo.listCustomers>[1]} query */
     async list(query) {
       const { rows, total } = await repo.listCustomers(db, query)

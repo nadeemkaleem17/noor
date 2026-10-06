@@ -62,11 +62,11 @@ Removes K9–K11 and F-01…F-03 by construction. Checkout cost: a few more quer
 **Always:** compute money on the server; aggregate stock per variant; write `order_events` for every change. **Never:** accept `total`, `discount`, `shippingFee` from a client; update an order status with a bare `UPDATE` outside the transition function; derive identifiers from `max()+1`. **Common mistake:** locking rows in different orders in different code paths (deadlocks); fixed order is `counters` last, variants ascending by id. Retry the transaction on MySQL error 1213 (deadlock), up to 3 times.
 
 ## Acceptance checklist
-- [ ] Test: two lines for one variant (2+2) with stock 3 → `409 insufficient_stock`, stock unchanged.
-- [ ] Test: 50 concurrent orders for the last unit → exactly one succeeds.
-- [ ] Test: same `Idempotency-Key` twice → one order, identical response.
-- [ ] Test: posting a body containing `total` is rejected by schema.
-- [ ] Test: invalid transition (`pending → delivered`) → `409 invalid_transition`.
+- [x] Test: two lines for one variant (2+2) with stock 3 → `409 insufficient_stock`, stock unchanged. (`orders.int.test.js`.)
+- [x] Test: 50 concurrent orders for the last unit → exactly one succeeds. (`orders.int.test.js`: one 201, 49 refused, `reserved = 1`, the counter at 10001. A request that arrives after the winner has committed is refused as `cart_has_issues` (the line is sold out) rather than `insufficient_stock`; both mean no oversell. Passed 20 runs in a row.)
+- [x] Test: same `Idempotency-Key` twice → one order, identical response. (`orders.int.test.js`; a refusal is replayed too.)
+- [x] Test: posting a body containing `total` is rejected by schema. (`orders.int.test.js`: total, discount, shippingFee, unitPrice, subtotal and cartId.)
+- [x] Test: invalid transition (`pending → delivered`) → `409 invalid_transition`. (`order-transitions.test.js` at the level of the table; the route that takes `{ to }` is M4-05.)
 
 ## Revisit trigger
 Lock wait p95 over 200 ms during a drop, or a single SKU sees over 20 orders/s (consider a queue-based allocation for that SKU).
@@ -78,6 +78,7 @@ Reservation TTL (30 min) and COD confirmation window (DOC-07) are assumptions; t
 | Date | Change |
 |---|---|
 | 2026-10-02 | Proposed |
+| 2026-10-06 | M4-04 lesson, written as a rule: a command that holds a transaction never asks the shared pool for a second connection (a settings read, a picture lookup): with more such commands in flight than the pool has connections, every one of them waits for a connection that only another of them can free. Everything such a command reads goes through its own `tx` (`settings.value(key, tx)`, `lowStockThreshold(tx)`, `price(tx, cart, { images: false })`); pictures are added after the commit. |
 | 2026-10-02 | Order and invoice numbers from a `counters` table (no sequences in MySQL); DDL rewritten; deadlock retry rule added |
 | 2026-10-02 | Order-number prefix is `RB-` (store name Rubaya, README A-10); the prefix is a store setting, not a constant |
 | 2026-10-02 | Phase 5: order transition table (DOC-09.7 §5.1), inventory operations and lock order (DOC-09.4 §3), counters and idempotency protocol (DOC-09.1) |

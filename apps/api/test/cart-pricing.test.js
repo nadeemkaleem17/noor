@@ -115,6 +115,10 @@ describe('the promo', () => {
     const r = price({ promo: promo({ type: 'free_shipping', valueBps: null }), shipping: { options: [express] }, payments: { methods: [cod] } })
     expect(r.cart).toMatchObject({ discount: pkr(0), shipping: { fee: pkr(0) }, total: pkr(500000), messages: [{ code: 'free_shipping_applied' }] })
     expect(r.freeShippingPromo).toBe(true)
+    expect(r.shippingWaivedMinor).toBe(45000) // what the code saved
+    // nothing is saved before there is a city to deliver to, or when the fee was already waived by the threshold
+    expect(price({ promo: promo({ type: 'free_shipping', valueBps: null }) }).shippingWaivedMinor).toBe(0)
+    expect(price({ lines: [line({ unitMinor: 600000, seenUnitMinor: 600000 })], promo: promo({ type: 'free_shipping', valueBps: null }), shipping: { options: [standard] } }).shippingWaivedMinor).toBe(0)
   })
 })
 
@@ -164,6 +168,7 @@ describe('deposits on made-to-order lines (ADR-0014: rounded up)', () => {
     const mto = line({ stockMode: 'made_to_order', madeToOrder: { leadMinDays: 10, leadMaxDays: 14, depositBps: 3000 }, unitMinor: 333333, seenUnitMinor: 333333 })
     const r = price({ lines: [mto, line({ id: 'l2', variantId: 'v2', unitMinor: 100000, seenUnitMinor: 100000 })], shipping: { options: [express] }, payments: { methods: [cod] } })
     // 333333 * 30% = 99999.9 -> 100000; the ready-made line owes no deposit
+    expect(r.lineDeposits).toEqual([100000, 0])
     expect(r.cart).toMatchObject({ depositDue: pkr(100000), total: pkr(333333 + 100000 + 45000), dueOnDelivery: pkr(333333 + 100000 + 45000 - 100000) })
   })
 

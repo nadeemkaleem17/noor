@@ -32,7 +32,7 @@ const STATUS_ORDER = /** @type {const} */ ({ in: 'in_stock', low: 'low_stock', s
 export async function recomputeProductCache(tx, productId, stock = noStock) {
   const enabled = (await tx.select().from(variants).where(eq(variants.productId, productId))).filter((v) => v.enabled)
   const available = await stock.available(tx, enabled.map((v) => v.id))
-  const low = await stock.lowStockThreshold()
+  const low = await stock.lowStockThreshold(tx)
   const cheapest = [...enabled].sort((a, b) => a.priceMinor - b.priceMinor)[0]
   await tx
     .update(products)

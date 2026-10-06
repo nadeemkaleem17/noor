@@ -341,6 +341,11 @@ export function createShippingService({ db }) {
       }
     },
 
+    /** The name of a city, for an order's snapshot. @param {import('../../platform/db.js').Executor} x @param {string} id */
+    async cityName(x, id) {
+      return (await repo.findCity(x, id))?.name
+    },
+
     /**
      * Every way to deliver to a city, with the raw fee and threshold: the cart prices them against its own total.
      * @param {import('../../platform/db.js').Executor} x @param {string} cityId

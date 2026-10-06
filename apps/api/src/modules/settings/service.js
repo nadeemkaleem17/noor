@@ -62,9 +62,9 @@ export function createSettingsService({ db, config, media, shippingFacts = async
     return []
   }
 
-  /** The stored value, or the default when nothing was saved or the stored JSON no longer fits the schema. @param {keyof typeof DOCS} key */
-  async function readValue(key) {
-    const row = await repo.getSetting(db, key)
+  /** The stored value, or the default when nothing was saved or the stored JSON no longer fits the schema. @param {keyof typeof DOCS} key @param {import('../../platform/db.js').Executor} [x] the caller's transaction, when there is one */
+  async function readValue(key, x = db) {
+    const row = await repo.getSetting(x, key)
     const parsed = row ? DOCS[key].schema.safeParse(row.value) : null
     return { value: /** @type {any} */ (parsed?.success ? parsed.data : defaults[key]), row }
   }
@@ -236,6 +236,9 @@ export function createSettingsService({ db, config, media, shippingFacts = async
     // ================================ admin: documents ================================
     /** @param {keyof typeof DOCS} key */
     get: (key) => view(key),
+    /** Just the value, read through the caller's transaction: what a command that holds a transaction needs (the pool may be empty while many of them wait). */
+    /** @param {keyof typeof DOCS} key @param {import('../../platform/db.js').Executor} [x] */
+    value: (key, x) => readValue(key, x),
     save,
 
     async getPayments() {
@@ -491,8 +494,9 @@ export function createSettingsService({ db, config, media, shippingFacts = async
     },
 
     /** Units at or below which a variant reads "low stock". */
-    async lowStock() {
-      return (await readValue('store')).value.thresholds.lowStock
+    /** @param {import('../../platform/db.js').Executor} [x] the caller's transaction, when there is one */
+    async lowStock(x) {
+      return (await readValue('store', x)).value.thresholds.lowStock
     },
 
     /** Is this media still used by a settings document? Checked before a file is deleted. @param {string} mediaId */

@@ -8,6 +8,7 @@ import { createCatalogService } from './catalog/index.js'
 import { createCustomersService } from './customers/index.js'
 import { createInventory } from './inventory/index.js'
 import { createMediaService } from './media/index.js'
+import { createOrdersService } from './orders/index.js'
 import { createPromotionsService } from './promotions/index.js'
 import { createSearch } from './search/index.js'
 import { createSettingsService } from './settings/index.js'
@@ -28,7 +29,7 @@ export function createServices({ db, config, storage = createStorage(config) }) 
   const shipping = createShippingService({ db })
   const customers = createCustomersService({ db })
   const promotions = createPromotionsService({ db })
-  const inventory = createInventory({ db, lowStockThreshold: () => settings.lowStock(), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
+  const inventory = createInventory({ db, lowStockThreshold: (x) => settings.lowStock(x), onChanged: (tx, ids) => catalog.products.recomputeMany(tx, ids) })
   catalog = createCatalogService({
     db, config, media, stock: inventory.stock, search,
     deliveryFacts: () => shipping.facts(),
@@ -36,6 +37,7 @@ export function createServices({ db, config, storage = createStorage(config) }) 
     subscribe: (s) => inventory.subscribe(s),
   })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
-  const cart = createCartService({ db, media, stock: inventory.stock, shipping, settings: { get: (key) => settings.get(key) }, promotions, customers })
-  return { auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  const cart = createCartService({ db, media, stock: inventory.stock, shipping, settings, promotions, customers })
+  const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping })
+  return { orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

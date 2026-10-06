@@ -16,47 +16,17 @@ import { setClock } from '../src/platform/clock.js'
 import { transaction } from '../src/platform/db.js'
 import { uuidv7 } from '../src/platform/ids.js'
 import { createCustomersService } from '../src/modules/customers/index.js'
-import { app, closeHarness, createHarness, signedIn, t } from './support/staff.js'
+import { closeHarness, createHarness, t } from './support/staff.js'
+import { add, createShop, pkr, shop } from './support/shop.js'
 import { dbAvailable } from './support/db.js'
 
-const pkr = (/** @type {number} */ paisa) => ({ amount: paisa, currency: 'PKR' })
-let seq = 0
-/** A storefront request: its own client address each time, so the per-address limit of the cart bucket never gets in the way. @param {string} method @param {string} url @param {{ token?: string, body?: object }} [o] */
-async function shop(method, url, { token, body } = {}) {
-  const r = await app.inject({ method: /** @type {'GET'} */ (method), url: `/api/v1${url}`, remoteAddress: `10.77.${Math.floor(++seq / 250)}.${(seq % 250) + 1}`, headers: token ? { 'x-cart-token': token } : {}, ...(body ? { payload: body } : {}) })
-  return { status: r.statusCode, body: r.body ? JSON.parse(r.body) : undefined, headers: r.headers }
-}
-
-/** @type {Awaited<ReturnType<typeof signedIn>>['b']} */
+const S = createShop()
+/** @type {ReturnType<typeof createShop>['owner']} */
 let owner
-let cat = ''
 let cityId = ''
 let zoneId = ''
 let methodId = ''
-
-/** A product with one variant, active unless said otherwise. @param {{ price?: number, compareAt?: number, stock?: number, mode?: string, enabled?: boolean, status?: string, schema?: string, kind?: string, maxPerOrder?: number, mto?: boolean }} [o] */
-async function product({ price = 500000, compareAt, stock = 10, mode = 'counted', enabled = true, status = 'active', schema, kind = 'stitched', maxPerOrder = 10, mto = false } = {}) {
-  const handle = `p-${uuidv7().slice(-8)}`
-  const r = await owner.call('POST', '/admin/products', {
-    body: {
-      handle, status: 'draft', kind, title: `Product ${handle.slice(-4)}`, primaryCategoryId: cat, categoryIds: [], attributes: [], media: [], options: [],
-      ...(schema ? { customSizeSchemaId: schema } : {}),
-      ...(mto ? { madeToOrder: { leadMinDays: 10, leadMaxDays: 14, returnable: false, depositPercent: 30 } } : {}),
-      variants: [{ key: 'v', sku: handle.toUpperCase().slice(0, 40), optionValueKeys: [], price: pkr(price), ...(compareAt ? { compareAt: pkr(compareAt) } : {}), stockMode: mode, maxPerOrder, enabled }],
-      ...(mode === 'counted' && stock ? { initialStock: [{ variantKey: 'v', quantity: stock }] } : {}),
-    },
-  })
-  if (r.status !== 201) throw new Error(JSON.stringify(r.body))
-  const productId = /** @type {string} */ (r.body.id)
-  await t.db.update(products).set({ status }).where(eq(products.id, productId))
-  return { productId, variantId: /** @type {string} */ (r.body.variants[0].id) }
-}
-/** @param {string | undefined} token @param {string} variantId @param {number} [quantity] @param {object} [customization] */
-const add = (token, variantId, quantity = 1, customization = undefined) =>
-  shop('POST', '/cart/lines', { ...(token ? { token } : {}), body: { variantId, quantity, ...(customization ? { customization } : {}) } })
-/** @param {string} code @param {object} [over] */
-const promo = (code, over = {}) =>
-  owner.call('POST', '/admin/promos', { body: { code, type: 'percent', percent: 10, scope: 'all', excludeSaleItems: true, firstOrderOnly: false, enabled: true, ...over } })
+const { product, promo } = S
 
 describe.skipIf(!dbAvailable)('cart (MySQL, through HTTP)', () => {
   beforeAll(async () => {
@@ -83,26 +53,12 @@ describe.skipIf(!dbAvailable)('cart (MySQL, through HTTP)', () => {
     await t.db.delete(staffUsers)
   })
   const setup = async () => {
-    ;({ b: owner } = await signedIn('owner'))
-    cat = uuidv7()
-    await t.db.insert(categories).values({ id: cat, handle: `c-${cat.slice(-6)}`, name: 'Women', createdAt: new Date(), updatedAt: new Date() })
+    await S.setup()
+    owner = S.owner
   }
-  /** One zone with Lahore in it: Standard Rs. 250, free over Rs. 5,000; Express Rs. 450. */
   const delivery = async () => {
-    const city = await owner.call('POST', '/admin/shipping/cities', { body: { name: 'Lahore', province: 'Punjab' } })
-    cityId = city.body.id
-    const zone = await owner.call('POST', '/admin/shipping/zones', {
-      body: {
-        name: 'Major', cityIds: [cityId],
-        methods: [
-          { label: 'Standard', fee: pkr(25000), freeAbove: pkr(500000), etaMinDays: 3, etaMaxDays: 5, codAllowed: true, enabled: true },
-          { label: 'Express', fee: pkr(45000), etaMinDays: 1, etaMaxDays: 2, codAllowed: true, enabled: true },
-        ],
-      },
-    })
-    if (zone.status !== 201) throw new Error(JSON.stringify(zone.body))
-    zoneId = zone.body.id
-    methodId = zone.body.methods.find((/** @type {{ label: string }} */ m) => m.label === 'Standard').id
+    await S.delivery()
+    ;({ cityId, zoneId, methodId } = S)
   }
 
   describe('reading', () => {
@@ -397,7 +353,7 @@ describe.skipIf(!dbAvailable)('cart (MySQL, through HTTP)', () => {
     const oldCart = [a, b].find((c) => c && c.tokenHash !== fresh.body.id)
     await t.db.update(carts).set({ updatedAt: new Date(Date.now() - 31 * 86_400_000) }).where(eq(carts.id, /** @type {string} */ (old.body.id)))
     const { createCartService } = await import('../src/modules/cart/index.js')
-    await createCartService({ db: t.db, media: { imagesFor: async () => ({}) }, stock: { available: async () => new Map() }, shipping: { deliveryOptions: async () => [] }, settings: { get: async () => ({ value: { methods: [] } }) }, promotions: { findRule: async () => undefined, findRuleById: async () => undefined, customerProblem: async () => undefined }, customers: { findByPhone: async () => undefined } }).cleanup()
+    await createCartService({ db: t.db, media: { imagesFor: async () => ({}) }, stock: { available: async () => new Map() }, shipping: { deliveryOptions: async () => [] }, settings: { value: async () => ({ value: { methods: [] } }) }, promotions: { findRule: async () => undefined, findRuleById: async () => undefined, customerProblem: async () => undefined }, customers: { findByPhone: async () => undefined } }).cleanup()
     expect((await t.db.select().from(carts)).map((c) => c.id)).toEqual([fresh.body.id])
     expect(oldCart).toBeTruthy()
     expect(await t.db.select().from(cartLines)).toHaveLength(1)

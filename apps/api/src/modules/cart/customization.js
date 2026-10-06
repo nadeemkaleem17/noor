@@ -25,19 +25,20 @@ const sorted = (v) =>
 export const customizationHash = (c) => (c ? createHash('sha256').update(JSON.stringify(sorted(c))).digest('hex') : '')
 
 /**
- * @param {LineCustomization | undefined} c already normalised
- * @param {{ fields: import('@noor/contract').FormField[]; allowNotes: boolean; bundleChildIds: string[] | null }} rules
- *   `fields`: the product's custom-size form (empty when it has none); `bundleChildIds`: the children of a bundle product, `null` for any other
+ * Answers checked against a form's fields (the custom-size form of a product, the extra fields of the checkout): each field present or missing as it requires,
+ * numbers within their range, a select from its options, text not too long, and no answer to a field the form does not have.
+ * @param {import('@noor/contract').FormField[]} fields
+ * @param {Record<string, string | number | boolean>} answers
+ * @param {string} prefix the path of the answers in the request, for the issue paths
  * @returns {Issue[]}
  */
-export function customizationIssues(c, { fields, allowNotes, bundleChildIds }) {
+export function fieldIssues(fields, answers, prefix) {
   /** @type {Issue[]} */
   const issues = []
-  const measurements = c?.measurements ?? {}
-  for (const key of Object.keys(measurements)) if (!fields.some((f) => f.key === key)) issues.push({ path: `customization.measurements.${key}`, code: 'invalid_format' })
+  for (const key of Object.keys(answers)) if (!fields.some((f) => f.key === key)) issues.push({ path: `${prefix}.${key}`, code: 'invalid_format' })
   for (const f of fields) {
-    const path = `customization.measurements.${f.key}`
-    const raw = measurements[f.key]
+    const path = `${prefix}.${f.key}`
+    const raw = answers[f.key]
     if (raw === undefined || raw === '') {
       if (f.required) issues.push({ path, code: 'required' })
       continue
@@ -49,8 +50,21 @@ export function customizationIssues(c, { fields, allowNotes, bundleChildIds }) {
       else if (f.max !== undefined && n > f.max) issues.push({ path, code: 'too_big' })
     } else if (f.type === 'select') {
       if (!f.options?.some((o) => o.value === String(raw))) issues.push({ path, code: 'invalid_format' })
-    } else if (String(raw).length > 100) issues.push({ path, code: 'too_long' })
+    } else if (f.type === 'checkbox') {
+      if (typeof raw !== 'boolean') issues.push({ path, code: 'invalid_format' })
+    } else if (String(raw).length > 100 + (f.type === 'textarea' ? 150 : 0)) issues.push({ path, code: 'too_long' })
   }
+  return issues
+}
+
+/**
+ * @param {LineCustomization | undefined} c already normalised
+ * @param {{ fields: import('@noor/contract').FormField[]; allowNotes: boolean; bundleChildIds: string[] | null }} rules
+ *   `fields`: the product's custom-size form (empty when it has none); `bundleChildIds`: the children of a bundle product, `null` for any other
+ * @returns {Issue[]}
+ */
+export function customizationIssues(c, { fields, allowNotes, bundleChildIds }) {
+  const issues = fieldIssues(fields, c?.measurements ?? {}, 'customization.measurements')
   if (c?.notes && !allowNotes) issues.push({ path: 'customization.notes', code: 'invalid_format' })
 
   if (bundleChildIds === null) {

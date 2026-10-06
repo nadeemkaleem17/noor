@@ -286,13 +286,13 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 
 ## 8. Acceptance checklist
 
-- [ ] A table-driven test tries every (from, to) pair: exactly the rows of §5.1 succeed.
-- [ ] `total_minor` check constraint rejects an inconsistent update.
-- [ ] Renaming a product or changing its price does not change any existing order row.
+- [x] A table-driven test tries every (from, to) pair: exactly the rows of §5.1 succeed. (`order-transitions.test.js`: the table is `modules/orders/transitions.js`, the guards and effects come with M4-05.)
+- [x] `total_minor` check constraint rejects an inconsistent update. (`orders.int.test.js`; the line subtotal has the same kind of check.)
+- [x] Renaming a product or changing its price does not change any existing order row. (`orders.int.test.js`.)
 - [ ] Dispatch twice (retry) assigns one invoice number.
 - [ ] Refused-at-door return: COD payment `failed`, stock handled per line, customer `refused_count` + 1.
 - [ ] Cancel after a manual deposit payment sets `payment_status = refund_due`; recording a refund of the same amount sets `refunded`.
-- [ ] Order lookup by `number` + phone and by token hash each use a unique index (`EXPLAIN`).
+- [ ] Order lookup by `number` + phone and by token hash each use a unique index (`EXPLAIN`). (The unique indexes `orders_number_uq` and `orders_tracking_token_uq` exist; the lookup itself is M4-07.)
 - [ ] After a randomised sequence of transitions, `customers` counters equal a fresh aggregate over orders.
 
 ## 9. Open questions and assumptions
@@ -309,5 +309,6 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-04: `orders`, `order_lines`, `order_events` built (migration 0014) and `orders.create` (`modules/orders`). Decisions: a bundle line holds its chosen child variants in stock (its own variant holds nothing, so give it a made-to-order stock mode); the `placed` event is public; the order counts on the customer when placed (`orders_count + 1`, first and last order times); `promo_redemptions.order_id` and `reservations.order_id` still have no foreign key to `orders` (the promo and stock tests use ids of orders that do not exist; add both when those tests build real orders, M4-05); the unique index keeps one redemption per order. Orders are numbered from 10001 (counter `order_number`, gap-free: a refused order gives its number back). |
 | 2026-10-05 | M4-01: `customers` and `customer_notes` built (migration 0011). `applyOrderChange` adds signed amounts in one SQL statement (so changes at the same time are all kept; `firstOrderAt` is the least and `lastOrderAt` the greatest order time). The caller (M4-05) decides the deltas: a cancel is `orders -1, cancelled +1`. `createCustomersService({ db, orders })` takes an `orders` view (`openCount`, `addresses`, `anonymise`) that is empty until M4-04. The derived-counter acceptance item waits for orders. |
 | 2026-10-02 | Initial version (Phase 5, part 1). Splits the glossary's single payment status into order-level `payment_status` and per-payment `payment_state` |

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { auditRoutes, authRoutes } from './auth.js'
 import { catalogPublicRoutes } from './catalog-public.js'
 import { cartRoutes } from './cart.js'
+import { orderRoutes } from './orders.js'
 import { customerRoutes } from './customers.js'
 import { promoRoutes } from './promos.js'
 import { contentPublicRoutes, contentRoutes } from './content.js'
@@ -49,6 +50,7 @@ export const routes = defineRoutes({
   ...shippingRoutes,
   ...customerRoutes,
   ...cartRoutes,
+  ...orderRoutes,
   ...promoRoutes,
   ...taxonomyRoutes,
   ...productRoutes,

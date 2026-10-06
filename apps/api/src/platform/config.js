@@ -37,9 +37,12 @@ const Env = z.object({
   STOREFRONT_URL: z.url().default('http://localhost:5174'),
   /** Owners and managers must use two-step sign-in. Can be switched off only in local development and CI (the check below). */
   TWO_FACTOR_REQUIRED: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
+  /** Secret that tracking tokens are derived from (HMAC of the order id). Staging and production must set it; local and CI derive one from DATA_ENCRYPTION_KEY. Changing it breaks every existing order link. */
+  TRACKING_KEY: z.string().min(32).optional(),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
   APP_VERSION: z.string().default('dev'),
 }).superRefine((env, ctx) => {
+  if (!env.TRACKING_KEY && env.APP_ENV !== 'local' && env.APP_ENV !== 'ci') ctx.addIssue({ code: 'custom', path: ['TRACKING_KEY'], message: 'required unless APP_ENV is local or ci' })
   if (!env.TWO_FACTOR_REQUIRED && env.APP_ENV !== 'local' && env.APP_ENV !== 'ci') {
     ctx.addIssue({ code: 'custom', path: ['TWO_FACTOR_REQUIRED'], message: 'two-step sign-in can be switched off only when APP_ENV is local or ci' })
   }

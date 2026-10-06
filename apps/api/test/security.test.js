@@ -50,7 +50,7 @@ describe('response headers', () => {
       expect(h, url).toMatchObject({ 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'content-security-policy': "default-src 'none'; frame-ancestors 'none'" })
       expect(h['strict-transport-security'], url).toBeUndefined()
     }
-    const prod = await make({ config: parseConfig({ ...base, APP_ENV: 'production' }) })
+    const prod = await make({ config: parseConfig({ ...base, APP_ENV: 'production', TRACKING_KEY: 'k'.repeat(40) }) })
     expect((await prod.inject('/api/v1/shipping/cities')).headers['strict-transport-security']).toBe('max-age=31536000; includeSubDomains')
   })
 

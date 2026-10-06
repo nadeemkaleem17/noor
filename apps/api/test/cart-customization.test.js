@@ -1,6 +1,6 @@
 // M4-03: what may be attached to a cart line, with no database (plan/09-data-model/06-cart-promotions.md section 2.2).
 import { describe, expect, it } from 'vitest'
-import { customizationHash, customizationIssues, customizationSummary, normalise } from '../src/modules/cart/customization.js'
+import { customizationHash, customizationIssues, customizationSummary, fieldIssues, normalise } from '../src/modules/cart/customization.js'
 
 const field = (/** @type {object} */ over) => ({ key: 'chest', label: 'Chest', type: /** @type {const} */ ('number'), required: false, ...over })
 const none = { fields: [], allowNotes: false, bundleChildIds: null }
@@ -89,5 +89,15 @@ describe('summary', () => {
   it('says nothing when there is nothing to say', () => {
     expect(customizationSummary(undefined, fields, new Map())).toBeUndefined()
     expect(customizationSummary({ notes: 'only a note' }, fields, new Map())).toBeUndefined()
+  })
+})
+
+describe('fieldIssues (the same checks for the extra checkout fields)', () => {
+  const fields = [field({ key: 'gift', label: 'Gift', type: 'checkbox' }), field({ key: 'message', label: 'Message', type: 'textarea' })]
+  it('a checkbox is true or false; a long text may be longer than a short one', () => {
+    expect(fieldIssues(fields, { gift: true, message: 'x'.repeat(250) }, 'customFields')).toEqual([])
+    expect(paths(fieldIssues(fields, { gift: 'yes' }, 'customFields'))).toEqual(['customFields.gift:invalid_format'])
+    expect(paths(fieldIssues(fields, { message: 'x'.repeat(251) }, 'customFields'))).toEqual(['customFields.message:too_long'])
+    expect(paths(fieldIssues(fields, { unknown: 1 }, 'customFields'))).toEqual(['customFields.unknown:invalid_format'])
   })
 })

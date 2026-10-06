@@ -43,8 +43,8 @@ export async function buildApp(opts) {
   const table = /** @type {T} */ ((opts.table ?? contractRoutes))
   // the database handle is optional so route-table tests can run without one; auth routes then fail only when they need it
   const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
-  const { auth, audit, storage, media, settings, shipping, customers, promotions, cart, catalog, inventory } = createServices({ db, config, ...(opts.storage ? { storage: opts.storage } : {}) })
-  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, customers, promotions, cart, catalog, inventory })))
+  const { auth, audit, storage, media, settings, shipping, customers, promotions, cart, orders, catalog, inventory } = createServices({ db, config, ...(opts.storage ? { storage: opts.storage } : {}) })
+  const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, catalog, inventory })))
 
   const app = Fastify({
     logger: loggerOptions(config),
