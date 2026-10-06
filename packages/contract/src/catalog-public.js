@@ -1,6 +1,6 @@
 // The public catalog: listings with facets, product detail, categories, collections, size charts, forms, back-in-stock requests and
 // sitemap entries (plan/10-api/02-catalog-public.md). Only active products, visible categories and live collections are ever returned.
-// Reviews (`reviews.listForProduct`, `rating`) arrive with the reviews module.
+// Reviews (`reviews.listForProduct`) are in reviews.js; `rating` on a card comes from the product's rating columns.
 import { z } from 'zod'
 import { Component, Fit } from './products.js'
 import { Enum } from './enums.js'

@@ -7,6 +7,7 @@ import { cartRoutes } from './cart.js'
 import { orderRoutes } from './orders.js'
 import { customerRoutes } from './customers.js'
 import { promoRoutes } from './promos.js'
+import { reviewRoutes } from './reviews.js'
 import { contentPublicRoutes, contentRoutes } from './content.js'
 import { inventoryRoutes } from './inventory.js'
 import { mediaRoutes } from './media.js'
@@ -52,6 +53,7 @@ export const routes = defineRoutes({
   ...cartRoutes,
   ...orderRoutes,
   ...promoRoutes,
+  ...reviewRoutes,
   ...taxonomyRoutes,
   ...productRoutes,
   ...catalogPublicRoutes,

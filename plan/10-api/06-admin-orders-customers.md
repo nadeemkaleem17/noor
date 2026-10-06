@@ -201,4 +201,5 @@ X-CSRF-Token: …
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-09: the six `admin.reviews.*` routes built under `/admin/reviews` (`reviews:read`, `reviews:moderate`). `q` searches the text, title, name, product title and order number. Moderating again is allowed (approved to rejected and back); each decision recomputes the product's rating. `bulk` takes `{ ids, action: 'approve' }` or `{ ids, action: 'reject', reason }` and decides each review on its own. `removePhoto` returns the review and deletes the file. `AdminReview.product.image` is the picture of the purchased line. |
 | 2026-10-02 | Initial version (Phase 5, part 2) |

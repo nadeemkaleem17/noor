@@ -99,6 +99,7 @@ export function createListing({ db, media, search, filtersOf }) {
         ...(p.compareAtMinMinor === null ? {} : { compareAtFrom: { amount: p.compareAtMinMinor, currency: 'PKR' } }),
         badges,
         stockStatus: /** @type {ProductSummary['stockStatus']} */ (p.stockStatus),
+        ...(p.ratingCount > 0 && p.ratingAvgX100 !== null ? { rating: { average: p.ratingAvgX100 / 100, count: p.ratingCount } } : {}),
         colorways: p.styleId
           ? siblings.filter((s) => s.styleId === p.styleId && s.colorwayLabel).map((s) => ({ handle: s.handle, label: s.colorwayLabel ?? '', swatch: /** @type {import('@noor/contract').Swatch} */ (s.colorwaySwatch), current: s.id === p.id }))
           : [],

@@ -8,6 +8,7 @@ import { now } from '../../platform/clock.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { readyIds } from '../media/repository.js'
 import { diffOf, record } from '../audit/index.js'
+import { reviews } from '../../db/schema/reviews.js'
 import { attributeValues, attributes, categories, formSchemas, sizeCharts, sizeSystemValues, sizeSystems } from '../../db/schema/taxonomy.js'
 import { bundleItems, collectionProducts, productAttributeValues, productCategories, productMedia, productOptionValues, productOptions, productRelated, productSizes, products, variantOptionValues, variants } from '../../db/schema/products.js'
 import { actorOf, duplicateKey, isReferenced, productChanged, purge } from './common.js'
@@ -61,6 +62,16 @@ export async function recomputeProductCache(tx, productId, stock = noStock) {
   }
   await tx.delete(productSizes).where(eq(productSizes.productId, productId))
   if (sizes.size) await tx.insert(productSizes).values([...sizes].map(([sizeSystemValueId, inStock]) => ({ productId, sizeSystemValueId, inStock })))
+}
+
+/**
+ * The rating of a product, from its approved reviews only (DOC-09.3 section 7): the average times 100, and how many. Called after a review is approved or rejected.
+ * @param {Db} tx @param {string} productId
+ */
+export async function recomputeRating(tx, productId) {
+  const [r] = await tx.select({ n: count(), avg: sql`avg(${reviews.rating})`.mapWith(Number) }).from(reviews).where(and(eq(reviews.productId, productId), eq(reviews.status, 'approved')))
+  const n = r?.n ?? 0
+  await tx.update(products).set({ ratingCount: n, ratingAvgX100: n ? Math.round((r?.avg ?? 0) * 100) : null }).where(eq(products.id, productId))
 }
 
 /**
@@ -496,6 +507,7 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
 
   return {
     recompute: (/** @type {Db} */ tx, /** @type {string} */ productId) => recomputeProductCache(tx, productId, stock),
+    recomputeRating,
     /** After stock moved: the cached stock status of these products. */
     async recomputeMany(/** @type {Db} */ tx, /** @type {string[]} */ ids) {
       for (const id of ids) await recomputeProductCache(tx, id, stock)

@@ -50,7 +50,7 @@ export const OrderPublic = z.strictObject({
   lines: z.array(
     z.strictObject({
       id: Id, title: z.string(), variantLabel: z.string(), image: Image.optional(), quantity: z.int(), unitPrice: Money, lineTotal: Money,
-      customizationSummary: z.string().optional(), leadTime: z.strictObject({ minDays: z.int(), maxDays: z.int() }).optional(),
+      customizationSummary: z.string().optional(), review: z.strictObject({ available: z.boolean(), submitted: z.boolean() }).optional(), leadTime: z.strictObject({ minDays: z.int(), maxDays: z.int() }).optional(),
     }),
   ),
   subtotal: Money, discount: Money, promoCode: z.string().optional(), shippingFee: Money, total: Money,

@@ -14,15 +14,16 @@ import { ordersHandlers } from './orders/routes.js'
 import { notificationEvents, notificationJobs } from './notifications/index.js'
 import { paymentJobs } from './payments/jobs.js'
 import { promotionsHandlers } from './promotions/routes.js'
+import { reviewsHandlers } from './reviews/index.js'
 import { shippingHandlers } from './shipping/routes.js'
 
 // ponytail: admin.system.info grows with the job queue numbers (M1-01 added the tables).
 /**
  * @param {import('../platform/config.js').Config} config
- * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, cart: ReturnType<import('./cart/index.js').createCartService>, orders: ReturnType<import('./orders/index.js').createOrdersService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory> }} deps
+ * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, cart: ReturnType<import('./cart/index.js').createCartService>, orders: ReturnType<import('./orders/index.js').createOrdersService>, reviews: ReturnType<import('./reviews/index.js').createReviewsService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory> }} deps
  * @returns {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>}
  */
-export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, catalog, inventory }) => ({
+export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, reviews, catalog, inventory }) => ({
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (authHandlers(auth, config))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (auditHandlers(audit))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (mediaHandlers(media))),
@@ -32,6 +33,7 @@ export const appHandlers = (config, { auth, audit, media, settings, shipping, cu
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (promotionsHandlers(promotions))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (cartHandlers(cart))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (ordersHandlers(orders))),
+  ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (reviewsHandlers(reviews))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (catalogHandlers(catalog))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (inventoryHandlers(inventory))),
   'admin.system.info': async () => ({ environment: config.APP_ENV, version: config.APP_VERSION, queue: { pending: 0, dead: 0 } }),

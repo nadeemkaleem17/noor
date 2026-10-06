@@ -17,16 +17,9 @@
 
 ## 2. Review tables
 
-### 2.1 `review_invites`
+### 2.1 Review invites (not a table)
 
-Created by the `review.issue_tokens` job when an order is delivered: one per order line of a reviewable product.
-
-| Column | Type | Null | Default | Notes |
-|---|---|---|---|---|
-| `order_line_id` | char(36) | NN | | PK; FK → `order_lines.id` CASCADE |
-| `token_hash` | char(64) (bin) | NN | | UQ. The review URL is reached from the order page, which already proves possession of the order token; this token guards the single line |
-| `expires_at` | datetime(3) | NN | | Delivery + 90 days |
-| `used_at` | datetime(3) | NULL | | |
+Built without a `review_invites` table (M4-09): the order's link already proves who may write (DOC-10.3 section 4), so a separate per-line token guarded nothing. A line may be reviewed when its order is `delivered`, the line is not returned in full, and fewer than 90 days have passed since `delivered_at` (`modules/reviews/window.js`, used by the order page and the review endpoints). "Submitted" is the existence of the review row, which the unique index on `order_line_id` makes final. The job `review.issue_tokens` is therefore not needed.
 
 ### 2.2 `reviews`
 
@@ -94,8 +87,8 @@ Each customer message also produces an `order_events` row of type `notification`
 
 ## 5. Acceptance checklist
 
-- [ ] A second review for the same order line is rejected by the unique index (`review_already_submitted`).
-- [ ] Approving, then rejecting a review returns the product's rating fields to their previous values.
+- [x] A second review for the same order line is rejected by the unique index (`review_already_submitted`). (`reviews.int.test.js`.)
+- [x] Approving, then rejecting a review returns the product's rating fields to their previous values. (`reviews.int.test.js`: also with two reviews at once.)
 - [x] Running the same `notify.customer` job twice creates one `notification_log` row. (`notifications.int.test.js`; the job is `notify.order`.)
 - [x] With no provider configured, placing an order creates a `skipped` row whose body staff can copy from the order page. (The row and its text are tested; the Copy button on the order page is M6-02.)
 - [x] Anonymising a customer clears `recipient` and `body` of their notification rows. (`notifications.int.test.js`.)
@@ -112,5 +105,6 @@ Each customer message also produces an `order_events` row of type `notification`
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-09: `reviews` and `review_photos` built (migration 0017); `review_invites` dropped (section 2.1). A review photo is a media slot with no staff member (`media.uploaded_by` NULL), confirmed when the review is sent; a file a staff member uploaded, a refused one, or one already on a review cannot be attached. `products.rating_avg_x100` and `rating_count` are written by `recomputeRating` (`catalog/products.js`), in the same transaction as every approve or reject, from approved rows only. Approve, reject, reply and photo removal purge the product's cache tags and write an audit entry; approve and reject emit `review.approved` and `review.rejected`. Photo removal deletes the link, then the media through `media.remove`. |
 | 2026-10-06 | M4-08: `notification_log` built (migration 0016). `channel` is the intended channel (`whatsapp`, `email`; `sms` unused), so a `skipped` row says which was not available. Only the customer's messages add an `order_events` row of type `notification`; the staff email does not. Anonymising a customer (`orders/customer-view.js`, now wired into `customers`) rewrites the personal fields of the customer's **settled** orders (delivered, cancelled, returned) and sets `recipient` and `body` of those orders' messages to `(removed)`; an order that is still open blocks it. |
 | 2026-10-02 | Initial version (Phase 5, part 1) |

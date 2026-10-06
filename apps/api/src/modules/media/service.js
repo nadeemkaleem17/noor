@@ -61,11 +61,11 @@ export function createMediaService({ db, config, storage, inUse = async () => fa
   }
 
   return {
-    /** @param {Staff} actor @param {{ contentType: keyof typeof EXTENSIONS, bytes: number }} input */
+    /** A customer's review photo has no staff member behind it (`actor` undefined). @param {Staff | undefined} actor @param {{ contentType: keyof typeof EXTENSIONS, bytes: number }} input */
     async createUpload(actor, { contentType, bytes }) {
       const id = uuidv7()
       const objectKey = newMediaKey(EXTENSIONS[contentType])
-      await repo.insert(db, { id, kind: 'image', status: 'pending', objectKey, contentType, bytes, uploadedBy: actor.staffId, createdAt: now() })
+      await repo.insert(db, { id, kind: 'image', status: 'pending', objectKey, contentType, bytes, uploadedBy: actor?.staffId ?? null, createdAt: now() })
       const put = storage.presignPut(objectKey, { contentType, bytes })
       return { mediaId: id, uploadUrl: put.url, headers: put.headers, expiresAt: put.expiresAt.toISOString() }
     },

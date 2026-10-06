@@ -1,8 +1,12 @@
 // The order as its customer meets it (plan/10-api/03-cart-orders-public.md section 4, plan/06-storefront/06-orders-tracking.md): found by the token in their link or by
 // order number plus phone, shown masked, and with the two things they may do themselves: cancel before it is confirmed, and ask for cash on delivery.
+import { inArray } from 'drizzle-orm'
 import { maskPkMobile, normalizePkMobile } from '@noor/contract'
+import { now } from '../../platform/clock.js'
 import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
+import { reviews } from '../../db/schema/reviews.js'
+import { reviewState } from '../reviews/window.js'
 import * as repo from './repository.js'
 import { isFinal } from './transitions.js'
 import { trackingHash, trackingToken } from './tracking.js'
@@ -47,7 +51,9 @@ function summaryOf(snapshot) {
 export function createPublicOrders({ db, config, changes, settings, shipping, media }) {
   /** @param {OrderRow} o */
   async function view(o) {
-    const [lines, payments, courier] = await Promise.all([repo.linesOf(db, o.id), settings.value('payments', db), o.courierId ? shipping.courierById(db, o.courierId) : undefined])
+    const [lines, payments, store, courier] = await Promise.all([repo.linesOf(db, o.id), settings.value('payments', db), settings.value('store', db), o.courierId ? shipping.courierById(db, o.courierId) : undefined])
+    const done = new Set(lines.length ? (await db.select({ id: reviews.orderLineId }).from(reviews).where(inArray(reviews.orderLineId, lines.map((l) => l.id)))).map((r) => r.id) : [])
+    const reviewsOn = Boolean(store.value.features?.reviews)
     const images = await media.imagesFor(lines.flatMap((l) => (l.imageMediaId ? [l.imageMediaId] : [])))
     const status = /** @type {import('./transitions.js').OrderStatus} */ (o.status)
     const open = !isFinal(status)
@@ -79,6 +85,7 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
         return {
           id: l.id, title: l.title, variantLabel: l.variantLabel, ...(image ? { image } : {}), quantity: l.quantity, unitPrice: money(l.unitPriceMinor), lineTotal: money(l.lineSubtotalMinor),
           ...(summary ? { customizationSummary: summary } : {}),
+          ...(reviewsOn && status === 'delivered' ? { review: { available: reviewState(o, l, now()) === 'ok' && !done.has(l.id), submitted: done.has(l.id) } } : {}),
           ...(l.leadMinDays != null && l.leadMaxDays != null ? { leadTime: { minDays: l.leadMinDays, maxDays: l.leadMaxDays } } : {}),
         }
       }),
@@ -121,6 +128,9 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
   }
 
   return {
+    /** The order behind a link, for the other modules that work through it (reviews). @param {string} token */
+    orderByToken: byToken,
+
     /** @param {string} token */
     async getByToken(token) {
       return view(await byToken(token))

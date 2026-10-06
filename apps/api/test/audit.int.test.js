@@ -7,7 +7,10 @@ import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
 import { customers } from '../src/db/schema/customers.js'
+import { media } from '../src/db/schema/media.js'
 import { promos } from '../src/db/schema/promotions.js'
+import { orders } from '../src/db/schema/orders.js'
+import { reviewPhotos, reviews } from '../src/db/schema/reviews.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { collections, products } from '../src/db/schema/products.js'
 import { reservations } from '../src/db/schema/inventory.js'
@@ -29,6 +32,10 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     setClock(null)
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
+    await t.db.delete(reviewPhotos)
+    await t.db.delete(reviews)
+    await t.db.delete(orders) // the bare orders of the review samples; their lines go with them
+    await t.db.delete(media)
     await t.db.delete(customers)
     await t.db.delete(promos)
     await t.db.delete(collections)
@@ -374,6 +381,34 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       await t.migrate.db.delete(auditLog)
       return { ...s, categoryId, product: r.body }
     }
+    // a review needs a product, an order and a line; the order and its line are made bare, with the keys not checked
+    const withReview = async () => {
+      const s = await withProduct() // the review's product must be real: deciding a review updates the product's rating
+      const id = uuidv7()
+      const mediaId = uuidv7()
+      const [orderId, lineId, orderNo] = [uuidv7(), uuidv7(), Math.floor(Math.random() * 1e9)]
+      const at = new Date()
+      await t.db.insert(media).values({ id: mediaId, kind: 'image', status: 'ready', objectKey: `proofs/${mediaId}.jpg`, contentType: 'image/jpeg', bytes: 1, createdAt: at })
+      const conn = await t.migrate.pool.getConnection()
+      try {
+        await conn.query('SET FOREIGN_KEY_CHECKS=0')
+        await conn.query(
+          'INSERT INTO orders (id, number, number_prefix, tracking_token_hash, status, customer_id, customer_name, customer_phone, ship_city_id, ship_city, ship_address, shipping_method_label, eta_min_days, eta_max_days, subtotal_minor, shipping_fee_minor, total_minor, payment_method, placed_at, status_changed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 2, 100, 0, 100, ?, ?, ?, ?, ?)',
+          [orderId, orderNo, 'RB', orderId.replaceAll('-', '').padEnd(64, '0'), 'delivered', uuidv7(), 'Sana Malik', '+923001234567', uuidv7(), 'Lahore', 'House 12, Street 4', 'Standard', 'cod', at, at, at, at],
+        )
+        await conn.query('INSERT INTO order_lines (id, order_id, position, product_id, variant_id, kind, title, sku, quantity, unit_price_minor, line_subtotal_minor, stock_tracked) VALUES (?, ?, 1, ?, ?, ?, ?, ?, 1, 100, 100, 1)', [lineId, orderId, uuidv7(), uuidv7(), 'stitched', 'Lawn suit', 'SKU1'])
+        await conn.query('INSERT INTO reviews (id, product_id, order_line_id, display_name, rating, body, status, locale, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [id, s.product.id, lineId, 'Sana M.', 5, 'Lovely fabric and neat embroidery.', 'pending', 'en', at, at])
+        await conn.query('INSERT INTO review_photos (review_id, media_id, sort_order) VALUES (?, ?, 0)', [id, mediaId])
+      } finally {
+        await conn.query('SET FOREIGN_KEY_CHECKS=1')
+        conn.release()
+      }
+      return { ...s, id, mediaId }
+    }
+    samples['admin.reviews.moderate'] = { prepare: withReview, act: ({ b, id }) => b.call('POST', `/admin/reviews/${id}/moderation`, { body: { status: 'rejected', reason: 'spam' } }) }
+    samples['admin.reviews.reply'] = { prepare: withReview, act: ({ b, id }) => b.call('PUT', `/admin/reviews/${id}/reply`, { body: { body: 'Thank you!' } }) }
+    samples['admin.reviews.removePhoto'] = { prepare: withReview, act: ({ b, id, mediaId }) => b.call('DELETE', `/admin/reviews/${id}/photos/${mediaId}`), rows: 2 } // the link, and the file
+    samples['admin.reviews.bulk'] = { prepare: withReview, act: ({ b, id }) => b.call('POST', '/admin/reviews/bulk', { body: { ids: [id], action: 'approve' } }) }
     samples['admin.products.create'] = {
       prepare: async () => {
         const s = await signedIn('owner')
@@ -423,7 +458,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       const ctx = await sample.prepare()
       const before = await count()
       const res = await sample.act(ctx)
-      expect(res.status, `${key} should succeed`).toBeLessThan(400)
+      expect(res.status, `${key} should succeed ${JSON.stringify(/** @type {any} */ (res).body)}`).toBeLessThan(400)
       expect((await count()) - before, `${key} audit rows`).toBe(sample.rows ?? 1)
     }, 90_000)
 

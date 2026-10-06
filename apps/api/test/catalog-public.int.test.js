@@ -172,6 +172,17 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       for (const hidden of ['draft-dress', 'archived-dress', 'ARCH']) expect(everything).not.toContain(hidden)
     }, 60_000)
 
+    it('a card shows the rating of a product that has approved reviews, and nothing for one that has none', async () => {
+      await t.db.update(products).set({ ratingAvgX100: 450, ratingCount: 2 }).where(eq(products.id, d.kurtaRed.id))
+      try {
+        const body = (await get('/products')).json()
+        expect(body.items.find((/** @type {{ handle: string }} */ i) => i.handle === 'cotton-kurta').rating).toEqual({ average: 4.5, count: 2 })
+        expect(body.items.find((/** @type {{ handle: string }} */ i) => i.handle === 'lawn-suit-3pc').rating).toBeUndefined()
+      } finally {
+        await t.db.update(products).set({ ratingAvgX100: null, ratingCount: 0 }).where(eq(products.id, d.kurtaRed.id))
+      }
+    }, 60_000)
+
     it('filters by category with its descendants, by collection in the collection’s order, by kind, colour, price, sale, newness and stock', async () => {
       expect(handles(await json('/products?category=women'))).toHaveLength(5)
       expect(handles(await json('/products?category=unstitched&sort=newest'))).toEqual(['bridal-gown', 'lawn-suit-3pc', 'silk-lawn-suit'])
