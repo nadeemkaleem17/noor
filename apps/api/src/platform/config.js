@@ -35,9 +35,14 @@ const Env = z.object({
   IMG_BASE_URL: z.url().default('http://localhost:3000/img'),
   /** Public address of the storefront: preview links point here. */
   STOREFRONT_URL: z.url().default('http://localhost:5174'),
+  /** Owners and managers must use two-step sign-in. Can be switched off only in local development and CI (the check below). */
+  TWO_FACTOR_REQUIRED: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
   APP_VERSION: z.string().default('dev'),
 }).superRefine((env, ctx) => {
+  if (!env.TWO_FACTOR_REQUIRED && env.APP_ENV !== 'local' && env.APP_ENV !== 'ci') {
+    ctx.addIssue({ code: 'custom', path: ['TWO_FACTOR_REQUIRED'], message: 'two-step sign-in can be switched off only when APP_ENV is local or ci' })
+  }
   // plan/14-devops.md section 6: a production process never keeps files on its own disk
   if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
     ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for development only' })

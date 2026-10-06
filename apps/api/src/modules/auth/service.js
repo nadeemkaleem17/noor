@@ -55,6 +55,8 @@ const tooMany = (ms) => new DomainError('too_many_attempts', { retryAfter: Math.
  */
 export function createAuthService({ db, config }) {
   const sealer = createSealer(config.DATA_ENCRYPTION_KEY)
+  /** Whether this role must use two-step sign-in in this process (TWO_FACTOR_REQUIRED=0 is allowed only in local development and CI). @param {import('@noor/contract').StaffRole} role */
+  const needsTwoFactor = (role) => config.TWO_FACTOR_REQUIRED && requiresTwoFactor(role)
   const adminUrl = (/** @type {string} */ path) => `${config.ADMIN_ORIGIN.replace(/\/$/, '')}${path}`
 
   /** @param {StaffActor | { staffId: string, name: string, role: string }} a @param {RequestInfo} req */
@@ -79,7 +81,7 @@ export function createAuthService({ db, config }) {
   async function startSession(/** @type {import('../../platform/db.js').Executor} */ tx, /** @type {UserRow} */ user, /** @type {RequestInfo} */ req) {
     const role = /** @type {import('@noor/contract').StaffRole} */ (user.role)
     if (user.totpEnabledAt) return { next: /** @type {const} */ ('two_factor'), ...(await createSession(tx, { userId: user.id, kind: 'pending_2fa', ip: req.ip, userAgent: req.userAgent })) }
-    if (requiresTwoFactor(role)) return { next: /** @type {const} */ ('enrol_two_factor'), ...(await createSession(tx, { userId: user.id, kind: 'enrol_2fa', ip: req.ip, userAgent: req.userAgent })) }
+    if (needsTwoFactor(role)) return { next: /** @type {const} */ ('enrol_two_factor'), ...(await createSession(tx, { userId: user.id, kind: 'enrol_2fa', ip: req.ip, userAgent: req.userAgent })) }
     return { next: /** @type {const} */ ('ok'), ...(await createSession(tx, { userId: user.id, kind: 'full', ip: req.ip, userAgent: req.userAgent })) }
   }
 
@@ -226,7 +228,7 @@ export function createAuthService({ db, config }) {
       const { user } = await this._findUsableToken('invite', token)
       if (user.status !== 'invited') throw new DomainError('token_expired')
       const role = /** @type {import('@noor/contract').StaffRole} */ (user.role)
-      return { name: user.name, email: user.email, role, requiresTwoFactor: requiresTwoFactor(role) }
+      return { name: user.name, email: user.email, role, requiresTwoFactor: needsTwoFactor(role) }
     },
 
     /** @param {string} token @param {string} password @param {RequestInfo} req */
@@ -282,7 +284,7 @@ export function createAuthService({ db, config }) {
         role: actor.role,
         permissions: [...actor.permissions],
         twoFactorEnabled: user.totpEnabledAt !== null,
-        twoFactorRequired: requiresTwoFactor(actor.role),
+        twoFactorRequired: needsTwoFactor(actor.role),
         csrfToken: actor.session.csrfToken,
         environment: config.APP_ENV,
         ...(until > now() ? { stepUpValidUntil: until.toISOString() } : {}),
@@ -380,7 +382,7 @@ export function createAuthService({ db, config }) {
 
     /** @param {StaffActor} actor @param {RequestInfo} req */
     async disableTwoFactor(actor, req) {
-      if (requiresTwoFactor(actor.role)) throw new DomainError('forbidden', {}, 'Your role requires two-factor authentication.')
+      if (needsTwoFactor(actor.role)) throw new DomainError('forbidden', {}, 'Your role requires two-factor authentication.')
       await transaction(db, async (tx) => {
         await repo.updateUser(tx, actor.staffId, { totpSecretEnc: null, totpEnabledAt: null, totpLastStep: null, updatedAt: now() })
         await repo.deleteRecoveryCodes(tx, actor.staffId)
@@ -418,7 +420,7 @@ export function createAuthService({ db, config }) {
     },
 
     // ------------------------------------------------------------------ staff management
-    roles: () => ({ items: roleList() }),
+    roles: () => ({ items: roleList(config.TWO_FACTOR_REQUIRED) }),
 
     /** @param {{ q?: string, role?: string, status?: string, sort?: string, page: number, size: number }} query */
     async listStaff(query) {

@@ -66,6 +66,6 @@ export const requiresTwoFactor = (role) => twoFactorRoles.has(role)
  */
 export const mayManage = (actor, target) => (target === 'owner' ? actor === 'owner' : rank[actor] >= rank[target] && roleCan(actor, 'staff:manage'))
 
-/** The data served by `admin.roles.list`. */
-export const roleList = () =>
-  /** @type {StaffRole[]} */ (Object.keys(matrix)).map((role) => ({ role, ...roleInfo[role], twoFactorRequired: requiresTwoFactor(role), permissions: [...matrix[role]] }))
+/** The data served by `admin.roles.list`. @param {boolean} [twoFactorOn] false when the process runs with two-step sign-in switched off (local development) */
+export const roleList = (twoFactorOn = true) =>
+  /** @type {StaffRole[]} */ (Object.keys(matrix)).map((role) => ({ role, ...roleInfo[role], twoFactorRequired: twoFactorOn && requiresTwoFactor(role), permissions: [...matrix[role]] }))

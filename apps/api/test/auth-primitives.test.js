@@ -8,6 +8,13 @@ import { createSealer } from '../src/modules/auth/secrets.js'
 import { randomToken, safeEqual, sha256Hex } from '../src/modules/auth/tokens.js'
 import { newTotpSecret, totpUri, verifyTotp } from '../src/modules/auth/totp.js'
 
+describe('two-step switch', () => {
+  it('roleList shows no role as requiring it when the process has it switched off', () => {
+    expect(roleList().filter((r) => r.twoFactorRequired).map((r) => r.role)).toEqual(['owner', 'manager'])
+    expect(roleList(false).some((r) => r.twoFactorRequired)).toBe(false)
+  })
+})
+
 describe('passwords', () => {
   it('hashes with Argon2id and verifies', async () => {
     const h = await hashPassword('correct horse battery staple')

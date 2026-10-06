@@ -221,6 +221,13 @@ describe('config', () => {
     expect(() => parseConfig(env)).toThrow("STORAGE_DRIVER (local storage is for development only)")
     expect(parseConfig({ ...env, NODE_ENV: 'development' }).STORAGE_DRIVER).toBe('local')
   })
+  it('keeps two-step sign-in required unless the process is local or CI', () => {
+    const base = { NODE_ENV: 'development', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }
+    expect(parseConfig({ ...base, APP_ENV: 'production' }).TWO_FACTOR_REQUIRED).toBe(true)
+    expect(() => parseConfig({ ...base, APP_ENV: 'production', TWO_FACTOR_REQUIRED: '0' })).toThrow('TWO_FACTOR_REQUIRED')
+    expect(() => parseConfig({ ...base, APP_ENV: 'staging', TWO_FACTOR_REQUIRED: '0' })).toThrow('TWO_FACTOR_REQUIRED')
+    expect(parseConfig({ ...base, APP_ENV: 'local', TWO_FACTOR_REQUIRED: '0' }).TWO_FACTOR_REQUIRED).toBe(false)
+  })
 })
 
 // keeps the unused-type import honest for the table type used above
