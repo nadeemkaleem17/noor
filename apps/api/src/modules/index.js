@@ -8,6 +8,7 @@ import { mediaHandlers, mediaJobs } from './media/index.js'
 import { searchEvents, searchJobs } from './search/index.js'
 import { createServices } from './services.js'
 import { settingsHandlers } from './settings/routes.js'
+import { cartHandlers } from './cart/routes.js'
 import { customersHandlers } from './customers/routes.js'
 import { promotionsHandlers } from './promotions/routes.js'
 import { shippingHandlers } from './shipping/routes.js'
@@ -15,10 +16,10 @@ import { shippingHandlers } from './shipping/routes.js'
 // ponytail: admin.system.info grows with the job queue numbers (M1-01 added the tables).
 /**
  * @param {import('../platform/config.js').Config} config
- * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory> }} deps
+ * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, cart: ReturnType<import('./cart/index.js').createCartService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory> }} deps
  * @returns {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>}
  */
-export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, catalog, inventory }) => ({
+export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, cart, catalog, inventory }) => ({
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (authHandlers(auth, config))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (auditHandlers(audit))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (mediaHandlers(media))),
@@ -26,6 +27,7 @@ export const appHandlers = (config, { auth, audit, media, settings, shipping, cu
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (shippingHandlers(shipping))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (customersHandlers(customers))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (promotionsHandlers(promotions))),
+  ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (cartHandlers(cart))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (catalogHandlers(catalog))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (inventoryHandlers(inventory))),
   'admin.system.info': async () => ({ environment: config.APP_ENV, version: config.APP_VERSION, queue: { pending: 0, dead: 0 } }),
@@ -39,7 +41,7 @@ export const eventHandlers = { ...searchEvents }
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, log?: { error: (o: object, msg: string) => void } }} deps
  */
 export function backgroundOf({ db, config, storage, log }) {
-  const { media, search, inventory, catalog } = createServices({ db, config, ...(storage ? { storage } : {}) })
+  const { media, search, inventory, catalog, cart } = createServices({ db, config, ...(storage ? { storage } : {}) })
   return {
     handlers: {
       ...mediaJobs(media),
@@ -51,7 +53,8 @@ export function backgroundOf({ db, config, storage, log }) {
         for (const p of problems) log?.error(p, 'stock does not add up') // reported, never repaired (DOC-09.4 section 2.3)
       },
       'inventory.cleanup_subscriptions': async () => inventory.cleanupSubscriptions(),
+      'cart.cleanup': async () => cart.cleanup(),
     },
-    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }, { type: 'search.cleanup_misses', cron: '30 21 * * *' }], // media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
+    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }, { type: 'search.cleanup_misses', cron: '30 21 * * *' }, { type: 'cart.cleanup', cron: '45 21 * * *' }], // carts idle 30 days 02:45 PKT, media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
   }
 }

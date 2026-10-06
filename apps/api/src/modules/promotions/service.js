@@ -29,6 +29,9 @@ const rs = (paisa) => `Rs. ${new Intl.NumberFormat('en-PK', { minimumFractionDig
 /** @param {Date} d */
 const day = (d) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short', year: 'numeric' }).format(d)
 
+/** What the customer sees beside the code: "10% off", "Rs. 500 off", "Free shipping". @param {repo.PromoRow} p */
+const headline = (p) => (p.type === 'percent' ? `${(p.valueBps ?? 0) / 100}% off` : p.type === 'fixed' ? `${rs(p.valueMinor ?? 0)} off` : 'Free shipping')
+
 /** The rule in words: "10% off Lawn and Stitched, up to Rs. 2,000, on orders over Rs. 5,000. Once per customer. From 1 Oct 2026 to 15 Oct 2026." @param {repo.PromoRow} p @param {string[]} labels */
 function summarise(p, labels) {
   const what = p.scope === 'all' ? '' : ` ${labels.length ? labels.join(' and ') : p.scope}`
@@ -174,6 +177,11 @@ export function createPromotionsService({ db }) {
     return diffOf(pick(before), pick(after))
   }
 
+  /** @param {Db} x @param {repo.PromoRow | undefined} p */
+  async function ruleView(x, p) {
+    return p ? { id: p.id, code: p.code, label: headline(p), firstOrderOnly: p.firstOrderOnly, perCustomerLimit: p.perCustomerLimit, rule: await ruleOf(x, p) } : undefined
+  }
+
   return {
     /** @param {Parameters<typeof repo.listPromos>[1]} query */
     async list(query) {
@@ -300,12 +308,26 @@ export function createPromotionsService({ db }) {
     },
 
     /**
-     * The code a cart or an order asks about: its rule and its id, or nothing. For the cart (M4-03) this is a read; the order re-checks inside its transaction through `redeem`.
+     * The code a cart or an order asks about: its rule and its id, or nothing. For the cart this is a read; the order re-checks inside its transaction through `redeem`.
      * @param {Db} x @param {string} rawCode
      */
     async findRule(x, rawCode) {
-      const p = await repo.findByCode(x, rawCode.trim().toUpperCase())
-      return p ? { id: p.id, code: p.code, firstOrderOnly: p.firstOrderOnly, perCustomerLimit: p.perCustomerLimit, rule: await ruleOf(x, p) } : undefined
+      return ruleView(x, await repo.findByCode(x, rawCode.trim().toUpperCase()))
+    },
+
+    /** The same, for a code a cart already holds. @param {Db} x @param {string} id */
+    async findRuleById(x, id) {
+      return ruleView(x, await repo.findById(x, id))
+    },
+
+    /**
+     * What only the customer decides: their own limit and the first-order rule. Checked when the phone is known (a quote) and again in the order.
+     * @param {Db} x @param {{ id: string, firstOrderOnly: boolean, perCustomerLimit: number | null }} promo @param {{ id: string, ordersCount: number }} customer
+     */
+    async customerProblem(x, promo, customer) {
+      if (promo.firstOrderOnly && customer.ordersCount > 0) return /** @type {const} */ ('promo_first_order_only')
+      if (promo.perCustomerLimit !== null && (await repo.customerUses(x, promo.id, customer.id, false)) >= promo.perCustomerLimit) return /** @type {const} */ ('promo_customer_limit')
+      return undefined
     },
 
     /**

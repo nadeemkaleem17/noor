@@ -123,12 +123,12 @@ At order creation `promotions.redeem(tx, …)` locks the promo row `FOR UPDATE`,
 
 ## 6. Acceptance checklist
 
-- [ ] Adding the same variant with the same customisation twice yields one line with summed quantity; a different customisation yields two lines. (Cart: M4-03.)
+- [x] Adding the same variant with the same customisation twice yields one line with summed quantity; a different customisation yields two lines. (Cart: M4-03.) (`cart.int.test.js`: the identity is the variant plus the hash of the canonical customisation, so key order does not matter; the unique key `cart_lines_identity_uq` is the backstop.)
 - [x] 10% off on lines of Rs. 6,990.00 and Rs. 1,234.56 gives discounts 69900 and 12346 paisa, total 82246 (unit test with these numbers). (`promo-evaluate.test.js`; also through `admin.promos.preview` in `promos.int.test.js`.)
 - [x] A fixed Rs. 500 code over three eligible lines produces line discounts summing to exactly 50000 paisa. (`promo-evaluate.test.js`: the spare paisa goes to the earlier of the two largest remainders.)
 - [x] Two concurrent orders using the last allowed use of a code → one succeeds, one gets `promo_usage_limit`. (`promos.int.test.js`, repeated; `redeem` locks the promo row `FOR UPDATE`. The per-customer count is also a locking read, so two orders of one customer cannot both pass.)
 - [x] Cancelling an order decrements `usage_count` and the customer can use the code again. (`reverse(tx, orderId)`; a second call does nothing; a promo with a reversed redemption still counts as used, so it cannot be deleted.)
-- [ ] The storefront quote, the order created from it and the admin preview (`admin.promos.preview`) return identical amounts for the same cart. (The preview and the cart both call `evaluatePromo`; the quote and the order are M4-03 and M4-04.)
+- [ ] The storefront quote, the order created from it and the admin preview (`admin.promos.preview`) return identical amounts for the same cart. (The preview and the cart quote both call `evaluatePromo` through `priceCart`; the order created from it is M4-04.)
 
 ## 7. Open questions and assumptions
 
@@ -143,4 +143,5 @@ At order creation `promotions.redeem(tx, …)` locks the promo row `FOR UPDATE`,
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 5, part 1) |
+| 2026-10-06 | M4-03: `carts` and `cart_lines` built (migration 0013). `modules/cart/pricing.js` `priceCart` is the one pricing function (steps 1 to 10, pure, 100% branch coverage in `cart-pricing.test.js`); the cart service loads the facts and calls it for every read, quote and (M4-04) order. Decisions: lines the customer can no longer buy stay in the subtotal with `sold_out` or `unavailable` and block the order; the cheapest delivery option is chosen by the fee after the free-delivery threshold; payment options appear once a city is quoted; a customer with a No COD flag gets `cod_not_available`; the code on a cart that stops applying is dropped from the price and reported as `promoProblem` (orders will answer `promo_invalid`); the per-order limit and the stock are counted over all lines of the same variant. |
 | 2026-10-05 | M4-02: `promos`, `promo_targets`, `promo_redemptions` built (migration 0012). The promo steps of section 4 (3 to 5, and the window checks of step 4) are one pure function, `modules/promotions/evaluate.js` (`evaluatePromo`, `promoStatus`), which `cart.price` will call. `promo_redemptions.order_id` has its unique index but no foreign key to `orders` yet: M4-04 adds it. Target rows whose category or product is gone are ignored and dropped at the next save; nothing is wired into the catalog delete. A disabled code is answered as `promo_not_found`. |

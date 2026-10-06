@@ -39,9 +39,11 @@ export const Swatch = z.union([
 export const ColorFamily = Enum.colorFamily
 
 export const LineCustomization = z.strictObject({
-  measurements: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
+  /** Keys are the fields of the product's custom-size form. */
+  measurements: z.record(z.string().max(30), z.union([z.string().max(60), z.number()])).optional(),
   notes: z.string().max(500).optional(),
-  bundle: z.array(z.strictObject({ productId: Id, variantId: Id })).optional(),
+  /** For a bundle product: which variant of each child the customer chose. */
+  bundle: z.array(z.strictObject({ productId: Id, variantId: Id })).max(20).optional(),
 })
 /**
  * @typedef {z.infer<typeof LineCustomization>} LineCustomization

@@ -42,6 +42,7 @@ const denyStaff = /** @type {Authorize} */ (async () => null)
  * @property {string} userAgent
  * @property {(name: string, value: string, options: import('@fastify/cookie').CookieSerializeOptions) => void} setCookie
  * @property {(name: string) => void} clearCookie
+ * @property {(name: string) => string | undefined} header a request header, by name in any case (the cart token, for instance)
  * @property {(name: string, value: string) => void} setHeader overrides a response header (the shared-cache flag of the route is set first)
  */
 
@@ -143,6 +144,7 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
       handler: async (req, reply) => {
         // the route's cache flag first, so a handler can still say something stricter (a search, a preview)
         if (def.cache === 'shared') void reply.header('cache-control', 'public, s-maxage=60, stale-while-revalidate=600')
+        else if (def.auth === 'cart' || def.auth === 'order-token') void reply.header('cache-control', 'private, no-store') // what belongs to one holder is never shared
         const out = await handler({
           params: req.params,
           query: req.query,
@@ -156,6 +158,11 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
             userAgent: String(req.headers['user-agent'] ?? ''),
             /** @param {string} name @param {string} value @param {import('@fastify/cookie').CookieSerializeOptions} options */
             setCookie: (name, value, options) => void reply.setCookie(name, value, options),
+            /** @param {string} name */
+            header: (name) => {
+              const v = req.headers[name.toLowerCase()]
+              return typeof v === 'string' ? v : undefined
+            },
             /** @param {string} name */
             clearCookie: (name) => void reply.clearCookie(name, { path: '/' }),
             /** @param {string} name @param {string} value */

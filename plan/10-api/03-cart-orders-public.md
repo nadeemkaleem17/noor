@@ -206,4 +206,5 @@ Content-Type: application/problem+json
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-03 built (`modules/cart`): the seven cart routes. Handlers read the token from `X-Cart-Token` (new `http.header(name)` in the handler context); every `cart` and `order-token` route answers `Cache-Control: private, no-store`. Additions to the shape: `Cart.promoProblem` (why a code on the cart no longer applies). `QuoteBody.paymentMethod` is accepted and not used yet (every method is listed with whether it is allowed). `locale` is stored as `en` and not used until product translations are read by the cart. Customisation is checked against the product: its custom-size form (`measurements`, `notes` only if the form allows them) and, for a bundle, one variant for every child. Carts idle for 30 days are deleted by the job `cart.cleanup` (02:45 PKT). |
 | 2026-10-02 | Initial version (Phase 5, part 2). Order body has no `cartId` (cart from `X-Cart-Token`); tracking token is HMAC-derived; adds `TRACKING_KEY` secret |

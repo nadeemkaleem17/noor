@@ -87,9 +87,11 @@ export const redemptionCount = async (db, promoId) => (await db.select({ n: coun
 /** @param {Db} db @param {string[]} promoIds */
 export const usedIds = async (db, promoIds) =>
   promoIds.length ? new Set((await db.select({ id: promoRedemptions.promoId }).from(promoRedemptions).where(inArray(promoRedemptions.promoId, promoIds)).groupBy(promoRedemptions.promoId)).map((r) => r.id)) : new Set()
-/** Live redemptions of one customer for one promo. A locking read, so it sees what other orders have just committed, not an older snapshot. @param {Db} db @param {string} promoId @param {string} customerId */
-export const customerUses = async (db, promoId, customerId) =>
-  (await db.select({ id: promoRedemptions.id }).from(promoRedemptions).where(and(eq(promoRedemptions.promoId, promoId), eq(promoRedemptions.customerId, customerId), isNull(promoRedemptions.reversedAt))).for('update')).length
+/** Live redemptions of one customer for one promo. Inside an order, a locking read (`lock`), so it sees what other orders have just committed and not an older snapshot. @param {Db} db @param {string} promoId @param {string} customerId @param {boolean} [lock] */
+export async function customerUses(db, promoId, customerId, lock = true) {
+  const q = db.select({ id: promoRedemptions.id }).from(promoRedemptions).where(and(eq(promoRedemptions.promoId, promoId), eq(promoRedemptions.customerId, customerId), isNull(promoRedemptions.reversedAt)))
+  return (await (lock ? q.for('update') : q)).length
+}
 /** @param {Db} db @param {typeof promoRedemptions.$inferInsert} row */
 export const insertRedemption = (db, row) => db.insert(promoRedemptions).values(row)
 /** @param {Db} db @param {string} orderId */

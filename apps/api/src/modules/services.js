@@ -3,6 +3,7 @@
 import { createStorage } from '../platform/storage.js'
 import { createAuditService } from './audit/index.js'
 import { createAuthService } from './auth/index.js'
+import { createCartService } from './cart/index.js'
 import { createCatalogService } from './catalog/index.js'
 import { createCustomersService } from './customers/index.js'
 import { createInventory } from './inventory/index.js'
@@ -35,5 +36,6 @@ export function createServices({ db, config, storage = createStorage(config) }) 
     subscribe: (s) => inventory.subscribe(s),
   })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
-  return { auth, audit, storage, search, media, shipping, customers, promotions, inventory, catalog, settings }
+  const cart = createCartService({ db, media, stock: inventory.stock, shipping, settings: { get: (key) => settings.get(key) }, promotions, customers })
+  return { auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

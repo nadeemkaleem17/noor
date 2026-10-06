@@ -342,6 +342,16 @@ export function createShippingService({ db }) {
     },
 
     /**
+     * Every way to deliver to a city, with the raw fee and threshold: the cart prices them against its own total.
+     * @param {import('../../platform/db.js').Executor} x @param {string} cityId
+     */
+    async deliveryOptions(x, cityId) {
+      const zone = await repo.zoneOfCity(x, cityId)
+      if (!zone || !zone.methods.length) throw new DomainError('city_not_served')
+      return zone.methods.map((m) => ({ methodId: m.id, label: m.label, feeMinor: m.feeMinor, freeAboveMinor: m.freeAboveMinor, etaMinDays: m.etaMinDays, etaMaxDays: m.etaMaxDays, codAllowed: m.codAllowed }))
+    },
+
+    /**
      * The delivery fee for a city (ADR-0020 section 3): the chosen method of its zone, or the cheapest; free at or above the method's threshold.
      * @param {import('../../platform/db.js').Executor} x
      * @param {{ cityId: string, methodId?: string, amountAfterDiscount: number }} q paisa
