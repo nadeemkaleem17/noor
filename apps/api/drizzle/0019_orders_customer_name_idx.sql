@@ -1,0 +1,1 @@
+CREATE INDEX `orders_customer_name_idx` ON `orders` (`customer_name`);

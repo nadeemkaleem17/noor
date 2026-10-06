@@ -34,6 +34,7 @@ export const customers = mysqlTable(
     uniqueIndex('customers_phone_uq').on(t.phone),
     index('customers_last_order_idx').on(t.lastOrderAt),
     index('customers_name_idx').on(t.name),
+    index('customers_email_idx').on(t.email),
     index('customers_city_idx').on(t.city),
     index('customers_refused_idx').on(t.refusedCount),
   ],

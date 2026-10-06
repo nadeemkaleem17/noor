@@ -7,6 +7,7 @@ import { staffUsers } from '../../db/schema/auth.js'
 import { customers } from '../../db/schema/customers.js'
 import { orderLines, orders } from '../../db/schema/orders.js'
 import { rupees, toCsv } from '../../platform/csv.js'
+import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
 import { record } from '../audit/index.js'
@@ -146,10 +147,12 @@ export function createAdminOrders({ db, config, orders: orderService, cart, paym
 
   // ---------------------------------------------------------------- lists
   /** The conditions of a list or an export. @param {Record<string, any>} q @param {boolean} seeCustomer */
-  function conditions(q, seeCustomer) {
-    const text = q.q ? `%${String(q.q).replace(/[\\%_]/g, '\\$&')}%` : undefined
-    const digits = q.q ? String(q.q).replace(/\D/g, '') : ''
-    const num = /^(?:[A-Za-z]{1,4}-?)?(\d{1,12})$/.exec(String(q.q ?? '').replace(/\s+/g, ''))
+  async function conditions(q, seeCustomer) {
+    const typed = q.q ? String(q.q).trim() : ''
+    const phone = phonePrefix(typed)
+    const num = /^(?:[A-Za-z]{1,4}-?)?(\d{1,12})$/.exec(typed.replace(/\s+/g, ''))
+    // the orders that hold this SKU, looked up first: a subquery inside the OR would make the database read every order
+    const bySku = typed ? (await db.select({ id: orderLines.orderId }).from(orderLines).where(eq(orderLines.sku, typed)).limit(100)).map((r) => r.id) : []
     return and(
       q.status?.length ? inArray(orders.status, q.status) : undefined,
       q.cityId ? eq(orders.shipCityId, q.cityId) : undefined,
@@ -163,13 +166,15 @@ export function createAdminOrders({ db, config, orders: orderService, cart, paym
       q.customerId ? eq(orders.customerId, q.customerId) : undefined,
       q.channel ? eq(orders.channel, q.channel) : undefined,
       // a person who may not read customers finds orders by their number alone: a search by phone or name would tell them what they may not see
-      text
+      // each way is an index: the number, the tracking and invoice number exactly, a name or a phone by its start, a SKU through the lines
+      typed
         ? or(
             num ? eq(orders.number, Number(num[1])) : undefined,
-            seeCustomer ? like(orders.customerName, text) : undefined,
-            seeCustomer && digits.length >= 4 ? like(orders.customerPhone, `%${digits}%`) : undefined,
-            like(orders.trackingNumber, text),
-            like(orders.invoiceNumber, text),
+            seeCustomer ? like(orders.customerName, likePrefix(typed)) : undefined,
+            seeCustomer && phone ? like(orders.customerPhone, phone) : undefined,
+            eq(orders.trackingNumber, typed),
+            eq(orders.invoiceNumber, typed),
+            bySku.length ? inArray(orders.id, bySku) : undefined,
           )
         : undefined,
     )
@@ -232,7 +237,7 @@ export function createAdminOrders({ db, config, orders: orderService, cart, paym
     /** @param {Record<string, any>} q @param {Actor} actor */
     async list(q, actor) {
       const seeCustomer = may(actor, 'customers:read')
-      const where = conditions(q, seeCustomer)
+      const where = await conditions(q, seeCustomer)
       const field = (q.sort ?? '').replace(/^-/, '')
       const columns = { placedAt: orders.placedAt, total: orders.totalMinor, city: orders.shipCity, statusAge: orders.statusChangedAt }
       // a tab of orders waiting for somebody is oldest first; everything else newest first
@@ -398,7 +403,7 @@ export function createAdminOrders({ db, config, orders: orderService, cart, paym
     async exportCsv(actor, q, req) {
       const days = (new Date(q.to).getTime() - new Date(q.from).getTime()) / 86_400_000
       if (!(days >= 0) || days > MAX_EXPORT_DAYS) throw new DomainError('validation_failed', { issues: [{ path: 'to', code: days < 0 ? 'invalid_format' : 'too_big' }] })
-      const where = conditions(q, true)
+      const where = await conditions(q, true)
       const [{ n: total } = { n: 0 }] = await db.select({ n: count() }).from(orders).where(where)
       if (total > MAX_EXPORT_ROWS) throw new DomainError('validation_failed', { issues: [{ path: 'from', code: 'too_big' }] })
       const rows = await db.select().from(orders).where(where).orderBy(asc(orders.placedAt), asc(orders.id))

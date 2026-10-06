@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, gte, like, or, sql } from 'drizzle-orm'
 import { staffUsers } from '../../db/schema/auth.js'
+import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { customerNotes, customers } from '../../db/schema/customers.js'
 
 /** @typedef {import('../../platform/db.js').Executor} Db */
@@ -14,17 +15,15 @@ const sorts = /** @type {const} */ ({
   lastOrderAt: customers.lastOrderAt,
 })
 
-/** `%` and `_` typed by a person are text, not wildcards. @param {string} s */
-const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
-
 /**
  * @param {Db} db
  * @param {{ q?: string, cityName?: string, flag?: 'no_cod' | 'vip' | 'consent', minOrders?: number, hasRefusals?: boolean, sort?: string, page: number, size: number }} f
  */
 export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefusals, sort, page, size }) {
-  const digits = q?.replace(/\D/g, '') ?? ''
+  const phone = q ? phonePrefix(q) : undefined
   const where = and(
-    q ? or(like(customers.name, `%${escapeLike(q)}%`), like(customers.email, `%${escapeLike(q)}%`), digits.length >= 4 ? like(customers.phone, `%${digits}%`) : undefined) : undefined,
+    // the start of a name or a phone number, or a whole e-mail address: each is an index
+    q ? or(like(customers.name, likePrefix(q)), eq(customers.email, q), phone ? like(customers.phone, phone) : undefined) : undefined,
     cityName ? eq(customers.city, cityName) : undefined,
     flag === 'no_cod' ? eq(customers.noCod, true) : flag === 'vip' ? eq(customers.vip, true) : flag === 'consent' ? eq(customers.marketingConsent, true) : undefined,
     minOrders ? gte(customers.ordersCount, minOrders) : undefined,

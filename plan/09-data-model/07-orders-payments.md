@@ -53,7 +53,7 @@ erDiagram
 | `version` | int | NN | 1 | |
 | `created_at`, `updated_at` | datetime(3) | NN | | |
 
-Indexes: `customers_last_order_idx (last_order_at)`, `customers_name_idx (name)`, `customers_city_idx (city)`, `customers_refused_idx (refused_count)`.
+Indexes: `customers_last_order_idx (last_order_at)`, `customers_name_idx (name)`, `customers_email_idx (email)`, `customers_city_idx (city)`, `customers_refused_idx (refused_count)`.
 Derived counters are updated in the order transition transaction by `customers.applyOrderChange(tx, …)`.
 
 ### 2.2 `customer_notes`
@@ -110,7 +110,7 @@ Derived counters are updated in the order transition transaction by `customers.a
 
 Checks: `orders_total_chk` (above); `orders_money_chk` (all `_minor` ≥ 0, `deposit_due_minor <= total_minor`).
 
-Indexes: `orders_status_placed_idx (status, placed_at)`, `orders_status_changed_idx (status, status_changed_at)`, `orders_customer_idx (customer_id, placed_at)`, `orders_phone_idx (customer_phone)`, `orders_placed_idx (placed_at)`, `orders_city_idx (ship_city_id, placed_at)`, `orders_tracking_idx (tracking_number)`, `orders_promo_idx (promo_code)`, `orders_payment_idx (payment_method, payment_status)`.
+Indexes: `orders_status_placed_idx (status, placed_at)`, `orders_status_changed_idx (status, status_changed_at)`, `orders_customer_idx (customer_id, placed_at)`, `orders_phone_idx (customer_phone)`, `orders_customer_name_idx (customer_name)`, `orders_placed_idx (placed_at)`, `orders_city_idx (ship_city_id, placed_at)`, `orders_tracking_idx (tracking_number)`, `orders_promo_idx (promo_code)`, `orders_payment_idx (payment_method, payment_status)`.
 
 Admin search (`q`) uses: exact `number` when the text is digits (with or without the prefix), `customer_phone` prefix match on the normalised digits, `tracking_number` exact, `customer_name` prefix, or SKU through `order_lines_sku_idx`. No full-text search on orders.
 
@@ -309,6 +309,7 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-12: indexes `orders_customer_name_idx` (the admin search finds an order by the start of the name, which had no index) and `customers_email_idx` (migrations 0019 and 0020), found by the query-plan run (DOC-13 section 6.3). The search is by prefix everywhere: a name or a phone number by its start (`0300 123`, `300123` and `+92 300 123` all mean `+92300123%`; under four digits is not a search), an e-mail address whole, a tracking or invoice number whole, an order number exactly, a SKU through the lines. A `LIKE '%…%'` on a table of this size reads every row. |
 | 2026-10-06 | M4-06: `payments` and `payment_events` built (migration 0015). Differences from this page: the proof of a transfer is stored as `proof_media_id` (a media row, not an object key); the hold for a bank transfer is the constant 48 hours (`holdMinutesFor`), not a setting; a refund is its own row of kind `refund`, so the amounts of a refund and of what it refunds both stay; the job `orders.expire_unpaid` (every 5 minutes) cancels unpaid prepaid orders with reason `payment_expired`; `payments.reconcile` stays off until a real gateway exists. |
 | 2026-10-06 | M4-05: `modules/orders/changes.js` (every edge of the table with its guards and effects; the only writer of `orders.status`), `edit.js` (section 6), `rules.js` (`allowedActions`, `riskMarkers`, invoice numbers). Decisions: a partial return of a delivered order is a "returned" request that does not cover everything, and keeps the status; a full return after partial ones takes back only what the partial ones had not (`spent_minor` returns to 0); cancelling, returning and delivering move the customer counters in the same transaction; the invoice number comes from the counter `invoice_<year>` after the stock is taken, so a refused dispatch uses none; `reservations.order_id` and `promo_redemptions.order_id` deliberately have **no** foreign key to `orders` (stock and promo tests, and the jobs that release held stock, work on order ids; the services are the only writers); an edit whose code no longer applies proceeds without the code and says so in the event (`promoDropped`) and in the preview. `payments.*` hooks (capturing the COD cash at delivery, `refund_due`) are M4-06. |
 | 2026-10-06 | M4-04: `orders`, `order_lines`, `order_events` built (migration 0014) and `orders.create` (`modules/orders`). Decisions: a bundle line holds its chosen child variants in stock (its own variant holds nothing, so give it a made-to-order stock mode); the `placed` event is public; the order counts on the customer when placed (`orders_count + 1`, first and last order times); `promo_redemptions.order_id` and `reservations.order_id` still have no foreign key to `orders` (the promo and stock tests use ids of orders that do not exist; add both when those tests build real orders, M4-05); the unique index keeps one redemption per order. Orders are numbered from 10001 (counter `order_number`, gap-free: a refused order gives its number back). |

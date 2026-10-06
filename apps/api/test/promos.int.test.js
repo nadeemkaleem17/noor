@@ -252,6 +252,36 @@ describe.skipIf(!dbAvailable)('promos (MySQL, through HTTP)', () => {
       expect((await b.call('DELETE', `/admin/promos/${made.id}`)).status).toBe(409)
     }, 60_000)
 
+    it('customerProblem tells the cart what would stop this customer: nothing, a first-order rule, or their own limit', async () => {
+      const { b } = await signedIn('owner')
+      const open = (await b.call('POST', '/admin/promos', { body: promo('OPEN1', { perCustomerLimit: undefined }) })).body
+      const once = (await b.call('POST', '/admin/promos', { body: promo('ONCE1', { perCustomerLimit: 1, firstOrderOnly: true }) })).body
+      const who = await customer('03001234567')
+      const rule = (/** @type {{ id: string, firstOrderOnly: boolean, perCustomerLimit?: number }} */ p) => ({ id: p.id, firstOrderOnly: p.firstOrderOnly, perCustomerLimit: p.perCustomerLimit ?? null })
+      const problem = (/** @type {{ id: string, firstOrderOnly: boolean, perCustomerLimit?: number }} */ p, /** @type {number} */ ordersCount) => service.customerProblem(t.db, /** @type {never} */ (rule(p)), { id: who.id, ordersCount })
+      expect(await problem(open, 3)).toBeUndefined()
+      expect(await problem(once, 2)).toBe('promo_first_order_only')
+      expect(await problem(once, 0)).toBeUndefined()
+      await redeem(once.id, who)
+      expect(await problem(once, 0)).toBe('promo_customer_limit')
+    }, 60_000)
+
+    it('an edited order changes what its redemption gave; a reversed one and an order with none are left alone', async () => {
+      const { b } = await signedIn('owner')
+      const made = (await b.call('POST', '/admin/promos', { body: promo('EDIT1', { perCustomerLimit: undefined }) })).body
+      const who = await customer('03001234567')
+      const orderId = uuidv7()
+      await redeem(made.id, who, orderId, 1000)
+      const update = (/** @type {string} */ id, /** @type {number} */ discountMinor) => transaction(t.db, (tx) => service.updateRedemption(tx, id, { discountMinor, shippingWaivedMinor: 250 }))
+      await update(orderId, 1800)
+      expect((await t.db.select().from(promoRedemptions))[0]).toMatchObject({ discountMinor: 1800, shippingWaivedMinor: 250 })
+      await update(uuidv7(), 5) // an order without a code: nothing to change
+      expect((await t.db.select().from(promoRedemptions)).map((r) => r.discountMinor)).toEqual([1800])
+      await transaction(t.db, (tx) => service.reverse(tx, orderId))
+      await update(orderId, 9999)
+      expect((await t.db.select().from(promoRedemptions))[0]?.discountMinor).toBe(1800) // a cancelled order's code is not touched
+    }, 60_000)
+
     it('an order has at most one redemption', async () => {
       const { b } = await signedIn('owner')
       const one = (await b.call('POST', '/admin/promos', { body: promo('ONE1', { perCustomerLimit: undefined }) })).body

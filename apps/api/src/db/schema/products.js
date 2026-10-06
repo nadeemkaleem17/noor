@@ -55,6 +55,7 @@ export const products = mysqlTable(
     updatedAt: utc('updated_at').notNull(),
   },
   (t) => [
+    index('products_title_idx').on(t.title),
     index('products_status_published_idx').on(t.status, t.publishedAt),
     index('products_status_price_idx').on(t.status, t.priceMinMinor),
     index('products_status_sales_idx').on(t.status, t.salesCount),

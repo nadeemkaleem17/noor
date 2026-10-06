@@ -10,6 +10,7 @@ import { reviews } from '../../db/schema/reviews.js'
 import { webVitalsDaily } from '../../db/schema/reporting.js'
 import { searchMisses } from '../../db/schema/search.js'
 import { now } from '../../platform/clock.js'
+import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
 import { enqueue } from '../../platform/jobs.js'
@@ -26,7 +27,6 @@ const may = (/** @type {Actor} */ actor, /** @type {string} */ permission) => ac
 const DAY = 86_400_000
 /** Pakistan is five hours ahead of UTC all year. */
 const PKT_HOURS = 5
-const like$ = (/** @type {string} */ s) => s.replace(/[\\%_]/g, '\\$&')
 
 /** The moment a Pakistani day begins. @param {string} day */
 const dayStart = (day) => new Date(`${day}T00:00:00+05:00`)
@@ -202,10 +202,8 @@ export function createReporting({ db, config, settings, media }) {
     /** Orders, products and customers by the ways a person looks for them: each section only for those who may see it, five at most. @param {Actor} actor @param {string} q */
     async search(actor, q) {
       const seeCustomers = may(actor, 'customers:read')
-      const digits = q.replace(/\D/g, '')
-      const national = digits.replace(/^(0092|92|0)/, '')
-      const phone = digits.length >= 4 && national ? `+92${national}%` : undefined
-      const prefix = `${like$(q)}%`
+      const phone = phonePrefix(q)
+      const prefix = likePrefix(q)
 
       const orderRows = may(actor, 'orders:read')
         ? await (async () => {

@@ -10,6 +10,8 @@
     "typecheck": "node --max-old-space-size=4096 node_modules/typescript/lib/tsc.js -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage && node ../../scripts/coverage-groups.mjs ../../.data/cov/coverage-summary.json",
+    "test:perf": "vitest run --config vitest.perf.config.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env src/db/migrate.js",
     "spike:drizzle": "node --env-file-if-exists=.env spikes/m0-06-drizzle.js",

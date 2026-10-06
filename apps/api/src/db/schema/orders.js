@@ -72,6 +72,7 @@ export const orders = mysqlTable(
     index('orders_status_changed_idx').on(t.status, t.statusChangedAt),
     index('orders_customer_idx').on(t.customerId, t.placedAt),
     index('orders_phone_idx').on(t.customerPhone),
+    index('orders_customer_name_idx').on(t.customerName),
     index('orders_placed_idx').on(t.placedAt),
     index('orders_city_idx').on(t.shipCityId, t.placedAt),
     index('orders_tracking_idx').on(t.trackingNumber),

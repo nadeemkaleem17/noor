@@ -77,8 +77,10 @@ describe.skipIf(!dbAvailable)('customers (MySQL, through HTTP)', () => {
       await t.db.update(customers).set({ noCod: true, noCodReason: 'refused', ordersCount: 1 }).where(eq(customers.id, bilal.id))
       const names = async (/** @type {string} */ q) => (await b.call('GET', `/admin/customers${q}`)).body.items.map((/** @type {{ name: string }} */ c) => c.name)
       expect(await names('?q=sana')).toEqual(['Sana Malik'])
-      expect(await names('?q=example.com')).toEqual(['Sana Malik'])
-      expect(await names('?q=7654')).toEqual(['Bilal Raza'])
+      expect(await names('?q=sana@example.com')).toEqual(['Sana Malik']) // an e-mail address whole: a fragment would read every row
+      expect(await names('?q=example.com')).toEqual([])
+      expect(await names('?q=0321765')).toEqual(['Bilal Raza']) // the start of the number, typed as people type it
+      expect(await names('?q=7654')).toEqual([])
       expect(await names('?cityName=Karachi')).toEqual(['Bilal Raza'])
       expect(await names('?flag=vip')).toEqual(['Sana Malik'])
       expect(await names('?flag=no_cod')).toEqual(['Bilal Raza'])

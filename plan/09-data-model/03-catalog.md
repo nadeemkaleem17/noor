@@ -218,7 +218,7 @@ A category with no rows inherits its nearest ancestor's rows (resolved in the se
 
 Checks: `products_mto_chk` (`mto_lead_min_days <= mto_lead_max_days`), `products_colorway_chk` (`style_id IS NULL OR colorway_label IS NOT NULL`), `products_price_chk` (`price_min_minor <= price_max_minor`).
 
-Indexes: `products_status_published_idx (status, published_at)`, `products_status_price_idx (status, price_min_minor)`, `products_status_sales_idx (status, sales_count)`, `products_primary_category_idx (primary_category_id, status)`, `products_style_idx (style_id)`, `products_kind_idx (kind, status)`, `products_publish_at_idx (status, publish_at)`, `products_updated_idx (updated_at)`.
+Indexes: `products_title_idx (title)` (the admin search by the start of a title), `products_status_published_idx (status, published_at)`, `products_status_price_idx (status, price_min_minor)`, `products_status_sales_idx (status, sales_count)`, `products_primary_category_idx (primary_category_id, status)`, `products_style_idx (style_id)`, `products_kind_idx (kind, status)`, `products_publish_at_idx (status, publish_at)`, `products_updated_idx (updated_at)`.
 
 Derived columns are written only by `catalog.recomputeProductCache(tx, productId)`, called after any variant, stock or review change (stock via the `inventory.changed` handler). They exist so listings sort and filter without joining variants or stock.
 
@@ -388,5 +388,6 @@ When a handle changes, the old one is inserted here. If a new entity later takes
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-12: index `products_title_idx (title)` (migration 0021): the admin search matches a title by its start and had no index to do it with (found by the query-plan run, DOC-13 section 6.3). |
 | 2026-10-02 | Initial version (Phase 5, part 1) |
 | 2026-10-02 | Phase 7 consistency review: error code `in_use` |

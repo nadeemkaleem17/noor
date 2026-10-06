@@ -134,6 +134,27 @@
       "when": 1791288976525,
       "tag": "0018_reporting",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1791309778869,
+      "tag": "0019_orders_customer_name_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1791310016216,
+      "tag": "0020_customers_email_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1791310328015,
+      "tag": "0021_products_title_idx",
+      "breakpoints": true
     }
   ]
 }
