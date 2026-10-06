@@ -86,6 +86,15 @@ ExportInfo = { id: Id, type: string, status: ExportStatus, rowCount?: int, reque
 
 A user-started job's state is stored on its `exports` row (type `bulk_result` for bulk actions, DOC-09.1 §2.7), so it survives the `jobs` row being deleted on success; `:id` in `admin.jobs.get` is that row's id.
 
+### 4.1 Reports from the browsers (public, bucket `default`, answer 204)
+
+| Key | Method & path | Body | Notes |
+|---|---|---|---|
+| `reporting.vitals` | `POST /vitals` | `{ name: 'LCP' \| 'INP' \| 'CLS', value: number ≥ 0, route: string ≤ 40, navigationType?: string }` | Counted in `web_vitals_daily` by Pakistan day, page (`home`, `category`, `product`, `cart`, `checkout`, `order`, `page`; anything else is `other`), metric and size bucket (DOC-13 §8.6). Nothing about the visitor is stored |
+| `reporting.clientError` | `POST /client-errors` | `{ message, stack?, route, app: 'storefront' \| 'admin', release }`; text is cut to 1,000 / 2,500 / 100 / 40 characters | Written to the log at `error` with the request id; not stored |
+
+An extra field in either body is a `400`: nothing that names a person is accepted.
+
 ## 5. Health (no auth, not under `/admin`, not rate-limited, not logged at `info`)
 
 | Method & path | Response | Meaning |
@@ -107,9 +116,9 @@ The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied*
 
 ## 8. Acceptance checklist
 
-- [ ] `admin.dashboard.todo.toConfirm.count` equals `admin.orders.counts.pending_confirmation`.
-- [ ] `netSales` for a seeded range equals a hand-written SQL sum (test), and excludes cancelled and returned orders.
-- [ ] `admin.search` as a `catalog` user returns only `products`.
+- [x] `admin.dashboard.todo.toConfirm.count` equals `admin.orders.counts.pending_confirmation`. (`reporting.int.test.js`.)
+- [x] `netSales` for a seeded range equals a hand-written SQL sum (test), and excludes cancelled and returned orders. (`reporting.int.test.js`: against a sum in SQL, with a cancelled order left out, and with days at the Pakistan day boundary.)
+- [x] `admin.search` as a `catalog` user returns only `products`. (`reporting.int.test.js`: orders and customers come back empty.)
 - [ ] Every search path uses an index (`EXPLAIN` in the query-plan test set, DOC-13).
 - [ ] A bulk job's result is still readable 10 minutes after it finished.
 - [ ] `/readyz` returns 503 with `failing: ["migrations"]` when a migration is pending.
@@ -126,6 +135,7 @@ The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied*
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-11: `modules/reporting` built: `admin.nav.counts`, `admin.dashboard.todo`, `.summary`, `.topProducts`, `.zeroSearches`, `admin.search`, `admin.jobs.listDead`, `admin.jobs.retry`, `admin.system.info` (the real queue numbers), `reporting.vitals`, `reporting.clientError`, the job `reporting.sales_counts` (nightly 01:00 in Pakistan: units in delivered orders of the last 90 days, minus what was returned) and `reporting.cleanup` (counts older than 180 days). **Not built:** `admin.jobs.get` and `admin.exports.*`: nothing starts a user job yet (exports and bulk answer at once, DOC-10.6), so there is no state to report; they come with the first background export. Decisions: the nav badge `ordersNeedingAction` is `pending_confirmation` plus `confirmed`; the to-do `toDispatch` leaves out an order with a made-to-order line whose shortest lead time has not passed since confirmation; `lowStock` and `soldOut` count active products by their stock status, not variants; `summary` and `topProducts` need `orders:read` as well as `dashboard:read` (`403` otherwise); `deliveredRate` and `cancelledRate` are shares of the orders placed in the period that reached a final status (absent below 20); `cancelledByReason` is the cancel reasons plus, for returned orders, the return type of the return event; the week bucket starts on Monday; `topProducts` counts every order not cancelled or returned, delivered or not; the search matches by prefix (`LIKE 'x%'`), by exact SKU, order number and tracking number, and by name or phone only for those who may read customers (an order is then found by name or phone too). The 75th percentile of a metric is `reporting.p75(route, metric, days)`; the table in settings waits for the screen (M6). Every `GROUP BY` uses the same text as the column it lists (the database runs with `ONLY_FULL_GROUP_BY`). |
 | 2026-10-02 | Initial version (Phase 5, part 2) |
 | 2026-10-02 | Phase 5 part 3: public `POST /api/v1/vitals` (storefront field metrics) is defined in DOC-12 §6.1 and belongs to this file's `reporting` module; body `{ name: 'LCP' | 'INP' | 'CLS', value: number, route: string, navigationType?: string }`, 204, bucket `default` |
 | 2026-10-02 | Phase 6: public `POST /api/v1/client-errors` (browser error intake, DOC-13 §8.5) belongs to this file: body `{ message: string, stack?: string, route: string, app: 'storefront' | 'admin', release: string }` (≤ 4 kB), 204, bucket `default` |

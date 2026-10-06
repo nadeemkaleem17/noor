@@ -32,6 +32,7 @@ const denyStaff = /** @type {Authorize} */ (async () => null)
  * @property {R extends { auth: 'staff' | 'staff-any' | 'staff-pending'; } ? Actor : null} actor
  * @property {R extends { idempotent: true; } ? string : undefined} idempotencyKey the Idempotency-Key header, already checked to be a UUID
  * @property {string} requestId
+ * @property {{ error: (o: object, msg: string) => void }} log the request's logger
  * @property {HttpInfo} http
  * @property {(bucket: string, by: import('./rate-limit.js').By, subject: string) => Promise<void>} limit counts one request against a rate-limit rule the route knows the subject of (a phone, an order number ...); throws `rate_limited`
  */
@@ -152,6 +153,7 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
           body: req.body,
           actor: (/** @type {import('fastify').FastifyRequest & { actor?: Actor; }} */ (req)).actor ?? null,
           requestId: req.id,
+          log: req.log,
           idempotencyKey: def.idempotent ? req.headers['idempotency-key'] : undefined,
           /** @param {string} bucket @param {import('./rate-limit.js').By} by @param {string} subject */
           limit: async (bucket, by, subject) => void (await limiter.consume(bucket, by, subject)),

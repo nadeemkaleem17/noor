@@ -13,7 +13,7 @@ import { orders } from '../src/db/schema/orders.js'
 import { carts } from '../src/db/schema/cart.js'
 import { notificationLog } from '../src/db/schema/notifications.js'
 import { paymentEvents, payments } from '../src/db/schema/payments.js'
-import { counters, idempotencyKeys, jobs, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
+import { counters, idempotencyKeys, jobs, jobsDead, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
 import { promoRedemptions } from '../src/db/schema/promotions.js'
 import { add, createShop, shop } from './support/shop.js'
 import { reviewPhotos, reviews } from '../src/db/schema/reviews.js'
@@ -40,7 +40,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.db.delete(loginAttempts)
     await t.db.delete(reviewPhotos)
     await t.db.delete(reviews)
-    for (const table of [notificationLog, paymentEvents, payments, promoRedemptions, carts, outboxEvents, jobs, idempotencyKeys, rateLimitHits]) await t.db.delete(table)
+    for (const table of [notificationLog, paymentEvents, payments, promoRedemptions, carts, outboxEvents, jobs, jobsDead, idempotencyKeys, rateLimitHits]) await t.db.delete(table)
     await t.db.delete(orders) // the orders of the review and order samples; their lines go with them
     await t.db.delete(counters)
     await t.db.delete(media)
@@ -437,6 +437,16 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       }
       await t.migrate.db.delete(auditLog)
       return { b: S.owner, id, courierId: courier.body.id, variantId: p.variantId, cityId: S.cityId, methodId: S.methodId }
+    }
+    samples['admin.jobs.retry'] = {
+      prepare: async () => {
+        const s = await signedIn('owner')
+        const id = uuidv7()
+        const at = new Date()
+        await t.db.insert(jobsDead).values({ id, type: 'notify.order', payload: {}, runAt: at, attempts: 8, maxAttempts: 8, lastError: 'connection refused', createdAt: at, diedAt: at })
+        return { ...s, id }
+      },
+      act: ({ b, id }) => b.call('POST', `/admin/jobs/dead/${id}/retry`),
     }
     samples['admin.orders.transition'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', `/admin/orders/${id}/transitions`, { body: { version: 1, to: 'confirmed', via: 'call' } }) }
     samples['admin.orders.edit'] = { prepare: withOrder, act: ({ b, id, cityId }) => b.call('PUT', `/admin/orders/${id}`, { body: { version: 1, shippingAddress: { cityId, address: 'Another house, Street 9, DHA' } } }) }

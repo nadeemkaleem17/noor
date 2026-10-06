@@ -13,6 +13,7 @@ import { createAdminOrders } from './orders/admin.js'
 import { createOrdersService, customerOrders } from './orders/index.js'
 import { createPaymentsService, createProviders } from './payments/index.js'
 import { createPromotionsService } from './promotions/index.js'
+import { createReporting } from './reporting/index.js'
 import { createReviewsService } from './reviews/index.js'
 import { createSearch } from './search/index.js'
 import { createSettingsService } from './settings/index.js'
@@ -47,5 +48,6 @@ export function createServices({ db, config, storage = createStorage(config), pr
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
   const notifications = createNotifications({ db, config, settings, mailer })
   const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
-  return { adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  const reporting = createReporting({ db, config, settings, media })
+  return { reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

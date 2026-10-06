@@ -3,14 +3,14 @@
 import i18next from 'i18next'
 import ICU from 'i18next-icu'
 import { defaultLocale } from './locale.js'
-import enCommon from '../locales/en/common.json'
-import enErrors from '../locales/en/errors.json'
-import enNotifications from '../locales/en/notifications.json'
-import enStorefront from '../locales/en/storefront.json'
-import urCommon from '../locales/ur/common.json'
-import urErrors from '../locales/ur/errors.json'
-import urNotifications from '../locales/ur/notifications.json'
-import urStorefront from '../locales/ur/storefront.json'
+import enCommon from '../locales/en/common.json' with { type: 'json' }
+import enErrors from '../locales/en/errors.json' with { type: 'json' }
+import enNotifications from '../locales/en/notifications.json' with { type: 'json' }
+import enStorefront from '../locales/en/storefront.json' with { type: 'json' }
+import urCommon from '../locales/ur/common.json' with { type: 'json' }
+import urErrors from '../locales/ur/errors.json' with { type: 'json' }
+import urNotifications from '../locales/ur/notifications.json' with { type: 'json' }
+import urStorefront from '../locales/ur/storefront.json' with { type: 'json' }
 
 export const namespaces = /** @type {const} */ (['common', 'storefront', 'errors', 'notifications'])
 
