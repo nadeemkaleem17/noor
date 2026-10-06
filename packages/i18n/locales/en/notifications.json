@@ -1,0 +1,22 @@
+{
+  "order": {
+    "placed": "Hi {name}, we received your order {orderNo} for {total}. We will contact you shortly to confirm it. Track it here: {link}",
+    "confirm_request": "Hi {name}, this is {store}. Please confirm your order {orderNo}: {items}. Total {total}, cash on delivery to {city}. Reply YES to confirm.",
+    "confirmed": "Thank you {name}. Order {orderNo} is confirmed and will be dispatched soon. Expected delivery: {eta}. {link}",
+    "confirmed_mto": "Thank you {name}. Order {orderNo} is confirmed. Your piece will be made in about {leadDays} days. {link}",
+    "dispatched": "Order {orderNo} is on its way with {courier}{tracking, select, none {} other {, tracking no. {tracking}}}. {amountDue, select, none {} other {Please keep {amountDue} ready for the rider. }}{link}",
+    "delivered": "Hi {name}, order {orderNo} was delivered. We hope you love it. See your order: {link}",
+    "cancelled": "Order {orderNo} has been cancelled. If this is a mistake, reply to this message.",
+    "returned": "We have received order {orderNo} back. Contact us if you would like to reorder.",
+    "bank_details": "Order {orderNo}: please transfer {total} to {account} and send the receipt here with your order number."
+  },
+  "staff": {
+    "new_order": {
+      "subject": "New order {orderNo} ({total})",
+      "body": "New order {orderNo} for {total} to {city}, paid by {method}. Open it: {adminLink}"
+    }
+  },
+  "email": {
+    "subject": "{store}: order {orderNo}"
+  }
+}

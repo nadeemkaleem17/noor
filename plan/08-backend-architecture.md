@@ -278,8 +278,8 @@ UPDATE jobs SET locked_at = NOW(3), locked_by = ?, attempts = attempts + 1 WHERE
 
 | Job type | Trigger | Owner | Notes |
 |---|---|---|---|
-| `notify.customer` | order events | notifications | One per (order, template, channel); provider chosen in DOC-12; while no provider is configured the job records the rendered message in `notification_log` with status `skipped` so staff can copy it |
-| `notify.staff` | `order.placed`, low stock | notifications | Email when configured; otherwise only the admin badge counts |
+| `notify.order` | `order.placed`, `confirmed`, `dispatched`, `delivered`, `cancelled`, `returned` | notifications | One message per (order, template, channel) for the customer, plus the staff email on `order.placed`; while no provider is configured the job records the rendered message in `notification_log` with status `skipped` so staff can copy it. An email that fails fails the job (retried with backoff) |
+| `notifications.cleanup` | daily 21:30 | notifications | Deletes messages older than 90 days |
 | `search.reindex_product` | product/inventory events | search | Rebuilds one `product_search` row |
 | `cache.purge` | content/product/settings events | platform | Calls the CDN purge API by tag (DOC-14); no-op locally |
 | `media.process` | `media.confirm` | media | Validate magic bytes, strip EXIF, record dimensions, generate LQIP |

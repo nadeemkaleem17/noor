@@ -260,9 +260,9 @@ Recorded per provider in §11 with the date and the document version read.
 
 ## 10. Acceptance checklist
 
-- [ ] With no provider environment variables set, the full flow works locally: place a COD order, see `skipped` messages on the order, confirm, dispatch with a typed tracking number, deliver.
-- [ ] Every template renders in English with sample variables under 600 characters and contains no address or full phone (snapshot test).
-- [ ] A repeated `notify.customer` job produces one `notification_log` row and (with a fake channel) one send.
+- [x] With no provider environment variables set, the full flow works locally: place a COD order, see `skipped` messages on the order, confirm, dispatch with a typed tracking number, deliver. (`notifications.int.test.js`: placed, confirmed, dispatched, delivered, each once as `skipped`; the typed tracking number and the order page are M6.)
+- [x] Every template renders in English with sample variables under 600 characters and contains no address or full phone (snapshot test). (`notification-templates.test.js`.)
+- [x] A repeated `notify.customer` job produces one `notification_log` row and (with a fake channel) one send. (`notifications.int.test.js`; the job is `notify.order`; with a fake mailer, a failed send is retried and sent once.)
 - [x] The fake payment provider's webhook with a bad signature is rejected and stored nowhere; a valid duplicate is a no-op.
 - [ ] `track()` is a no-op and loads no script when analytics is not configured; a Playwright run asserts zero third-party requests.
 - [x] Enabling bank transfer shows instructions on the order page and activates the reservation-expiry job with the 48-hour window. (The instructions come back in the `orders.create` answer; the order page that shows them again is M4-07 and M5-07. `payments.int.test.js`.)
@@ -290,5 +290,6 @@ Recorded per provider in §11 with the date and the document version read.
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-08: `modules/notifications` (`templates.js` renders the `notifications` namespace of `@noor/i18n`; `mailer.js` is `nodemailer` over `MAIL_URL`, none when unset; `service.js` writes and sends). One job, `notify.order`, handles the six order events (`order.placed`, `confirmed`, `dispatched`, `delivered`, `cancelled`, `returned`) and replaces `notify.customer` and `notify.staff`. A message is rendered from the order **as it is when the job runs**. `notification_log.channel` is the channel the message was meant for (`whatsapp`, `email`): with no WhatsApp provider the row is `skipped` and keeps its text; email is `sent`, `failed` (the job fails and is retried) or `skipped` without `MAIL_URL`. A bank transfer order gets `order.bank_details` instead of `order.placed`. Staff get `staff.new_order` by email at `store.notifications.staffEmails` (a row per address). Money in messages is `Rs 7,240` with an ordinary space. Not wired yet: `order.confirm_request` (text exists; used by the staff WhatsApp button in M4-10 through `notifications.preview`), `stock.back`, `staff.low_stock`, `staff.job_failed`, `staff.invite`, `staff.password_reset`; Urdu texts (a missing key falls back to English). The delivered message carries the order link; the review link comes with M4-09. Rows older than 90 days are deleted by the daily job `notifications.cleanup`. |
 | 2026-10-06 | M4-06: the provider registry (`createProviders`) holds `cod`, `manual`, `bank_transfer` and, for tests, a `fake` gateway registered under the method it stands in for. The webhook route is `POST /api/v1/webhooks/:provider`: it reads the raw bytes (the JSON parser is removed in that scope), verifies the signature, stores the event once (unique per provider and event id), answers 200, and a job applies it. A provider with no verifier (`cod`, `bank_transfer`) answers 404. |
 | 2026-10-02 | Initial version (Phase 5, part 3) |

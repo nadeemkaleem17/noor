@@ -5,16 +5,18 @@ import ICU from 'i18next-icu'
 import { defaultLocale } from './locale.js'
 import enCommon from '../locales/en/common.json'
 import enErrors from '../locales/en/errors.json'
+import enNotifications from '../locales/en/notifications.json'
 import enStorefront from '../locales/en/storefront.json'
 import urCommon from '../locales/ur/common.json'
 import urErrors from '../locales/ur/errors.json'
+import urNotifications from '../locales/ur/notifications.json'
 import urStorefront from '../locales/ur/storefront.json'
 
-export const namespaces = /** @type {const} */ (['common', 'storefront', 'errors'])
+export const namespaces = /** @type {const} */ (['common', 'storefront', 'errors', 'notifications'])
 
 const resources = {
-  en: { common: enCommon, storefront: enStorefront, errors: enErrors },
-  ur: { common: urCommon, storefront: urStorefront, errors: urErrors },
+  en: { common: enCommon, storefront: enStorefront, errors: enErrors, notifications: enNotifications },
+  ur: { common: urCommon, storefront: urStorefront, errors: urErrors, notifications: urNotifications },
 }
 
 /**

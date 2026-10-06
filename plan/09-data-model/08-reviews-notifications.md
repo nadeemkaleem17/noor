@@ -96,9 +96,9 @@ Each customer message also produces an `order_events` row of type `notification`
 
 - [ ] A second review for the same order line is rejected by the unique index (`review_already_submitted`).
 - [ ] Approving, then rejecting a review returns the product's rating fields to their previous values.
-- [ ] Running the same `notify.customer` job twice creates one `notification_log` row.
-- [ ] With no provider configured, placing an order creates a `skipped` row whose body staff can copy from the order page.
-- [ ] Anonymising a customer clears `recipient` and `body` of their notification rows.
+- [x] Running the same `notify.customer` job twice creates one `notification_log` row. (`notifications.int.test.js`; the job is `notify.order`.)
+- [x] With no provider configured, placing an order creates a `skipped` row whose body staff can copy from the order page. (The row and its text are tested; the Copy button on the order page is M6-02.)
+- [x] Anonymising a customer clears `recipient` and `body` of their notification rows. (`notifications.int.test.js`.)
 
 ## 6. Open questions and assumptions
 
@@ -112,4 +112,5 @@ Each customer message also produces an `order_events` row of type `notification`
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-08: `notification_log` built (migration 0016). `channel` is the intended channel (`whatsapp`, `email`; `sms` unused), so a `skipped` row says which was not available. Only the customer's messages add an `order_events` row of type `notification`; the staff email does not. Anonymising a customer (`orders/customer-view.js`, now wired into `customers`) rewrites the personal fields of the customer's **settled** orders (delivered, cancelled, returned) and sets `recipient` and `body` of those orders' messages to `(removed)`; an order that is still open blocks it. |
 | 2026-10-02 | Initial version (Phase 5, part 1) |

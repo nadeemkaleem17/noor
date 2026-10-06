@@ -35,6 +35,9 @@ const Env = z.object({
   IMG_BASE_URL: z.url().default('http://localhost:3000/img'),
   /** Public address of the storefront: preview links point here. */
   STOREFRONT_URL: z.url().default('http://localhost:5174'),
+  /** Where customer and staff emails go out (`smtp://user:pass@host:587`; Mailpit locally). Without it the messages are only written to the log. */
+  MAIL_URL: z.string().min(1).optional(),
+  MAIL_FROM: z.string().min(3).default('Rubaya <no-reply@rubaya.pk>'),
   /** Owners and managers must use two-step sign-in. Can be switched off only in local development and CI (the check below). */
   TWO_FACTOR_REQUIRED: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
   /** Secret that tracking tokens are derived from (HMAC of the order id). Staging and production must set it; local and CI derive one from DATA_ENCRYPTION_KEY. Changing it breaks every existing order link. */
