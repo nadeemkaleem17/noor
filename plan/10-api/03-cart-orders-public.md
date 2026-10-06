@@ -186,12 +186,12 @@ Content-Type: application/problem+json
 
 ## 7. Acceptance checklist
 
-- [ ] `orders.create` body containing `total`, `discount`, `shippingFee` or `unitPrice` → `400 validation_failed` (ADR-0020).
-- [ ] The five ADR-0020 acceptance tests pass against these endpoints (duplicate-variant lines, 50 concurrent last-unit orders, repeated idempotency key, money field rejected, invalid transition).
-- [ ] `expectedTotal` different from the server total → `409 price_changed` with the new cart and no order created.
-- [ ] `orders.track`: wrong phone, wrong number and malformed input return byte-identical bodies and the same status.
-- [ ] `OrderPublic` for any order contains no unmasked phone, address or email (schema-level test plus a regex scan of the response).
-- [ ] The derived tracking token for order A never validates order B, and changing `TRACKING_KEY` invalidates all tokens (documented in runbook R-6).
+- [x] `orders.create` body containing `total`, `discount`, `shippingFee` or `unitPrice` → `400 validation_failed` (ADR-0020). (`orders.int.test.js`.)
+- [x] The five ADR-0020 acceptance tests pass against these endpoints (duplicate-variant lines, 50 concurrent last-unit orders, repeated idempotency key, money field rejected, invalid transition). (`orders.int.test.js`, `order-changes.int.test.js`.)
+- [x] `expectedTotal` different from the server total → `409 price_changed` with the new cart and no order created. (`orders.int.test.js`.)
+- [x] `orders.track`: wrong phone, wrong number and malformed input return byte-identical bodies and the same status. (`public-orders.int.test.js`: six kinds of failure, one answer; five an hour per number, ten per address.)
+- [x] `OrderPublic` for any order contains no unmasked phone, address or email (schema-level test plus a regex scan of the response). (`public-orders.int.test.js`: the schema has no field for them, and the answer is scanned for the phone, street, name, email and ids.)
+- [x] The derived tracking token for order A never validates order B, and changing `TRACKING_KEY` invalidates all tokens (documented in runbook R-6). (`public-orders.int.test.js`; the runbook entry R-6 is M7.)
 - [ ] A review cannot be created for an order that is not `delivered`.
 
 ## 8. Open questions and assumptions
@@ -206,6 +206,7 @@ Content-Type: application/problem+json
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-07 built (`modules/orders/public.js`): `orders.getByToken`, `orders.cancelByToken`, `orders.switchToCod`, `orders.track`. Differences from section 4: `orders.track` takes the phone as a plain string (a malformed phone must fail like a wrong one, so the contract does not reject it with a different answer); the `locale` query is not read (the answer holds nothing that is translated; `locale` is the order's); `orders.retryPayment` is not built (no online method at launch, A-07); `OrderPublic.lines[].review` waits for M4-09; the customer can cancel only while nothing has been paid (otherwise "WhatsApp us"), and the cancel note is kept on the order's event. A link is valid only if its hash is stored **and** it equals the token derived under the current `TRACKING_KEY`, so rotating the key ends every old link. `customizationSummary` is built from the keys stored on the line ("chest 38"), not the form labels. `orders.getByToken` and the actions answer `404 not_found` for an unknown token. |
 | 2026-10-06 | M4-04 built (`modules/orders`): `orders.create`. The handler context has `idempotencyKey` (checked to be a UUID) for routes marked `idempotent`. Conflict responses carry `cart` (priced for the same city and method, with pictures). `TRACKING_KEY` is a new setting: required in staging and production, derived from `DATA_ENCRYPTION_KEY` in local and CI. A prepaid method with a bank account shows `payment.instructions`; there are no redirects yet (no provider). A bundle holds its chosen children in stock. The checkout bucket also counts five orders per phone number in ten minutes. |
 | 2026-10-06 | M4-03 built (`modules/cart`): the seven cart routes. Handlers read the token from `X-Cart-Token` (new `http.header(name)` in the handler context); every `cart` and `order-token` route answers `Cache-Control: private, no-store`. Additions to the shape: `Cart.promoProblem` (why a code on the cart no longer applies). `QuoteBody.paymentMethod` is accepted and not used yet (every method is listed with whether it is allowed). `locale` is stored as `en` and not used until product translations are read by the cart. Customisation is checked against the product: its custom-size form (`measurements`, `notes` only if the form allows them) and, for a bundle, one variant for every child. Carts idle for 30 days are deleted by the job `cart.cleanup` (02:45 PKT). |
 | 2026-10-02 | Initial version (Phase 5, part 2). Order body has no `cartId` (cart from `X-Cart-Token`); tracking token is HMAC-derived; adds `TRACKING_KEY` secret |

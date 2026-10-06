@@ -11,6 +11,10 @@ export const insertLines = (db, rows) => db.insert(orderLines).values(rows)
 export const insertEvent = (db, row) => db.insert(orderEvents).values(row)
 /** @param {Db} db @param {string} id */
 export const orderById = async (db, id) => (await db.select().from(orders).where(eq(orders.id, id)))[0]
+/** By the hash of the customer's token (unique index). @param {Db} db @param {string} hash */
+export const orderByTokenHash = async (db, hash) => (await db.select().from(orders).where(eq(orders.trackingTokenHash, hash)))[0]
+/** By the number alone (unique index); the prefix is the caller's to compare. @param {Db} db @param {number} number */
+export const orderByNumber = async (db, number) => (await db.select().from(orders).where(eq(orders.number, number)))[0]
 /** @param {Db} db @param {string} orderId */
 export const linesOf = (db, orderId) => db.select().from(orderLines).where(eq(orderLines.orderId, orderId)).orderBy(orderLines.position)
 

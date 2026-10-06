@@ -40,6 +40,6 @@ export function createServices({ db, config, storage = createStorage(config), pr
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
   const cart = createCartService({ db, media, stock: inventory.stock, shipping, settings, promotions, customers })
   const payments = createPaymentsService({ db, providers })
-  const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments })
+  const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media })
   return { payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

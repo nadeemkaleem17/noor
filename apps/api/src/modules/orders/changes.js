@@ -80,7 +80,16 @@ export function createChanges({ inventory, promotions, customers, shipping, sett
     return invoiceNumberOf(year, await nextValue(/** @type {never} */ (tx), `invoice_${year}`))
   }
 
+  /** Would cash on delivery be allowed for this order: enabled, under the limit, and the customer not blocked? @param {Db} tx @param {{ totalMinor: number, customerId: string }} order */
+  async function codBlocked(tx, order) {
+    const cod = (await settings.value('payments', tx)).value
+    const method = cod.methods.find((m) => m.type === 'cod')
+    return !method?.enabled || (cod.codLimitMinor != null && order.totalMinor > cod.codLimitMinor) || (await people.noCod(tx, order.customerId))
+  }
+
   return {
+    codBlocked,
+
     /**
      * Moves an order along one edge of the table with the guards and effects of that edge. A partial return of a delivered order keeps it `delivered`.
      * @param {Db} tx @param {string} orderId @param {Change} input @param {OrderActor} actor @param {RequestInfo} [req]
@@ -127,10 +136,7 @@ export function createChanges({ inventory, promotions, customers, shipping, sett
             data = { reason: input.reason }
           } else {
             // an unpaid prepaid order goes to cash on delivery: only if cash on delivery would have been allowed for it
-            const cod = (await settings.value('payments', tx)).value
-            const method = cod.methods.find((m) => m.type === 'cod')
-            const blocked = !method?.enabled || (cod.codLimitMinor != null && order.totalMinor > cod.codLimitMinor) || (await people.noCod(tx, customerId))
-            if (blocked) throw new DomainError('payment_method_not_allowed', { reason: 'cod_not_available' })
+            if (await codBlocked(tx, order)) throw new DomainError('payment_method_not_allowed', { reason: 'cod_not_available' })
             patch = { paymentMethod: 'cod' }
             data = { switchedFrom: order.paymentMethod }
             await inventory.keepReservation(tx, orderId)

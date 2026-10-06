@@ -15,6 +15,7 @@ import { record } from '../audit/index.js'
 import { holdsOf } from './holds.js'
 import { createChanges } from './changes.js'
 import { createEdits } from './edit.js'
+import { createPublicOrders } from './public.js'
 import * as repo from './repository.js'
 import { allowedActions, confirmable, riskMarkers } from './rules.js'
 import { trackingHash, trackingToken } from './tracking.js'
@@ -37,9 +38,10 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
  * @param {{ upsertByPhone: (tx: Db, c: { phone: string, name: string, email?: string, city?: string }) => Promise<{ id: string, ordersCount: number }>, recordConsent: (tx: Db, id: string, note: string) => Promise<void>, applyOrderChange: (tx: Db, id: string, change: { orders?: number, delivered?: number, refused?: number, cancelled?: number, spentMinor?: number, orderedAt?: Date }) => Promise<void>, noCod: (x: Db, id: string) => Promise<boolean>, counters: (x: Db, id: string) => Promise<{ ordersCount: number, deliveredCount: number, refusedCount: number, noCod: boolean, vip: boolean } | undefined> }} deps.customers
  * @param {{ value: (key: 'store' | 'checkout' | 'payments', x: Db) => Promise<{ value: any }> }} deps.settings
  * @param {{ cityName: (x: Db, id: string) => Promise<string | undefined>, deliveryOptions: (x: Db, cityId: string) => Promise<import('../cart/pricing.js').DeliveryOption[]>, courierById: (x: Db, id: string) => Promise<{ id: string, name: string, enabled: boolean, trackingRequired: boolean } | undefined> }} deps.shipping
+ * @param {{ imagesFor: (ids: string[]) => Promise<Record<string, import('@noor/contract').Image>> }} deps.media
  * @param {{ createInitial: (tx: Db, order: { id: string, totalMinor: number, depositDueMinor: number, paymentMethod: string, numberPrefix: string, number: number }, o?: { bank?: { accountTitle: string, bank: string, accountNumber: string, instructions?: string } }) => Promise<{ instructions?: string, redirectUrl?: string, expiresAt: Date | null }>, record: (tx: Db, orderId: string, input: { kind: 'deposit' | 'balance' | 'full' | 'refund', amount: number, method: string, reference?: string, paidAt?: Date, proofMediaId?: string }, staffId: string | null) => Promise<{ paymentId: string, paidMinor: number, refundedMinor: number, paymentStatus: string }>, applyEvent: (tx: Db, eventId: string) => Promise<{ orderId: string, captured: boolean } | null>, unpaidPastDeadline: (x: Db) => Promise<string[]>, onDelivered: (tx: Db, orderId: string, o: { cashReceived: boolean }) => Promise<unknown>, onClosed: (tx: Db, orderId: string) => Promise<unknown>, recompute: (tx: Db, orderId: string) => Promise<unknown>, switchToCod: (tx: Db, order: { id: string, totalMinor: number, depositDueMinor: number, paymentMethod: string, numberPrefix: string, number: number }) => Promise<void>, onEdited: (tx: Db, orderId: string) => Promise<unknown> }} deps.payments
  */
-export function createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments }) {
+export function createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media }) {
   /**
    * Everything in one transaction. The caller wraps it in the idempotency protocol; a refusal rolls all of it back.
    * @param {Db} tx @param {string | undefined} token @param {CreateOrderBody} body
@@ -149,8 +151,11 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     return false
   }
 
+  const customerView = createPublicOrders({ db, config, changes, settings, shipping: /** @type {never} */ (shipping), media })
+
   return {
     ...changes,
+    ...customerView,
     edit: edits.edit,
     previewEdit: edits.preview,
 
