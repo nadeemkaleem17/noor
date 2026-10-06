@@ -91,11 +91,11 @@ Site settings, store config and categories come from the shell loader (`useRoute
 
 ## 6. Acceptance checklist
 
-- [ ] With all `SiteSettings` home fields empty and two products, the page renders header, category tiles (if ≥ 2) and footer with no empty frames and one `<h1>`.
-- [ ] LCP element on a 360 px viewport is the first hero image and it is in the server HTML with `fetchpriority="high"`.
-- [ ] The carousel pauses under `prefers-reduced-motion` and has a working pause button.
-- [ ] A hero `buttonLink` of `javascript:alert(1)` renders no button.
-- [ ] Response has `Cache-Control: public, s-maxage=60, stale-while-revalidate=600` and no `Set-Cookie`.
+- [x] With all `SiteSettings` home fields empty and two products, the page renders header, category tiles (if ≥ 2) and footer with no empty frames and one `<h1>`. (`apps/storefront/test/shell.server.test.js`, with a stand-in API: two products and nothing else give the header, the footer, no section, and a visually hidden `<h1>` with the shop name. Category tiles need pictures on the categories: none in that test.)
+- [x] LCP element on a 360 px viewport is the first hero image and it is in the server HTML with `fetchpriority="high"`. (Same test: the first hero picture is the only `<img>` with `fetchPriority="high"` and the only eager one, and React adds the preload link for it. Not measured with Lighthouse.)
+- [x] The carousel pauses under `prefers-reduced-motion` and has a working pause button. (The pause button is tested in `@noor/ui`. The pause under reduced motion is in `Carousel` itself and has no test of its own yet.)
+- [x] A hero `buttonLink` of `javascript:alert(1)` renders no button. (Same test, and the loader drops the address and its words before the page data is sent.)
+- [x] Response has `Cache-Control: public, s-maxage=60, stale-while-revalidate=600` and no `Set-Cookie`. (`shell.server.test.js`.)
 
 ## 7. Open questions and assumptions
 
@@ -109,5 +109,6 @@ Site settings, store config and categories come from the shell loader (`useRoute
 
 | Date | Change |
 |---|---|
+| 2026-10-07 | M5-02 built (`app/routes/home.jsx`, `features/home/sections.jsx`, `features/catalog/product-card.jsx`). Notes: (1) the product card is built here, since the home needs it; M5-03 reuses it (its wishlist button comes with M5-08). (2) The home loader waits for the new arrivals and the featured collections and streams the bestsellers; for a visitor they arrive after the rest and are moved into place by a script, so with JavaScript off they are in the document but hidden. A section that cannot be loaded is left out. (3) The home grids load no picture eagerly: the first hero picture is the one `priority` image of the page (the listing pages' first four cards are eager, `ProductGrid eager`). (4) A hero, promo or editorial button without a safe address loses its words and its address in the loader, so the page data never holds an address that must not be followed; `SafeLinkButton` checks again. (5) The trust strip reads `shipping.freeAboveFrom`, whether cash on delivery is on, `policies.returnsDays` and the WhatsApp number from the store settings; an item with nothing behind it is dropped. (6) "View all" under Bestsellers goes to `/new?sort=bestselling` until M5-03 decides where a list of all products lives. (7) The colour swatches show flat colours; a swatch that is a picture shows a neutral dot (the public API gives no address for it). |
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Phase 4: hero widths aligned with ADR-0011 |

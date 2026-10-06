@@ -29,10 +29,35 @@ const config = () =>
     environment: 'local',
   })
 
-/** @param {string} p */
-function answer(p) {
+const money = (/** @type {number} */ amount) => ({ amount, currency: 'PKR' })
+/** @param {number} n @param {object} [over] */
+const product = (n, over = {}) => ({
+  id: `0192f5aa-0000-7000-8000-0000000001${String(n).padStart(2, '0')}`, handle: `dress-${n}`, title: `Dress ${n}`, kind: 'stitched', primaryImage: { ...image, alt: `Dress ${n}` },
+  priceFrom: money(699000), badges: [], stockStatus: 'in_stock', colorways: [], ...over,
+})
+const heroImage = { src: 'http://localhost/img/hero.webp', srcset: 'http://localhost/img/hero-480.webp 480w', width: 1600, height: 700, alt: 'Festive edit' }
+const fullHome = {
+  announcement: { text: 'Free delivery over Rs. 5,000' }, notices: [],
+  heroSlides: [
+    { id: 'h1', image: heroImage, heading: 'The Eid edit', subheading: 'Embroidered formals', buttonText: 'Shop now', buttonHref: '/new' },
+    { id: 'h2', image: { ...heroImage, src: 'http://localhost/img/hero2.webp' }, heading: 'Summer lawn', buttonText: 'Evil button', buttonHref: 'javascript:alert(1)' },
+  ],
+  promo: { eyebrow: 'Sale', heading: 'Up to 25% off', text: 'Until Sunday', buttonText: 'See the sale', buttonHref: '/sale' },
+  editorial: { heading: 'Made by hand', text: 'Our story', buttonText: 'Read more', buttonHref: '/pages/about' },
+  footer: { about: 'Pakistani fashion.' },
+}
+const emptyHome = { notices: [], heroSlides: [], footer: {} }
+
+/** @param {string} p @param {string} locale */
+function answer(p, locale) {
   if (p === '/api/v1/store/config') return config()
-  if (p === '/api/v1/content/home') return { announcement: { text: 'Free delivery over Rs. 5,000' }, notices: [], heroSlides: [], footer: { about: 'Pakistani fashion.' } }
+  if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
+  if (p === '/api/v1/products') {
+    const n = locale === 'ur' ? 2 : 8
+    const items = Array.from({ length: n }, (_, i) => product(i + 1, i === 0 ? { badges: ['sale'], priceFrom: money(600000), compareAtFrom: money(800000) } : i === 1 ? { badges: ['new', 'bestseller'] } : i === 2 ? { stockStatus: 'sold_out', badges: ['sold_out', 'sale'] } : {}))
+    return { items, total: n }
+  }
+  if (p === '/api/v1/collections') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', image }] }
   if (p === '/api/v1/content/menus/main') return { handle: 'main', items: [{ id: 'a', label: 'Women', href: '/c/women', children: [{ id: 'b', label: 'Lawn', href: '/c/lawn' }] }, { id: 'c', label: 'Evil', href: 'javascript:alert(1)' }] }
   if (p === '/api/v1/content/menus/footer') return { handle: 'footer', items: [{ id: 'f', label: 'Shipping', href: '/pages/shipping' }] }
   if (p === '/api/v1/categories') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000001', handle: 'women', name: 'Women', productCount: 3, children: [{ id: '0192f5aa-0000-7000-8000-000000000002', handle: 'lawn', name: 'Lawn', productCount: 2, children: [] }] }] }
@@ -41,7 +66,8 @@ function answer(p) {
 }
 
 const api = createServer((req, res) => {
-  const body = state.down ? undefined : answer(new URL(req.url ?? '/', 'http://x').pathname)
+  const u = new URL(req.url ?? '/', 'http://x')
+  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en')
   res.statusCode = state.down ? 500 : body ? 200 : 404
   res.setHeader('content-type', 'application/json')
   res.end(JSON.stringify(body ?? { code: 'not_found' }))
@@ -157,6 +183,38 @@ describe('the storefront through its whole stack', () => {
     expect((await get('/orders/sometoken')).headers.get('referrer-policy')).toBe('no-referrer')
   })
 
+  describe('the home page (DOC-06.2)', () => {
+    it('English: one h1 from the first slide, its picture the only one loaded eagerly, the sections in their order, no frame without content', async () => {
+      const r = await get('/')
+      const html = await r.text()
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toMatch(/<h1[^>]*>The Eid edit</)
+      // React writes the attribute as fetchPriority; the browser reads it either way. The preload link it adds for that picture is what the plan asks for too.
+      expect(html.match(/<img[^>]*fetchPriority="high"/g)).toHaveLength(1) // the first hero picture: the largest element of the page
+      expect(html).toMatch(/<img(?=[^>]*fetchPriority="high")(?=[^>]*hero\.webp)[^>]*>/)
+      expect(html).toMatch(/<link rel="preload" as="image"[^>]*hero/)
+      expect(html).not.toMatch(/<img(?=[^>]*loading="eager")(?![^>]*fetchPriority="high")[^>]*>/) // nothing else is eager: the cards are below the fold
+      // the bestsellers are below the fold and stream in after the rest: React puts them at the end of the document and moves them into place, so they are checked apart
+      expect(html).toContain('Bestsellers')
+      const order = ['The Eid edit', 'New arrivals', 'Up to 25% off', 'Made by hand', 'Collections'].map((t) => html.indexOf(t))
+      expect(order.every((at) => at > 0)).toBe(true)
+      expect([...order].sort((a, b) => a - b)).toEqual(order)
+      expect(html).toContain('href="/p/dress-1"')
+      expect(html).toContain('-25%') // the sale badge: 6,000 off 8,000
+      expect(html).toContain('Sold out')
+      expect(html.match(/<article/g)).toHaveLength(16) // new arrivals and bestsellers, eight each
+      expect(html).toContain('href="/collections/summer"')
+    })
+
+    it('a hero button whose address is javascript: draws no button at all', async () => {
+      const html = await (await get('/')).text()
+      expect(html).toContain('Summer lawn')
+      expect(html).not.toContain('Evil button')
+      expect(html).not.toContain('javascript:')
+      expect(html).toContain('Shop now') // the safe one is there
+    })
+  })
+
   describe('redirects of the old shop (section 4)', () => {
     const cases = /** @type {const} */ ([
       ['/shop', '/new'], ['/shop?tag=new', '/new'], ['/shop?tag=sale', '/sale'], ['/shop?q=red', '/search?q=red'], ['/shop?category=Women', '/c/women'], ['/shop?category=Women&sub=Lawn', '/c/lawn'],
@@ -189,6 +247,11 @@ describe('the storefront through its whole stack', () => {
       expect(html).toMatch(/<html lang="ur" dir="rtl"/)
       expect(html).toMatch(/href="\/ur\/c\/women"/)
       expect(html).toContain('href="/"') // the way back to English
+      // nothing to show but two products: no hero, no empty frame, one h1 (the shop's name, kept for screen readers), no product section under four
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toMatch(/<h1 class="sr-only">Rubaya</)
+      expect(html).not.toMatch(/<article/)
+      expect(html).not.toMatch(/fetchPriority/)
       state.ur = false
     }, 60_000)
   })

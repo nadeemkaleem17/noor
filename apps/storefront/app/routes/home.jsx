@@ -1,33 +1,76 @@
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
-import { createI18n } from '@noor/i18n'
+import { Await, useLoaderData } from 'react-router'
+import { CategoryTiles, CollectionsRow, EditorialBand, Hero, ProductSection, PromoBand, TrustStrip } from '~/features/home/sections'
+import { safeHref } from '@noor/ui/safe-href'
+import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
-import { useShell } from '~/features/layout/use-shell'
 import { localeOfPath } from '~/lib/locale'
+import { loadShell } from '~/lib/shell.server'
 
 export const headers = /** @type {import('./+types/home').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.listing }))
 
-/**
- * @param {import('./+types/home').Route.LoaderArgs} props
- */
-export function loader({ request }) {
-  const i18n = createI18n(localeOfPath(new URL(request.url).pathname))
-  return { title: i18n.t('storefront:home.title'), description: i18n.t('storefront:home.tagline') }
+/** A section that cannot be loaded is left out; it does not take the page down (plan/05-react-patterns.md section 7). @template T @param {Promise<T>} p @returns {Promise<T | undefined>} */
+const optional = (p) => p.catch((e) => {
+  console.error('home section could not be loaded', e)
+  return undefined
+})
+
+/** A button staff set up keeps its words only with a safe address; the page data never carries an address that must not be followed. @template {{ buttonText?: string | undefined, buttonHref?: string | undefined }} T @param {T} block @returns {T} */
+function withSafeButton(block) {
+  const href = block.buttonHref ? safeHref(block.buttonHref) : undefined
+  const rest = { ...block }
+  delete rest.buttonText
+  delete rest.buttonHref
+  return /** @type {T} */ (href && block.buttonText ? { ...rest, buttonText: block.buttonText, buttonHref: href } : rest)
 }
 
-export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ (({ loaderData }) => [{ title: loaderData.title }, { name: 'description', content: loaderData.description }])
+/**
+ * The home page (plan/06-storefront/02-home.md section 4): what is above the fold is waited for; the bestsellers below it stream in after.
+ * The shop's settings, banners and categories come from the shell data, kept for 30 seconds.
+ * @param {import('./+types/home').Route.LoaderArgs} props
+ */
+export async function loader({ request }) {
+  const locale = localeOfPath(new URL(request.url).pathname)
+  const { config, home, categories } = await loadShell(locale)
+  const bestsellers = optional(api('catalog.listProducts', { query: { sort: 'bestselling', limit: 8, facets: false, locale } }))
+  const [newArrivals, collections] = await Promise.all([
+    optional(api('catalog.listProducts', { query: { sort: 'newest', limit: 8, facets: false, locale } })),
+    optional(api('catalog.listCollections', { query: { featured: true, limit: 3, locale } })),
+  ])
+  return {
+    brand: config.brand.name,
+    title: config.brand.tagline ? `${config.brand.name}: ${config.brand.tagline}` : config.brand.name,
+    description: config.seo.homeDescription ?? config.brand.tagline ?? '',
+    slides: home.heroSlides.map(withSafeButton),
+    promo: home.promo && withSafeButton(home.promo),
+    editorial: home.editorial && withSafeButton(home.editorial),
+    categories,
+    newArrivals: newArrivals?.items ?? [],
+    collections: collections?.items ?? [],
+    bestsellers,
+  }
+}
 
-// ponytail: the real home page is M5-02; this keeps the first page answering inside the shell.
+export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ (({ loaderData }) => [{ title: loaderData.title }, ...(loaderData.description ? [{ name: 'description', content: loaderData.description }] : [])])
+
 export default function Home() {
   const { t } = useTranslation('storefront')
-  const isUrdu = useShell()?.locale === 'ur'
+  const { brand, slides, promo, editorial, categories, newArrivals, collections, bestsellers } = useLoaderData()
   return (
-    <div className="mx-auto max-w-2xl p-8">
-      <h1 className="font-heading text-4xl">{t('home.title')}</h1>
-      <p className="mt-2 text-fg-soft">{t('home.tagline')}</p>
-      <Link to={isUrdu ? '/' : '/ur'} lang={isUrdu ? 'en' : 'ur'} reloadDocument className="mt-6 inline-block text-accent-text underline">
-        {t('language.switch')}
-      </Link>
-    </div>
+    <>
+      {slides.length ? <Hero slides={slides} /> : <h1 className="sr-only">{brand}</h1>}
+      <TrustStrip />
+      <CategoryTiles categories={categories} />
+      <ProductSection id="home-new" title={t('home.newArrivals')} href="/new" items={newArrivals} />
+      {promo?.heading ? <PromoBand promo={promo} /> : null}
+      <Suspense fallback={null}>
+        <Await resolve={bestsellers} errorElement={null}>
+          {(list) => <ProductSection id="home-best" title={t('home.bestsellers')} href="/new?sort=bestselling" items={list?.items ?? []} />}
+        </Await>
+      </Suspense>
+      {editorial?.heading ? <EditorialBand editorial={editorial} /> : null}
+      <CollectionsRow collections={collections} />
+    </>
   )
 }

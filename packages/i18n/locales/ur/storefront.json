@@ -2,7 +2,19 @@
   "home": {
     "title": "روبایا میں خوش آمدید",
     "tagline": "پاکستانی فیشن، آپ کے دروازے تک۔",
-    "items": "آپ کے بیگ میں {count, plural, one {# چیز} other {# چیزیں}} ہیں"
+    "items": "آپ کے بیگ میں {count, plural, one {# چیز} other {# چیزیں}} ہیں",
+    "heroLabel": "نمایاں",
+    "shopNow": "ابھی خریدیں",
+    "newArrivals": "نئی آمد",
+    "bestsellers": "سب سے زیادہ بکنے والے",
+    "collections": "کلیکشنز",
+    "shopByCategory": "زمرے کے مطابق خریداری",
+    "viewAll": "سب دیکھیں",
+    "trustFree": "{amount} سے اوپر مفت ڈیلیوری",
+    "trustCod": "کیش آن ڈیلیوری",
+    "trustReturns": "{days} دن میں واپسی",
+    "trustWhatsapp": "واٹس ایپ پر مدد",
+    "trustLabel": "ہم سے کیوں خریدیں"
   },
   "language": {
     "switch": "English"
@@ -43,5 +55,18 @@
   },
   "stub": {
     "soon": "یہ صفحہ تیار کیا جا رہا ہے۔"
+  },
+  "product": {
+    "from": "شروع",
+    "badge": {
+      "sale": "-{percent}%",
+      "new": "نیا",
+      "bestseller": "مقبول",
+      "limited": "محدود",
+      "made_to_order": "آرڈر پر تیار",
+      "sold_out": "ختم"
+    },
+    "colour": "رنگ: {name}",
+    "moreColours": "+{count}"
   }
 }

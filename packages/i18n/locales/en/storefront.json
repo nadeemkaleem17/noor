@@ -2,7 +2,19 @@
   "home": {
     "title": "Welcome to Rubaya",
     "tagline": "Pakistani fashion, delivered to your door.",
-    "items": "{count, plural, one {# item} other {# items}} in your bag"
+    "items": "{count, plural, one {# item} other {# items}} in your bag",
+    "heroLabel": "Featured",
+    "shopNow": "Shop now",
+    "newArrivals": "New arrivals",
+    "bestsellers": "Bestsellers",
+    "collections": "Collections",
+    "shopByCategory": "Shop by category",
+    "viewAll": "View all",
+    "trustFree": "Free delivery over {amount}",
+    "trustCod": "Cash on delivery",
+    "trustReturns": "{days}-day returns",
+    "trustWhatsapp": "WhatsApp support",
+    "trustLabel": "Why shop with us"
   },
   "language": {
     "switch": "اردو"
@@ -43,5 +55,18 @@
   },
   "stub": {
     "soon": "This page is being built."
+  },
+  "product": {
+    "from": "From",
+    "badge": {
+      "sale": "-{percent}%",
+      "new": "New",
+      "bestseller": "Bestseller",
+      "limited": "Limited",
+      "made_to_order": "Made to order",
+      "sold_out": "Sold out"
+    },
+    "colour": "Colour: {name}",
+    "moreColours": "+{count}"
   }
 }
