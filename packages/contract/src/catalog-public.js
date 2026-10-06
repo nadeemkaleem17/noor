@@ -66,6 +66,7 @@ export const Facet = z.strictObject({
   values: z.array(z.strictObject({ value: z.string(), label: z.string(), count: z.int(), swatch: Swatch.optional(), selected: z.boolean() })),
   seoIndexable: z.boolean().optional(),
 })
+/** @typedef {z.infer<typeof Facet>} Facet */
 
 export const ProductListing = z.strictObject({
   items: z.array(ProductSummary),
@@ -74,6 +75,7 @@ export const ProductListing = z.strictObject({
   facets: z.array(Facet).optional(),
   pricePresets: z.array(z.strictObject({ min: z.int().optional(), max: z.int().optional() })).optional(),
 })
+/** @typedef {z.infer<typeof ProductListing>} ProductListing */
 
 // ---- detail -----------------------------------------------------------------------------------------------------------------
 

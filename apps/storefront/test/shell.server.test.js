@@ -48,10 +48,31 @@ const fullHome = {
 }
 const emptyHome = { notices: [], heroSlides: [], footer: {} }
 
-/** @param {string} p @param {string} locale */
-function answer(p, locale) {
+const facets = [
+  { key: 'size', label: 'Size', display: 'buttons', values: [{ value: 'M', label: 'M', count: 9, selected: false }, { value: 'L', label: 'L', count: 0, selected: false }] },
+  { key: 'attr.fabric', label: 'Fabric', display: 'checkbox', values: Array.from({ length: 10 }, (_, i) => ({ value: `f${i}`, label: `Fabric ${i}`, count: 3, selected: false })) },
+  { key: 'inStock', label: 'In stock', display: 'checkbox', values: [{ value: '1', label: 'In stock only', count: 20, selected: false }] },
+]
+/** The listing calls (a page of a category, the new arrivals, a search ...): 24 products and a next page, then 24 more; the home page asks for 8 and never for facets. @param {URLSearchParams} q */
+function listing(q) {
+  if (q.get('q') === 'nothing') return { items: [], total: 0 }
+  const size = Number(q.get('limit'))
+  const second = q.get('cursor') === 'c1'
+  const items = Array.from({ length: Math.min(size, 24) }, (_, i) => product(i + (second ? 25 : 1)))
+  if (size < 24) return { items, total: items.length }
+  const selected = new Set((q.get('size') ?? '').split(','))
+  return { items, total: 40, ...(second ? {} : { nextCursor: 'c1' }), facets: facets.map((f) => (f.key === 'size' ? { ...f, values: f.values.map((v) => ({ ...v, selected: selected.has(v.value) })) } : f)), pricePresets: [{ max: 500000 }, { min: 500000, max: 1000000 }, { min: 1000000 }] }
+}
+
+/** @param {string} p @param {string} locale @param {URLSearchParams} [q] */
+function answer(p, locale, q = new URLSearchParams()) {
   if (p === '/api/v1/store/config') return config()
   if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
+  if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed' }], seo: { title: 'Lawn suits' } }
+  if (p === '/api/v1/categories/old-lawn') return { redirectTo: 'lawn' }
+  if (p === '/api/v1/collections/summer') return { id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', seo: {} }
+  if (p === '/api/v1/products' && q.get('size') === 'XXL') return { code: 'validation_failed', status: 400 }
+  if (p === '/api/v1/products' && (q.get('limit') !== '8' || q.has('q'))) return listing(q)
   if (p === '/api/v1/products') {
     const n = locale === 'ur' ? 2 : 8
     const items = Array.from({ length: n }, (_, i) => product(i + 1, i === 0 ? { badges: ['sale'], priceFrom: money(600000), compareAtFrom: money(800000) } : i === 1 ? { badges: ['new', 'bestseller'] } : i === 2 ? { stockStatus: 'sold_out', badges: ['sold_out', 'sale'] } : {}))
@@ -67,8 +88,8 @@ function answer(p, locale) {
 
 const api = createServer((req, res) => {
   const u = new URL(req.url ?? '/', 'http://x')
-  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en')
-  res.statusCode = state.down ? 500 : body ? 200 : 404
+  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en', u.searchParams)
+  res.statusCode = state.down ? 500 : body && 'status' in body ? Number(body.status) : body ? 200 : 404
   res.setHeader('content-type', 'application/json')
   res.end(JSON.stringify(body ?? { code: 'not_found' }))
 })
@@ -215,6 +236,92 @@ describe('the storefront through its whole stack', () => {
     })
   })
 
+  describe('the listings (DOC-06.3)', () => {
+    it('a category: 24 titles and prices in the HTML, the way up, subcategories, filters in a real form, and the way to more', async () => {
+      const r = await get('/c/lawn')
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toBe('public, s-maxage=60, stale-while-revalidate=600')
+      const html = await r.text()
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toMatch(/<h1[^>]*>Lawn</)
+      expect(html).toContain('<title>Lawn suits | Rubaya</title>')
+      expect(html.match(/<article/g)).toHaveLength(24)
+      expect(html).toContain('Dress 24')
+      expect(html).toContain('6,990')
+      expect(html).toContain('href="/c/women"') // the way up; the current page is not a link
+      expect(html).toContain('href="/c/printed"')
+      // React writes the attributes in an order of its own, so each is looked for apart
+      expect(html).toMatch(/<form(?=[^>]*method="get")(?=[^>]*action="\/c\/lawn")[^>]*>/)
+      expect(html).toContain('name="size"')
+      expect(html).toContain('Apply filters') // without JavaScript the filters are sent with a button
+      expect(html).toMatch(/<input(?=[^>]*name="size")(?=[^>]*value="L")(?=[^>]*disabled)[^>]*>/) // nobody can pick it, so it is greyed out, not removed
+      expect(html).toContain('Show all') // more than eight fabrics
+      expect(html).toContain('href="/c/lawn?cursor=c1"') // load more is a real link
+      expect(html).toContain('Showing 24 of 40')
+      expect(html).toMatch(/role="status"[^>]*>40 products/)
+      expect(html).toContain('Under ') // the price ranges
+      expect(html).toContain('/c/lawn?priceMax=500000')
+    })
+
+    it('an address in any other form is sent to its canonical one; values the API refuses and old handles are sent on; a missing category is a 404', async () => {
+      const a = await get('/c/lawn?sort=newest&size=M&size=L&utm_source=x')
+      expect(a.status).toBe(301)
+      expect(a.headers.get('location')).toBe('/c/lawn?size=L,M&sort=newest')
+      expect((await get('/c/lawn?size=L,M&sort=newest')).status).toBe(200)
+      expect((await get('/c/lawn?size=L%2CM&sort=newest')).status).toBe(200) // the same address with the comma escaped, as a navigation in the browser writes it: no bounce
+      const b = await get('/c/lawn?size=XXL')
+      expect(b.status).toBe(302)
+      expect(b.headers.get('location')).toBe('/c/lawn')
+      const c = await get('/c/old-lawn?size=M')
+      expect(c.status).toBe(301)
+      expect(c.headers.get('location')).toBe('/c/lawn?size=M')
+      expect((await get('/c/nothing-here')).status).toBe(404)
+    })
+
+    it('a chosen filter is checked and shows as a chip that takes it off; the page behind a cursor shows its own items', async () => {
+      const html = await (await get('/c/lawn?size=M')).text()
+      expect(html).toMatch(/<input(?=[^>]*name="size")(?=[^>]*value="M")(?=[^>]*checked)[^>]*>/)
+      expect(html).toContain('aria-label="Remove filter M"')
+      expect(html).toContain('Clear all')
+      const next = await (await get('/c/lawn?cursor=c1')).text()
+      expect(next).toContain('Dress 25')
+      expect(next).not.toContain('Dress 1<')
+      expect(next).not.toContain('cursor=c1"') // no further page
+    })
+
+    it('new, sale, a collection and a search have their own heading and breadcrumb; a search is never cached and is not for the index', async () => {
+      for (const { p, h1 } of [{ p: '/new', h1: 'New arrivals' }, { p: '/sale', h1: 'Sale' }, { p: '/collections/summer', h1: 'Summer' }]) {
+        const r = await get(p)
+        expect(r.status, p).toBe(200)
+        expect(r.headers.get('cache-control')).toContain('public')
+        expect(await r.text(), p).toMatch(new RegExp(`<h1[^>]*>${h1}<`))
+      }
+      const r = await get('/search?q=shalwar')
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      const html = await r.text()
+      expect(html).toMatch(/<h1[^>]*>Results for “shalwar”</)
+      expect(html).toContain('content="noindex,follow"')
+      expect(html).toContain('Most relevant')
+    })
+
+    it('a search text is escaped, and short or empty ones ask nothing of the API', async () => {
+      const html = await (await get('/search?q=%3Cscript%3Ealert(1)%3C/script%3E', { redirect: 'follow' })).text()
+      expect(html).not.toContain('<script>alert(1)')
+      expect(html).toContain('&lt;script&gt;')
+      const short = await (await get('/search?q=a')).text()
+      expect(short).toContain('Type at least 2 letters')
+      expect(short).toContain('href="/c/women"') // the categories to start from
+      expect(short).not.toMatch(/<article/)
+    })
+
+    it('a search with no results says so, with the new pieces and WhatsApp', async () => {
+      const html = await (await get('/search?q=nothing')).text()
+      expect(html).toContain('No results for “nothing”')
+      expect(html).toContain('https://wa.me/923001234567?text=nothing')
+      expect(html.match(/<article/g)).toHaveLength(4)
+    })
+  })
+
   describe('redirects of the old shop (section 4)', () => {
     const cases = /** @type {const} */ ([
       ['/shop', '/new'], ['/shop?tag=new', '/new'], ['/shop?tag=sale', '/sale'], ['/shop?q=red', '/search?q=red'], ['/shop?category=Women', '/c/women'], ['/shop?category=Women&sub=Lawn', '/c/lawn'],
@@ -252,6 +359,11 @@ describe('the storefront through its whole stack', () => {
       expect(html).toMatch(/<h1 class="sr-only">Rubaya</)
       expect(html).not.toMatch(/<article/)
       expect(html).not.toMatch(/fetchPriority/)
+      // a listing in Urdu: its links stay in Urdu
+      const list = await (await get('/ur/c/lawn')).text()
+      expect(list).toContain('href="/ur/c/printed"')
+      expect(list).toContain('href="/ur/c/lawn?cursor=c1"')
+      expect(list).toContain('پروڈکٹس')
       state.ur = false
     }, 60_000)
   })

@@ -68,5 +68,52 @@
     },
     "colour": "Colour: {name}",
     "moreColours": "+{count}"
+  },
+  "listing": {
+    "home": "Home",
+    "new": "New arrivals",
+    "sale": "Sale",
+    "filters": "Filters",
+    "filtersCount": "Filters ({count})",
+    "sort": "Sort by",
+    "apply": "Apply",
+    "applyFilters": "Apply filters",
+    "showResults": "Show results",
+    "clearAll": "Clear all",
+    "applied": "Filters in use",
+    "removeFilter": "Remove filter {label}",
+    "availability": "Availability",
+    "count": "{count, plural, one {# product} other {# products}}",
+    "showAll": "Show all",
+    "price": "Price",
+    "priceUnder": "Under {amount}",
+    "priceOver": "{amount} and over",
+    "priceRange": "{min} to {max}",
+    "readMore": "Read more",
+    "subcategories": "Subcategories",
+    "refine": "Refine your results",
+    "loadFailed": "More products could not be loaded",
+    "sorts": {
+      "featured": "Featured",
+      "newest": "Newest",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "bestselling": "Bestselling",
+      "relevance": "Most relevant"
+    },
+    "emptyTitle": "New pieces are on their way",
+    "emptyBody": "Nothing is here yet. See what is new in the shop.",
+    "seeNew": "See new arrivals",
+    "noMatchTitle": "No products match these filters",
+    "noMatchBody": "Try taking a filter off.",
+    "search": {
+      "crumb": "Search",
+      "title": "Results for “{q}”",
+      "short": "Type at least 2 letters to search.",
+      "popular": "Popular categories",
+      "zeroTitle": "No results for “{q}”",
+      "tips": "Check the spelling, or try a more general word such as “lawn” or “kurta”.",
+      "whatsapp": "Ask us on WhatsApp"
+    }
   }
 }

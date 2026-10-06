@@ -58,7 +58,8 @@ export function canonicalQuery(search, allowed = listingParams) {
   /** @type {string[]} */
   const parts = []
   for (const key of [...new Set(search.keys())].filter(known).sort()) {
-    const values = search.getAll(key).flatMap((v) => v.split(',')).filter(Boolean).sort()
+    // a search text is one value: its commas are part of it
+    const values = key === 'q' ? [search.get(key)?.trim() ?? ''].filter(Boolean) : search.getAll(key).flatMap((v) => v.split(',')).filter(Boolean).sort()
     if (values.length) parts.push(`${encodeURIComponent(key)}=${values.map(encodeURIComponent).join(',')}`)
   }
   return parts.length ? `?${parts.join('&')}` : ''

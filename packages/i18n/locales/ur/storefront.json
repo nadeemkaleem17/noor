@@ -68,5 +68,52 @@
     },
     "colour": "رنگ: {name}",
     "moreColours": "+{count}"
+  },
+  "listing": {
+    "home": "ہوم",
+    "new": "نئی آمد",
+    "sale": "سیل",
+    "filters": "فلٹر",
+    "filtersCount": "فلٹر ({count})",
+    "sort": "ترتیب",
+    "apply": "لاگو کریں",
+    "applyFilters": "فلٹر لاگو کریں",
+    "showResults": "نتائج دکھائیں",
+    "clearAll": "سب ہٹائیں",
+    "applied": "لگے ہوئے فلٹر",
+    "removeFilter": "فلٹر ہٹائیں: {label}",
+    "availability": "دستیابی",
+    "count": "{count, plural, one {# پروڈکٹ} other {# پروڈکٹس}}",
+    "showAll": "سب دکھائیں",
+    "price": "قیمت",
+    "priceUnder": "{amount} سے کم",
+    "priceOver": "{amount} اور اس سے زیادہ",
+    "priceRange": "{min} سے {max} تک",
+    "readMore": "مزید پڑھیں",
+    "subcategories": "ذیلی زمرے",
+    "refine": "نتائج کو محدود کریں",
+    "loadFailed": "مزید پروڈکٹس نہیں کھل سکیں",
+    "sorts": {
+      "featured": "نمایاں",
+      "newest": "سب سے نئی",
+      "price_asc": "قیمت: کم سے زیادہ",
+      "price_desc": "قیمت: زیادہ سے کم",
+      "bestselling": "سب سے زیادہ بکنے والی",
+      "relevance": "سب سے متعلقہ"
+    },
+    "emptyTitle": "نئے جوڑے جلد آ رہے ہیں",
+    "emptyBody": "ابھی یہاں کچھ نہیں ہے۔ دکان میں نیا کیا ہے دیکھیں۔",
+    "seeNew": "نئی آمد دیکھیں",
+    "noMatchTitle": "ان فلٹرز سے کوئی پروڈکٹ نہیں ملی",
+    "noMatchBody": "کوئی فلٹر ہٹا کر دیکھیں۔",
+    "search": {
+      "crumb": "تلاش",
+      "title": "“{q}” کے نتائج",
+      "short": "تلاش کے لیے کم از کم 2 حروف لکھیں۔",
+      "popular": "مقبول زمرے",
+      "zeroTitle": "“{q}” کا کوئی نتیجہ نہیں",
+      "tips": "ہجے دیکھ لیں، یا کوئی عام لفظ آزمائیں، جیسے “لان” یا “کرتا”۔",
+      "whatsapp": "واٹس ایپ پر پوچھیں"
+    }
   }
 }

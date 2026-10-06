@@ -17,7 +17,7 @@ export function badgeOf(p) {
 }
 
 /** A colour swatch: one or two flat colours. A swatch that is a picture has no address here to draw, so it shows a neutral dot. @param {{ swatch: import('@noor/contract').Swatch }} props */
-function Dot({ swatch }) {
+export function Dot({ swatch }) {
   const colours = 'hex' in swatch ? swatch.hex : []
   return (
     <span
