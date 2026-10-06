@@ -63,6 +63,9 @@ export const CursorPage = (item) =>
     total: z.number().int().nonnegative().optional(),
   })
 
+/** An export, small enough to answer at once: the file's text. Bigger ones wait for the jobs screen (DOC-10.8). */
+export const CsvFile = z.strictObject({ filename: z.string(), rowCount: z.int(), csv: z.string() })
+
 /** Result of a bulk action (DOC-10.0 section 10). */
 export const BulkResult = z.strictObject({
   succeeded: z.array(z.string()),

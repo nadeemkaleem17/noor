@@ -5,6 +5,7 @@ import { auditRoutes, authRoutes } from './auth.js'
 import { catalogPublicRoutes } from './catalog-public.js'
 import { cartRoutes } from './cart.js'
 import { orderRoutes } from './orders.js'
+import { adminOrderRoutes } from './admin-orders.js'
 import { customerRoutes } from './customers.js'
 import { promoRoutes } from './promos.js'
 import { reviewRoutes } from './reviews.js'
@@ -52,6 +53,7 @@ export const routes = defineRoutes({
   ...customerRoutes,
   ...cartRoutes,
   ...orderRoutes,
+  ...adminOrderRoutes,
   ...promoRoutes,
   ...reviewRoutes,
   ...taxonomyRoutes,

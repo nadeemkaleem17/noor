@@ -10,6 +10,12 @@ import { customers } from '../src/db/schema/customers.js'
 import { media } from '../src/db/schema/media.js'
 import { promos } from '../src/db/schema/promotions.js'
 import { orders } from '../src/db/schema/orders.js'
+import { carts } from '../src/db/schema/cart.js'
+import { notificationLog } from '../src/db/schema/notifications.js'
+import { paymentEvents, payments } from '../src/db/schema/payments.js'
+import { counters, idempotencyKeys, jobs, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
+import { promoRedemptions } from '../src/db/schema/promotions.js'
+import { add, createShop, shop } from './support/shop.js'
 import { reviewPhotos, reviews } from '../src/db/schema/reviews.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { collections, products } from '../src/db/schema/products.js'
@@ -34,7 +40,9 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.db.delete(loginAttempts)
     await t.db.delete(reviewPhotos)
     await t.db.delete(reviews)
-    await t.db.delete(orders) // the bare orders of the review samples; their lines go with them
+    for (const table of [notificationLog, paymentEvents, payments, promoRedemptions, carts, outboxEvents, jobs, idempotencyKeys, rateLimitHits]) await t.db.delete(table)
+    await t.db.delete(orders) // the orders of the review and order samples; their lines go with them
+    await t.db.delete(counters)
     await t.db.delete(media)
     await t.db.delete(customers)
     await t.db.delete(promos)
@@ -43,7 +51,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.migrate.pool.query('DELETE FROM inventory_movements')
     await t.db.delete(products)
     for (const table of [pages, menus, settings, shippingZones, couriers]) await t.db.delete(table)
-    await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City']))
+    await t.db.delete(cities).where(inArray(cities.name, ['Newtown', 'Oldtown', 'Oldtown City', 'Lahore']))
     for (let i = 0; i < 4; i++) await t.migrate.pool.query('DELETE c FROM categories c LEFT JOIN categories k ON k.parent_id = c.id WHERE k.id IS NULL')
     for (const table of [attributes, sizeCharts, sizeSystems, formSchemas]) await t.db.delete(table)
     await t.db.delete(staffUsers)
@@ -409,6 +417,40 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.reviews.reply'] = { prepare: withReview, act: ({ b, id }) => b.call('PUT', `/admin/reviews/${id}/reply`, { body: { body: 'Thank you!' } }) }
     samples['admin.reviews.removePhoto'] = { prepare: withReview, act: ({ b, id, mediaId }) => b.call('DELETE', `/admin/reviews/${id}/photos/${mediaId}`), rows: 2 } // the link, and the file
     samples['admin.reviews.bulk'] = { prepare: withReview, act: ({ b, id }) => b.call('POST', '/admin/reviews/bulk', { body: { ids: [id], action: 'approve' } }) }
+    // a real order, made through the storefront, with a delivery city and a courier
+    const S = createShop()
+    const withOrder = async (/** @type {'new' | 'dispatched'} */ stage = 'new') => {
+      await S.setup()
+      await S.delivery()
+      const courier = await S.owner.call('POST', '/admin/couriers', { body: { name: 'TCS', trackingRequired: false, enabled: true } })
+      const p = await S.product({ price: 200000, stock: 5 })
+      const token = (await add(undefined, p.variantId, 1)).body.cartToken
+      const placed = await shop('POST', '/orders', {
+        token, headers: { 'idempotency-key': uuidv7() },
+        body: { customer: { name: 'Sana Malik', phone: '03001234567' }, shippingAddress: { cityId: S.cityId, address: 'House 12, Street 4, Gulberg III' }, shippingMethodId: S.methodId, paymentMethod: 'cod' },
+      })
+      if (placed.status !== 201) throw new Error(JSON.stringify(placed.body))
+      const id = /** @type {string} */ ((await t.db.select().from(orders))[0]?.id)
+      if (stage === 'dispatched') {
+        await S.owner.call('POST', `/admin/orders/${id}/transitions`, { body: { version: 1, to: 'confirmed', via: 'call' } })
+        await S.owner.call('POST', `/admin/orders/${id}/transitions`, { body: { version: 2, to: 'dispatched', courierId: courier.body.id } })
+      }
+      await t.migrate.db.delete(auditLog)
+      return { b: S.owner, id, courierId: courier.body.id, variantId: p.variantId, cityId: S.cityId, methodId: S.methodId }
+    }
+    samples['admin.orders.transition'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', `/admin/orders/${id}/transitions`, { body: { version: 1, to: 'confirmed', via: 'call' } }) }
+    samples['admin.orders.edit'] = { prepare: withOrder, act: ({ b, id, cityId }) => b.call('PUT', `/admin/orders/${id}`, { body: { version: 1, shippingAddress: { cityId, address: 'Another house, Street 9, DHA' } } }) }
+    samples['admin.orders.addNote'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', `/admin/orders/${id}/notes`, { body: { body: 'Call after 5pm' } }) }
+    samples['admin.orders.logAttempt'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', `/admin/orders/${id}/confirmation-attempts`, { body: { channel: 'call', outcome: 'busy' } }) }
+    samples['admin.orders.recordPayment'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', `/admin/orders/${id}/payments`, { body: { kind: 'full', amount: { amount: 100000, currency: 'PKR' }, method: 'cash' }, headers: { 'idempotency-key': uuidv7() } }) }
+    samples['admin.orders.updateTracking'] = { prepare: () => withOrder('dispatched'), act: ({ b, id, courierId }) => b.call('PUT', `/admin/orders/${id}/tracking`, { body: { courierId, trackingNumber: 'T-9', version: 3 } }) }
+    samples['admin.orders.create'] = {
+      prepare: withOrder,
+      act: ({ b, variantId, cityId, methodId }) => b.call('POST', '/admin/orders', { body: { customer: { name: 'Hina Raza', phone: '03451112223' }, shippingAddress: { cityId, address: 'Flat 4, Block B, DHA Phase 5' }, shippingMethodId: methodId, paymentMethod: 'cod', lines: [{ variantId, quantity: 1 }] }, headers: { 'idempotency-key': uuidv7() } }),
+    }
+    samples['admin.orders.bulk'] = { prepare: withOrder, act: ({ b, id }) => b.call('POST', '/admin/orders/bulk', { body: { ids: [id], action: 'confirm', params: { via: 'call' } } }) }
+    samples['admin.orders.export'] = { prepare: withOrder, act: ({ b }) => b.call('POST', '/admin/orders/exports', { body: { from: new Date(Date.now() - 86_400_000).toISOString(), to: new Date(Date.now() + 86_400_000).toISOString() } }) }
+    samples['admin.customers.export'] = { prepare: withCustomer, act: ({ b }) => b.call('POST', '/admin/customers/exports', { body: {} }) }
     samples['admin.products.create'] = {
       prepare: async () => {
         const s = await signedIn('owner')
@@ -447,6 +489,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       'admin.products.checks': 'runs the publish checks on a document that may not be saved; nothing is stored',
       'admin.products.previewLink': 'signs a link that expires in 15 minutes; it changes no data',
       'admin.pages.preview': 'only renders text with the store tokens filled in; nothing is stored',
+      'admin.orders.previewEdit': 'a read-only calculation of what an edit would do; nothing is stored',
+      'admin.orders.quote': 'prices the lines of a staff-typed order in a cart that is dropped at once; no order is made',
       'admin.promos.preview': 'a read-only calculation on a code that is not saved; nothing is stored',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }

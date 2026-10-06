@@ -1,8 +1,8 @@
 // Customers: admin routes (plan/10-api/06-admin-orders-customers.md section 3, plan/09-data-model/07-orders-payments.md section 2).
-// The export route (`admin.customers.export`) waits for the exports job table (M4-10).
+// The export answers with the file's text (at most 5,000 rows); the bigger, background kind waits for the jobs screen (DOC-10.8).
 import { z } from 'zod'
 import { Money } from './money.js'
-import { Page, PageQuery, flag, qint } from './pagination.js'
+import { CsvFile, Page, PageQuery, flag, qint } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
 
@@ -52,6 +52,8 @@ export const CustomerListQuery = PageQuery.extend({
   hasRefusals: flag.optional(),
 })
 
+export const CustomerExportBody = CustomerListQuery.omit({ page: true, size: true, sort: true }).strict()
+
 export const CustomerUpdate = z
   .strictObject({
     name: z.string().trim().min(1).max(80),
@@ -79,6 +81,7 @@ export const customerRoutes = defineRoutes({
     body: z.strictObject({ body: z.string().trim().min(1).max(1000) }),
     response: CustomerNote,
   },
+  'admin.customers.export': { method: 'POST', path: '/admin/customers/exports', auth: 'staff', permission: 'customers:export', stepUp: true, body: CustomerExportBody, response: CsvFile },
   'admin.customers.anonymise': {
     method: 'POST', path: '/admin/customers/:id/anonymise', auth: 'staff', permission: 'customers:anonymise', stepUp: true, status: 204, params: IdParams,
     /** Must equal the last 4 digits of the phone: a typed confirmation of an irreversible act. */

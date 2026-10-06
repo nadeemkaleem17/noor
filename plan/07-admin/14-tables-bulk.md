@@ -180,5 +180,6 @@ select rows ──► bar appears: "3 selected  [Publish] [Archive] [⋯]  ✕ c
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-10: the order and customer exports are built on the server as `200 { filename, rowCount, csv }` (at most 5,000 rows) with the formula guard and the byte order mark of section 6; the screen downloads the text as a file, so the `download` outcome of `DataTable` fits. Order bulk actions take at most 500 ids; "select all matching" and the `202 { jobId }` path wait for the jobs endpoints (DOC-10.8). |
 | 2026-10-02 | Initial version (Phase 3). Resolves DOC-05 Q-05-1 as far as the announcement allows |
 | 2026-10-05 | M3-02 built: `DataTable`, URL state (`lib/list-params.js`), filters (select, multi, boolean, date range) with chips, selection, bulk bar, failures dialog, job polling, column visibility in prefs. No TanStack Table, no virtualisation (section 2) |

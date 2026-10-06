@@ -15,6 +15,7 @@ export function customersHandlers(s) {
     'admin.customers.get': async ({ params }) => s.get(params.id),
     'admin.customers.update': async ({ actor, params, body, http, requestId }) => s.update(staff(actor), params.id, body, info(http, requestId)),
     'admin.customers.addNote': async ({ actor, params, body, http, requestId }) => s.addNote(staff(actor), params.id, body.body, info(http, requestId)),
+    'admin.customers.export': async ({ actor, body, http, requestId }) => s.exportCsv(staff(actor), body, info(http, requestId)),
     'admin.customers.anonymise': async ({ actor, params, body, http, requestId }) => {
       await s.anonymise(staff(actor), params.id, body.confirm, info(http, requestId))
     },

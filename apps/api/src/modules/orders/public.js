@@ -22,7 +22,7 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
 const dayAfter = (/** @type {Date} */ from, /** @type {number} */ days) => new Date(from.getTime() + days * 86_400_000).toISOString().slice(0, 10)
 
 /** "Ayesha Khan" -> "Ayesha K.". @param {string} name */
-const shortName = (name) => {
+export const shortName = (name) => {
   const parts = name.trim().split(/\s+/)
   const last = parts.length > 1 ? parts.at(-1) : undefined
   return last ? `${parts[0]} ${[...last][0]}.` : (parts[0] ?? '')
@@ -31,7 +31,7 @@ const shortName = (name) => {
 const maskAddress = (address) => (address.length > 12 ? `${[...address].slice(0, 12).join('')}•••` : address)
 
 /** What the customer sees of the choices made on a line, from the snapshot kept on it. @param {unknown} snapshot */
-function summaryOf(snapshot) {
+export function summaryOf(snapshot) {
   const c = /** @type {{ measurements?: Record<string, unknown>, bundle?: { title?: string, label?: string }[] } | null} */ (snapshot)
   if (!c) return undefined
   const measurements = Object.entries(c.measurements ?? {}).map(([k, v]) => `${k} ${v}`).join(', ')

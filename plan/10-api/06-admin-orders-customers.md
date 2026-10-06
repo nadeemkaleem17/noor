@@ -181,13 +181,13 @@ X-CSRF-Token: …
 
 ## 8. Acceptance checklist
 
-- [ ] `TransitionBody` variants map one-to-one to the rows of DOC-09.7 §5.1 (test enumerates both).
-- [ ] No route in this file can change `subtotal`, `discount`, `shipping fee` or `total` other than `admin.orders.edit` and `admin.orders.create`, and both compute them.
-- [ ] `admin.orders.get` for a `viewer` returns masked phone and no email or address line.
-- [ ] `admin.orders.bulk` `dispatch` with one unknown order number returns it under `failed` and dispatches the rest.
-- [ ] `admin.promos.preview` equals the storefront cart discount for the same lines.
-- [ ] `admin.customers.anonymise` with open orders → `409 action_not_allowed`.
-- [ ] Repeating `admin.orders.recordPayment` with the same idempotency key records one payment.
+- [x] `TransitionBody` variants map one-to-one to the rows of DOC-09.7 §5.1 (test enumerates both). (`admin-orders.int.test.js`: the targets of the table of edges equal the variants.)
+- [x] No route in this file can change `subtotal`, `discount`, `shipping fee` or `total` other than `admin.orders.edit` and `admin.orders.create`, and both compute them. (Every body is strict: a total, discount or price is a `400`; `admin-orders.int.test.js` tries it on edit and create.)
+- [x] `admin.orders.get` for a `viewer` returns masked phone and no email or address line. (Also the list, the search and the invoice: `admin-orders.int.test.js`.)
+- [x] `admin.orders.bulk` `dispatch` with one unknown order number returns it under `failed` and dispatches the rest. (`admin-orders.int.test.js`.)
+- [x] `admin.promos.preview` equals the storefront cart discount for the same lines. (`admin-orders.int.test.js`.)
+- [x] `admin.customers.anonymise` with open orders → `409 action_not_allowed`. (`notifications.int.test.js`, with the orders view wired in M4-08.)
+- [x] Repeating `admin.orders.recordPayment` with the same idempotency key records one payment. (`admin-orders.int.test.js` and `payments.int.test.js`.)
 
 ## 9. Open questions and assumptions
 
@@ -201,5 +201,6 @@ X-CSRF-Token: …
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-10: the fifteen `admin.orders.*` routes and `admin.customers.export` built (`modules/orders/admin.js`). Differences from section 2: (1) **Exports and bulk are answered at once.** `admin.orders.export` and `admin.customers.export` answer `200 { filename, rowCount, csv }`, at most 5,000 rows (orders: a range of at most 366 days, required), and both are step-up and audited (`order.exported`, `customer.exported`); a larger one is refused with `validation_failed` (`too_big`). `admin.orders.bulk` takes at most 500 ids (a display number works as well as an id) and has no "all matching" form. The `202 { jobId }` kind waits for `admin.jobs.get` (DOC-10.8). (2) `transition` and `bulk` carry the permission `orders:read` in the table, and the handler checks the one of the target (`confirmed` and back to `pending_confirmation`: `orders:confirm`; `dispatched`; `delivered`; `cancelled`; `returned`) or of the action, answering `403 forbidden`. (3) `returned` has no `refundAmount`: a refund is recorded as a payment of kind `refund`. (4) Without `customers:read`: name as "Sana M.", phone as `0300 ••••567`, no email, no address line, landmark or notes (`shippingAddress.address` is optional for this), no `whatsappConfirmUrl`, and the search by `q` finds by number, tracking number and invoice number only. (5) A list row's `riskMarkers` leave out `duplicate_suspect` (one more query per order); the detail has it. (6) A tab of orders waiting for somebody (one status that is not final) sorts oldest first by default. (7) A staff-typed order is made in a cart of its own that is priced by the cart's code, passed to the same order transaction (channel `admin`, `created_by` and the `placed` event name the staff member) and then dropped; the same `Idempotency-Key` gives the same order (scope `admin.orders.create`, compared by what staff sent). `confirmedOnCall` confirms it straight away unless a deposit is still owed; `note` becomes a note. `admin.orders.quote` does the same and keeps nothing. Audit entries: `order.created`, `order.note_added`, `order.attempt_logged`. (8) In both CSV files money is rupees with two decimals in numeric columns and phones are written as `0300 1234567`, so no cell starts with `+`; a text cell that starts with `=`, `+`, `-` or `@` is prefixed with `'`. |
 | 2026-10-06 | M4-09: the six `admin.reviews.*` routes built under `/admin/reviews` (`reviews:read`, `reviews:moderate`). `q` searches the text, title, name, product title and order number. Moderating again is allowed (approved to rejected and back); each decision recomputes the product's rating. `bulk` takes `{ ids, action: 'approve' }` or `{ ids, action: 'reject', reason }` and decides each review on its own. `removePhoto` returns the review and deletes the file. `AdminReview.product.image` is the picture of the purchased line. |
 | 2026-10-02 | Initial version (Phase 5, part 2) |

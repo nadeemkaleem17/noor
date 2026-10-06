@@ -1,10 +1,11 @@
 // Customers: found or made by phone number when an order is placed, flagged and annotated by staff, counted by the order transitions,
 // and anonymised on request (plan/09-data-model/07-orders-payments.md section 2, plan/10-api/06 section 3, plan/11-security-auth.md section 8.2).
 import { randomInt } from 'node:crypto'
-import { normalizePkMobile } from '@noor/contract'
+import { formatPkMobileLocal, normalizePkMobile } from '@noor/contract'
 import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
 import { now } from '../../platform/clock.js'
+import { count, rupees, toCsv } from '../../platform/csv.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { record } from '../audit/index.js'
 import * as repo from './repository.js'
@@ -154,6 +155,21 @@ export function createCustomersService({ db, orders = noOrders }) {
     async list(query) {
       const { rows, total } = await repo.listCustomers(db, query)
       return { items: rows.map(toRow), total, page: query.page, size: query.size }
+    },
+
+    /**
+     * The customers of a filter as a file: personal data leaves the system, so there are at most 5,000 rows and it is written down.
+     * @param {Staff} actor @param {Omit<Parameters<typeof repo.listCustomers>[1], 'page' | 'size' | 'sort'>} filter @param {RequestInfo} req
+     */
+    async exportCsv(actor, filter, req) {
+      const { rows, total } = await repo.listCustomers(db, { ...filter, sort: 'name', page: 1, size: 5000 })
+      if (total > 5000) throw new DomainError('validation_failed', { issues: [{ path: 'q', code: 'too_big' }] })
+      const file = toCsv(
+        ['Name', 'Phone', 'Email', 'City', 'Orders', 'Delivered', 'Refused', 'Cancelled', 'Spent', 'First order', 'Last order', 'No cash on delivery', 'VIP', 'Marketing consent'],
+        rows.map((c) => [c.name, formatPkMobileLocal(c.phone), c.email, c.city, count(c.ordersCount), count(c.deliveredCount), count(c.refusedCount), count(c.cancelledCount), rupees(c.spentMinor), c.firstOrderAt?.toISOString(), c.lastOrderAt?.toISOString(), c.noCod ? 'yes' : 'no', c.vip ? 'yes' : 'no', c.marketingConsent ? 'yes' : 'no']),
+      )
+      await transaction(db, (tx) => record(tx, { ...actorOf(actor, req), action: 'customer.exported', entityType: 'customer', entityId: 'export', entityLabel: `${rows.length} customers`, category: 'security' }))
+      return { filename: `customers-${now().toISOString().slice(0, 10)}.csv`, rowCount: rows.length, csv: file }
     },
 
     /** @param {string} id */

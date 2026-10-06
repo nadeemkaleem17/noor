@@ -9,6 +9,7 @@ import { createCustomersService } from './customers/index.js'
 import { createInventory } from './inventory/index.js'
 import { createMailer, createNotifications } from './notifications/index.js'
 import { createMediaService } from './media/index.js'
+import { createAdminOrders } from './orders/admin.js'
 import { createOrdersService, customerOrders } from './orders/index.js'
 import { createPaymentsService, createProviders } from './payments/index.js'
 import { createPromotionsService } from './promotions/index.js'
@@ -45,5 +46,6 @@ export function createServices({ db, config, storage = createStorage(config), pr
   const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media })
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
   const notifications = createNotifications({ db, config, settings, mailer })
-  return { reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
+  return { adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

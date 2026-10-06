@@ -45,8 +45,9 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
   /**
    * Everything in one transaction. The caller wraps it in the idempotency protocol; a refusal rolls all of it back.
    * @param {Db} tx @param {string | undefined} token @param {CreateOrderBody} body
+   * @param {{ staff?: { id: string, label: string } }} [opts] a staff member typing the order for a customer: channel `admin`, and the history says who
    */
-  async function place(tx, token, body) {
+  async function place(tx, token, body, opts = {}) {
     const cartRow = await cart.lockCartOf(tx, token)
     if (!cartRow) throw new DomainError('cart_empty')
     const priced = await cart.price(tx, cartRow, { cityId: body.shippingAddress.cityId, methodId: body.shippingMethodId, phone: body.customer.phone, images: false })
@@ -99,7 +100,7 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     const ship = /** @type {NonNullable<typeof c.shipping>} */ (c.shipping)
 
     await repo.insertOrder(tx, {
-      id: orderId, number, numberPrefix: prefix, trackingTokenHash: trackingHash(token2), status, channel: 'storefront', locale: body.locale ?? 'en',
+      id: orderId, number, numberPrefix: prefix, trackingTokenHash: trackingHash(token2), status, channel: opts.staff ? 'admin' : 'storefront', createdBy: opts.staff?.id ?? null, locale: body.locale ?? 'en',
       customerId: customer.id, customerName: body.customer.name, customerPhone: body.customer.phone, customerEmail: body.customer.email ?? null,
       shipCityId: body.shippingAddress.cityId, shipCity: cityName, shipAddress: body.shippingAddress.address, shipLandmark: body.shippingAddress.landmark ?? null, shipNotes: body.shippingAddress.notes ?? null,
       customFields: body.customFields && Object.keys(body.customFields).length ? body.customFields : null,
@@ -119,7 +120,7 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
         })),
       ),
     )
-    await repo.insertEvent(tx, { id: uuidv7(), orderId, type: 'placed', toStatus: status, actorType: 'storefront', data: { paymentMethod: body.paymentMethod }, public: true, createdAt: at })
+    await repo.insertEvent(tx, { id: uuidv7(), orderId, type: 'placed', toStatus: status, actorType: opts.staff ? 'staff' : 'storefront', actorId: opts.staff?.id ?? null, actorLabel: opts.staff?.label ?? null, data: { paymentMethod: body.paymentMethod }, public: true, createdAt: at })
     await emit(tx, { type: 'order.placed', payload: { orderId, number: `${prefix}-${number}` } })
     await cart.deleteCart(tx, cartRow.id)
 
@@ -235,10 +236,11 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     /**
      * `orders.create`: at most once per Idempotency-Key. The same key and body again gives the first answer; the same key with another body is refused.
      * @param {string | undefined} token the cart token @param {CreateOrderBody} body @param {string} idempotencyKey
+     * @param {{ staff?: { id: string, label: string }, asked?: unknown }} [opts] for a staff-typed order: who, and the request as staff sent it (what a repeated key is compared with)
      */
-    async create(token, body, idempotencyKey) {
+    async create(token, body, idempotencyKey, opts = {}) {
       try {
-        return await run(token, body, idempotencyKey)
+        return await run(token, body, idempotencyKey, opts)
       } catch (e) {
         // a refusal carries the cart as it stands; the pictures are added here, after the transaction that made it has ended
         if (e instanceof DomainError && e.details.cart) throw new DomainError(e.code, { ...e.details, cart: await cart.withImages(/** @type {never} */ (e.details.cart)) })
@@ -247,13 +249,14 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     },
   }
 
-  /** @param {string | undefined} token @param {CreateOrderBody} body @param {string} idempotencyKey */
-  async function run(token, body, idempotencyKey) {
+  /** @param {string | undefined} token @param {CreateOrderBody} body @param {string} idempotencyKey @param {{ staff?: { id: string, label: string }, asked?: unknown }} opts */
+  async function run(token, body, idempotencyKey, opts) {
     const r = await withIdempotency(db, {
-      scope: 'orders.create',
+      scope: opts.staff ? 'admin.orders.create' : 'orders.create',
       key: idempotencyKey,
-      body: { cart: token ? sha256Hex(token) : null, order: body },
-      command: async (tx) => ({ status: 201, body: await place(tx, token, body) }),
+      // a customer's request is its cart and its form; a staff member's is what they typed (the cart behind it is made new each time)
+      body: opts.staff ? { asked: opts.asked ?? body, by: opts.staff.id } : { cart: token ? sha256Hex(token) : null, order: body },
+      command: async (tx) => ({ status: 201, body: await place(tx, token, body, opts) }),
     })
     return r.body
   }
