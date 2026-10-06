@@ -125,7 +125,7 @@ AdminCustomer = AdminCustomerRow & { email?: string, noCodReason?: string, conse
 |---|---|---|---|---|---|
 | `admin.promos.list` | `GET /promos` | `promos:read` | Q: `q?`, `status?: 'active' \| 'scheduled' \| 'expired' \| 'disabled'`, `type?`, `page`, `size`, `sort` (`code`, `-createdAt`, `usageCount`) | 200 `Page<AdminPromo>` | — |
 | `admin.promos.get` | `GET /promos/:id` | `promos:read` | — | 200 `AdminPromo` | `not_found` |
-| `admin.promos.create` | `POST /promos` | `promos:write` | B: `PromoInput` | 201 `AdminPromo` | `code_taken` |
+| `admin.promos.create` | `POST /promos` | `promos:write` | B: `PromoInput` | 201 `AdminPromo` | `validation_failed` (`code` `not_unique`) |
 | `admin.promos.update` | `PUT /promos/:id` | `promos:write` | B: `PromoInput & { version }` | 200 `AdminPromo` | `stale_write`, `validation_failed` (changing `code`/`type` of a used promo) |
 | `admin.promos.delete` | `DELETE /promos/:id` | `promos:delete` | — | 204 | `in_use` (has redemptions → disable instead) |
 | `admin.promos.preview` | `POST /promos/preview` | `promos:read` | B: `{ promo: PromoInput, lines: { variantId: Id, quantity: int }[] }` | 200 `{ applies: boolean, reason?: string, discount: Money, eligibleSubtotal: Money, lineDiscounts: { variantId: Id, discount: Money }[] }` | — |

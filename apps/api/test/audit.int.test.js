@@ -7,6 +7,7 @@ import { auditLog } from '../src/db/schema/audit.js'
 import { loginAttempts, staffUsers } from '../src/db/schema/auth.js'
 import { menus, pages, settings } from '../src/db/schema/content.js'
 import { customers } from '../src/db/schema/customers.js'
+import { promos } from '../src/db/schema/promotions.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
 import { collections, products } from '../src/db/schema/products.js'
 import { reservations } from '../src/db/schema/inventory.js'
@@ -29,6 +30,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     await t.migrate.db.delete(auditLog) // only the migration user may remove entries
     await t.db.delete(loginAttempts)
     await t.db.delete(customers)
+    await t.db.delete(promos)
     await t.db.delete(collections)
     await t.db.delete(reservations)
     await t.migrate.pool.query('DELETE FROM inventory_movements')
@@ -303,6 +305,17 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.customers.update'] = { prepare: withCustomer, act: ({ b, id }) => b.call('PUT', `/admin/customers/${id}`, { body: { name: 'Sana Malik', noCod: true, noCodReason: 'Refused twice', vip: false, marketingConsent: false, version: 1 } }) }
     samples['admin.customers.addNote'] = { prepare: withCustomer, act: ({ b, id }) => b.call('POST', `/admin/customers/${id}/notes`, { body: { body: 'Call after 5pm' } }) }
     samples['admin.customers.anonymise'] = { prepare: withCustomer, act: ({ b, id }) => b.call('POST', `/admin/customers/${id}/anonymise`, { body: { confirm: '4567' } }) }
+    const promoBody = { code: 'EID10', type: 'percent', percent: 10, scope: 'all', excludeSaleItems: true, firstOrderOnly: false, enabled: true }
+    const withPromo = async () => {
+      const s = await signedIn('owner')
+      const r = await s.b.call('POST', '/admin/promos', { body: promoBody })
+      await t.migrate.db.delete(auditLog)
+      return { ...s, id: r.body.id }
+    }
+    samples['admin.promos.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/promos', { body: promoBody }) }
+    samples['admin.promos.update'] = { prepare: withPromo, act: ({ b, id }) => b.call('PUT', `/admin/promos/${id}`, { body: { ...promoBody, percent: 15, version: 1 } }) }
+    samples['admin.promos.delete'] = { prepare: withPromo, act: ({ b, id }) => b.call('DELETE', `/admin/promos/${id}`) }
+    samples['admin.promos.bulk'] = { prepare: withPromo, act: ({ b, id }) => b.call('POST', '/admin/promos/bulk', { body: { ids: [id], action: 'disable' } }) }
     const courier = { name: 'BlueEx', trackingRequired: true, enabled: true }
     samples['admin.couriers.create'] = { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/couriers', { body: courier }) }
     samples['admin.couriers.update'] = {
@@ -399,6 +412,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       'admin.products.checks': 'runs the publish checks on a document that may not be saved; nothing is stored',
       'admin.products.previewLink': 'signs a link that expires in 15 minutes; it changes no data',
       'admin.pages.preview': 'only renders text with the store tokens filled in; nothing is stored',
+      'admin.promos.preview': 'a read-only calculation on a code that is not saved; nothing is stored',
       'admin.me.twoFactor.begin': 'stores a pending secret that does nothing until `enable`, which is audited',
     }
 

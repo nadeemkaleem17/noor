@@ -10,7 +10,7 @@ const people = () => [
   person({ id: ids.staff, name: 'Ayesha Khan', email: 'ayesha@example.com', role: 'owner', twoFactorEnabled: true }),
   person({ id: uid(2), name: 'Bilal Raza', email: 'bilal@example.com', role: 'manager', twoFactorEnabled: false }),
   person({ id: uid(3), name: 'Chand Ali', email: 'chand@example.com', role: 'catalog', twoFactorEnabled: true }),
-  person({ id: uid(4), name: 'Dua Malik', email: 'dua@example.com', role: 'support', status: 'invited', inviteExpiresAt: '2026-10-10T05:00:00.000Z', lastSeenAt: undefined }),
+  person({ id: uid(4), name: 'Dua Malik', email: 'dua@example.com', role: 'support', status: 'invited', inviteExpiresAt: new Date(Date.now() + 5 * 86_400_000 + 3_600_000).toISOString(), lastSeenAt: undefined }),
   person({ id: uid(5), name: 'Esa Shah', email: 'esa@example.com', role: 'viewer', status: 'deactivated' }),
 ]
 const roles = () => ({

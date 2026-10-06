@@ -85,6 +85,13 @@
       "when": 1791199879626,
       "tag": "0011_customers",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1791264927101,
+      "tag": "0012_promotions",
+      "breakpoints": true
     }
   ]
 }
