@@ -115,5 +115,122 @@
       "tips": "ہجے دیکھ لیں، یا کوئی عام لفظ آزمائیں، جیسے “لان” یا “کرتا”۔",
       "whatsapp": "واٹس ایپ پر پوچھیں"
     }
+  },
+  "pdp": {
+    "gallery": "پروڈکٹ کی تصاویر",
+    "image": "تصویر",
+    "imageAlt": "{title}، {role} {n}",
+    "enlarge": "تصویر {n} بڑی کریں",
+    "counter": "{n} / {total}",
+    "thumbs": "تصاویر",
+    "showPicture": "تصویر {n} دکھائیں",
+    "prev": "پچھلی",
+    "next": "اگلی",
+    "rating": "5 میں سے {average}، {count, plural, one {# جائزہ} other {# جائزے}}",
+    "taxNote": "تمام ٹیکسوں سمیت",
+    "colour": "رنگ: {name}",
+    "choose": "چنیں",
+    "optionValue": "{name}: {value}",
+    "unavailable": "ختم ہو گیا",
+    "sizeGuide": "سائز گائیڈ",
+    "unit": "اکائی",
+    "units": {
+      "in": "انچ",
+      "cm": "سینٹی میٹر"
+    },
+    "howToMeasure": "ناپ کیسے لیں",
+    "fit": {
+      "runs_small": "چھوٹا آتا ہے: ایک سائز بڑا لیں",
+      "true_to_size": "سائز کے مطابق",
+      "runs_large": "بڑا آتا ہے: ایک سائز چھوٹا لیں"
+    },
+    "model": "ماڈل کا قد {height} سینٹی میٹر ہے اور وہ {size} پہنتی ہیں",
+    "modelHeight": "ماڈل کا قد {height} سینٹی میٹر ہے",
+    "stock": {
+      "in_stock": "دستیاب ہے",
+      "low": "صرف {n} باقی",
+      "lowUnknown": "کم مقدار باقی",
+      "sold_out": "ختم ہو گیا",
+      "preorder": "{date} سے روانہ",
+      "preorderUnknown": "پری آرڈر",
+      "madeToOrder": "آرڈر پر تیار"
+    },
+    "quantity": "تعداد",
+    "maxQuantity": "زیادہ سے زیادہ آرڈر: {n}",
+    "button": {
+      "add": "کارٹ میں ڈالیں",
+      "select": "{name} چنیں",
+      "soldOut": "ختم ہو گیا",
+      "preorder": "پری آرڈر",
+      "order": "ابھی آرڈر کریں",
+      "unavailable": "دستیاب نہیں"
+    },
+    "added": "کارٹ میں شامل ہو گیا۔",
+    "viewCart": "کارٹ دیکھیں",
+    "errors": {
+      "select": "پہلے {name} چنیں۔",
+      "insufficient_stock": "صرف {n} دستیاب ہیں۔",
+      "variant_unavailable": "یہ آپشن ابھی ختم ہو گیا۔",
+      "max_per_order": "ایک آرڈر میں زیادہ سے زیادہ {n}۔",
+      "cart_full": "آپ کا کارٹ بھر گیا ہے۔ مزید ڈالنے کے لیے کچھ ہٹائیں۔",
+      "invalid": "براہ کرم آپشن چنیں اور اپنا ناپ دیکھ لیں۔",
+      "busy": "بہت زیادہ درخواستیں۔ تھوڑی دیر بعد کوشش کریں۔",
+      "failed": "کارٹ میں نہیں ڈالا جا سکا۔ دوبارہ کوشش کریں۔"
+    },
+    "notify": {
+      "title": "{label} واپس آنے پر مجھے بتائیں",
+      "phone": "موبائل نمبر",
+      "submit": "مجھے بتائیں",
+      "done": "شکریہ۔ واپس آنے پر ہم آپ کو پیغام بھیجیں گے۔",
+      "failed": "یہ نمبر محفوظ نہیں ہو سکا۔ چیک کر کے دوبارہ کوشش کریں۔"
+    },
+    "whatsapp": "واٹس ایپ پر پوچھیں",
+    "whatsappText": "السلام علیکم، مجھے {title} کے بارے میں پوچھنا ہے ({url})",
+    "delivery": {
+      "eta": "{min} سے {max} دن میں ڈیلیوری",
+      "cod": "کیش آن ڈیلیوری دستیاب ہے",
+      "freeAbove": "{amount} سے اوپر ڈیلیوری مفت"
+    },
+    "mto": {
+      "deposit": "{percent}% ایڈوانس سے آپ کا آرڈر شروع ہوتا ہے۔",
+      "notReturnable": "آرڈر پر تیار جوڑے واپس نہیں ہو سکتے۔"
+    },
+    "sections": {
+      "details": "تفصیل",
+      "included": "کیا شامل ہے",
+      "fabric": "کپڑا اور دیکھ بھال",
+      "delivery": "ڈیلیوری اور واپسی"
+    },
+    "included": {
+      "piece": "حصہ",
+      "fabric": "کپڑا",
+      "colour": "رنگ",
+      "technique": "کام",
+      "quantity": "مقدار",
+      "note": "صرف کپڑا، سلائی شامل نہیں۔"
+    },
+    "returnsLink": "ڈیلیوری اور واپسی کی پالیسی",
+    "custom": {
+      "title": "آپ کا ناپ",
+      "notes": "درزی کے لیے ہدایات",
+      "check": "براہ کرم اپنا ناپ دیکھ لیں۔"
+    },
+    "bundle": {
+      "title": "اس سیٹ میں",
+      "sizeOf": "{title} کا سائز"
+    },
+    "reviews": "جائزے",
+    "reviewCount": "{count, plural, one {# جائزہ} other {# جائزے}}",
+    "byStar": "ستاروں کے لحاظ سے جائزے",
+    "stars": "5 میں سے {n} ستارے",
+    "starsShort": "{n} ستارے",
+    "reviewPhoto": "گاہک کی تصویر",
+    "reviewReply": "{brand} کی طرف سے جواب",
+    "moreReviews": "مزید جائزے",
+    "reviewsFailed": "مزید جائزے نہیں کھل سکے۔",
+    "loading": "کھل رہا ہے",
+    "related": "آپ کو یہ بھی پسند آ سکتا ہے",
+    "recent": "حال ہی میں دیکھے گئے",
+    "measurement": "ناپ"
   }
 }

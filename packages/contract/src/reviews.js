@@ -40,6 +40,7 @@ export const ReviewListing = z.strictObject({
   /** `byStar[0]` is the number of one-star reviews, `byStar[4]` of five-star ones. */
   summary: z.strictObject({ average: z.number(), count: z.int(), byStar: z.tuple([z.int(), z.int(), z.int(), z.int(), z.int()]) }),
 })
+/** @typedef {z.infer<typeof ReviewListing>} ReviewListing */
 
 export const ReviewInvite = z.strictObject({
   product: z.strictObject({ title: z.string(), image: Image.optional() }),

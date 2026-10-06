@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { StoreConfigPublic, themePresets } from '@noor/contract'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const state = { down: false, ur: false }
+const state = { down: false, ur: false, /** @type {any} */ cartBody: undefined }
 const image = { src: 'http://localhost/img/logo.webp', srcset: '', width: 120, height: 40, alt: 'Rubaya' }
 
 const config = () =>
@@ -64,8 +64,57 @@ function listing(q) {
   return { items, total: 40, ...(second ? {} : { nextCursor: 'c1' }), facets: facets.map((f) => (f.key === 'size' ? { ...f, values: f.values.map((v) => ({ ...v, selected: selected.has(v.value) })) } : f)), pricePresets: [{ max: 500000 }, { min: 500000, max: 1000000 }, { min: 1000000 }] }
 }
 
-/** @param {string} p @param {string} locale @param {URLSearchParams} [q] */
-function answer(p, locale, q = new URLSearchParams()) {
+const uuid = (/** @type {number} */ n) => `0192f5aa-0000-7000-8000-${String(n).padStart(12, '0')}`
+/** A stitched dress in three sizes: S has two left, M is sold out, L is plentiful. */
+const detail = () => ({
+  id: uuid(100), handle: 'dress-1', kind: 'stitched', status: 'active', title: 'Dress 1', subtitle: 'Embroidered lawn', brand: 'Rubaya', descriptionMd: 'Soft **lawn** with care.', highlights: ['Three piece'], care: ['Dry clean only'],
+  breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }],
+  media: [1, 2, 3].map((n) => ({ ...image, alt: n === 1 ? 'Front' : '', id: uuid(300 + n), kind: 'image', src: `http://localhost/img/p${n}.webp` })),
+  options: [{ id: uuid(10), name: 'Size', role: 'size', display: 'buttons', values: [{ id: uuid(11), label: 'S', kind: 'standard' }, { id: uuid(12), label: 'M', kind: 'standard' }, { id: uuid(13), label: 'L', kind: 'standard' }] }],
+  variants: [
+    { id: uuid(21), sku: 'D-S', optionValueIds: [uuid(11)], price: money(699000), compareAt: money(849000), stockStatus: 'low_stock', available: 2, maxPerOrder: 10 },
+    { id: uuid(22), sku: 'D-M', optionValueIds: [uuid(12)], price: money(699000), stockStatus: 'sold_out', maxPerOrder: 10 },
+    { id: uuid(23), sku: 'D-L', optionValueIds: [uuid(13)], price: money(749000), stockStatus: 'in_stock', maxPerOrder: 10 },
+  ],
+  components: [{ type: 'shirt', label: 'Shirt', fabric: 'Lawn', quantity: '3 m', included: true }], attributes: [{ label: 'Fabric', values: ['Lawn'] }],
+  siblings: [{ handle: 'dress-1', label: 'Teal', swatch: { hex: ['#008080'] }, image, current: true }, { handle: 'dress-2', label: 'Rose', swatch: { hex: ['#ff6699'] }, image, current: false }],
+  colorway: { label: 'Teal', family: 'blue', swatch: { hex: ['#008080'] } },
+  sizeChartId: uuid(40), fit: { note: 'runs_small', modelHeightCm: 168, modelWears: 'M' }, badges: [], rating: { average: 4.6, count: 38 },
+  delivery: { etaMinDays: 3, etaMaxDays: 5, codAvailable: true, freeAbove: money(500000) }, seo: { title: 'Embroidered lawn 3-piece' }, updatedAt: '2026-10-01T00:00:00.000Z',
+})
+
+const one = (/** @type {string} */ handle, /** @type {string} */ kind, /** @type {object} */ over) => ({
+  ...detail(), id: uuid(600 + handle.length), handle, kind, title: handle, options: [], variants: [{ id: uuid(700 + handle.length), sku: handle, optionValueIds: [], price: money(500000), stockStatus: 'in_stock', maxPerOrder: 10 }], sizeChartId: undefined, fit: undefined, components: [], ...over,
+})
+const sizeOption = { id: uuid(50), name: 'Size', role: 'size', display: 'buttons', values: [{ id: uuid(51), label: '40', kind: 'standard' }, { id: uuid(52), label: '41', kind: 'standard' }] }
+/** One product of each of the other kinds (DOC-06.4 section 5). @param {string} handle */
+const ofKind = (handle) => (/** @type {Record<string, () => object>} */ ({
+  'unstitched-1': () => one(handle, 'unstitched', { components: [{ type: 'shirt', label: 'Shirt', fabric: 'Lawn', quantity: '3 m', included: true }, { type: 'dupatta', label: 'Dupatta', fabric: 'Chiffon', quantity: '2.5 m', included: true }] }),
+  'mto-1': () => one(handle, 'made_to_order', {
+    options: [{ ...sizeOption, values: [...sizeOption.values, { id: uuid(53), label: 'Custom size', kind: 'custom' }] }], customSizeSchemaId: uuid(60),
+    variants: [uuid(51), uuid(52), uuid(53)].map((v, i) => ({ id: uuid(710 + i), sku: `m${i}`, optionValueIds: [v], price: money(18500000), stockStatus: 'made_to_order', maxPerOrder: 10 })),
+    madeToOrder: { leadMinDays: 15, leadMaxDays: 20, label: 'Made for you in 15–20 days', returnable: false, depositPercent: 30 },
+  }),
+  'shoe-1': () => one(handle, 'footwear', { options: [sizeOption], variants: [uuid(51), uuid(52)].map((v, i) => ({ id: uuid(720 + i), sku: `s${i}`, optionValueIds: [v], price: money(500000), stockStatus: 'in_stock', maxPerOrder: 10 })), sizeChartId: uuid(40) }),
+  'bundle-1': () => one(handle, 'bundle', { bundle: { items: [{ product: product(5), options: [sizeOption], variants: [uuid(51), uuid(52)].map((v, i) => ({ id: uuid(730 + i), sku: `b${i}`, optionValueIds: [v], price: money(300000), stockStatus: 'in_stock', maxPerOrder: 10 })) }] } }),
+  'accessory-1': () => one(handle, 'accessory', {}),
+}))[handle]?.()
+
+/** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any }} [req] */
+function answer(p, locale, q = new URLSearchParams(), req = {}) {
+  const kind = ofKind(p.replace('/api/v1/products/', ''))
+  if (kind) return kind
+  if (p === '/api/v1/form-schemas/' + uuid(60)) return { id: uuid(60), fields: [{ key: 'bust', label: 'Bust', type: 'number', required: true, min: 20, max: 60, unit: 'in' }, { key: 'length', label: 'Length', type: 'number', required: false, unit: 'in' }], allowNotes: true }
+  if (p === '/api/v1/products/dress-1' || p === '/api/v1/products/embroidered-lawn') return detail()
+  if (p === '/api/v1/products/old-dress') return { redirectTo: 'dress-1' }
+  if (p === '/api/v1/size-charts/' + uuid(40)) return { id: uuid(40), title: 'Women', unit: 'in', tables: [{ id: 't', title: 'Body', columns: ['Bust', 'Waist'], rows: [{ label: 'S', values: [34, 28] }] }] }
+  if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25] } }
+  if (p === '/api/v1/products/' + uuid(100) + '/related') return { items: [product(7), product(8), product(9), product(10)] }
+  if (p === '/api/v1/cart/lines' && req.method === 'POST') {
+    state.cartBody = req.body
+    if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
+    return { cartToken: 'tok-123', lines: [], count: req.body.quantity, subtotal: money(0), discount: money(0), total: money(0), messages: [], hasBlockingIssues: false }
+  }
   if (p === '/api/v1/store/config') return config()
   if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
   if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed' }], seo: { title: 'Lawn suits' } }
@@ -86,10 +135,13 @@ function answer(p, locale, q = new URLSearchParams()) {
   return undefined
 }
 
-const api = createServer((req, res) => {
+const api = createServer(async (req, res) => {
   const u = new URL(req.url ?? '/', 'http://x')
-  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en', u.searchParams)
-  res.statusCode = state.down ? 500 : body && 'status' in body ? Number(body.status) : body ? 200 : 404
+  let text = ''
+  for await (const chunk of req) text += chunk
+  /** @type {any} */
+  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en', u.searchParams, { method: req.method ?? 'GET', body: text ? JSON.parse(text) : undefined })
+  res.statusCode = state.down ? 500 : body && typeof body.status === 'number' ? body.status : body ? 200 : 404
   res.setHeader('content-type', 'application/json')
   res.end(JSON.stringify(body ?? { code: 'not_found' }))
 })
@@ -319,6 +371,108 @@ describe('the storefront through its whole stack', () => {
       expect(html).toContain('No results for “nothing”')
       expect(html).toContain('https://wa.me/923001234567?text=nothing')
       expect(html.match(/<article/g)).toHaveLength(4)
+    })
+  })
+
+  describe('the product page (DOC-06.4)', () => {
+    it('server HTML: heading, the price, the options, a form that posts to the cart, the way up, the sections, one cache class', async () => {
+      const r = await get('/p/dress-1')
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toBe('public, s-maxage=60, stale-while-revalidate=600')
+      const html = await r.text()
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toMatch(/<h1[^>]*>Dress 1</)
+      expect(html).toContain('<title>Embroidered lawn 3-piece | Rubaya</title>')
+      expect(html).toMatch(/<form(?=[^>]*action="\/cart")(?=[^>]*method="post")[^>]*>/)
+      expect(html).toContain('From') // nothing is chosen, the sizes differ in price: the lowest
+      expect(html).toMatch(/<input(?=[^>]*type="radio")(?=[^>]*name="opt\.[^"]*")[^>]*>/)
+      expect(html).not.toMatch(/<input(?=[^>]*type="radio")(?=[^>]*checked)[^>]*>/) // no size is chosen for the visitor
+      expect(html).toMatch(/<input(?=[^>]*type="radio")(?=[^>]*aria-disabled="true")[^>]*>/) // M is sold out: marked, still there
+      expect(html).toContain('Select Size')
+      expect(html).toContain('href="/c/lawn"')
+      expect(html).toContain('Runs small: consider one size up')
+      expect(html).toContain('Model is 168 cm and wears M')
+      expect(html).toContain('Dry clean only')
+      expect(html).toContain('<strong>lawn</strong>') // the description is Markdown
+      expect(html).toContain('href="/p/dress-2"') // the other colour is its own page
+      expect(html).toContain('4.6 out of 5')
+      expect(html).toContain('wa.me/923001234567')
+      expect(html).toContain('Cash on delivery available')
+      expect(html.match(/<img[^>]*fetchPriority="high"/g)).toHaveLength(1) // the first picture only
+      expect(html).toContain('Front') // a picture's own words
+      expect(html).toContain('Dress 1, picture 2') // and, with none, the title and its place
+    })
+
+    it('every kind shows its own blocks (DOC-06.4 section 5)', async () => {
+      const page = async (/** @type {string} */ handle) => await (await get(`/p/${handle}`)).text()
+      const unstitched = await page('unstitched-1')
+      expect(unstitched).toContain('What is included')
+      expect(unstitched).toContain('Dupatta')
+      expect(unstitched).toContain('Fabric only, stitching not included.')
+      expect(unstitched).toContain('Add to cart') // one variant: nothing to choose first
+      expect(unstitched).not.toContain('Select ')
+      const mto = await page('mto-1')
+      expect(mto).toContain('Made for you in 15–20 days')
+      expect(mto).toContain('A deposit of 30% starts your order.')
+      expect(mto).toContain('Made-to-order pieces cannot be returned.')
+      expect(mto).toContain('Custom size') // the made-to-measure value of the size
+      expect(mto).toContain('Select Size')
+      const shoe = await page('shoe-1')
+      expect(shoe).toContain('Select Size')
+      const bundle = await page('bundle-1')
+      expect(bundle).toContain('In this set')
+      expect(bundle).toContain('Select a size for Dress 5') // every part of the set needs its size
+      const accessory = await page('accessory-1')
+      expect(accessory).toContain('Add to cart')
+      expect(accessory).not.toContain('What is included') // no components
+    })
+
+    it('an old handle is sent on, a missing product is a 404', async () => {
+      const r = await get('/p/old-dress')
+      expect(r.status).toBe(301)
+      expect(r.headers.get('location')).toBe('/p/dress-1')
+      expect((await get('/p/nothing-here')).status).toBe(404)
+    })
+
+    it('the reviews and related products are in the page after they stream in; a size in the address is chosen', async () => {
+      const html = await (await get('/p/dress-1?size=l', { headers: { 'user-agent': 'Googlebot/2.1 (+http://www.google.com/bot.html)' } })).text()
+      expect(html).toContain('Lovely fit')
+      expect(html).toContain('You may also like')
+      expect(html).toMatch(/<input(?=[^>]*type="radio")(?=[^>]*checked)[^>]*>/)
+    })
+
+    it('adding without JavaScript: the variant is found from the options, no price is sent, the cart cookie is set, the visitor goes to the cart', async () => {
+      const body = new URLSearchParams({ intent: 'add', handle: 'dress-1', quantity: '1', [`opt.${uuid(10)}`]: uuid(13) })
+      const r = await get('/cart', { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+      expect(r.status).toBe(302)
+      expect(r.headers.get('location')).toBe('/cart')
+      expect(state.cartBody).toEqual({ variantId: uuid(23), quantity: 1 })
+      expect(r.headers.get('set-cookie')).toMatch(/^nc_cart=tok-123; Path=\/; Max-Age=2592000; HttpOnly; SameSite=Lax/)
+    })
+
+    it('measurements, a note and the chosen parts of a set go on the line as the customer gave them, and empty answers are left out', async () => {
+      const body = new URLSearchParams({ intent: 'add', variantId: uuid(23), quantity: '1', 'm.bust': ' 36 ', 'm.waist': '', notes: 'Longer sleeves', [`bundle.${uuid(7)}`]: uuid(24) })
+      await get('/cart', { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+      expect(state.cartBody).toEqual({ variantId: uuid(23), quantity: 1, customization: { measurements: { bust: '36' }, notes: 'Longer sleeves', bundle: [{ productId: uuid(7), variantId: uuid(24) }] } })
+    })
+
+    it('adding more than there is: nothing is added, the visitor is sent back with the reason and the number left', async () => {
+      const body = new URLSearchParams({ intent: 'add', variantId: uuid(21), handle: 'dress-1', quantity: '3', returnTo: '/p/dress-1' })
+      const r = await get('/cart', { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+      expect(r.headers.get('location')).toBe('/p/dress-1?cartError=insufficient_stock&n=2')
+      expect(r.headers.get('set-cookie')).toBeNull()
+      const page = await (await get('/p/dress-1?cartError=insufficient_stock&n=2')).text()
+      expect(page).toContain('Only 2 available.')
+    })
+
+    it('a made-up choice is refused, a page of another site cannot add to the cart, and the return address is only ever a product page', async () => {
+      const post = (/** @type {Record<string, string>} */ fields, /** @type {Record<string, string>} */ headers = {}) => get('/cart', { method: 'POST', body: new URLSearchParams(fields), headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers } })
+      const none = await post({ intent: 'add', handle: 'dress-1', quantity: '1', returnTo: '/p/dress-1' }) // no size chosen
+      expect(none.headers.get('location')).toBe('/p/dress-1?cartError=invalid')
+      expect((await post({ intent: 'add', variantId: uuid(23), quantity: '1' }, { origin: 'https://evil.example' })).status).toBe(400) // React Router's own origin check: the cart was not touched
+      const away = await post({ intent: 'add', handle: 'dress-1', quantity: '1', returnTo: 'https://evil.example/' })
+      expect(away.headers.get('location')).toBe('/cart')
+      expect((await post({ intent: 'checkout' })).status).toBe(400)
     })
   })
 

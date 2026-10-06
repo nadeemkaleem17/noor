@@ -47934,6 +47934,24 @@
                             ]
                           }
                         },
+                        "rating": {
+                          "type": "object",
+                          "properties": {
+                            "average": {
+                              "type": "number"
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "average",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        },
                         "delivery": {
                           "type": "object",
                           "properties": {

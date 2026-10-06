@@ -1,14 +1,100 @@
+import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Await, data, redirect, useLoaderData } from 'react-router'
+import { ApiError } from '@noor/contract'
+import { addErrors } from '~/lib/cart.server'
+import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
+import { getEnv } from '~/lib/env.server'
+import { orNotFound } from '~/lib/listing.server'
+import { localeOfPath } from '~/lib/locale'
+import { pageTitle } from '~/lib/page-title'
+import { localePath } from '~/lib/paths'
+import { loadShell } from '~/lib/shell.server'
+import { ProductPage } from '~/features/product/product-page'
+import { RecentlyViewed, RelatedSection, ReviewsSection } from '~/features/product/deferred'
 
-export const headers = /** @type {import('./+types/product').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.listing }))
+/** A page seen through a staff preview link is for one person: never cached. */
+export const headers = /** @type {import('./+types/product').Route.HeadersFunction} */ (({ loaderHeaders }) => ({ 'Cache-Control': loaderHeaders.get('Cache-Control') ?? cacheControl.listing }))
 
-// ponytail: the page itself is built in its own task (plan/16-roadmap.md section 5); until then it answers with the right cache class and says so.
+/**
+ * The product page (plan/06-storefront/04-pdp.md section 10): the product with its colourways, the size chart and the custom-size form it names, and, deferred, its reviews and related products.
+ * @param {import('./+types/product').Route.LoaderArgs} props
+ */
+export async function loader({ params, request }) {
+  const url = new URL(request.url)
+  const locale = localeOfPath(url.pathname)
+  const preview = url.searchParams.get('preview') ?? undefined
+  const { config } = await loadShell(locale)
+  const res = await api('catalog.getProduct', { params: { handleOrId: params.handle ?? '' }, query: { locale, ...(preview ? { preview } : {}) } }).catch(orNotFound)
+  if ('redirectTo' in res) throw redirect(localePath(locale, `/p/${res.redirectTo}`) + url.search, 301)
+  const product = res
+  const [sizeChart, formSchema] = await Promise.all([
+    product.sizeChartId ? api('catalog.getSizeChart', { params: { id: product.sizeChartId } }).catch(() => null) : null,
+    // without its form a made-to-measure size cannot be ordered, so this one is not optional
+    product.customSizeSchemaId ? api('catalog.getFormSchema', { params: { id: product.customSizeSchemaId } }) : null,
+  ])
+  const reviews = config.features.reviews ? api('reviews.listForProduct', { params: { id: product.id }, query: { limit: 5 } }).catch(() => undefined) : undefined
+  const related = api('catalog.listRelated', { params: { id: product.id }, query: { locale, limit: 8 } }).then((r) => r.items, () => undefined)
+  const error = url.searchParams.get('cartError')
+  // a section that cannot be loaded is left out, the page stays (plan/05-react-patterns.md section 7)
+  return data({
+    product,
+    sizeChart,
+    formSchema,
+    reviews,
+    related,
+    brand: config.brand.name,
+    whatsapp: config.contact.whatsapp,
+    imageOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin,
+    url: `${getEnv().PUBLIC_SITE_URL}${url.pathname}`,
+    cartError: addErrors.find((e) => e === error),
+    cartErrorN: Number(url.searchParams.get('n')) || undefined,
+    sizeParam: url.searchParams.get('size'),
+  }, preview ? { headers: { 'Cache-Control': cacheControl.private } } : undefined)
+}
+
+/**
+ * "Tell me when it is back" (plan/06-storefront/04-pdp.md section 6): the mobile number goes to the API, which keeps it for the back-in-stock message.
+ * @param {import('./+types/product').Route.ActionArgs} props
+ */
+export async function action({ request }) {
+  const form = await request.formData()
+  if (form.get('intent') !== 'notify') throw new Response('Bad Request', { status: 400 })
+  try {
+    await api('catalog.subscribeBackInStock', { params: { id: String(form.get('variantId') ?? '') }, body: { phone: String(form.get('phone') ?? ''), locale: localeOfPath(new URL(request.url).pathname) } })
+    return { ok: true }
+  } catch (e) {
+    // a number that is not a mobile number, a variant that is gone, too many requests: the visitor is told to check the number
+    if (!(e instanceof ApiError) && !(e instanceof Error && e.name === 'ZodError')) console.error('notify me failed', e)
+    return { ok: false }
+  }
+}
+
+export const meta = /** @type {import('./+types/product').Route.MetaFunction} */ (({ loaderData }) => {
+  const p = loaderData?.product
+  if (!p) return []
+  return [{ title: pageTitle(p.seo.title ?? p.title, loaderData.brand) }, ...(p.seo.description ? [{ name: 'description', content: p.seo.description }] : []), ...(p.status === 'active' ? [] : [{ name: 'robots', content: 'noindex,nofollow' }])]
+})
+
 export default function Product() {
   const { t } = useTranslation('storefront')
+  const { product, sizeChart, formSchema, reviews, related, whatsapp, url, imageOrigin, cartError, cartErrorN, sizeParam } = useLoaderData()
   return (
-    <div className="mx-auto max-w-2xl p-8">
-      <p className="text-fg-soft">{t('stub.soon')}</p>
-    </div>
+    <ProductPage product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} imageOrigin={imageOrigin} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam}>
+      {reviews ? (
+        <Suspense fallback={<section id="reviews" aria-label={t('pdp.reviews')} className="min-h-40" />}>
+          <Await resolve={reviews} errorElement={null}>
+            {(r) => (r ? <ReviewsSection listing={r} productId={product.id} /> : null)}
+          </Await>
+        </Suspense>
+      ) : null}
+      <Suspense fallback={<div className="min-h-64" />}>
+        <Await resolve={related} errorElement={null}>
+          {(items) => (items?.length ? <RelatedSection items={items} /> : null)}
+        </Await>
+      </Suspense>
+      <RecentlyViewed id={product.id} />
+    </ProductPage>
   )
 }

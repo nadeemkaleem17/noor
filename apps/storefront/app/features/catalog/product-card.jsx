@@ -6,11 +6,14 @@ import { useLocalePath, useShell } from '../layout/use-shell'
 
 /** @typedef {import('@noor/contract').ProductSummary} ProductSummary */
 
+/** How much is off, worked out from the two prices: the one place the percentage is computed. @param {import('@noor/contract').Money} price @param {import('@noor/contract').Money} compareAt */
+export const percentOff = (price, compareAt) => Math.round(((compareAt.amount - price.amount) / compareAt.amount) * 100)
+
 /** The one badge a card shows, by priority (plan/06-storefront/03-plp-search.md section 3): sold out, then sale, made to order, limited, new, bestseller. @param {ProductSummary} p */
 export function badgeOf(p) {
   if (p.badges.includes('sold_out') || p.stockStatus === 'sold_out') return { name: /** @type {const} */ ('sold_out') }
   if (p.badges.includes('sale') && p.compareAtFrom && p.compareAtFrom.amount > p.priceFrom.amount) {
-    return { name: /** @type {const} */ ('sale'), percent: Math.round(((p.compareAtFrom.amount - p.priceFrom.amount) / p.compareAtFrom.amount) * 100) }
+    return { name: /** @type {const} */ ('sale'), percent: percentOff(p.priceFrom, p.compareAtFrom) }
   }
   const next = /** @type {const} */ (['made_to_order', 'limited', 'new', 'bestseller']).find((b) => p.badges.includes(b))
   return next ? { name: next } : undefined

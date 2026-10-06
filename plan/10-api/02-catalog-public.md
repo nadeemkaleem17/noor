@@ -37,7 +37,7 @@ All endpoints: auth `public`; `Cache-Control: public, s-maxage=60, stale-while-r
 
 Built at M1-12 (`packages/contract/src/catalog-public.js`, `apps/api/src/modules/catalog/public*.js`). What differs, or is left for later:
 
-- **Reviews:** `reviews.listForProduct` and `rating` on cards are built (M4-09). `ProductDetail` carries no `rating` yet: the page reads it from the listing's `summary`.
+- **Reviews:** `reviews.listForProduct` and `rating` on cards are built (M4-09). `ProductDetail` carries `rating` (`{ average, count }`, approved reviews, absent when there are none) since M5-04; the fit counts of section 7 are still not built.
 - **Listing:** `ListingQuery` is an open object so `attr.<code>` keys fit; any other unknown key, an unknown attribute code, `sort=relevance` without `q`, `priceMin` above `priceMax` and a bad cursor are `400`. A hidden category, a draft collection and one outside its window are `404`. `ids` ignores every other filter and returns live products in the order given. A text search answers `Cache-Control: private, no-store` and counts against the `search` bucket (60/min/IP); everything else is `public, s-maxage=60, stale-while-revalidate=600`. A zero-result text search is written to the miss log.
 - **Cursors:** keyset on the sort key plus the product id (`newest`, `price_*`, `bestselling`, `featured`, and the collection's own order inside a collection), so a walk returns every product once even when products are published during it; `relevance` pages by offset.
 - **Facets:** `kind`, `size` (only sizes with an available variant), `color` (colour family), `inStock`, and, inside a category, its filters (own or inherited, in order, `number` attributes left out); counts leave out the facet's own selection and values with count 0 stay. `pricePresets` are four ranges from the quartiles, empty when fewer than four products match. `facets=0` and `ids` skip all of it.
@@ -206,5 +206,6 @@ GET /api/v1/products/old-handle
 
 | Date | Change |
 |---|---|
+| 2026-10-07 | M5-04: `ProductDetail.rating` built (same value as on the card). Typedefs `ProductDetail`, `SizeChart`, `CustomSizeForm` and `ReviewListing` exported from `@noor/contract` |
 | 2026-10-06 | M4-09: `reviews.listForProduct` built: approved reviews, newest first, cursor `<created ms>.<id>` (base64url), `summary.byStar[0]` is the one-star count; `404` when reviews are off or the product is not active; cacheable (`s-maxage`), purged with the tag `product:<handle>` on approve, reject, reply and photo removal. `ProductSummary.rating` is `{ average, count }` from the product's rating columns, absent with no approved review. |
 | 2026-10-02 | Initial version (Phase 5, part 2). Final shapes for `ProductSummary` and listing params (camelCase: `priceMin`, `inStock`; DOC-06.3 used provisional `price_min`, `in_stock`) |

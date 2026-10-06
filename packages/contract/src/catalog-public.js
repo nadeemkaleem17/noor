@@ -125,10 +125,13 @@ export const ProductDetail = z.strictObject({
   madeToOrder: z.strictObject({ leadMinDays: z.int(), leadMaxDays: z.int(), label: z.string(), returnable: z.boolean(), depositPercent: z.number().optional() }).optional(),
   bundle: z.strictObject({ items: z.array(z.strictObject({ product: ProductSummary, options: z.array(DetailOption), variants: z.array(DetailVariant) })) }).optional(),
   badges: Badges,
+  /** Approved reviews only; absent while there are none. */
+  rating: z.strictObject({ average: z.number(), count: z.int() }).optional(),
   delivery: z.strictObject({ etaMinDays: z.int().optional(), etaMaxDays: z.int().optional(), codAvailable: z.boolean(), freeAbove: Money.optional() }),
   seo: Seo,
   updatedAt: IsoDate,
 })
+/** @typedef {z.infer<typeof ProductDetail>} ProductDetail */
 
 // ---- the rest ---------------------------------------------------------------------------------------------------------------
 
@@ -159,6 +162,8 @@ export const SizeChartPublic = z.strictObject({
   tables: z.array(z.strictObject({ id: z.string(), title: z.string(), columns: z.array(z.string()), rows: z.array(z.strictObject({ label: z.string(), values: z.array(z.number()) })) })),
 })
 export const FormSchemaPublic = z.strictObject({ id: Id, title: z.string().optional(), fields: z.array(FormField), allowNotes: z.boolean() })
+/** @typedef {z.infer<typeof SizeChartPublic>} SizeChart */
+/** @typedef {z.infer<typeof FormSchemaPublic>} CustomSizeForm */
 
 export const SitemapEntry = z.strictObject({
   loc: z.string(),

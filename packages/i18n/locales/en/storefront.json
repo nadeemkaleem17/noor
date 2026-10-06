@@ -115,5 +115,122 @@
       "tips": "Check the spelling, or try a more general word such as “lawn” or “kurta”.",
       "whatsapp": "Ask us on WhatsApp"
     }
+  },
+  "pdp": {
+    "gallery": "Product pictures",
+    "image": "picture",
+    "imageAlt": "{title}, {role} {n}",
+    "enlarge": "Enlarge picture {n}",
+    "counter": "{n} / {total}",
+    "thumbs": "Pictures",
+    "showPicture": "Show picture {n}",
+    "prev": "Previous",
+    "next": "Next",
+    "rating": "{average} out of 5, {count, plural, one {# review} other {# reviews}}",
+    "taxNote": "Inclusive of all taxes",
+    "colour": "Colour: {name}",
+    "choose": "Choose",
+    "optionValue": "{name}: {value}",
+    "unavailable": "sold out",
+    "sizeGuide": "Size guide",
+    "unit": "Unit",
+    "units": {
+      "in": "in",
+      "cm": "cm"
+    },
+    "howToMeasure": "How to measure",
+    "fit": {
+      "runs_small": "Runs small: consider one size up",
+      "true_to_size": "True to size",
+      "runs_large": "Runs large: consider one size down"
+    },
+    "model": "Model is {height} cm and wears {size}",
+    "modelHeight": "Model is {height} cm tall",
+    "stock": {
+      "in_stock": "In stock",
+      "low": "Only {n} left",
+      "lowUnknown": "Low stock",
+      "sold_out": "Sold out",
+      "preorder": "Ships from {date}",
+      "preorderUnknown": "Pre-order",
+      "madeToOrder": "Made to order"
+    },
+    "quantity": "Quantity",
+    "maxQuantity": "Most you can order: {n}",
+    "button": {
+      "add": "Add to cart",
+      "select": "Select {name}",
+      "soldOut": "Sold out",
+      "preorder": "Pre-order",
+      "order": "Order now",
+      "unavailable": "Not available"
+    },
+    "added": "Added to cart.",
+    "viewCart": "View cart",
+    "errors": {
+      "select": "Please choose {name} first.",
+      "insufficient_stock": "Only {n} available.",
+      "variant_unavailable": "This option just sold out.",
+      "max_per_order": "Limit of {n} per order.",
+      "cart_full": "Your cart is full. Remove something to add more.",
+      "invalid": "Please choose your options and check your measurements.",
+      "busy": "Too many requests. Try again in a moment.",
+      "failed": "Could not add to cart. Please try again."
+    },
+    "notify": {
+      "title": "Notify me when {label} is back",
+      "phone": "Mobile number",
+      "submit": "Notify me",
+      "done": "Thank you. We will message you when it is back.",
+      "failed": "Could not save this number. Check it and try again."
+    },
+    "whatsapp": "Ask about this on WhatsApp",
+    "whatsappText": "Hi, I have a question about {title} ({url})",
+    "delivery": {
+      "eta": "Delivery in {min} to {max} days",
+      "cod": "Cash on delivery available",
+      "freeAbove": "Free delivery over {amount}"
+    },
+    "mto": {
+      "deposit": "A deposit of {percent}% starts your order.",
+      "notReturnable": "Made-to-order pieces cannot be returned."
+    },
+    "sections": {
+      "details": "Details",
+      "included": "What is included",
+      "fabric": "Fabric and care",
+      "delivery": "Delivery and returns"
+    },
+    "included": {
+      "piece": "Piece",
+      "fabric": "Fabric",
+      "colour": "Colour",
+      "technique": "Technique",
+      "quantity": "Quantity",
+      "note": "Fabric only, stitching not included."
+    },
+    "returnsLink": "Delivery and returns policy",
+    "custom": {
+      "title": "Your measurements",
+      "notes": "Notes for the tailor",
+      "check": "Please check your measurements."
+    },
+    "bundle": {
+      "title": "In this set",
+      "sizeOf": "a size for {title}"
+    },
+    "reviews": "Reviews",
+    "reviewCount": "{count, plural, one {# review} other {# reviews}}",
+    "byStar": "Reviews by stars",
+    "stars": "{n} out of 5 stars",
+    "starsShort": "{n} stars",
+    "reviewPhoto": "Photo from a customer",
+    "reviewReply": "Reply from {brand}",
+    "moreReviews": "More reviews",
+    "reviewsFailed": "More reviews could not be loaded.",
+    "loading": "Loading",
+    "related": "You may also like",
+    "recent": "Recently viewed",
+    "measurement": "Measurement"
   }
 }

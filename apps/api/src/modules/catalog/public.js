@@ -156,6 +156,7 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
         : {}),
       ...(bundle ? { bundle } : {}),
       badges: card?.badges ?? [],
+      ...(card?.rating ? { rating: card.rating } : {}),
       delivery: {
         ...(facts.defaultEta ? { etaMinDays: facts.defaultEta.minDays, etaMaxDays: facts.defaultEta.maxDays } : {}),
         codAvailable: facts.codAvailable ?? false,
