@@ -9,6 +9,7 @@ import { customers } from '../src/db/schema/customers.js'
 import { inventoryLevels } from '../src/db/schema/inventory.js'
 import { orderEvents, orderLines, orders } from '../src/db/schema/orders.js'
 import { counters, idempotencyKeys, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
+import { payments } from '../src/db/schema/payments.js'
 import { products, variants } from '../src/db/schema/products.js'
 import { promoRedemptions, promos } from '../src/db/schema/promotions.js'
 import { reservations } from '../src/db/schema/inventory.js'
@@ -50,6 +51,7 @@ describe.skipIf(!dbAvailable)('orders (MySQL, through HTTP)', () => {
     await t.db.delete(idempotencyKeys)
     await t.db.delete(rateLimitHits) // five orders per phone in ten minutes is a rule of the product, not of every test
     await t.db.delete(reservations)
+    await t.db.delete(payments)
     await t.db.delete(orders) // lines and events go with them
     await t.db.delete(carts)
     await t.db.delete(promoRedemptions)
@@ -147,7 +149,7 @@ describe.skipIf(!dbAvailable)('orders (MySQL, through HTTP)', () => {
   })
 
   describe('prepaid orders', () => {
-    it('bank transfer: pending, stock held for 30 minutes, the account to pay shown', async () => {
+    it('bank transfer: pending, stock held for 48 hours, the account to pay shown', async () => {
       await ready()
       await S.owner.call('PUT', '/admin/settings/payments', {
         body: { value: { methods: [{ type: 'cod', enabled: true, label: 'Cash on delivery', sortOrder: 0 }, { type: 'bank_transfer', enabled: true, label: 'Bank transfer', sortOrder: 1 }], bankTransfer: { accountTitle: 'Rubaya', bank: 'HBL', accountNumber: 'PK00HABB0000000000', instructions: 'Send a screenshot' } }, version: 0 },
@@ -160,7 +162,7 @@ describe.skipIf(!dbAvailable)('orders (MySQL, through HTTP)', () => {
       expect(r.body.payment.instructions).toContain('PK00HABB0000000000')
       const hold = (await t.db.select().from(reservations))[0]
       expect(hold?.expiresAt).toBeTruthy()
-      expect(Math.round(((hold?.expiresAt?.getTime() ?? 0) - Date.now()) / 60_000)).toBe(30)
+      expect(Math.round(((hold?.expiresAt?.getTime() ?? 0) - Date.now()) / 60_000)).toBe(48 * 60)
     }, 90_000)
 
     it('a method that is not on is refused, and so is cash on delivery above the limit, with the reason and the cart', async () => {

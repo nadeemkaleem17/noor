@@ -1,6 +1,7 @@
 // Placing an order (ADR-0020, plan/08-backend-architecture.md section 7, plan/09-data-model/07-orders-payments.md): one transaction that prices the cart, holds the stock,
 // redeems the promo, finds or makes the customer, takes the next number and writes the order with everything copied into it.
 // Later (M4-05) the same module owns every change of status.
+import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
 import { now } from '../../platform/clock.js'
 import { ensureCounter, nextValue } from '../../platform/counters.js'
@@ -9,11 +10,13 @@ import { uuidv7 } from '../../platform/ids.js'
 import { emit } from '../../platform/outbox.js'
 import { sha256Hex } from '../auth/tokens.js'
 import { fieldIssues } from '../cart/customization.js'
+import { holdMinutesFor } from '../payments/status.js'
+import { record } from '../audit/index.js'
 import { holdsOf } from './holds.js'
 import { createChanges } from './changes.js'
 import { createEdits } from './edit.js'
 import * as repo from './repository.js'
-import { allowedActions, riskMarkers } from './rules.js'
+import { allowedActions, confirmable, riskMarkers } from './rules.js'
 import { trackingHash, trackingToken } from './tracking.js'
 
 /**
@@ -22,8 +25,6 @@ import { trackingHash, trackingToken } from './tracking.js'
  * @typedef {ReturnType<typeof import('../cart/service.js').createCartService>} CartService
  */
 
-/** How long stock is held for an order that is not cash on delivery and is not paid (ADR-0020). */
-const HOLD_MS = 30 * 60_000
 const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {const} */ ('PKR') })
 
 /**
@@ -36,8 +37,9 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
  * @param {{ upsertByPhone: (tx: Db, c: { phone: string, name: string, email?: string, city?: string }) => Promise<{ id: string, ordersCount: number }>, recordConsent: (tx: Db, id: string, note: string) => Promise<void>, applyOrderChange: (tx: Db, id: string, change: { orders?: number, delivered?: number, refused?: number, cancelled?: number, spentMinor?: number, orderedAt?: Date }) => Promise<void>, noCod: (x: Db, id: string) => Promise<boolean>, counters: (x: Db, id: string) => Promise<{ ordersCount: number, deliveredCount: number, refusedCount: number, noCod: boolean, vip: boolean } | undefined> }} deps.customers
  * @param {{ value: (key: 'store' | 'checkout' | 'payments', x: Db) => Promise<{ value: any }> }} deps.settings
  * @param {{ cityName: (x: Db, id: string) => Promise<string | undefined>, deliveryOptions: (x: Db, cityId: string) => Promise<import('../cart/pricing.js').DeliveryOption[]>, courierById: (x: Db, id: string) => Promise<{ id: string, name: string, enabled: boolean, trackingRequired: boolean } | undefined> }} deps.shipping
+ * @param {{ createInitial: (tx: Db, order: { id: string, totalMinor: number, depositDueMinor: number, paymentMethod: string, numberPrefix: string, number: number }, o?: { bank?: { accountTitle: string, bank: string, accountNumber: string, instructions?: string } }) => Promise<{ instructions?: string, redirectUrl?: string, expiresAt: Date | null }>, record: (tx: Db, orderId: string, input: { kind: 'deposit' | 'balance' | 'full' | 'refund', amount: number, method: string, reference?: string, paidAt?: Date, proofMediaId?: string }, staffId: string | null) => Promise<{ paymentId: string, paidMinor: number, refundedMinor: number, paymentStatus: string }>, applyEvent: (tx: Db, eventId: string) => Promise<{ orderId: string, captured: boolean } | null>, unpaidPastDeadline: (x: Db) => Promise<string[]>, onDelivered: (tx: Db, orderId: string, o: { cashReceived: boolean }) => Promise<unknown>, onClosed: (tx: Db, orderId: string) => Promise<unknown>, recompute: (tx: Db, orderId: string) => Promise<unknown>, switchToCod: (tx: Db, order: { id: string, totalMinor: number, depositDueMinor: number, paymentMethod: string, numberPrefix: string, number: number }) => Promise<void>, onEdited: (tx: Db, orderId: string) => Promise<unknown> }} deps.payments
  */
-export function createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping }) {
+export function createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments }) {
   /**
    * Everything in one transaction. The caller wraps it in the idempotency protocol; a refusal rolls all of it back.
    * @param {Db} tx @param {string | undefined} token @param {CreateOrderBody} body
@@ -57,7 +59,7 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     const option = c.paymentOptions?.find((o) => o.method === body.paymentMethod)
     if (!option || !option.allowed) throw refuse('payment_method_not_allowed', { reason: option?.reason ?? 'not_enabled' })
 
-    const [store, checkout, payments] = await Promise.all([settings.value('store', tx), settings.value('checkout', tx), settings.value('payments', tx)])
+    const [store, checkout, payments0] = await Promise.all([settings.value('store', tx), settings.value('checkout', tx), settings.value('payments', tx)])
     const issues = fieldIssues(checkout.value.extraFields, body.customFields ?? {}, 'customFields')
     if (issues.length) throw new DomainError('validation_failed', { issues })
 
@@ -67,7 +69,7 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
 
     const holds = holdsOf(lines.map(({ id, line, fact }) => ({ id, quantity: line.quantity, variantId: line.variantId, kind: fact.kind, stockMode: fact.stockMode, ...(fact.customization ? { customization: fact.customization } : {}) })))
     try {
-      await inventory.reserve(tx, { orderId, lines: holds, expiresAt: body.paymentMethod === 'cod' ? null : new Date(at.getTime() + HOLD_MS) })
+      await inventory.reserve(tx, { orderId, lines: holds, expiresAt: body.paymentMethod === 'cod' ? null : new Date(at.getTime() + holdMinutesFor(body.paymentMethod) * 60_000) })
     } catch (e) {
       if (e instanceof DomainError && e.code === 'insufficient_stock') throw refuse('insufficient_stock', e.details)
       throw e
@@ -119,18 +121,33 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     await emit(tx, { type: 'order.placed', payload: { orderId, number: `${prefix}-${number}` } })
     await cart.deleteCart(tx, cartRow.id)
 
-    const bank = payments.value.bankTransfer
+    // how the customer pays: cash is waited for at the door, a prepaid method gets its row, and instructions or a page to go to
+    const bank = payments0.value.bankTransfer
+    const session = await payments.createInitial(tx, { id: orderId, totalMinor: c.total.amount, depositDueMinor: c.depositDue?.amount ?? 0, paymentMethod: body.paymentMethod, numberPrefix: prefix, number }, bank ? { bank } : {})
     return {
       orderNumber: `${prefix}-${number}`,
       trackingToken: token2,
       status,
       total: money(c.total.amount),
-      ...(body.paymentMethod === 'bank_transfer' && bank ? { payment: { instructions: `Send Rs. ${((c.depositDue?.amount ?? c.total.amount) / 100).toLocaleString('en-PK')} to ${bank.accountTitle}, ${bank.bank}, ${bank.accountNumber}.${bank.instructions ? ` ${bank.instructions}` : ''}` } } : {}),
+      ...(session.instructions || session.redirectUrl ? { payment: { ...(session.instructions ? { instructions: session.instructions } : {}), ...(session.redirectUrl ? { redirectUrl: session.redirectUrl } : {}) } } : {}),
     }
   }
 
-  const changes = createChanges({ inventory, promotions, customers, shipping, settings, people: customers })
-  const edits = createEdits({ cart, shipping, promotions, inventory })
+  const changes = createChanges({ inventory, promotions, customers, shipping, settings, people: customers, payments })
+  const edits = createEdits({ cart, shipping, promotions, inventory, payments })
+
+  /**
+   * A prepaid order that has now been paid is confirmed on the spot; any other order is left for staff.
+   * @param {Db} tx @param {string} orderId @param {import('./changes.js').OrderActor} actor
+   */
+  async function confirmIfPaid(tx, orderId, actor) {
+    const o = await repo.orderById(tx, orderId)
+    if (o && o.status === 'pending' && confirmable({ status: 'pending', paidMinor: o.paidMinor, totalMinor: o.totalMinor, depositDueMinor: o.depositDueMinor, paymentMethod: o.paymentMethod, refundedMinor: o.refundedMinor, lines: [] })) {
+      await changes.transition(tx, orderId, { version: o.version, to: 'confirmed' }, actor)
+      return true
+    }
+    return false
+  }
 
   return {
     ...changes,
@@ -151,6 +168,63 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
         riskMarkers: riskMarkers({ paymentMethod: order.paymentMethod, totalMinor: order.totalMinor, customer: customer ?? { deliveredCount: 0, refusedCount: 0, noCod: false }, duplicateOf, highValueMinor: store.value.thresholds.highValueCodMinor }),
         ...(duplicateOf ? { duplicateOf } : {}),
       }
+    },
+
+    /**
+     * Money staff received outside the system, or a refund paid by hand. At most once per Idempotency-Key (the same key and body again gives the first answer).
+     * A prepaid order that this payment completes is confirmed at once.
+     * @param {string} orderId @param {{ kind: 'deposit' | 'balance' | 'full' | 'refund', amount: { amount: number }, method: string, reference?: string, paidAt?: string, proofMediaId?: string }} input
+     * @param {import('./changes.js').OrderActor} actor @param {string} idempotencyKey @param {{ ip?: string, userAgent?: string, requestId?: string }} [req]
+     */
+    async recordPayment(orderId, input, actor, idempotencyKey, req = {}) {
+      const r = await withIdempotency(db, {
+        scope: 'orders.recordPayment',
+        key: idempotencyKey,
+        body: { orderId, ...input }, // the same key for another order is a different request
+        command: async (tx) => {
+          const order = await repo.lockOrder(tx, orderId)
+          if (!order) throw new DomainError('not_found')
+          const staffId = actor.type === 'staff' ? actor.id : null
+          const result = await payments.record(tx, orderId, { kind: input.kind, amount: input.amount.amount, method: input.method, ...(input.reference ? { reference: input.reference } : {}), ...(input.paidAt ? { paidAt: new Date(input.paidAt) } : {}), ...(input.proofMediaId ? { proofMediaId: input.proofMediaId } : {}) }, staffId)
+          const refund = input.kind === 'refund'
+          await repo.insertEvent(tx, { id: uuidv7(), orderId, type: refund ? 'refund_recorded' : 'payment_recorded', actorType: actor.type, actorId: staffId, actorLabel: actor.type === 'storefront' ? null : actor.label, data: { kind: input.kind, method: input.method, amountMinor: input.amount.amount, ...(input.reference ? { reference: input.reference } : {}) }, public: false, createdAt: now() })
+          await record(tx, {
+            actor: actor.type === 'staff' ? { type: 'staff', id: actor.id, label: actor.label, role: actor.role } : actor.type === 'system' ? { type: 'system', label: actor.label } : { type: 'storefront', label: 'customer' },
+            action: refund ? 'order.refund_recorded' : 'order.payment_recorded', entityType: 'order', entityId: orderId, entityLabel: `${order.numberPrefix}-${order.number}`, category: 'money',
+            diff: { paidMinor: [order.paidMinor, result.paidMinor], paymentStatus: [order.paymentStatus, result.paymentStatus] },
+            ...(req.ip ? { ip: req.ip } : {}), ...(req.userAgent ? { userAgent: req.userAgent } : {}), ...(req.requestId ? { requestId: req.requestId } : {}),
+          })
+          const confirmed = refund ? false : await confirmIfPaid(tx, orderId, actor)
+          return { status: 201, body: { orderId, paymentId: result.paymentId, paidMinor: result.paidMinor, refundedMinor: result.refundedMinor, paymentStatus: result.paymentStatus, confirmed } }
+        },
+      })
+      return r.body
+    },
+
+    /** The job that applies a provider's stored event; a payment that completes an order confirms it. @param {string} eventId */
+    async applyPaymentEvent(eventId) {
+      return transaction(db, async (tx) => {
+        const r = await payments.applyEvent(tx, eventId)
+        if (r?.captured) await confirmIfPaid(tx, r.orderId, { type: 'system', label: 'payment received' })
+        return r
+      })
+    },
+
+    /** The job that cancels orders nobody paid for in time: the stock goes back on the shelf, the order says why. */
+    async expireUnpaid() {
+      let cancelled = 0
+      for (const id of await payments.unpaidPastDeadline(db)) {
+        try {
+          await transaction(db, async (tx) => {
+            const o = await repo.orderById(tx, id)
+            if (o && o.status === 'pending') await changes.transition(tx, id, { version: o.version, to: 'cancelled', reason: 'payment_expired' }, { type: 'system', label: 'payment time limit' })
+          })
+          cancelled += 1
+        } catch (e) {
+          if (!(e instanceof DomainError)) throw e // somebody changed the order first: it is not ours to cancel any more
+        }
+      }
+      return cancelled
     },
 
     /**

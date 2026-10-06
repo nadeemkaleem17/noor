@@ -9,6 +9,7 @@ import { customers } from '../src/db/schema/customers.js'
 import { inventoryLevels, inventoryMovements, reservations } from '../src/db/schema/inventory.js'
 import { orderEvents, orderLines, orders } from '../src/db/schema/orders.js'
 import { counters, idempotencyKeys, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
+import { payments } from '../src/db/schema/payments.js'
 import { products, variants } from '../src/db/schema/products.js'
 import { promoRedemptions, promos } from '../src/db/schema/promotions.js'
 import { cities, couriers, shippingZones } from '../src/db/schema/shipping.js'
@@ -71,6 +72,7 @@ describe.skipIf(!dbAvailable)('order changes (MySQL)', () => {
     await t.db.delete(idempotencyKeys)
     await t.db.delete(rateLimitHits)
     await t.db.delete(reservations)
+    await t.db.delete(payments)
     await t.db.delete(orders)
     await t.db.delete(carts)
     await t.db.delete(promoRedemptions)

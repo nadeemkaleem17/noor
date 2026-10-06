@@ -56,8 +56,9 @@ function stockOf(line, quantity) {
  * @param {{ courierById: (x: Db, id: string) => Promise<{ id: string, name: string, enabled: boolean, trackingRequired: boolean } | undefined> }} deps.shipping
  * @param {{ value: (key: 'payments', x: Db) => Promise<{ value: { methods: { type: string, enabled: boolean }[], codLimitMinor?: number } }> }} deps.settings
  * @param {{ noCod: (tx: Db, customerId: string) => Promise<boolean> }} deps.people
+ * @param {{ onDelivered: (tx: Db, orderId: string, o: { cashReceived: boolean }) => Promise<unknown>, onClosed: (tx: Db, orderId: string) => Promise<unknown>, recompute: (tx: Db, orderId: string) => Promise<unknown>, switchToCod: (tx: Db, order: { id: string, totalMinor: number, depositDueMinor: number, paymentMethod: string, numberPrefix: string, number: number }) => Promise<void> }} deps.payments the order's money follows what happens to it
  */
-export function createChanges({ inventory, promotions, customers, shipping, settings, people }) {
+export function createChanges({ inventory, promotions, customers, shipping, settings, people, payments }) {
   /** A line of the order's history. @param {Db} tx @param {string} orderId @param {Omit<typeof import('../../db/schema/orders.js').orderEvents.$inferInsert, 'id' | 'orderId' | 'createdAt'>} e */
   const event = (tx, orderId, e) => repo.insertEvent(tx, { id: uuidv7(), orderId, createdAt: now(), ...e })
 
@@ -133,6 +134,7 @@ export function createChanges({ inventory, promotions, customers, shipping, sett
             patch = { paymentMethod: 'cod' }
             data = { switchedFrom: order.paymentMethod }
             await inventory.keepReservation(tx, orderId)
+            await payments.switchToCod(tx, order)
           }
           break
         }
@@ -210,6 +212,10 @@ export function createChanges({ inventory, promotions, customers, shipping, sett
       await repo.updateOrder(tx, orderId, { ...patch, ...(stays ? {} : { status: to, statusChangedAt: at }), version: nextVersion, updatedAt: at })
       await event(tx, orderId, { type: eventType, ...(stays ? {} : { fromStatus: from, toStatus: to }), ...who(actor), data, public: eventType === 'status_changed' })
       if (Object.keys(counters).length) await customers.applyOrderChange(tx, customerId, counters)
+      // the money follows the order: cash taken at the door, what will never be paid closed, what must be paid back worked out
+      if (to === 'delivered' && !stays) await payments.onDelivered(tx, orderId, { cashReceived: input.to === 'delivered' && Boolean(input.cashReceived) })
+      else if (to === 'cancelled' || (to === 'returned' && from === 'dispatched')) await payments.onClosed(tx, orderId)
+      else if (to === 'returned') await payments.recompute(tx, orderId)
       await record(tx, { ...auditActor(actor, req), action: stays ? 'order.partial_return' : `order.${to}`, entityType: 'order', entityId: orderId, entityLabel: numberOf(order), category: 'money', diff: stays ? {} : { status: [from, to] }, ...(typeof data.reason === 'string' ? { reason: data.reason } : {}) })
       if (outbox) await emit(tx, { type: outbox, payload: { orderId, number: numberOf(order) }, ...(req.requestId ? { requestId: req.requestId } : {}) })
       return { id: orderId, status: stays ? from : to, version: nextVersion }

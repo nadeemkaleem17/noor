@@ -30,8 +30,9 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
  * @param {{ deliveryOptions: (x: Db, cityId: string) => Promise<import('../cart/pricing.js').DeliveryOption[]>, cityName: (x: Db, id: string) => Promise<string | undefined> }} deps.shipping
  * @param {{ findRule: (x: Db, code: string) => Promise<{ id: string, code: string, label: string, rule: import('../promotions/evaluate.js').PromoRule } | undefined>, updateRedemption: (tx: Db, orderId: string, a: { discountMinor: number, shippingWaivedMinor: number }) => Promise<void>, reverse: (tx: Db, orderId: string) => Promise<void> }} deps.promotions
  * @param {{ editReserved: (tx: Db, change: { orderId: string, lines: { orderLineId: string, variantId: string, quantity: number }[] }) => Promise<unknown> }} deps.inventory
+ * @param {{ onEdited: (tx: Db, orderId: string) => Promise<unknown> }} deps.payments
  */
-export function createEdits({ cart, shipping, promotions, inventory }) {
+export function createEdits({ cart, shipping, promotions, inventory, payments }) {
   /**
    * What the order would be after the edit, with nothing written. Throws what the edit would throw.
    * @param {Db} x @param {NonNullable<Awaited<ReturnType<typeof repo.orderById>>>} order @param {OrderEdit} body
@@ -166,6 +167,7 @@ export function createEdits({ cart, shipping, promotions, inventory }) {
         else await promotions.updateRedemption(tx, orderId, { discountMinor: c.discount.amount, shippingWaivedMinor: p.priced.shippingWaivedMinor })
       }
 
+      await payments.onEdited(tx, orderId)
       const afterTotals = totalsOf({ subtotalMinor: c.subtotal.amount, discountMinor: c.discount.amount, shippingFeeMinor: ship.fee.amount, totalMinor: c.total.amount, depositDueMinor: c.depositDue?.amount ?? 0 })
       const after = { ...afterTotals, city: cityName, address: body.shippingAddress?.address ?? order.shipAddress, landmark: body.shippingAddress ? (body.shippingAddress.landmark ?? null) : order.shipLandmark, notes: body.shippingAddress ? (body.shippingAddress.notes ?? null) : order.shipNotes, method: ship.label, lines: c.lines.map((l, i) => `${/** @type {{ sku?: string }} */ (p.lines[i]).sku ?? ''} x${l.quantity}`).join(', ') }
       /** @type {Record<string, [unknown, unknown]>} */

@@ -8,6 +8,7 @@ import { routes as contractRoutes } from '@noor/contract'
 import { errorHandler, sendProblem, toProblem } from './platform/errors.js'
 import { loggerOptions } from './platform/logger.js'
 import { registerRoutes, zodValidatorCompiler } from './platform/http/route-registrar.js'
+import { registerWebhookRoutes } from './modules/payments/webhook-routes.js'
 import cookie from '@fastify/cookie'
 import { createLimiter } from './platform/http/rate-limit.js'
 import { clientIp, registerSecurity } from './platform/http/security.js'
@@ -29,6 +30,7 @@ import { createServices } from './modules/services.js'
  * @property {import('./platform/http/route-registrar.js').Authorize} [authorize]
  * @property {import('./platform/db.js').Database['db']} [db] the application database handle (the app user)
  * @property {import('./platform/storage.js').Storage} [storage] default: the driver named in the config
+ * @property {ReturnType<typeof import('./modules/payments/index.js').createProviders>} [providers] the payment providers; default: cash on delivery, manual and bank transfer
  * @property {Readiness} [readiness] - Database reachable and migrations at head. M0-06 supplies the real check; until then nothing can fail.
  */
 
@@ -43,7 +45,7 @@ export async function buildApp(opts) {
   const table = /** @type {T} */ ((opts.table ?? contractRoutes))
   // the database handle is optional so route-table tests can run without one; auth routes then fail only when they need it
   const db = /** @type {import('./platform/db.js').Database['db']} */ (opts.db)
-  const { auth, audit, storage, media, settings, shipping, customers, promotions, cart, orders, catalog, inventory } = createServices({ db, config, ...(opts.storage ? { storage: opts.storage } : {}) })
+  const { auth, audit, storage, media, settings, shipping, customers, promotions, cart, orders, payments, catalog, inventory } = createServices({ db, config, ...(opts.storage ? { storage: opts.storage } : {}), ...(opts.providers ? { providers: opts.providers } : {}) })
   const handlers = /** @type {import('./platform/http/route-registrar.js').Handlers<T>} */ ((opts.handlers ?? appHandlers(config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, catalog, inventory })))
 
   const app = Fastify({
@@ -95,5 +97,6 @@ export async function buildApp(opts) {
   })
 
   registerRoutes(app, table, handlers, opts.authorize ?? (db ? createAuthorize({ db, config, auth }) : undefined), createLimiter({ db }))
+  await registerWebhookRoutes(app, { payments })
   return app
 }

@@ -103,9 +103,12 @@ export async function signedIn(/** @type {string} */ role, o = {}) {
 
 
 /** Creates the scratch database and the app on it. Call `closeHarness()` when done. */
-export async function createHarness() {
+export const createHarness = () => createHarnessWith(undefined) // no parameters: `beforeAll(createHarness)` hands it vitest's context
+
+/** The same, with payment providers of the test's choosing. @param {import('../../src/app.js').AppOptions<never>['providers']} [providers] */
+export async function createHarnessWith(providers) {
   t = await createTestDatabase()
-  app = await buildApp({ config, db: t.db })
+  app = await buildApp({ config, db: t.db, ...(providers ? { providers } : {}) })
   passwordHash = await hashPassword(PASSWORD)
 }
 export async function closeHarness() {

@@ -263,9 +263,9 @@ Recorded per provider in §11 with the date and the document version read.
 - [ ] With no provider environment variables set, the full flow works locally: place a COD order, see `skipped` messages on the order, confirm, dispatch with a typed tracking number, deliver.
 - [ ] Every template renders in English with sample variables under 600 characters and contains no address or full phone (snapshot test).
 - [ ] A repeated `notify.customer` job produces one `notification_log` row and (with a fake channel) one send.
-- [ ] The fake payment provider's webhook with a bad signature is rejected and stored nowhere; a valid duplicate is a no-op.
+- [x] The fake payment provider's webhook with a bad signature is rejected and stored nowhere; a valid duplicate is a no-op.
 - [ ] `track()` is a no-op and loads no script when analytics is not configured; a Playwright run asserts zero third-party requests.
-- [ ] Enabling bank transfer shows instructions on the order page and activates the reservation-expiry job with the 48-hour window.
+- [x] Enabling bank transfer shows instructions on the order page and activates the reservation-expiry job with the 48-hour window. (The instructions come back in the `orders.create` answer; the order page that shows them again is M4-07 and M5-07. `payments.int.test.js`.)
 - [ ] No adapter file is merged without its §11 record.
 
 ## 11. Verification records
@@ -290,4 +290,5 @@ Recorded per provider in §11 with the date and the document version read.
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-06: the provider registry (`createProviders`) holds `cod`, `manual`, `bank_transfer` and, for tests, a `fake` gateway registered under the method it stands in for. The webhook route is `POST /api/v1/webhooks/:provider`: it reads the raw bytes (the JSON parser is removed in that scope), verifies the signature, stores the event once (unique per provider and event id), answers 200, and a job applies it. A provider with no verifier (`cod`, `bank_transfer`) answers 404. |
 | 2026-10-02 | Initial version (Phase 5, part 3) |
