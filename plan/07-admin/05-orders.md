@@ -149,13 +149,13 @@ Stable codes stored on events (labels are message keys): cancel: `customer_reque
 
 ## 8. Acceptance checklist
 
-- [ ] The UI offers exactly the server's `allowedActions` for each status (test iterates all statuses with an `owner` and a `support` user).
-- [ ] Confirm is blocked while a deposit is due and unpaid.
-- [ ] Dispatch assigns an invoice number once; printing twice shows the same number.
-- [ ] Cancel releases reserved stock (variant "reserved" drops) and the timeline shows the reason and actor.
-- [ ] Returning 1 of 2 units with "Restock: no" does not increase on-hand stock.
-- [ ] Two staff acting on one order: the second sees the "order was updated" banner, not a silent overwrite.
-- [ ] Bulk dispatch with one invalid row applies the valid ones and lists the failure.
+- [ ] The UI offers exactly the server's `allowedActions` for each status (test iterates all statuses with an `owner` and a `support` user). (The server side exists and is tested per status: `allowedActions` in `modules/orders/rules.js`; the UI check is M6.)
+- [x] Confirm is blocked while a deposit is due and unpaid. (API: `deposit_unpaid`; `order-changes.int.test.js`.)
+- [x] Dispatch assigns an invoice number once; printing twice shows the same number. (API; the print view is M6.)
+- [x] Cancel releases reserved stock (variant "reserved" drops) and the timeline shows the reason and actor. (API: the variant's `reserved` drops; the timeline event carries the reason and the actor.)
+- [x] Returning 1 of 2 units with "Restock: no" does not increase on-hand stock. (API.)
+- [ ] Two staff acting on one order: the second sees the "order was updated" banner, not a silent overwrite. (API: the second gets `stale_write` and nothing is overwritten; the banner is M6.)
+- [ ] Bulk dispatch with one invalid row applies the valid ones and lists the failure. (M4-10 and M6.)
 - [ ] List and detail are usable at 360 px; call and WhatsApp buttons work on a phone.
 - [ ] The print view contains no unescaped customer input (test with `<script>` in the address).
 

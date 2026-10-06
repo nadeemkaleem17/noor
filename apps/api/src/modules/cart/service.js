@@ -146,6 +146,16 @@ export function createCartService({ db, media, stock, shipping, settings, promot
   return {
     price,
     facts,
+
+    /**
+     * Lines that are not in a cart (an order being edited): the same facts, from the variant ids.
+     * @param {Db} x @param {{ id: string, variantId: string, quantity: number, customization?: import('@noor/contract').LineCustomization, seenUnitPriceMinor?: number }[]} wanted
+     */
+    async factsOf(x, wanted) {
+      const now0 = now()
+      const rows = wanted.map((w) => /** @type {repo.LineRow} */ ({ id: w.id, cartId: '', variantId: w.variantId, quantity: w.quantity, customization: w.customization ?? null, customizationHash: '', seenUnitPriceMinor: w.seenUnitPriceMinor ?? 0, createdAt: now0, updatedAt: now0 }))
+      return facts(x, rows, { images: false })
+    },
     withImages,
 
     /** The cart behind a token, locked until the transaction ends: an order and a quantity change on the same cart wait for each other. @param {Db} x @param {string | undefined} token */

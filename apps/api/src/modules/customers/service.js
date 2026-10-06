@@ -134,6 +134,17 @@ export function createCustomersService({ db, orders = noOrders }) {
 
     findByPhone,
 
+    /** Is cash on delivery switched off for this customer? @param {Db} x @param {string} id */
+    async noCod(x, id) {
+      return Boolean((await repo.findById(x, id))?.noCod)
+    },
+
+    /** @param {Db} x @param {string} id */
+    async counters(x, id) {
+      const c = await repo.findById(x, id)
+      return c ? { ordersCount: c.ordersCount, deliveredCount: c.deliveredCount, refusedCount: c.refusedCount, noCod: c.noCod, vip: c.vip } : undefined
+    },
+
     /** The customer ticked the marketing box at checkout. Never switched off from here: only staff or the customer can take consent back. @param {Db} tx @param {string} id @param {string} note */
     async recordConsent(tx, id, note) {
       await repo.update(tx, id, { marketingConsent: true, consentNote: note, updatedAt: now() })

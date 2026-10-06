@@ -98,3 +98,5 @@ export const insertRedemption = (db, row) => db.insert(promoRedemptions).values(
 export const redemptionOfOrder = async (db, orderId) => (await db.select().from(promoRedemptions).where(eq(promoRedemptions.orderId, orderId)))[0]
 /** @param {Db} db @param {string} id @param {Date} at */
 export const reverseRedemption = (db, id, at) => db.update(promoRedemptions).set({ reversedAt: at }).where(eq(promoRedemptions.id, id))
+/** @param {Db} db @param {string} id @param {{ discountMinor: number, shippingWaivedMinor: number }} set */
+export const updateRedemption = (db, id, set) => db.update(promoRedemptions).set(set).where(eq(promoRedemptions.id, id))

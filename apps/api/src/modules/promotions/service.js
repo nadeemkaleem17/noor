@@ -347,6 +347,12 @@ export function createPromotionsService({ db }) {
       await repo.update(tx, p.id, { usageCount: p.usageCount + 1 })
     },
 
+    /** An order was edited: what its code gave changes with it. @param {Db} tx @param {string} orderId @param {{ discountMinor: number, shippingWaivedMinor: number }} amounts */
+    async updateRedemption(tx, orderId, { discountMinor, shippingWaivedMinor }) {
+      const redemption = await repo.redemptionOfOrder(tx, orderId)
+      if (redemption && !redemption.reversedAt) await repo.updateRedemption(tx, redemption.id, { discountMinor, shippingWaivedMinor })
+    },
+
     /** An order was cancelled: the use is given back, once. A second call does nothing. @param {Db} tx @param {string} orderId */
     async reverse(tx, orderId) {
       const redemption = await repo.redemptionOfOrder(tx, orderId)

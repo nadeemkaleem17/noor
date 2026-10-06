@@ -289,11 +289,11 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 - [x] A table-driven test tries every (from, to) pair: exactly the rows of §5.1 succeed. (`order-transitions.test.js`: the table is `modules/orders/transitions.js`, the guards and effects come with M4-05.)
 - [x] `total_minor` check constraint rejects an inconsistent update. (`orders.int.test.js`; the line subtotal has the same kind of check.)
 - [x] Renaming a product or changing its price does not change any existing order row. (`orders.int.test.js`.)
-- [ ] Dispatch twice (retry) assigns one invoice number.
-- [ ] Refused-at-door return: COD payment `failed`, stock handled per line, customer `refused_count` + 1.
-- [ ] Cancel after a manual deposit payment sets `payment_status = refund_due`; recording a refund of the same amount sets `refunded`.
+- [x] Dispatch twice (retry) assigns one invoice number. (`order-changes.int.test.js`: a retry is `invalid_transition` or `stale_write`, and a refused dispatch takes no number.)
+- [ ] Refused-at-door return: COD payment `failed`, stock handled per line, customer `refused_count` + 1. (Stock per line and `refused_count + 1` are done and tested (M4-05); the COD payment `failed` is M4-06.)
+- [ ] Cancel after a manual deposit payment sets `payment_status = refund_due`; recording a refund of the same amount sets `refunded`. (The refund acknowledgement and the `refundDue` amount on the event are done; the `payment_status` change is M4-06.)
 - [ ] Order lookup by `number` + phone and by token hash each use a unique index (`EXPLAIN`). (The unique indexes `orders_number_uq` and `orders_tracking_token_uq` exist; the lookup itself is M4-07.)
-- [ ] After a randomised sequence of transitions, `customers` counters equal a fresh aggregate over orders.
+- [x] After a randomised sequence of transitions, `customers` counters equal a fresh aggregate over orders. (`order-changes.int.test.js`: 40 random steps over 8 orders; stock held also checked.)
 
 ## 9. Open questions and assumptions
 
@@ -309,6 +309,7 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | M4-05: `modules/orders/changes.js` (every edge of the table with its guards and effects; the only writer of `orders.status`), `edit.js` (section 6), `rules.js` (`allowedActions`, `riskMarkers`, invoice numbers). Decisions: a partial return of a delivered order is a "returned" request that does not cover everything, and keeps the status; a full return after partial ones takes back only what the partial ones had not (`spent_minor` returns to 0); cancelling, returning and delivering move the customer counters in the same transaction; the invoice number comes from the counter `invoice_<year>` after the stock is taken, so a refused dispatch uses none; `reservations.order_id` and `promo_redemptions.order_id` deliberately have **no** foreign key to `orders` (stock and promo tests, and the jobs that release held stock, work on order ids; the services are the only writers); an edit whose code no longer applies proceeds without the code and says so in the event (`promoDropped`) and in the preview. `payments.*` hooks (capturing the COD cash at delivery, `refund_due`) are M4-06. |
 | 2026-10-06 | M4-04: `orders`, `order_lines`, `order_events` built (migration 0014) and `orders.create` (`modules/orders`). Decisions: a bundle line holds its chosen child variants in stock (its own variant holds nothing, so give it a made-to-order stock mode); the `placed` event is public; the order counts on the customer when placed (`orders_count + 1`, first and last order times); `promo_redemptions.order_id` and `reservations.order_id` still have no foreign key to `orders` (the promo and stock tests use ids of orders that do not exist; add both when those tests build real orders, M4-05); the unique index keeps one redemption per order. Orders are numbered from 10001 (counter `order_number`, gap-free: a refused order gives its number back). |
 | 2026-10-05 | M4-01: `customers` and `customer_notes` built (migration 0011). `applyOrderChange` adds signed amounts in one SQL statement (so changes at the same time are all kept; `firstOrderAt` is the least and `lastOrderAt` the greatest order time). The caller (M4-05) decides the deltas: a cancel is `orders -1, cancelled +1`. `createCustomersService({ db, orders })` takes an `orders` view (`openCount`, `addresses`, `anonymise`) that is empty until M4-04. The derived-counter acceptance item waits for orders. |
 | 2026-10-02 | Initial version (Phase 5, part 1). Splits the glossary's single payment status into order-level `payment_status` and per-payment `payment_state` |

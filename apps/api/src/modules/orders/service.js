@@ -9,7 +9,11 @@ import { uuidv7 } from '../../platform/ids.js'
 import { emit } from '../../platform/outbox.js'
 import { sha256Hex } from '../auth/tokens.js'
 import { fieldIssues } from '../cart/customization.js'
+import { holdsOf } from './holds.js'
+import { createChanges } from './changes.js'
+import { createEdits } from './edit.js'
 import * as repo from './repository.js'
+import { allowedActions, riskMarkers } from './rules.js'
 import { trackingHash, trackingToken } from './tracking.js'
 
 /**
@@ -27,11 +31,11 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
  * @param {import('../../platform/db.js').Database['db']} deps.db
  * @param {import('../../platform/config.js').Config} deps.config
  * @param {CartService} deps.cart
- * @param {{ reserve: (tx: Db, order: { orderId: string, lines: { orderLineId: string, variantId: string, quantity: number }[], expiresAt?: Date | null }) => Promise<unknown> }} deps.inventory
- * @param {{ redeem: (tx: Db, r: { promoId: string, orderId: string, customer: { id: string, ordersCount: number }, discountMinor: number, shippingWaivedMinor?: number }) => Promise<void> }} deps.promotions
- * @param {{ upsertByPhone: (tx: Db, c: { phone: string, name: string, email?: string, city?: string }) => Promise<{ id: string, ordersCount: number }>, recordConsent: (tx: Db, id: string, note: string) => Promise<void>, applyOrderChange: (tx: Db, id: string, change: { orders?: number, orderedAt?: Date }) => Promise<void> }} deps.customers
+ * @param {{ reserve: (tx: Db, order: { orderId: string, lines: { orderLineId: string, variantId: string, quantity: number }[], expiresAt?: Date | null }) => Promise<unknown>, commit: (tx: Db, orderId: string) => Promise<unknown>, release: (tx: Db, orderId: string) => Promise<unknown>, restock: (tx: Db, orderId: string, lines: { variantId: string, quantity: number, restock: boolean }[]) => Promise<unknown>, editReserved: (tx: Db, change: { orderId: string, lines: { orderLineId: string, variantId: string, quantity: number }[] }) => Promise<unknown>, keepReservation: (tx: Db, orderId: string) => Promise<void> }} deps.inventory
+ * @param {{ redeem: (tx: Db, r: { promoId: string, orderId: string, customer: { id: string, ordersCount: number }, discountMinor: number, shippingWaivedMinor?: number }) => Promise<void>, reverse: (tx: Db, orderId: string) => Promise<void>, findRule: (x: Db, code: string) => Promise<{ id: string, code: string, label: string, rule: import('../promotions/evaluate.js').PromoRule } | undefined>, updateRedemption: (tx: Db, orderId: string, a: { discountMinor: number, shippingWaivedMinor: number }) => Promise<void> }} deps.promotions
+ * @param {{ upsertByPhone: (tx: Db, c: { phone: string, name: string, email?: string, city?: string }) => Promise<{ id: string, ordersCount: number }>, recordConsent: (tx: Db, id: string, note: string) => Promise<void>, applyOrderChange: (tx: Db, id: string, change: { orders?: number, delivered?: number, refused?: number, cancelled?: number, spentMinor?: number, orderedAt?: Date }) => Promise<void>, noCod: (x: Db, id: string) => Promise<boolean>, counters: (x: Db, id: string) => Promise<{ ordersCount: number, deliveredCount: number, refusedCount: number, noCod: boolean, vip: boolean } | undefined> }} deps.customers
  * @param {{ value: (key: 'store' | 'checkout' | 'payments', x: Db) => Promise<{ value: any }> }} deps.settings
- * @param {{ cityName: (x: Db, id: string) => Promise<string | undefined> }} deps.shipping
+ * @param {{ cityName: (x: Db, id: string) => Promise<string | undefined>, deliveryOptions: (x: Db, cityId: string) => Promise<import('../cart/pricing.js').DeliveryOption[]>, courierById: (x: Db, id: string) => Promise<{ id: string, name: string, enabled: boolean, trackingRequired: boolean } | undefined> }} deps.shipping
  */
 export function createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping }) {
   /**
@@ -61,14 +65,7 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     const at = now()
     const lines = c.lines.map((l) => ({ id: uuidv7(), line: l, fact: /** @type {NonNullable<(typeof priced.facts)[number]>} */ (priced.facts.find((f) => f.id === l.id)) }))
 
-    // stock: a bundle holds its chosen children, any other line holds its own variant; made-to-order and pre-order hold nothing
-    const holds = lines.flatMap(({ id, line, fact }) =>
-      fact.kind === 'bundle' && fact.customization?.bundle
-        ? fact.customization.bundle.map((b) => ({ orderLineId: id, variantId: b.variantId, quantity: line.quantity }))
-        : fact.stockMode === 'counted'
-          ? [{ orderLineId: id, variantId: line.variantId, quantity: line.quantity }]
-          : [],
-    )
+    const holds = holdsOf(lines.map(({ id, line, fact }) => ({ id, quantity: line.quantity, variantId: line.variantId, kind: fact.kind, stockMode: fact.stockMode, ...(fact.customization ? { customization: fact.customization } : {}) })))
     try {
       await inventory.reserve(tx, { orderId, lines: holds, expiresAt: body.paymentMethod === 'cod' ? null : new Date(at.getTime() + HOLD_MS) })
     } catch (e) {
@@ -132,7 +129,30 @@ export function createOrdersService({ db, config, cart, inventory, promotions, c
     }
   }
 
+  const changes = createChanges({ inventory, promotions, customers, shipping, settings, people: customers })
+  const edits = createEdits({ cart, shipping, promotions, inventory })
+
   return {
+    ...changes,
+    edit: edits.edit,
+    previewEdit: edits.preview,
+
+    /**
+     * What the screens need beside the row: the actions the order allows now, the risks to look at, and the other order of this phone number it may duplicate.
+     * @param {Db} x @param {string} orderId
+     */
+    async describe(x, orderId) {
+      const order = await repo.orderById(x, orderId)
+      if (!order) throw new DomainError('not_found')
+      const [lines, customer, store] = await Promise.all([repo.linesOf(x, orderId), customers.counters(x, order.customerId), settings.value('store', x)])
+      const duplicateOf = await repo.duplicateOf(x, order)
+      return {
+        allowedActions: allowedActions({ status: /** @type {never} */ (order.status), paymentMethod: order.paymentMethod, totalMinor: order.totalMinor, paidMinor: order.paidMinor, refundedMinor: order.refundedMinor, depositDueMinor: order.depositDueMinor, lines }),
+        riskMarkers: riskMarkers({ paymentMethod: order.paymentMethod, totalMinor: order.totalMinor, customer: customer ?? { deliveredCount: 0, refusedCount: 0, noCod: false }, duplicateOf, highValueMinor: store.value.thresholds.highValueCodMinor }),
+        ...(duplicateOf ? { duplicateOf } : {}),
+      }
+    },
+
     /**
      * `orders.create`: at most once per Idempotency-Key. The same key and body again gives the first answer; the same key with another body is refused.
      * @param {string | undefined} token the cart token @param {CreateOrderBody} body @param {string} idempotencyKey

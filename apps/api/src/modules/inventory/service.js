@@ -124,6 +124,11 @@ export function createInventory({ db, lowStockThreshold, onChanged = async () =>
       await announce(tx, changes)
     },
 
+    /** The order is confirmed or goes to cash on delivery: its hold no longer runs out (a prepaid order's 30 minutes only apply while it is unpaid). @param {Db} tx @param {string} orderId */
+    async keepReservation(tx, orderId) {
+      await tx.update(reservations).set({ expiresAt: null, updatedAt: now() }).where(and(eq(reservations.orderId, orderId), eq(reservations.status, 'active')))
+    },
+
     /** Gives the held stock back (cancelled order, expired reservation). Nothing was taken off the shelf, so there is no movement. @param {Db} tx @param {string} orderId */
     async release(tx, orderId) {
       const held = await activeOf(tx, orderId)

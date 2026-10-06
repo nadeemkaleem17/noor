@@ -341,6 +341,9 @@ export function createShippingService({ db }) {
       }
     },
 
+    /** A courier, for a dispatch. @param {import('../../platform/db.js').Executor} x @param {string} id */
+    courierById: (x, id) => repo.findCourier(x, id),
+
     /** The name of a city, for an order's snapshot. @param {import('../../platform/db.js').Executor} x @param {string} id */
     async cityName(x, id) {
       return (await repo.findCity(x, id))?.name
