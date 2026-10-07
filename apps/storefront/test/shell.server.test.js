@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { StoreConfigPublic, themePresets } from '@noor/contract'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const state = { down: false, ur: false, /** @type {any} */ cartBody: undefined }
+const state = { down: false, ur: false, /** @type {any} */ cartBody: undefined, /** @type {string[]} */ calls: /** @type {string[]} */ ([]), blocked: false }
 const image = { src: 'http://localhost/img/logo.webp', srcset: '', width: 120, height: 40, alt: 'Rubaya' }
 
 const config = () =>
@@ -100,7 +100,17 @@ const ofKind = (handle) => (/** @type {Record<string, () => object>} */ ({
   'accessory-1': () => one(handle, 'accessory', {}),
 }))[handle]?.()
 
-/** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any }} [req] */
+/** A cart with one line of two dresses; the API has worked every figure out. */
+const cartOf = () => ({
+  lines: [{
+    id: uuid(800), productId: uuid(100), variantId: uuid(23), handle: 'dress-1', title: 'Dress 1', variantLabel: 'L', kind: 'stitched', quantity: 2, unitPrice: money(749000), lineSubtotal: money(1498000), lineDiscount: money(0),
+    available: 5, maxPerOrder: 10, issues: state.blocked ? ['sold_out'] : ['price_changed'], customization: { measurements: { bust: 36 }, summary: 'Custom: bust 36 in' },
+  }],
+  count: 2, subtotal: money(1498000), discount: money(100000), total: money(1398000), promo: { code: 'SAVE10', label: '10% off', discount: money(100000) },
+  messages: [{ code: 'free_shipping_remaining', amount: money(250000) }], depositDue: money(420000), hasBlockingIssues: state.blocked,
+})
+
+/** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any, headers?: import('node:http').IncomingHttpHeaders }} [req] */
 function answer(p, locale, q = new URLSearchParams(), req = {}) {
   const kind = ofKind(p.replace('/api/v1/products/', ''))
   if (kind) return kind
@@ -110,6 +120,16 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/size-charts/' + uuid(40)) return { id: uuid(40), title: 'Women', unit: 'in', tables: [{ id: 't', title: 'Body', columns: ['Bust', 'Waist'], rows: [{ label: 'S', values: [34, 28] }] }] }
   if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25] } }
   if (p === '/api/v1/products/' + uuid(100) + '/related') return { items: [product(7), product(8), product(9), product(10)] }
+  if (p.startsWith('/api/v1/cart') && p !== '/api/v1/cart/lines') {
+    state.calls.push(`${req.method} ${p} ${JSON.stringify(req.body ?? '')}`)
+    if (p === '/api/v1/cart/promo' && req.method === 'PUT') {
+      if (req.body.code === 'BIG') return { title: 'Minimum', status: 422, code: 'promo_min_spend', minSpend: money(500000) }
+      if (req.body.code === 'NOPE') return { title: 'Unknown', status: 422, code: 'promo_not_found' }
+    }
+    if (p.startsWith('/api/v1/cart/lines/') && req.method === 'PUT' && req.body.quantity > 5) return { title: 'Not enough', status: 409, code: 'insufficient_stock', available: 5 }
+    if (!req.headers?.['x-cart-token']) return { title: 'No cart', status: 404, code: 'not_found' }
+    return req.method === 'GET' && q.get('summary') ? { count: 2 } : cartOf()
+  }
   if (p === '/api/v1/cart/lines' && req.method === 'POST') {
     state.cartBody = req.body
     if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
@@ -140,7 +160,7 @@ const api = createServer(async (req, res) => {
   let text = ''
   for await (const chunk of req) text += chunk
   /** @type {any} */
-  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en', u.searchParams, { method: req.method ?? 'GET', body: text ? JSON.parse(text) : undefined })
+  const body = state.down ? undefined : answer(u.pathname, u.searchParams.get('locale') ?? 'en', u.searchParams, { method: req.method ?? 'GET', body: text ? JSON.parse(text) : undefined, headers: req.headers })
   res.statusCode = state.down ? 500 : body && typeof body.status === 'number' ? body.status : body ? 200 : 404
   res.setHeader('content-type', 'application/json')
   res.end(JSON.stringify(body ?? { code: 'not_found' }))
@@ -471,8 +491,84 @@ describe('the storefront through its whole stack', () => {
       expect(none.headers.get('location')).toBe('/p/dress-1?cartError=invalid')
       expect((await post({ intent: 'add', variantId: uuid(23), quantity: '1' }, { origin: 'https://evil.example' })).status).toBe(400) // React Router's own origin check: the cart was not touched
       const away = await post({ intent: 'add', handle: 'dress-1', quantity: '1', returnTo: 'https://evil.example/' })
-      expect(away.headers.get('location')).toBe('/cart')
+      expect(away.headers.get('location')).toBe('/cart?error=invalid')
       expect((await post({ intent: 'checkout' })).status).toBe(400)
+    })
+  })
+
+  describe('the cart (DOC-06.5 sections 2 and 3)', () => {
+    const withCart = { cookie: 'nc_cart=tok-123' }
+    const plain = (/** @type {string} */ t) => t.replace(/\u00a0/g, ' ')
+    const post = (/** @type {Record<string, string>} */ fields) => get('/cart', { method: 'POST', body: new URLSearchParams(fields), headers: { 'content-type': 'application/x-www-form-urlencoded', ...withCart } })
+
+    it('the page is the visitor\'s own: never cached, never indexed; with no cart it says so and offers a way on', async () => {
+      const r = await get('/cart')
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      const html = await r.text().then(plain)
+      expect(html).toContain('Your cart is empty')
+      expect(html).toContain('href="/new"')
+      expect(html).toContain('content="noindex,nofollow"')
+    })
+
+    it('a cart shows what the API worked out, as it came: lines, issues, promo, shipping progress, deposit, total, the way to checkout', async () => {
+      const html = await (await get('/cart', { headers: withCart })).text().then(plain)
+      expect(html).toContain('Dress 1')
+      expect(html).toContain('Custom: bust 36 in')
+      expect(html).toContain('Price updated to Rs 7,490') // the line's issue
+      expect(html).toContain('Rs 14,980') // the line total, as returned
+      expect(html).toContain('Rs 13,980') // the total, as returned
+      expect(html).toContain('SAVE10')
+      expect(html).toContain('Add Rs 2,500 more for free delivery')
+      expect(html).toContain('deposit of Rs 4,200')
+      expect(html).toContain('Calculated at checkout')
+      expect(html).toMatch(/<a(?=[^>]*href="\/checkout")[^>]*>Checkout/)
+      expect(html).toMatch(/<form(?=[^>]*action="\/cart")[^>]*>/)
+      expect(html).toMatch(/<input(?=[^>]*name="quantity")(?=[^>]*type="number")[^>]*>/) // without JavaScript a number and an Update button
+      expect(html).toContain('Update')
+    })
+
+    it('a sold-out line stops the way to checkout and says why', async () => {
+      state.blocked = true
+      const html = await (await get('/cart', { headers: withCart })).text().then(plain)
+      state.blocked = false
+      expect(html).toContain('Sold out: remove to continue')
+      expect(html).toContain('Remove the sold-out items to continue.')
+      expect(html).not.toMatch(/<a(?=[^>]*href="\/checkout")[^>]*>Checkout/)
+      expect(html).toMatch(/<button(?=[^>]*disabled)[^>]*>Checkout/)
+    })
+
+    it('without JavaScript every action goes to the API once and the visitor comes back to the cart', async () => {
+      state.calls = []
+      for (const fields of /** @type {Record<string, string>[]} */ ([{ intent: 'setQty', lineId: uuid(800), quantity: '3' }, { intent: 'remove', lineId: uuid(800) }, { intent: 'applyPromo', code: 'save10' }, { intent: 'removePromo' }])) {
+        const r = await post(fields)
+        expect(r.status, JSON.stringify(fields)).toBe(302)
+        expect(r.headers.get('location')).toBe('/cart')
+      }
+      expect(state.calls).toEqual([
+        `PUT /api/v1/cart/lines/${uuid(800)} {"quantity":3}`,
+        `DELETE /api/v1/cart/lines/${uuid(800)} ""`,
+        'PUT /api/v1/cart/promo {"code":"SAVE10"}', // the code is the API's to read; the client only tidies its case
+        'DELETE /api/v1/cart/promo ""',
+      ])
+    })
+
+    it('what goes wrong is said: more than there is, a code that is unknown, a code with a minimum spend', async () => {
+      const more = await post({ intent: 'setQty', lineId: uuid(800), quantity: '9' })
+      expect(more.headers.get('location')).toBe('/cart?error=insufficient_stock&n=5')
+      expect(await (await get('/cart?error=insufficient_stock&n=5', { headers: withCart })).text().then(plain)).toContain('Only 5 available.')
+      const unknown = await post({ intent: 'applyPromo', code: 'NOPE' })
+      expect(unknown.headers.get('location')).toBe('/cart?error=promo_not_found')
+      expect(await (await get('/cart?error=promo_not_found', { headers: withCart })).text().then(plain)).toContain('We do not know this code.')
+      const min = await post({ intent: 'applyPromo', code: 'BIG' })
+      expect(min.headers.get('location')).toBe('/cart?error=promo_min_spend&amount=500000')
+      expect(await (await get('/cart?error=promo_min_spend&amount=500000', { headers: withCart })).text().then(plain)).toContain('Spend at least Rs 5,000 to use this code.')
+      expect((await post({ intent: 'setQty', lineId: uuid(800), quantity: '-1' })).headers.get('location')).toBe('/cart?error=invalid')
+    })
+
+    it('the header asks for the number in the cart after the page has loaded, so a cached page holds nothing of a visitor', async () => {
+      const html = await (await get('/')).text().then(plain)
+      expect(html).toMatch(/<a(?=[^>]*href="\/cart")[^>]*aria-label="Cart"[^>]*>/)
+      expect(html).not.toContain('Cart, ')
     })
   })
 

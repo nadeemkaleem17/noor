@@ -40,7 +40,8 @@
     "footerContact": "Contact",
     "footerPayments": "We accept",
     "rights": "© {year} {brand}",
-    "language": "Language"
+    "language": "Language",
+    "cartCount": "Cart, {count, plural, one {# item} other {# items}}"
   },
   "notFound": {
     "title": "We can't find that page",
@@ -232,5 +233,59 @@
     "related": "You may also like",
     "recent": "Recently viewed",
     "measurement": "Measurement"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "emptyBody": "Add something you like and it will wait for you here.",
+    "continue": "Continue shopping",
+    "remove": "Remove {title}",
+    "removed": "Removed {title}",
+    "undo": "Undo",
+    "update": "Update",
+    "quantityOf": "Quantity of {title}",
+    "maxQuantity": "Most you can order: {n}",
+    "each": "each",
+    "madeToOrder": "Made for you in {min} to {max} days",
+    "issues": {
+      "price_changed": "Price updated to {amount}",
+      "low_stock": "Only {n} left",
+      "sold_out": "Sold out: remove to continue",
+      "unavailable": "No longer available: remove to continue"
+    },
+    "errors": {
+      "insufficient_stock": "Only {n} available.",
+      "max_per_order": "Limit of {n} per order.",
+      "invalid": "That could not be done. Please check and try again.",
+      "busy": "Too many requests. Try again in a moment.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "promo": {
+      "have": "Have a promo code?",
+      "label": "Promo code",
+      "apply": "Apply",
+      "remove": "Remove code {code}",
+      "promo_not_found": "We do not know this code.",
+      "promo_not_started": "This code is not active yet.",
+      "promo_expired": "This code has expired.",
+      "promo_usage_limit": "This code has been used up.",
+      "promo_not_applicable": "This code does not apply to what is in your cart.",
+      "promo_customer_limit": "You have already used this code.",
+      "promo_first_order_only": "This code is for a first order only.",
+      "promo_min_spend": "Spend at least {amount} to use this code.",
+      "promo_invalid": "This code cannot be used right now."
+    },
+    "summary": "Order summary",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "shipping": "Shipping",
+    "shippingLater": "Calculated at checkout",
+    "free": "Free",
+    "total": "Total",
+    "freeRemaining": "Add {amount} more for free delivery",
+    "deposit": "Made-to-order items need a deposit of {amount}.",
+    "blocked": "Remove the sold-out items to continue.",
+    "checkout": "Checkout",
+    "viewCart": "View cart"
   }
 }

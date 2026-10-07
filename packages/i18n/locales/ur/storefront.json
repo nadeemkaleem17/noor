@@ -40,7 +40,8 @@
     "footerContact": "رابطہ",
     "footerPayments": "ادائیگی کے طریقے",
     "rights": "© {year} {brand}",
-    "language": "زبان"
+    "language": "زبان",
+    "cartCount": "کارٹ، {count, plural, one {# چیز} other {# چیزیں}}"
   },
   "notFound": {
     "title": "یہ صفحہ نہیں ملا",
@@ -232,5 +233,59 @@
     "related": "آپ کو یہ بھی پسند آ سکتا ہے",
     "recent": "حال ہی میں دیکھے گئے",
     "measurement": "ناپ"
+  },
+  "cart": {
+    "title": "آپ کا کارٹ",
+    "empty": "آپ کا کارٹ خالی ہے",
+    "emptyBody": "جو پسند آئے ڈال دیں، وہ یہاں آپ کا انتظار کرے گا۔",
+    "continue": "خریداری جاری رکھیں",
+    "remove": "{title} ہٹائیں",
+    "removed": "{title} ہٹا دیا گیا",
+    "undo": "واپس لائیں",
+    "update": "اپ ڈیٹ",
+    "quantityOf": "{title} کی تعداد",
+    "maxQuantity": "زیادہ سے زیادہ آرڈر: {n}",
+    "each": "فی عدد",
+    "madeToOrder": "{min} سے {max} دن میں آپ کے لیے تیار",
+    "issues": {
+      "price_changed": "قیمت اب {amount} ہے",
+      "low_stock": "صرف {n} باقی",
+      "sold_out": "ختم ہو گیا: جاری رکھنے کے لیے ہٹائیں",
+      "unavailable": "اب دستیاب نہیں: جاری رکھنے کے لیے ہٹائیں"
+    },
+    "errors": {
+      "insufficient_stock": "صرف {n} دستیاب ہیں۔",
+      "max_per_order": "ایک آرڈر میں زیادہ سے زیادہ {n}۔",
+      "invalid": "یہ نہیں ہو سکا۔ دیکھ کر دوبارہ کوشش کریں۔",
+      "busy": "بہت زیادہ درخواستیں۔ تھوڑی دیر بعد کوشش کریں۔",
+      "failed": "کچھ گڑبڑ ہو گئی۔ دوبارہ کوشش کریں۔"
+    },
+    "promo": {
+      "have": "پرومو کوڈ ہے؟",
+      "label": "پرومو کوڈ",
+      "apply": "لگائیں",
+      "remove": "کوڈ {code} ہٹائیں",
+      "promo_not_found": "ہم یہ کوڈ نہیں جانتے۔",
+      "promo_not_started": "یہ کوڈ ابھی شروع نہیں ہوا۔",
+      "promo_expired": "اس کوڈ کی میعاد ختم ہو گئی۔",
+      "promo_usage_limit": "یہ کوڈ استعمال ہو چکا ہے۔",
+      "promo_not_applicable": "یہ کوڈ آپ کے کارٹ کی چیزوں پر لاگو نہیں ہوتا۔",
+      "promo_customer_limit": "آپ یہ کوڈ پہلے استعمال کر چکے ہیں۔",
+      "promo_first_order_only": "یہ کوڈ صرف پہلے آرڈر کے لیے ہے۔",
+      "promo_min_spend": "یہ کوڈ استعمال کرنے کے لیے کم از کم {amount} کی خریداری کریں۔",
+      "promo_invalid": "یہ کوڈ ابھی استعمال نہیں ہو سکتا۔"
+    },
+    "summary": "آرڈر کا خلاصہ",
+    "subtotal": "ذیلی کل",
+    "discount": "رعایت",
+    "shipping": "ڈیلیوری",
+    "shippingLater": "چیک آؤٹ پر معلوم ہو گی",
+    "free": "مفت",
+    "total": "کل",
+    "freeRemaining": "مفت ڈیلیوری کے لیے {amount} اور شامل کریں",
+    "deposit": "آرڈر پر تیار چیزوں کے لیے {amount} ایڈوانس درکار ہے۔",
+    "blocked": "جاری رکھنے کے لیے ختم شدہ چیزیں ہٹائیں۔",
+    "checkout": "چیک آؤٹ",
+    "viewCart": "کارٹ دیکھیں"
   }
 }

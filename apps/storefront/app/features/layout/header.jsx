@@ -1,4 +1,4 @@
-import { ChevronDown, Heart, Menu as MenuIcon, Search, ShoppingBag } from 'lucide-react'
+import { ChevronDown, Heart, Menu as MenuIcon, Search } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
@@ -6,6 +6,7 @@ import { Accordion } from '@noor/ui/accordion'
 import { Drawer } from '@noor/ui/drawer'
 import { Link } from '@noor/ui/link'
 import { Popover } from '@noor/ui/popover'
+import { CartLink } from '../cart/cart-link'
 import { useLocalePath } from './use-shell'
 
 /** @typedef {import('~/lib/nav').NavItem} NavItem */
@@ -135,9 +136,7 @@ export function Header({ brand, logo, items, wishlist }) {
               <Heart aria-hidden="true" className="size-6" />
             </RouterLink>
           ) : null}
-          <RouterLink to={path('/cart')} aria-label={t('shell.cart')} className={iconButton}>
-            <ShoppingBag aria-hidden="true" className="size-6" />
-          </RouterLink>
+          <CartLink className={iconButton} />
         </div>
       </div>
       {searching ? (

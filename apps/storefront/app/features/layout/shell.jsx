@@ -1,6 +1,8 @@
 import { MessageCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, Outlet, useLocation } from 'react-router'
+import { ToastProvider } from '@noor/ui/toast'
+import { CartDrawerProvider } from '../cart/cart-drawer'
 import { Announcement } from './announcement'
 import { Footer } from './footer'
 import { Header } from './header'
@@ -53,7 +55,8 @@ export default function Shell() {
   if (!shell) return <Outlet />
   const { config, nav, notices, about, locale } = shell
   return (
-    <>
+    <ToastProvider>
+      <CartDrawerProvider>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent">
         {t('shell.skip')}
       </a>
@@ -64,6 +67,7 @@ export default function Shell() {
       </main>
       <Footer brand={config.brand.name} about={about} items={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />
       {config.contact.whatsapp ? <WhatsAppButton number={config.contact.whatsapp} /> : null}
-    </>
+      </CartDrawerProvider>
+    </ToastProvider>
   )
 }

@@ -167,15 +167,15 @@ The provider redirects to `/orders/:token?payment=return`. The order page (DOC-0
 
 ## 6. Acceptance checklist
 
-- [ ] `grep -rnE "subtotal|total" apps/storefront/app/features/{cart,checkout}` shows no arithmetic on money (only reads of API fields).
+- [x] `grep -rnE "subtotal|total" apps/storefront/app/features/{cart,checkout}` shows no arithmetic on money (only reads of API fields). (Cart half, by hand: `features/cart` only reads `cart.subtotal`, `cart.discount`, `cart.total` and the line fields, and compares `discount.amount > 0` and `shipping.fee.amount === 0` to decide what to show. `features/checkout` does not exist yet: M5-06.)
 - [ ] Two rapid submits create one order (same `Idempotency-Key`), verified against the API.
 - [ ] A 409 `price_changed` keeps all field values and shows the changed line.
-- [ ] A promo with unmet minimum spend shows the `promo_min_spend` message with the amount.
+- [x] A promo with unmet minimum spend shows the `promo_min_spend` message with the amount. (`shell.server.test.js`: the API's `promo_min_spend` with `minSpend` gives "Spend at least Rs 5,000 to use this code."; the other promo errors have their own words in `cart.promo.*`. By hand with the real API: an unknown code shows "We do not know this code." No promo code exists in the demo data, so a code that applies was not tried against the real API, only against the stand-in.)
 - [ ] Phone `0300 1234567`, `3001234567`, `+92 300 1234567` all submit as `+923001234567`; `051 1234567` is rejected.
 - [ ] Choosing a city updates shipping and total from the server; a city outside every zone blocks submission.
-- [ ] Cart and checkout work with JavaScript disabled (add, change quantity, apply promo, place a COD order).
+- [ ] Cart and checkout work with JavaScript disabled (add, change quantity, apply promo, place a COD order). (Cart half done in M5-04 and M5-05: add, change a quantity, remove, apply and remove a promo all work as plain forms that redirect back to `/cart` (`shell.server.test.js`, not with a browser that has JavaScript off). Placing an order is M5-06.)
 - [ ] After a successful order, reloading `/checkout` redirects to `/cart` (empty).
-- [ ] `/cart` and `/checkout` responses are `private, no-store`.
+- [x] `/cart` and `/checkout` responses are `private, no-store`. (`/cart`, its actions and `?summary=1`: `shell.server.test.js`. `/checkout` is M5-06; its placeholder already sends the same header.)
 
 ## 7. Open questions and assumptions
 
@@ -191,6 +191,7 @@ The provider redirects to `/orders/:token?payment=return`. The order page (DOC-0
 
 | Date | Change |
 |---|---|
+| 2026-10-07 | M5-05 built (`routes/cart.jsx`, `lib/cart.server.js`, `features/cart/*`). Notes: (1) The cart page, the drawer and the product page share `CartLines` and `CartSummary`; the drawer (`Drawer`, bottom sheet under `md`) is opened by the header's cart link and by a successful add, and reads `/cart` through a fetcher when it opens; the router reads it again after every action. No Zustand: the open state is a small React context in the shell. (2) The header badge is a fetcher on `/cart?summary=1`, asked for after hydration, so the page holds nothing of a visitor. (3) Optimistic UI is the fetcher's own pending form data: the quantity shows the new number and a removed line disappears at once, while the totals stay as they were, dimmed, until the API answers. (4) Removing shows a toast with "Undo", which adds the same variant, quantity and customisation (the `customization` field of the add form carries it as JSON; the API checks it like any other). The toast is shown when the click is made, not when the API has answered. (5) Without JavaScript each action is a form post that redirects back to `/cart`; a failure is in the address (`?error=<code>&n=&amount=`), not in a flash cookie, because the page is private and these carry no personal data. (6) Promo messages: one per API code, `promo_min_spend` with the amount. (7) A line that cannot be bought (`sold_out`, `unavailable`) turns "Checkout" into a disabled button with the reason; `price_changed` and `low_stock` are shown on the line. (8) Prices are drawn with the shop's `priceDisplay` (`ShopPrice`). (9) Not built: a flash cookie, the cart drawer's own promo box (promo is on the page), free-delivery progress as a bar (it is the API's sentence). |
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Owner answer: COD only at launch (A-07); other methods stay specified but disabled |
 | 2026-10-02 | Phase 5 part 2: route keys, parameter names and error codes in this document are provisional where they differ from DOC-10; DOC-10 is authoritative and Phase 7 reconciles the names |

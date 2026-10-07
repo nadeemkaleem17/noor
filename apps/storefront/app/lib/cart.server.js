@@ -1,5 +1,5 @@
 // The storefront's side of the server cart (plan/06-storefront/05-cart-checkout.md section 2): the cart token lives in the `nc_cart` cookie, which the browser cannot read,
-// and goes to the API as `X-Cart-Token`. Only the add-to-cart action is here so far (M5-04); the cart page and its other actions come with M5-05. Never imported by browser code.
+// and goes to the API as `X-Cart-Token`. The cart page, the drawer and the product page all go through here. Never imported by browser code.
 import { ApiError } from '@noor/contract'
 import { variantFor } from '~/lib/selection'
 import { api } from './api.server'
@@ -29,6 +29,16 @@ export const cartCookie = (token) => `${CART_COOKIE}=${encodeURIComponent(token)
 
 /** What a customer attached to a line, from the add form: the answers to the custom-size form (`m.<key>`), a note, and the chosen variant of each child of a bundle (`bundle.<productId>`). @param {FormData} form @returns {import('@noor/contract').LineCustomization | undefined} */
 export function customizationOf(form) {
+  // "Undo" after a removal sends back exactly what the line had; the API checks it like any other
+  const whole = String(form.get('customization') ?? '')
+  if (whole) {
+    try {
+      const parsed = JSON.parse(whole)
+      return parsed && typeof parsed === 'object' ? parsed : undefined
+    } catch {
+      return undefined
+    }
+  }
   /** @type {Record<string, string>} */
   const measurements = {}
   /** @type {{ productId: string, variantId: string }[]} */
@@ -82,6 +92,80 @@ export async function addToCart(request, form) {
       if (e.code === 'rate_limited') return { ok: false, error: 'busy' }
     }
     console.error('add to cart failed', e)
+    return { ok: false, error: 'failed' }
+  }
+}
+
+/** What a visitor with no cart sees; the API makes a cart only when something is added (plan/06-storefront/05-cart-checkout.md section 2). @type {import('@noor/contract').Cart} */
+export const emptyCart = { lines: [], count: 0, subtotal: { amount: 0, currency: 'PKR' }, discount: { amount: 0, currency: 'PKR' }, total: { amount: 0, currency: 'PKR' }, messages: [], hasBlockingIssues: false }
+
+/** The visitor's cart as the API prices it now, or an empty one when they have none (or it expired). @param {Request} request @returns {Promise<import('@noor/contract').Cart>} */
+export async function getCart(request) {
+  const headers = cartHeaders(request)
+  if (!headers) return emptyCart
+  try {
+    const cart = await api('cart.get', { query: { locale: localeOfPath(new URL(request.url).pathname) }, headers })
+    return 'lines' in cart ? cart : emptyCart
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 401)) return emptyCart
+    throw e
+  }
+}
+
+/** Only the number of things in the cart, for the badge in the header. @param {Request} request */
+export async function cartCount(request) {
+  const headers = cartHeaders(request)
+  if (!headers) return 0
+  try {
+    return (await api('cart.get', { query: { summary: true }, headers })).count
+  } catch {
+    return 0
+  }
+}
+
+/** The promo codes the cart page can say something about. */
+const promoErrors = ['promo_not_found', 'promo_not_started', 'promo_expired', 'promo_usage_limit', 'promo_not_applicable', 'promo_customer_limit', 'promo_first_order_only', 'promo_min_spend', 'promo_invalid']
+export const cartErrors = /** @type {const} */ ([...promoErrors, 'insufficient_stock', 'max_per_order', 'invalid', 'busy', 'failed'])
+
+/**
+ * The cart's other actions, one `intent` each (plan/06-storefront/05-cart-checkout.md section 2.1): change a quantity (0 removes), remove a line, apply or remove a promo code.
+ * Each is one API call and returns what went wrong in a form the page can say; the new cart is read again by the page.
+ * @param {Request} request
+ * @param {FormData} form
+ * @returns {Promise<{ ok: true } | { ok: false, error: (typeof cartErrors)[number], n?: number, amount?: number }>}
+ */
+export async function cartAction(request, form) {
+  const headers = cartHeaders(request)
+  const lineId = String(form.get('lineId') ?? '')
+  const intent = String(form.get('intent') ?? '')
+  const opts = headers ? { headers } : {}
+  try {
+    if (intent === 'setQty') {
+      const quantity = Number(form.get('quantity'))
+      if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99) return { ok: false, error: 'invalid' }
+      await api('cart.setLineQuantity', { params: { lineId }, body: { quantity }, ...opts })
+    } else if (intent === 'remove') {
+      await api('cart.removeLine', { params: { lineId }, ...opts })
+    } else if (intent === 'applyPromo') {
+      await api('cart.applyPromo', { body: { code: String(form.get('code') ?? '') }, ...opts })
+    } else if (intent === 'removePromo') {
+      await api('cart.removePromo', opts)
+    } else {
+      return { ok: false, error: 'invalid' }
+    }
+    return { ok: true }
+  } catch (e) {
+    if (e instanceof ApiError) {
+      if (e.code === 'insufficient_stock') return { ok: false, error: e.code, n: Number(e.details.available ?? 0) }
+      if (e.code === 'max_per_order') return { ok: false, error: e.code, n: Number(e.details.max ?? 0) }
+      if (e.code === 'promo_min_spend') return { ok: false, error: e.code, amount: Number(/** @type {{ amount?: number }} */ (e.details.minSpend)?.amount ?? 0) }
+      const known = cartErrors.find((c) => c === e.code)
+      if (known) return { ok: false, error: known }
+      // an empty code, a line that is already gone
+      if (e.code === 'validation_failed' || e.code === 'not_found') return { ok: false, error: 'invalid' }
+      if (e.code === 'rate_limited') return { ok: false, error: 'busy' }
+    }
+    console.error('cart action failed', e)
     return { ok: false, error: 'failed' }
   }
 }

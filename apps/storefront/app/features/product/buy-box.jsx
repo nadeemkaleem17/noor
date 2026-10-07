@@ -11,6 +11,7 @@ import { QuantityStepper } from '@noor/ui/quantity-stepper'
 import { useHydrated } from '../catalog/filters'
 import { Dot, percentOff } from '../catalog/product-card'
 import { useLocalePath, useShell } from '../layout/use-shell'
+import { useCartDrawer } from '../cart/cart-drawer'
 import { CustomSize } from './custom-size'
 import { OptionGroup } from './option-group'
 import { SizeGuide } from './size-guide'
@@ -66,6 +67,7 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
   const hydrated = useHydrated()
   const fetcher = useFetcher()
   const revalidator = useRevalidator()
+  const { setOpen: openCart } = useCartDrawer()
   const locale = shell?.locale ?? 'en'
   const display = shell?.config.priceDisplay
 
@@ -108,6 +110,12 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
     watch.observe(el)
     return () => watch.disconnect()
   }, [])
+
+  // a line was added: the cart drawer shows it
+  const added = fetcher.data
+  useEffect(() => {
+    if (added?.ok) openCart(true)
+  }, [added, openCart])
 
   useEffect(() => {
     if (fail?.error === 'variant_unavailable') void revalidator.revalidate()
