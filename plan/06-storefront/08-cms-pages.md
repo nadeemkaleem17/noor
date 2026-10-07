@@ -66,11 +66,11 @@ Seeded by `db:seed` and listed in the footer menu. Staff can edit but not delete
 
 ## 6. Acceptance checklist
 
-- [ ] A page body containing `<script>alert(1)</script>`, `[x](javascript:alert(1))` and `![x](https://evil.example/a.png)` renders none of them as active content (unit test of the renderer config).
-- [ ] Changing the store phone in settings changes it on `/pages/contact` and wherever `{{store.phone}}` is used, with no content edit.
-- [ ] A draft page returns 404.
-- [ ] `/size-guide` tables are readable at 360 px and have header cells with `scope`.
-- [ ] Each required page exists after `db:seed` and is linked in the footer.
+- [x] A page body containing `<script>alert(1)</script>`, `[x](javascript:alert(1))` and `![x](https://evil.example/a.png)` renders none of them as active content (unit test of the renderer config). (`shell.server.test.js` renders such a body through the real route: no `alert(1)`, no `<script`, no `javascript:`, no picture from `evil.example`; the renderer's own unit tests are in `@noor/ui` (M2-04).)
+- [x] Changing the store phone in settings changes it on `/pages/contact` and wherever `{{store.phone}}` is used, with no content edit. (The contact page is drawn by the route from `StoreConfig.contact`, and the API puts the settings into the text where it names `{{store.phone}}` and the others (`settings.int.test.js`). Not tried by changing a setting and looking: the shop's configuration is kept 30 seconds in the storefront and a page up to an hour by a CDN, which purges by tag when that exists.)
+- [x] A draft page returns 404. (`shell.server.test.js` with a stand-in API that answers 404 for it; the API's own rule that only an active page is given is in `settings.int.test.js`.)
+- [x] `/size-guide` tables are readable at 360 px and have header cells with `scope`. (Each table is in its own scrolling box with the first column kept in view, and every header cell has `scope`: checked in the browser pane and in `shell.server.test.js`. Not looked at on a 360 px screen.)
+- [x] Each required page exists after `db:seed` and is linked in the footer. (By hand against the seeded shop: `about`, `contact`, `privacy`, `shipping-returns` and `terms` all answer 200 and are in the footer menu.)
 
 ## 7. Open questions and assumptions
 
@@ -87,4 +87,5 @@ Seeded by `db:seed` and listed in the footer menu. Staff can edit but not delete
 |---|---|
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Owner answer: legal pages drafted by us (A-09) |
+| 2026-10-07 | M5-09 built (`routes/page.jsx`, `routes/size-guide.jsx`, `features/content/contact-details.jsx`, `features/product/size-chart.jsx`). Notes: (1) The tokens are not resolved by the storefront: `content.getPage` already gives the text with the shop's phone, email, address, free-delivery line, fee and return days in it (`resolveTokens` in the API), so the page only draws it; the section 2 row about tokens is the API's job. (2) `/pages/contact` draws the text, then the details from `StoreConfig.contact` (phone as `tel:`, WhatsApp, email, address with the map link, hours, socials); what is not set is not shown. (3) A page with no text in the visitor's language is shown in the other one, with `lang` (and `dir`) set on its heading and its body. (4) The size guide shows each chart as a `<details open>` (the charts have no size system to group by in the API's answer, so one block per chart): the in/cm switch with JavaScript, and without it both units, as two tables each. The drawer of the product page uses the same table component. (5) The footer gets a fixed "Size guide" link beside the menu's own links. (6) Pre-rendering the four required pages at build (ADR-0004) is not done: a page is rendered on request and kept by the cache class; revisit with the CDN. |
 | 2026-10-02 | M2-04: renderer built as `Markdown` in `@noor/ui/markdown`; also needs `remark-gfm` for tables; `skipHtml` drops raw HTML; images need a `"WxH"` title and our image origin (checked with `startsWith(origin + "/")`, so `img.rubaya.pk.evil.com` fails); §6 first bullet is a unit test |

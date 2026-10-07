@@ -10,6 +10,7 @@ import { NativeSelect } from '@noor/ui/native-select'
 import { Skeleton } from '@noor/ui/skeleton'
 import { clearAllHref, filterCount, listingHref } from '~/lib/listing-url'
 import { canonicalQuery } from '~/lib/redirects'
+import { asRouterLink } from '../layout/as-router-link'
 import { useLocalePath } from '../layout/use-shell'
 import { Applied, FilterForm, useHydrated } from './filters'
 import { recall, remember } from './listing-memory'
@@ -19,9 +20,6 @@ import { ProductGrid } from './product-card'
 
 /** After this many products the load-more button gives way to "Refine your results" (plan/06-storefront/03-plp-search.md section 6). */
 const CAP = 240
-
-/** A router link for the breadcrumb, which hands over a plain `href`. @type {(props: import('react').ComponentProps<'a'>) => import('react').ReactElement} */
-const asRouterLink = ({ href, ...props }) => <RouterLink {...props} to={href ?? '/'} />
 
 /** The description of a category or collection: its first 300 characters, the rest behind "Read more". Plain text. @param {{ text: string }} props */
 function Intro({ text }) {

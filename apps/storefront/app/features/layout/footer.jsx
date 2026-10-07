@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router'
 import { Link } from '@noor/ui/link'
 import { safeHref } from '@noor/ui/safe-href'
 import { Ltr } from '@noor/ui/ltr'
+import { useLocalePath } from './use-shell'
 
 /** @typedef {import('~/lib/nav').NavItem} NavItem */
 
@@ -14,6 +15,7 @@ const dialable = (/** @type {string} */ phone) => phone.replace(/[^\d+]/g, '')
  */
 export function Footer({ brand, about, items, contact, payments, languageSwitch }) {
   const { t } = useTranslation('storefront')
+  const path = useLocalePath()
   const whatsapp = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : undefined
   const socials = contact.socials.flatMap((s) => (safeHref(s.url) ? [s] : []))
   return (
@@ -40,6 +42,11 @@ export function Footer({ brand, about, items, contact, payments, languageSwitch 
                   )}
                 </li>
               ))}
+              <li>
+                <RouterLink to={path('/size-guide')} className="text-fg-soft hover:text-fg">
+                  {t('shell.sizeGuide')}
+                </RouterLink>
+              </li>
             </ul>
           </nav>
         ) : null}

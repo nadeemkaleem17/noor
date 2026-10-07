@@ -41,7 +41,8 @@
     "footerPayments": "ادائیگی کے طریقے",
     "rights": "© {year} {brand}",
     "language": "زبان",
-    "cartCount": "کارٹ، {count, plural, one {# چیز} other {# چیزیں}}"
+    "cartCount": "کارٹ، {count, plural, one {# چیز} other {# چیزیں}}",
+    "sizeGuide": "سائز گائیڈ"
   },
   "notFound": {
     "title": "یہ صفحہ نہیں ملا",
@@ -494,5 +495,20 @@
     "view": "پروڈکٹ دیکھیں",
     "notify": "مجھے بتائیں",
     "removeShort": "ہٹائیں"
+  },
+  "sizeGuide": {
+    "title": "سائز گائیڈ",
+    "bothUnits": "ناپ انچ اور سینٹی میٹر دونوں میں۔",
+    "empty": "ابھی کوئی سائز چارٹ نہیں۔"
+  },
+  "contact": {
+    "phone": "فون",
+    "whatsapp": "واٹس ایپ",
+    "whatsappChat": "ہم سے بات کریں",
+    "email": "ای میل",
+    "address": "پتہ",
+    "map": "نقشہ",
+    "hours": "اوقات",
+    "socials": "ہمیں یہاں ڈھونڈیں"
   }
 }

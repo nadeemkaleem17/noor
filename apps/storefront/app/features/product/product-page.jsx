@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router'
 import { Breadcrumb } from '@noor/ui/breadcrumb'
+import { asRouterLink } from '../layout/as-router-link'
 import { useLocalePath } from '../layout/use-shell'
 import { BuyBox } from './buy-box'
 import { Gallery } from './gallery'
 import { InfoSections } from './sections'
-
-/** A router link for the breadcrumb, which hands over a plain `href`. @type {(props: import('react').ComponentProps<'a'>) => import('react').ReactElement} */
-const asRouterLink = ({ href, ...props }) => <RouterLink {...props} to={href ?? '/'} />
 
 /**
  * The product page's frame (plan/06-storefront/04-pdp.md section 2): the way back up, the pictures beside the buy box, the information sections, and under them what streams in later

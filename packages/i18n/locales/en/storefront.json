@@ -41,7 +41,8 @@
     "footerPayments": "We accept",
     "rights": "© {year} {brand}",
     "language": "Language",
-    "cartCount": "Cart, {count, plural, one {# item} other {# items}}"
+    "cartCount": "Cart, {count, plural, one {# item} other {# items}}",
+    "sizeGuide": "Size guide"
   },
   "notFound": {
     "title": "We can't find that page",
@@ -494,5 +495,20 @@
     "view": "View product",
     "notify": "Notify me",
     "removeShort": "Remove"
+  },
+  "sizeGuide": {
+    "title": "Size guide",
+    "bothUnits": "Measurements in inches and in centimetres.",
+    "empty": "There are no size charts yet."
+  },
+  "contact": {
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "whatsappChat": "Chat with us",
+    "email": "Email",
+    "address": "Address",
+    "map": "Map",
+    "hours": "Hours",
+    "socials": "Find us on"
   }
 }

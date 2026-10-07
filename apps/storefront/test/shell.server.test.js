@@ -140,6 +140,21 @@ const orderOf = (status, over = {}) => ({
 })
 const orderStates = ['pending', 'pending_confirmation', 'confirmed', 'dispatched', 'delivered', 'cancelled']
 
+/** The pages of the shop as the API gives them: the text already has the shop's numbers in it. A slug it does not know is a draft or nothing: 404. @param {string} slug @param {string} locale */
+const pageOf = (slug, locale) => {
+  const base = { slug, seo: {}, updatedAt: '2026-10-01T00:00:00.000Z', locale: locale === 'ur' ? 'en' : locale }
+  if (slug === 'contact') return { ...base, title: 'Contact us', bodyMd: 'Call 0300 1234567 or write to hello@rubaya.pk.' }
+  if (slug === 'old-contact') return { redirectTo: 'contact' }
+  if (slug === 'hostile') {
+    return { ...base, title: 'Hostile', seo: { title: 'Hostile page', description: 'A test' }, bodyMd: [
+      '# Big heading', '', 'Fine text with **bold**.', '', '<script>alert(1)</script>', '', '[x](javascript:alert(1))', '', '![x](https://evil.example/a.png "10x10")', '',
+      '![shop](http://localhost/img/ok.png "800x1000")', '', '| a | b |', '|---|---|', '| 1 | 2 |', '', '[wa](https://wa.me/923001234567)',
+    ].join('\n') }
+  }
+  if (slug === 'about' || slug === 'shipping-returns' || slug === 'privacy' || slug === 'terms') return { ...base, title: slug, bodyMd: 'Words.' }
+  return undefined
+}
+
 /** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any, headers?: import('node:http').IncomingHttpHeaders }} [req] */
 function answer(p, locale, q = new URLSearchParams(), req = {}) {
   const kind = ofKind(p.replace('/api/v1/products/', ''))
@@ -166,6 +181,9 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (rest === `/lines/${uuid(850)}/review` && req.method === 'GET') return { product: { title: 'Lawn 3-Piece' }, displayNameDefault: 'Ayesha K.', sized: true, submitted: false }
     if (rest === `/lines/${uuid(850)}/review` && req.method === 'POST') { state.calls.push(`REVIEW ${JSON.stringify(req.body)}`); return { status: 'pending' } }
   }
+  const page = /^\/api\/v1\/content\/pages\/([a-z-]+)$/.exec(p)
+  if (page) return pageOf(page[1] ?? '', locale)
+  if (p === '/api/v1/size-charts') return { items: [{ id: uuid(40), title: 'Women', unit: 'in', notes: 'Measure over light clothes.', tables: [{ id: 't', title: 'Body', columns: ['S', 'M'], rows: [{ label: 'Bust', values: [34, 36] }] }] }] }
   if (p === '/api/v1/shipping/cities') return { items: cities }
   if (p === '/api/v1/cart/quote') return req.body.cityId === uuid(999) ? { title: 'No zone', status: 422, code: 'city_not_served' } : quoted()
   if (p === '/api/v1/orders' && req.method === 'POST') {
@@ -744,6 +762,60 @@ describe('the storefront through its whole stack', () => {
     })
   })
 
+  describe('the pages of staff and the size guide (DOC-06.8)', () => {
+    it('a page: one heading, the shop\'s contact details drawn from its settings, a cache that may keep it, and no cookie', async () => {
+      const r = await get('/pages/contact')
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toBe('public, s-maxage=3600, stale-while-revalidate=86400')
+      expect(r.headers.get('set-cookie')).toBeNull()
+      const html = await r.text()
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toContain('Call 0300 1234567')
+      const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'))
+      expect(main).toContain('href="tel:03001234567"')
+      expect(main).toContain('href="mailto:hello@rubaya.pk"')
+      expect(main).toContain('href="https://wa.me/923001234567"')
+      expect(html).toContain('<title>Contact us | Rubaya</title>')
+    })
+
+    it('what a page body holds is drawn as text and elements only: no script, no unsafe link, no picture from another site, the first heading is not a second h1', async () => {
+      const html = await (await get('/pages/hostile')).text()
+      const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'))
+      expect(main).not.toContain('alert(1)')
+      expect(main).not.toContain('<script')
+      expect(main).not.toContain('javascript:')
+      expect(main).not.toContain('evil.example')
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(main).toMatch(/<h2[^>]*>Big heading</)
+      expect(main).toContain('<strong>bold</strong>')
+      expect(main).toContain('src="http://localhost/img/ok.png"') // a picture of the shop's own image host
+      expect(main).toMatch(/<table/)
+      expect(main).toMatch(/<th[^>]*scope="col"/)
+      expect(main).toContain('href="https://wa.me/923001234567"')
+      expect(html).toContain('<title>Hostile page | Rubaya</title>')
+    })
+
+    it('an old address goes to the page, and a page that is not active is a 404', async () => {
+      const r = await get('/pages/old-contact')
+      expect(r.status).toBe(301)
+      expect(r.headers.get('location')).toBe('/pages/contact')
+      expect((await get('/pages/draft')).status).toBe(404)
+    })
+
+    it('the size guide: every chart with its tables in both units without JavaScript, readable header cells, the way to measure, linked from the footer', async () => {
+      const html = await (await get('/size-guide')).text()
+      expect(html.match(/<h1/g)).toHaveLength(1)
+      expect(html).toContain('Women')
+      expect(html).toContain('Body (in)')
+      expect(html).toContain('Body (cm)') // the other unit is in the page too
+      expect(html).toContain('86.4') // 34 in, worked out
+      expect(html).toMatch(/<th[^>]*scope="col"/)
+      expect(html).toMatch(/<th[^>]*scope="row"/)
+      expect(html).toContain('Measure over light clothes.')
+      expect(html).toContain('href="/size-guide"') // the footer's link
+    })
+  })
+
   describe('the wishlist (DOC-06.7)', () => {
     const id = (/** @type {number} */ n) => `0192f5aa-0000-7000-8000-0000000001${String(n).padStart(2, '0')}`
     const saved = (/** @type {string} */ value) => ({ cookie: `nc_wishlist=${encodeURIComponent(value)}` })
@@ -939,6 +1011,10 @@ describe('the storefront through its whole stack', () => {
       expect(html).not.toContain('aria-pressed')
       expect(html).not.toContain('href="/ur/wishlist"')
       expect((await get('/ur/wishlist')).status).toBe(404)
+      // a page with no Urdu text is shown in English and says so
+      const urPage = await (await get('/ur/pages/contact')).text()
+      expect(urPage).toMatch(/<h1[^>]*lang="en"/)
+      expect(urPage).toMatch(/<div[^>]*lang="en"[^>]*dir="ltr"|<div[^>]*dir="ltr"[^>]*lang="en"/)
       // a listing in Urdu: its links stay in Urdu
       const list = await (await get('/ur/c/lawn')).text()
       expect(list).toContain('href="/ur/c/printed"')
