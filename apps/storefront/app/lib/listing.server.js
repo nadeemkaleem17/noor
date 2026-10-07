@@ -4,6 +4,7 @@ import { redirect } from 'react-router'
 import { ApiError } from '@noor/contract'
 import { api } from './api.server'
 import { localeOfPath } from './locale'
+import { pagePath } from './paths'
 import { canonicalQuery } from './redirects'
 import { loadShell } from './shell.server'
 
@@ -36,7 +37,7 @@ export async function loadListing({ request, filter, sort }) {
   const canonical = canonicalQuery(url.searchParams)
   if (!chunk) {
     // compared by what the parameters say, not how they are written (`,` and `%2C` are the same), so a canonical address never bounces
-    if (new URLSearchParams(canonical).toString() !== new URLSearchParams(url.search).toString()) throw redirect(url.pathname + canonical, 301)
+    if (new URLSearchParams(canonical).toString() !== new URLSearchParams(url.search).toString()) throw redirect(pagePath(url) + canonical, 301)
   }
   const query = { ...Object.fromEntries(new URLSearchParams(canonical)), ...filter, locale, limit: PAGE_SIZE }
   if (sort && !('sort' in query)) Object.assign(query, { sort })
@@ -46,7 +47,7 @@ export async function loadListing({ request, filter, sort }) {
     return { page, failed: false, brand: config.brand.name }
   } catch (e) {
     if (chunk) return { page: NONE, failed: true, brand: config.brand.name }
-    if (refused(e)) throw redirect(url.pathname, 302)
+    if (refused(e)) throw redirect(pagePath(url), 302)
     return orNotFound(e)
   }
 }

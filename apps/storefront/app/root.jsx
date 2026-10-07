@@ -6,6 +6,7 @@ import { DirectionProvider } from '@noor/ui/direction'
 import { themeCss } from '@noor/ui/theme'
 import { api, handleOf } from '~/lib/api.server'
 import { localeOfPath } from '~/lib/locale'
+import { pagePath } from '~/lib/paths'
 import { redirectFor } from '~/lib/redirects'
 import { navItems, safeItems } from '~/lib/nav'
 import { cached, loadShell } from '~/lib/shell.server'
@@ -23,7 +24,7 @@ export async function loader({ request }) {
   const url = new URL(request.url)
 
   // The old shop's addresses, and a clean form of every address, go to the right place with a 301 (plan/06-storefront/01-sitemap.md section 4).
-  const needsCategories = url.pathname.replace(/\/+$/, '') === '/shop' && url.searchParams.has('category')
+  const needsCategories = pagePath(url).replace(/\/+$/, '') === '/shop' && url.searchParams.has('category')
   const where = redirectFor(url, needsCategories ? (await cached('categories:en', () => api('catalog.listCategories', { query: { locale: 'en' } }))).items : [])
   if (where && 'to' in where) throw redirect(where.to, 301)
   if (where && 'productId' in where) {

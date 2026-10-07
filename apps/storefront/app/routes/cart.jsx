@@ -4,11 +4,14 @@ import { LinkButton } from '@noor/ui/button'
 import { EmptyState } from '@noor/ui/empty-state'
 import { CartLines } from '~/features/cart/cart-lines'
 import { Promo } from '~/features/cart/promo'
+import { forgetCheckout } from '~/features/checkout/memory'
 import { CartSummary } from '~/features/cart/summary'
 import { useLocalePath } from '~/features/layout/use-shell'
 import { addToCart, cartAction, cartCookie, cartCount, cartErrors, getCart } from '~/lib/cart.server'
 import { cacheControl } from '~/lib/cache'
+import { pagePath } from '~/lib/paths'
 import { Link as RouterLink } from 'react-router'
+import { useEffect } from 'react'
 
 // the cart is one visitor's: never kept by a cache
 export const headers = /** @type {import('./+types/cart').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private }))
@@ -25,7 +28,7 @@ export async function action({ request }) {
   // a form on another site cannot change this visitor's cart: React Router answers 400 to an action whose Origin is not this site's
   const form = await request.formData()
   const intent = form.get('intent')
-  const here = new URL(request.url).pathname
+  const here = pagePath(new URL(request.url))
   if (intent !== 'add' && !['setQty', 'remove', 'applyPromo', 'removePromo'].includes(String(intent))) throw new Response('Bad Request', { status: 400 })
   const result = intent === 'add' ? await addToCart(request, form) : await cartAction(request, form)
   const token = result.ok && 'cartToken' in result ? result.cartToken : undefined
@@ -57,6 +60,11 @@ export default function Cart() {
   const path = useLocalePath()
   const d = useLoaderData()
   const cart = d.cart
+  const empty = cart ? cart.lines.length === 0 : false
+  // an empty cart is where a placed order leaves it: the next checkout starts clean
+  useEffect(() => {
+    if (empty) forgetCheckout()
+  }, [empty])
   if (!cart) return null
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">

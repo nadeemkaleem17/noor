@@ -1,5 +1,6 @@
 // Addresses the storefront sends somewhere else (plan/06-storefront/01-sitemap.md sections 4 and 5): the old shop's URLs, a clean form of every URL, and the one
 // canonical form of a listing's query. Pure, so each rule is a test; the root loader turns the answer into a 301.
+import { pagePath } from './paths'
 
 /** What the old categories were called, found by name or by handle. @typedef {{ handle: string, name: string, children: Category[] }} Category */
 
@@ -14,7 +15,7 @@ const named = (list, name) => list.find((c) => same(c.name, name) || same(c.hand
  * @returns {{ to: string } | { productId: string } | undefined}
  */
 export function redirectFor(url, categories = []) {
-  const path = url.pathname
+  const path = pagePath(url)
   const q = url.searchParams
 
   if (path === '/shop' || path === '/shop/') {
@@ -37,8 +38,10 @@ export function redirectFor(url, categories = []) {
   const product = /^\/product\/([^/]+)\/?$/.exec(path)
   if (product) return { productId: decodeURIComponent(product[1] ?? '') }
 
-  // lower case and no trailing slash (the query stays as it is)
-  const clean = path.length > 1 ? path.replace(/\/+$/, '').toLowerCase() : path
+  // lower case and no trailing slash (the query stays as it is). An order's link is a token, and a token is case-sensitive: only its trailing slash goes.
+  const keepCase = /^(\/ur)?\/orders\//.test(path)
+  const bare = path.replace(/\/+$/, '')
+  const clean = path.length > 1 ? (keepCase ? bare : bare.toLowerCase()) : path
   if (clean !== path) return { to: clean + url.search }
   return undefined
 }

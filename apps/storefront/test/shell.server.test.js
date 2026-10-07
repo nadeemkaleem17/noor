@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { StoreConfigPublic, themePresets } from '@noor/contract'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const state = { down: false, ur: false, /** @type {any} */ cartBody: undefined, /** @type {string[]} */ calls: /** @type {string[]} */ ([]), blocked: false }
+const state = /** @type {{ down: boolean, ur: boolean, cartBody: any, calls: string[], blocked: boolean, order: any }} */ ({ down: false, ur: false, cartBody: undefined, calls: [], blocked: false, order: undefined })
 const image = { src: 'http://localhost/img/logo.webp', srcset: '', width: 120, height: 40, alt: 'Rubaya' }
 
 const config = () =>
@@ -110,6 +110,15 @@ const cartOf = () => ({
   messages: [{ code: 'free_shipping_remaining', amount: money(250000) }], depositDue: money(420000), hasBlockingIssues: state.blocked,
 })
 
+const cities = [
+  { id: uuid(901), name: 'Sukkur', province: 'Sindh', aliases: [], isMajor: false },
+  { id: uuid(902), name: 'Lahore', province: 'Punjab', aliases: [], isMajor: true },
+  { id: uuid(903), name: 'Karachi', province: 'Sindh', aliases: [], isMajor: true },
+]
+const method = { methodId: uuid(910), label: 'Standard delivery', fee: money(25000), etaMinDays: 3, etaMaxDays: 5, codAllowed: true }
+/** The cart as the API prices it for a city: shipping, total, the zone's methods, the allowed payments. */
+const quoted = () => ({ ...cartOf(), shipping: { methodId: method.methodId, label: method.label, fee: method.fee, etaMinDays: 3, etaMaxDays: 5 }, shippingOptions: [method], paymentOptions: [{ method: 'cod', label: 'Cash on delivery', allowed: true }], total: money(1423000) })
+
 /** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any, headers?: import('node:http').IncomingHttpHeaders }} [req] */
 function answer(p, locale, q = new URLSearchParams(), req = {}) {
   const kind = ofKind(p.replace('/api/v1/products/', ''))
@@ -120,6 +129,15 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/size-charts/' + uuid(40)) return { id: uuid(40), title: 'Women', unit: 'in', tables: [{ id: 't', title: 'Body', columns: ['Bust', 'Waist'], rows: [{ label: 'S', values: [34, 28] }] }] }
   if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25] } }
   if (p === '/api/v1/products/' + uuid(100) + '/related') return { items: [product(7), product(8), product(9), product(10)] }
+  if (p === '/api/v1/shipping/cities') return { items: cities }
+  if (p === '/api/v1/cart/quote') return req.body.cityId === uuid(999) ? { title: 'No zone', status: 422, code: 'city_not_served' } : quoted()
+  if (p === '/api/v1/orders' && req.method === 'POST') {
+    state.order = { key: req.headers?.['idempotency-key'], token: req.headers?.['x-cart-token'], body: req.body }
+    if (req.body.customer.name === 'Changed') return { title: 'Changed', status: 409, code: 'price_changed', cart: { ...quoted(), total: money(1500000) } }
+    if (req.body.customer.name === 'Busy') return { title: 'Slow down', status: 429, code: 'rate_limited' }
+    if (req.body.customer.name === 'Down') return { title: 'Boom', status: 500, code: 'internal_error' }
+    return { orderNumber: 'RB-10001', trackingToken: 'Tok_En-Abc', status: 'pending', total: money(1423000) }
+  }
   if (p.startsWith('/api/v1/cart') && p !== '/api/v1/cart/lines') {
     state.calls.push(`${req.method} ${p} ${JSON.stringify(req.body ?? '')}`)
     if (p === '/api/v1/cart/promo' && req.method === 'PUT') {
@@ -221,8 +239,9 @@ describe('the storefront through its whole stack', () => {
     ['/orders/sometoken', P], ['/orders/sometoken/review/line1', P], ['/track', P], ['/wishlist', P], ['/pages/about', S], ['/size-guide', S], ['/healthz', 'no-store'],
   ])
 
+  // the checkout is for a visitor with something in the cart: without it, it sends them to the cart
   it.each(table)('%s answers with its cache class', async (url, cache) => {
-    const r = await get(url)
+    const r = await get(url, { headers: { cookie: 'nc_cart=tok-123' } })
     expect(r.status).toBe(200)
     expect(r.headers.get('cache-control')).toBe(cache)
   })
@@ -339,6 +358,10 @@ describe('the storefront through its whole stack', () => {
       const a = await get('/c/lawn?sort=newest&size=M&size=L&utm_source=x')
       expect(a.status).toBe(301)
       expect(a.headers.get('location')).toBe('/c/lawn?size=L,M&sort=newest')
+      // the router's own data request for the same page: the redirect has no `.data` in it either (the router adds it itself)
+      const data = await (await get('/c/lawn.data?size=M&size=L')).text()
+      expect(data).toContain('/c/lawn?size=L,M')
+      expect(data).not.toContain('lawn.data')
       expect((await get('/c/lawn?size=L,M&sort=newest')).status).toBe(200)
       expect((await get('/c/lawn?size=L%2CM&sort=newest')).status).toBe(200) // the same address with the comma escaped, as a navigation in the browser writes it: no bounce
       const b = await get('/c/lawn?size=XXL')
@@ -569,6 +592,116 @@ describe('the storefront through its whole stack', () => {
       const html = await (await get('/')).text().then(plain)
       expect(html).toMatch(/<a(?=[^>]*href="\/cart")[^>]*aria-label="Cart"[^>]*>/)
       expect(html).not.toContain('Cart, ')
+    })
+  })
+
+  describe('the checkout (DOC-06.5 section 4)', () => {
+    const withCart = { cookie: 'nc_cart=tok-123' }
+    const form = { 'content-type': 'application/x-www-form-urlencoded' }
+    const plain = (/** @type {string} */ t) => t.replace(/\u00a0/g, ' ')
+    const post = (/** @type {Record<string, string>} */ fields, /** @type {Record<string, string>} */ extra = {}) => get('/checkout', { method: 'POST', body: new URLSearchParams(fields), headers: { ...form, ...withCart, ...extra } })
+    const good = { intent: 'place', name: 'Sana Ali', phone: '0300 1234567', cityId: uuid(902), address: 'House 12, Street 4, Gulberg III', shippingMethodId: uuid(910), paymentMethod: 'cod', idempotencyKey: uuid(777), expectedTotal: '1423000' }
+
+    it('an empty cart goes back to the cart', async () => {
+      const r = await get('/checkout')
+      expect(r.status).toBe(302)
+      expect(r.headers.get('location')).toBe('/cart')
+    })
+
+    it('the page: its own slim header and no footer, never cached, the cities (the big ones first), cash on delivery chosen, a key for this checkout, the way to the terms', async () => {
+      const r = await get('/checkout', { headers: withCart })
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      const html = plain(await r.text())
+      expect(html).toContain('content="noindex,nofollow"')
+      expect(html).toContain('Back to cart')
+      expect(html).not.toContain('<footer')
+      expect(html).not.toContain('wa.me') // no chat button over the form
+      expect(html.indexOf('>Karachi<')).toBeGreaterThan(0)
+      expect(html.indexOf('>Karachi<')).toBeLessThan(html.indexOf('>Lahore<') + 100)
+      expect(html.indexOf('>Lahore<')).toBeLessThan(html.indexOf('>Sukkur<'))
+      expect(html).toMatch(/<input(?=[^>]*name="paymentMethod")(?=[^>]*value="cod")(?=[^>]*checked)[^>]*>/)
+      expect(html).toMatch(/<input(?=[^>]*name="idempotencyKey")(?=[^>]*value="[0-9a-f-]{36}")[^>]*>/)
+      expect(html).toMatch(/<input(?=[^>]*name="expectedTotal")(?=[^>]*value="1398000")[^>]*>/)
+      expect(html).toContain('Show delivery options') // without JavaScript the city is sent with a button
+      expect(html).toContain('href="/pages/terms"')
+      expect(html).toContain('We will contact you on WhatsApp or by phone to confirm your order')
+      // Enter must place the order: the first button of the form is the one that places it
+      expect(html.slice(html.indexOf('<form'), html.indexOf('Show delivery options'))).toMatch(/name="intent"[^>]*value="place"|value="place"[^>]*name="intent"/)
+    })
+
+    it('without JavaScript the delivery options come from the server for the chosen city, and what was typed stays', async () => {
+      const r = await post({ intent: 'quote', name: 'Sana', cityId: uuid(902), paymentMethod: 'cod' })
+      const html = plain(await r.text())
+      expect(r.status).toBe(200)
+      expect(html).toContain('Standard delivery')
+      expect(html).toContain('3 to 5 days')
+      expect(html).toContain('Rs 14,230') // the total, as the API worked it out
+      expect(html).toMatch(/<input(?=[^>]*name="name")(?=[^>]*value="Sana")[^>]*>/)
+      expect(html).toMatch(new RegExp(`<option(?=[^>]*value="${uuid(902)}")(?=[^>]*selected)[^>]*>`))
+    })
+
+    it('a city outside every zone has no delivery method, the page says so with the WhatsApp link, and an order for it is not placed', async () => {
+      const html = plain(await (await post({ intent: 'quote', cityId: uuid(999), paymentMethod: 'cod' })).text())
+      expect(html).toContain('We do not deliver to this city yet.')
+      expect(html).toContain('wa.me/923001234567')
+      expect(html).not.toMatch(/<input(?=[^>]*type="radio")(?=[^>]*name="shippingMethodId")[^>]*>/)
+      state.order = undefined
+      const placed = plain(await (await post({ ...good, cityId: uuid(999), shippingMethodId: '' })).text())
+      expect(state.order).toBeUndefined()
+      expect(placed).toContain('Please choose a delivery method.')
+    })
+
+    it('every phone way of writing goes to the API as +923001234567, and the order carries no price, no discount and no fee, only the total that was shown', async () => {
+      for (const phone of ['0300 1234567', '3001234567', '+92 300 1234567']) {
+        state.order = undefined
+        const r = await post({ ...good, phone })
+        expect(r.status, phone).toBe(302)
+        expect(state.order.body.customer.phone, phone).toBe('+923001234567')
+      }
+      expect(state.order.key).toBe(uuid(777)) // the key of this checkout, on every call
+      expect(state.order.token).toBe('tok-123') // the cart token, from the cookie
+      expect(Object.keys(state.order.body).sort()).toEqual(['customer', 'expectedTotal', 'locale', 'paymentMethod', 'shippingAddress', 'shippingMethodId'])
+      expect(state.order.body.expectedTotal).toEqual(money(1423000))
+    })
+
+    it('a placed order leaves for its page, and the cart is forgotten', async () => {
+      const r = await post(good)
+      expect(r.status).toBe(302)
+      expect(r.headers.get('location')).toBe('/orders/Tok_En-Abc?placed=1') // the token keeps its case
+      expect(r.headers.get('set-cookie')).toMatch(/^nc_cart=; Path=\/; Max-Age=0; HttpOnly/)
+    })
+
+    it('a landline, a short address and the like are refused where they are, with what was typed kept, and nothing is sent to the API', async () => {
+      state.order = undefined
+      const r = await post({ ...good, phone: '051 1234567', address: 'short', email: 'nope' })
+      const html = plain(await r.text())
+      expect(r.status).toBe(200)
+      expect(state.order).toBeUndefined()
+      expect(html).toContain('Please enter a Pakistani mobile number')
+      expect(html).toContain('Please enter your full address')
+      expect(html).toContain('Please enter a valid email address.')
+      expect(html).toMatch(/<input(?=[^>]*name="name")(?=[^>]*value="Sana Ali")[^>]*>/)
+    })
+
+    it('when the price moved: the page stays, lists what changed, shows the new total, keeps the fields, and the next try has a new key', async () => {
+      const r = await post({ ...good, name: 'Changed' })
+      const html = plain(await r.text())
+      expect(r.status).toBe(200)
+      expect(html).toContain('Something changed while you were checking out.')
+      expect(html).toContain('Rs 15,000') // the new total
+      expect(html).toMatch(/<input(?=[^>]*name="name")(?=[^>]*value="Changed")[^>]*>/)
+      const next = /name="idempotencyKey"[^>]*value="([^"]+)"|value="([^"]+)"[^>]*name="idempotencyKey"/.exec(html)
+      expect(next?.[1] ?? next?.[2]).not.toBe(uuid(777))
+    })
+
+    it('too many tries, and an order that cannot be confirmed, are said plainly', async () => {
+      expect(plain(await (await post({ ...good, name: 'Busy' })).text())).toContain('Too many attempts. Please wait a minute and try again.')
+      const html = plain(await (await post({ ...good, name: 'Down' })).text())
+      expect(html).toContain('We could not confirm your order. Please try again: you will not be charged twice.')
+    })
+
+    it('a made-up form is refused', async () => {
+      expect((await post({ intent: 'nope' })).status).toBe(400)
     })
   })
 

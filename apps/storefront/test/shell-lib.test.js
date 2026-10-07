@@ -42,6 +42,17 @@ describe('redirects of the old shop (DOC-06.1 section 4)', () => {
     expect(redirectFor(url('/ur/c/Lawn'))).toEqual({ to: '/ur/c/lawn' })
     for (const ok of ['/', '/new', '/c/lawn', '/p/embroidered-lawn', '/ur', '/ur/new', '/cart']) expect(redirectFor(url(ok)), ok).toBeUndefined()
   })
+
+  it('an order\'s link is a token: its case is never touched, only a slash at its end', () => {
+    expect(redirectFor(url('/orders/2_xKORnlRUlw'))).toBeUndefined()
+    expect(redirectFor(url('/ur/orders/2_xKORnlRUlw'))).toBeUndefined()
+    expect(redirectFor(url('/orders/2_xKORnlRUlw/'))).toEqual({ to: '/orders/2_xKORnlRUlw' })
+  })
+
+  it('a data request of the router is the same address: the redirect never has `.data` in it (it would be added again)', () => {
+    expect(redirectFor(url('/C/Lawn.data'))).toEqual({ to: '/c/lawn' })
+    expect(redirectFor(url('/new.data'))).toBeUndefined()
+  })
 })
 
 describe('the canonical query (DOC-06.1 section 5)', () => {

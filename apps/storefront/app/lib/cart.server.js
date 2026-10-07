@@ -96,6 +96,9 @@ export async function addToCart(request, form) {
   }
 }
 
+/** The cookie that ends the cart: after the order is placed the cart belongs to the order. */
+export const clearCartCookie = () => `${CART_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${getEnv().NODE_ENV === 'production' ? '; Secure' : ''}`
+
 /** What a visitor with no cart sees; the API makes a cart only when something is added (plan/06-storefront/05-cart-checkout.md section 2). @type {import('@noor/contract').Cart} */
 export const emptyCart = { lines: [], count: 0, subtotal: { amount: 0, currency: 'PKR' }, discount: { amount: 0, currency: 'PKR' }, total: { amount: 0, currency: 'PKR' }, messages: [], hasBlockingIssues: false }
 

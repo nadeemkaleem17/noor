@@ -9,7 +9,7 @@ import { getEnv } from '~/lib/env.server'
 import { orNotFound } from '~/lib/listing.server'
 import { localeOfPath } from '~/lib/locale'
 import { pageTitle } from '~/lib/page-title'
-import { localePath } from '~/lib/paths'
+import { localePath, pagePath } from '~/lib/paths'
 import { loadShell } from '~/lib/shell.server'
 import { ProductPage } from '~/features/product/product-page'
 import { RecentlyViewed, RelatedSection, ReviewsSection } from '~/features/product/deferred'
@@ -47,7 +47,7 @@ export async function loader({ params, request }) {
     brand: config.brand.name,
     whatsapp: config.contact.whatsapp,
     imageOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin,
-    url: `${getEnv().PUBLIC_SITE_URL}${url.pathname}`,
+    url: `${getEnv().PUBLIC_SITE_URL}${pagePath(url)}`,
     cartError: addErrors.find((e) => e === error),
     cartErrorN: Number(url.searchParams.get('n')) || undefined,
     sizeParam: url.searchParams.get('size'),

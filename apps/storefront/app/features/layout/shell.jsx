@@ -4,6 +4,7 @@ import { Link as RouterLink, Outlet, useLocation } from 'react-router'
 import { ToastProvider } from '@noor/ui/toast'
 import { CartDrawerProvider } from '../cart/cart-drawer'
 import { Announcement } from './announcement'
+import { CheckoutHeader } from './checkout-header'
 import { Footer } from './footer'
 import { Header } from './header'
 import { useShell } from './use-shell'
@@ -52,7 +53,10 @@ function LanguageSwitch({ supported, locale }) {
 export default function Shell() {
   const { t } = useTranslation('storefront')
   const shell = useShell()
+  const { pathname } = useLocation()
   if (!shell) return <Outlet />
+  // the checkout has a header of its own and no footer: nothing to wander off to
+  const checkout = /^(\/ur)?\/checkout\/?$/.test(pathname)
   const { config, nav, notices, about, locale } = shell
   return (
     <ToastProvider>
@@ -60,12 +64,12 @@ export default function Shell() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent">
         {t('shell.skip')}
       </a>
-      <Announcement items={notices} />
-      <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} />
+      {checkout ? null : <Announcement items={notices} />}
+      {checkout ? <CheckoutHeader brand={config.brand.name} logo={config.brand.logoLight} /> : <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} />}
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
-      <Footer brand={config.brand.name} about={about} items={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />
+      {checkout ? null : <Footer brand={config.brand.name} about={about} items={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />}
       {config.contact.whatsapp ? <WhatsAppButton number={config.contact.whatsapp} /> : null}
       </CartDrawerProvider>
     </ToastProvider>
