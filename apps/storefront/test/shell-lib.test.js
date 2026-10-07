@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest'
 import { switchLocalePath } from '../app/features/layout/shell'
 import { navItems, safeItems } from '../app/lib/nav'
+import { normalizeOrderNumber } from '../app/lib/order-number'
 import { localePath } from '../app/lib/paths'
 import { canonicalQuery, redirectFor } from '../app/lib/redirects'
 import { securityHeaders } from '../app/lib/security.server'
@@ -124,5 +125,16 @@ describe('the CSP of a page with a theme (plan/04-design-system/tokens.md sectio
   })
   it('allows no inline style when there is no theme block', () => {
     expect(securityHeaders(opts)['Content-Security-Policy']).toContain("style-src 'self';")
+  })
+})
+
+describe('the order number a customer types (DOC-06.6 section 3)', () => {
+  it('becomes RB-<digits> whether it is the digits alone, in any case, with spaces, or with the old prefix', () => {
+    for (const typed of ['RB-10458', 'rb-10458', 'RB 10458', ' 10458 ', 'nc-10458', 'NC 10458', 'rb10458']) expect(normalizeOrderNumber(typed), typed).toBe('RB-10458')
+  })
+  it('anything else is left as typed, in capitals, for the API to say it does not know it', () => {
+    expect(normalizeOrderNumber('abc')).toBe('ABC')
+    expect(normalizeOrderNumber('XY-12')).toBe('XY-12')
+    expect(normalizeOrderNumber('')).toBe('')
   })
 })

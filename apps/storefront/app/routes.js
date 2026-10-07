@@ -18,6 +18,7 @@ const pages = (id) => [
     route('checkout', 'routes/checkout.jsx', { id: `checkout${id}` }),
     route('orders/:token', 'routes/order.jsx', { id: `order${id}` }),
     route('orders/:token/review/:lineId', 'routes/order-review.jsx', { id: `order-review${id}` }),
+    route('orders/:token/review/:lineId/photo', 'routes/review-photo.js', { id: `review-photo${id}` }),
     route('track', 'routes/track.jsx', { id: `track${id}` }),
     route('wishlist', 'routes/wishlist.jsx', { id: `wishlist${id}` }),
     route('pages/:slug', 'routes/page.jsx', { id: `page${id}` }),

@@ -56,7 +56,9 @@ export function registerSecurity(app, config) {
           .send()
       }
     }
-    // CSRF, first line of defence (section 5.1): every state change must come from the admin site
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && origin !== config.ADMIN_ORIGIN) throw new DomainError('csrf_failed')
+    // CSRF, first line of defence (section 5.1): every state change must come from the admin site. The signed upload link of the local storage driver is also put to by the storefront's
+    // server (a customer's review photo), which sends no Origin: a browser always does on a cross-origin PUT, so no Origin is no browser, and the signature is the credential (as with S3).
+    const serverToServer = req.url.startsWith(DEV_UPLOAD_PREFIX) && origin === undefined
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && origin !== config.ADMIN_ORIGIN && !serverToServer) throw new DomainError('csrf_failed')
   })
 }

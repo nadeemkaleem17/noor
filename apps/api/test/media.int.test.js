@@ -146,7 +146,9 @@ describe.skipIf(!dbAvailable)('media (MySQL + local storage, through HTTP)', () 
       const other = (await b.call('POST', '/admin/media/uploads', { body: { filename: 'b.jpg', contentType: 'image/jpeg', bytes: data.length } })).body
       expect((await put({}, data, parts(other.uploadUrl).path + search)).statusCode, 'signature of another key').toBe(403)
       expect((await put({ origin: 'http://evil.example' })).statusCode, 'other site').toBe(403)
-      expect((await app.inject({ method: 'PUT', url: p + search, headers: { 'content-type': 'image/jpeg' }, payload: data })).statusCode, 'no Origin').toBe(403)
+      // no Origin is no browser (the storefront's server puts a customer's review photo this way): the signature alone decides, and a forged one is refused above
+      expect((await app.inject({ method: 'PUT', url: p + search.replace(/sig=[0-9a-f]{4}/, 'sig=0000'), headers: { 'content-type': 'image/jpeg' }, payload: data })).statusCode, 'no Origin, forged signature').toBe(403)
+      expect((await app.inject({ method: 'PUT', url: p + search, headers: { 'content-type': 'image/jpeg' }, payload: data })).statusCode, 'no Origin, right signature').toBe(200)
       expect((await put({})).statusCode).toBe(200)
       expect(await storage.size(p.replace('/api/v1/_dev/uploads/', ''))).toBe(data.length)
     }, 60_000)

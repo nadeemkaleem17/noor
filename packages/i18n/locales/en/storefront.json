@@ -366,5 +366,120 @@
       "shippingMethodId": "Please choose a delivery method.",
       "paymentMethod": "Please choose a payment method."
     }
+  },
+  "order": {
+    "thanks": "Thank you, {name}!",
+    "title": "Order {number}",
+    "number": "Order {number}",
+    "items": "Items",
+    "delivering": "Delivering to",
+    "eta": "expected {from} to {to}",
+    "paid": "Paid",
+    "timeline": "Order progress",
+    "step": {
+      "placed": "Placed",
+      "confirmed": "Confirmed",
+      "dispatched": "Dispatched",
+      "delivered": "Delivered"
+    },
+    "next": {
+      "pending": "Complete your payment to confirm this order.",
+      "bank": "Pay by bank transfer to the account below, then send us the receipt.",
+      "pending_confirmation": "We will call or WhatsApp you on {phone} to confirm your order.",
+      "deposit": "A deposit of {amount} is due before we start.",
+      "confirmed": "Your order is being prepared.",
+      "confirmedMade": "Your piece is being made: ready in about {days} days.",
+      "dispatched": "Your order is on its way.",
+      "dispatchedWith": "On its way with {courier}.",
+      "trackingNo": "Tracking no. {n}",
+      "trackWithCourier": "Track with the courier",
+      "keepReady": "Please keep {amount} ready.",
+      "delivered": "Your order was delivered.",
+      "deliveredOn": "Delivered on {date}."
+    },
+    "bank": {
+      "title": "Account title",
+      "bank": "Bank",
+      "number": "Account number",
+      "receipt": "Send the receipt on WhatsApp"
+    },
+    "closed": {
+      "cancelled": "This order was cancelled on {date}.",
+      "returned": "This order was returned on {date}.",
+      "refund": "Anything you paid will be refunded."
+    },
+    "reasons": {
+      "customer_request": "Cancelled at your request.",
+      "unreachable": "We could not reach you to confirm it.",
+      "duplicate": "It was a duplicate of another order.",
+      "out_of_stock": "An item in it was out of stock.",
+      "payment_expired": "The payment was not made in time."
+    },
+    "writeReview": "Write a review",
+    "reviewSubmitted": "Review submitted",
+    "reviewed": "Thank you. Your review will show once we have looked at it.",
+    "cancel": {
+      "button": "Cancel order",
+      "title": "Cancel order {number}?",
+      "body": "The order will be cancelled and nothing will be sent.",
+      "confirm": "Yes, cancel the order",
+      "keep": "Keep the order"
+    },
+    "needCancel": "Need to cancel? WhatsApp us",
+    "switchToCod": "Pay cash on delivery instead",
+    "whatsapp": "WhatsApp us about this order",
+    "print": "Print",
+    "waText": "Hi, this is about my order {orderNo}.",
+    "errors": {
+      "notAllowed": "This cannot be done to the order any more. WhatsApp us and we will help.",
+      "busy": "Too many attempts. Please wait a minute.",
+      "failed": "Something went wrong. Please try again."
+    }
+  },
+  "track": {
+    "title": "Track your order",
+    "orderNumber": "Order number",
+    "orderNumberHint": "Like RB-10458",
+    "phone": "Mobile number",
+    "submit": "Track order",
+    "whatsapp": "Cannot find it? WhatsApp us",
+    "errors": {
+      "notFound": "We could not find an order with that number and mobile number.",
+      "busy": "Too many attempts. Try again in a few minutes or WhatsApp us.",
+      "failed": "Something went wrong. Please try again."
+    }
+  },
+  "review": {
+    "title": "Write a review",
+    "intro": "Tell others how it was. Your review shows once we have looked at it.",
+    "rating": "Your rating",
+    "fit": "How did it fit?",
+    "fitSkip": "Skip",
+    "titleLabel": "Title (optional)",
+    "body": "Your review",
+    "bodyHint": "At least 20 characters.",
+    "name": "Name to show",
+    "photos": "Photos (optional, up to 3)",
+    "addPhoto": "Add a photo",
+    "removePhoto": "Remove this photo",
+    "submit": "Send review",
+    "already": "Review submitted. Thank you!",
+    "back": "Back to your order",
+    "errors": {
+      "already": "You have already reviewed this.",
+      "busy": "Too many attempts. Please wait a minute.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "fieldErrors": {
+      "invalid": "Please check this.",
+      "rating": "Please choose a rating from 1 to 5.",
+      "body": "Please write at least 20 characters (at most 1,000).",
+      "displayName": "Please enter a name (2 to 40 letters)."
+    },
+    "photoErrors": {
+      "type": "Please choose a JPEG, PNG or WebP picture.",
+      "size": "The picture is too big (5 MB at most).",
+      "failed": "The picture could not be uploaded. Try another."
+    }
   }
 }

@@ -119,6 +119,22 @@ const method = { methodId: uuid(910), label: 'Standard delivery', fee: money(250
 /** The cart as the API prices it for a city: shipping, total, the zone's methods, the allowed payments. */
 const quoted = () => ({ ...cartOf(), shipping: { methodId: method.methodId, label: method.label, fee: method.fee, etaMinDays: 3, etaMaxDays: 5 }, shippingOptions: [method], paymentOptions: [{ method: 'cod', label: 'Cash on delivery', allowed: true }], total: money(1423000) })
 
+const step = (/** @type {string} */ name, /** @type {string | undefined} */ at, current = false) => ({ step: name, ...(at ? { at } : {}), current })
+/** An order of one customer as the API masks it, in each state of section 4.2 of DOC-06.6. @param {string} status @param {object} [over] */
+const orderOf = (status, over = {}) => ({
+  orderNumber: 'RB-10458', status, placedAt: '2026-10-02T10:45:00.000Z',
+  timeline: [step('placed', '2026-10-02T10:45:00.000Z', status === 'pending' || status === 'pending_confirmation'), step('confirmed', ['confirmed', 'dispatched', 'delivered'].includes(status) ? '2026-10-02T12:00:00.000Z' : undefined, status === 'confirmed'), step('dispatched', ['dispatched', 'delivered'].includes(status) ? '2026-10-03T09:00:00.000Z' : undefined, status === 'dispatched'), step('delivered', status === 'delivered' ? '2026-10-05T09:00:00.000Z' : undefined, status === 'delivered')],
+  lines: [{ id: uuid(850), title: 'Lawn 3-Piece', variantLabel: 'M', quantity: 1, unitPrice: money(699000), lineTotal: money(699000), ...(status === 'delivered' ? { review: { available: true, submitted: false } } : {}) }],
+  subtotal: money(699000), discount: money(0), shippingFee: money(25000), total: money(724000), paid: money(0), dueOnDelivery: money(724000),
+  paymentMethod: 'cod', paymentLabel: 'Cash on delivery', paymentStatus: 'unpaid',
+  customer: { firstName: 'Ayesha', phoneMasked: '0300 ••••567' },
+  delivery: { city: 'Lahore', addressMasked: 'House 12, Str•••', methodLabel: 'Standard delivery', ...(status === 'dispatched' ? { courier: 'TCS', trackingNumber: 'T123', trackingUrl: 'https://tcs.example/t/T123' } : {}) },
+  allowedActions: status === 'pending' || status === 'pending_confirmation' ? ['cancel'] : [], locale: 'en',
+  ...(status === 'cancelled' ? { closed: { status: 'cancelled', at: '2026-10-03T09:00:00.000Z', reason: 'customer_request' } } : {}),
+  ...over,
+})
+const orderStates = ['pending', 'pending_confirmation', 'confirmed', 'dispatched', 'delivered', 'cancelled']
+
 /** @param {string} p @param {string} locale @param {URLSearchParams} [q] @param {{ method?: string, body?: any, headers?: import('node:http').IncomingHttpHeaders }} [req] */
 function answer(p, locale, q = new URLSearchParams(), req = {}) {
   const kind = ofKind(p.replace('/api/v1/products/', ''))
@@ -129,6 +145,22 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/size-charts/' + uuid(40)) return { id: uuid(40), title: 'Women', unit: 'in', tables: [{ id: 't', title: 'Body', columns: ['Bust', 'Waist'], rows: [{ label: 'S', values: [34, 28] }] }] }
   if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25] } }
   if (p === '/api/v1/products/' + uuid(100) + '/related') return { items: [product(7), product(8), product(9), product(10)] }
+  if (p === '/api/v1/orders/track') {
+    state.calls.push(`TRACK ${JSON.stringify(req.body)}`)
+    if (req.body.orderNumber === 'RB-10458' && req.body.phone === '+923001234567') return { trackingToken: 'Tok_pending_Abc' }
+    return req.body.orderNumber === 'RB-429' ? { title: 'Slow', status: 429, code: 'rate_limited' } : { title: 'No order', status: 404, code: 'order_not_found' }
+  }
+  const byToken = /^\/api\/v1\/orders\/by-token\/Tok_([a-z_]+)_Abc(\/.*)?$/.exec(p)
+  if (byToken) {
+    const status = byToken[1] ?? ''
+    const rest = byToken[2] ?? ''
+    if (!orderStates.includes(status)) return undefined
+    if (rest === '') return orderOf(status)
+    if (rest === '/cancel') { state.calls.push('CANCEL'); return orderOf('cancelled') }
+    if (rest === '/switch-to-cod') { state.calls.push('SWITCH'); return orderOf('pending_confirmation') }
+    if (rest === `/lines/${uuid(850)}/review` && req.method === 'GET') return { product: { title: 'Lawn 3-Piece' }, displayNameDefault: 'Ayesha K.', sized: true, submitted: false }
+    if (rest === `/lines/${uuid(850)}/review` && req.method === 'POST') { state.calls.push(`REVIEW ${JSON.stringify(req.body)}`); return { status: 'pending' } }
+  }
   if (p === '/api/v1/shipping/cities') return { items: cities }
   if (p === '/api/v1/cart/quote') return req.body.cityId === uuid(999) ? { title: 'No zone', status: 422, code: 'city_not_served' } : quoted()
   if (p === '/api/v1/orders' && req.method === 'POST') {
@@ -236,7 +268,7 @@ describe('the storefront through its whole stack', () => {
   /** The URL map of DOC-06.1 section 2, with each address's cache class. */
   const table = /** @type {const} */ ([
     ['/', L], ['/c/women', L], ['/collections/summer', L], ['/new', L], ['/sale', L], ['/search?q=lawn', P], ['/p/embroidered-lawn', L], ['/cart', P], ['/checkout', P],
-    ['/orders/sometoken', P], ['/orders/sometoken/review/line1', P], ['/track', P], ['/wishlist', P], ['/pages/about', S], ['/size-guide', S], ['/healthz', 'no-store'],
+    ['/orders/Tok_pending_confirmation_Abc', P], ['/orders/Tok_delivered_Abc/review/0192f5aa-0000-7000-8000-000000000850', P], ['/track', P], ['/wishlist', P], ['/pages/about', S], ['/size-guide', S], ['/healthz', 'no-store'],
   ])
 
   // the checkout is for a visitor with something in the cart: without it, it sends them to the cart
@@ -702,6 +734,116 @@ describe('the storefront through its whole stack', () => {
 
     it('a made-up form is refused', async () => {
       expect((await post({ intent: 'nope' })).status).toBe(400)
+    })
+  })
+
+  describe('the order page and the lookup (DOC-06.6)', () => {
+    const plain = (/** @type {string} */ t) => t.replace(/\u00a0/g, ' ')
+    const form = { 'content-type': 'application/x-www-form-urlencoded' }
+
+    it('the page is the customer\'s own: never cached, not indexed, sent with no referrer; the masked values are all there is of the person', async () => {
+      const r = await get('/orders/Tok_pending_confirmation_Abc')
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      expect(r.headers.get('referrer-policy')).toBe('no-referrer')
+      const html = plain(await r.text())
+      expect(html).toContain('0300 ••••567')
+      expect(html).toContain('House 12, Str•••')
+      expect(html).toContain('Ayesha')
+      // no full number anywhere in what the order shows (the footer carries the shop's own number, which is another thing)
+      const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'))
+      expect(main).not.toMatch(/0300 ?1234567|03001234567|\+92300/)
+      expect(html).toContain('Rs 7,240') // the total as the API wrote it
+    })
+
+    it('each state has its own words: the next step, the timeline with the current step marked, the actions the API allows', async () => {
+      const page = async (/** @type {string} */ status) => plain(await (await get(`/orders/Tok_${status}_Abc`)).text())
+      const pending = await page('pending')
+      expect(pending).toContain('Complete your payment to confirm this order.')
+      const confirming = await page('pending_confirmation')
+      expect(confirming).toContain('We will call or WhatsApp you on 0300 ••••567 to confirm your order.')
+      expect(confirming).toMatch(/<li[^>]*aria-current="step"[^>]*>/)
+      expect(confirming).toContain('Cancel order') // offered because the API lists it
+      expect(await page('confirmed')).toContain('Your order is being prepared.')
+      expect(await page('confirmed')).not.toContain('Cancel order')
+      expect(await page('confirmed')).toContain('Need to cancel? WhatsApp us')
+      const dispatched = await page('dispatched')
+      expect(dispatched).toContain('On its way with TCS.')
+      expect(dispatched).toContain('Tracking no. T123')
+      expect(dispatched).toContain('href="https://tcs.example/t/T123"')
+      expect(dispatched).toContain('Please keep Rs 7,240 ready.')
+      const delivered = await page('delivered')
+      expect(delivered).toContain('Delivered on')
+      expect(delivered).toContain('Write a review')
+      expect(delivered).toContain(`href="/orders/Tok_delivered_Abc/review/${uuid(850)}"`)
+      const cancelled = await page('cancelled')
+      expect(cancelled).toContain('This order was cancelled on')
+      expect(cancelled).toContain('Cancelled at your request.')
+      expect(cancelled).not.toMatch(/<ol[^>]*aria-label="Order progress"/) // the timeline gives way to the banner
+    })
+
+    it('the thank-you variant of the same page, and a token no order has is a 404', async () => {
+      const html = plain(await (await get('/orders/Tok_pending_confirmation_Abc?placed=1')).text())
+      expect(html).toMatch(/<h1[^>]*>Thank you, Ayesha!</)
+      expect(html).toContain('wa.me/923001234567?text=Hi%2C%20this%20is%20about%20my%20order%20RB-10458.') // only the number of the order goes in the message
+      expect((await get('/orders/Tok_nothing_Abc')).status).toBe(404)
+    })
+
+    it('cancelling without JavaScript goes to the API once and the page shows what came back', async () => {
+      state.calls = []
+      const r = await get('/orders/Tok_pending_confirmation_Abc', { method: 'POST', body: new URLSearchParams({ intent: 'cancel' }), headers: form })
+      expect(r.status).toBe(200)
+      expect(state.calls).toEqual(['CANCEL'])
+    })
+
+    it('the lookup: the order number in any way of writing it, the phone in any way, one answer for every miss, and the way to the order', async () => {
+      state.calls = []
+      const track = (/** @type {Record<string, string>} */ fields) => get('/track', { method: 'POST', body: new URLSearchParams(fields), headers: form })
+      for (const [orderNumber, phone] of [['rb-10458', '0300 1234567'], ['10458', '3001234567'], ['NC 10458', '+92 300 1234567']]) {
+        const r = await track({ orderNumber: orderNumber ?? '', phone: phone ?? '' })
+        expect(r.status, orderNumber).toBe(303)
+        expect(r.headers.get('location'), orderNumber).toBe('/orders/Tok_pending_Abc')
+      }
+      expect(state.calls.every((c) => c === 'TRACK {"orderNumber":"RB-10458","phone":"+923001234567"}')).toBe(true)
+      const wrongPhone = await track({ orderNumber: 'RB-10458', phone: '0300 9999999' })
+      const wrongNumber = await track({ orderNumber: 'RB-99999', phone: '0300 1234567' })
+      const garbage = await track({ orderNumber: 'abc', phone: 'xyz' })
+      const texts = await Promise.all([wrongPhone, wrongNumber, garbage].map(async (r) => [r.status, plain(await r.text()).match(/We could not find an order with that number and mobile number\./)?.[0]]))
+      expect(texts).toEqual([[200, 'We could not find an order with that number and mobile number.'], [200, 'We could not find an order with that number and mobile number.'], [200, 'We could not find an order with that number and mobile number.']])
+      expect(plain(await (await track({ orderNumber: 'RB-429', phone: '0300 1234567' })).text())).toContain('Too many attempts. Try again in a few minutes or WhatsApp us.')
+    })
+
+    it('the lookup page: never cached, not indexed, what was typed comes back after a miss', async () => {
+      const r = await get('/track')
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      const missed = plain(await (await get('/track', { method: 'POST', body: new URLSearchParams({ orderNumber: 'RB-1', phone: '0300 1234567' }), headers: form })).text())
+      expect(missed).toMatch(/<input(?=[^>]*name="orderNumber")(?=[^>]*value="RB-1")[^>]*>/)
+    })
+
+    it('the review form of a delivered line: a rating, the fit (it is a sized piece), words and a name; sent through the contract\'s own checks', async () => {
+      const page = plain(await (await get(`/orders/Tok_delivered_Abc/review/${uuid(850)}`)).text())
+      expect(page).toMatch(/<h1[^>]*>Write a review</)
+      expect(page).toContain('name="fit"')
+      expect(page).toMatch(/<input(?=[^>]*name="displayName")(?=[^>]*value="Ayesha K\.")[^>]*>/)
+      state.calls = []
+      const bad = plain(await (await get(`/orders/Tok_delivered_Abc/review/${uuid(850)}`, { method: 'POST', body: new URLSearchParams({ rating: '', body: 'short', displayName: 'Ayesha K.' }), headers: form })).text())
+      expect(bad).toContain('Please choose a rating from 1 to 5.')
+      expect(bad).toContain('Please write at least 20 characters')
+      expect(state.calls).toEqual([]) // nothing was sent
+      const ok = await get(`/orders/Tok_delivered_Abc/review/${uuid(850)}`, { method: 'POST', body: new URLSearchParams({ rating: '5', body: 'Lovely fabric and a neat finish.', displayName: 'Ayesha K.', fit: 'true_to_size' }), headers: form })
+      expect(ok.status).toBe(303)
+      expect(ok.headers.get('location')).toBe('/orders/Tok_delivered_Abc?reviewed=1')
+      expect(state.calls).toEqual(['REVIEW {"rating":5,"body":"Lovely fabric and a neat finish.","fit":"true_to_size","displayName":"Ayesha K."}'])
+    })
+
+    it('a review picture must be an image of a kind the API takes, and not too big', async () => {
+      const send = (/** @type {string} */ type, /** @type {number} */ size) => get(`/orders/Tok_delivered_Abc/review/${uuid(850)}/photo`, { method: 'POST', body: new Uint8Array(size), headers: { 'content-type': type } })
+      expect((await send('image/gif', 10)).status).toBe(422)
+      // too big: refused before it is read, and the connection is closed, so a client may see the answer or only the close
+      const big = await send('image/png', 6 * 1024 * 1024).then((r) => r.status, () => 'closed')
+      expect([413, 'closed']).toContain(big)
     })
   })
 

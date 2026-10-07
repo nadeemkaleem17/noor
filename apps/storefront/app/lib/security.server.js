@@ -15,10 +15,13 @@ export const makeNonce = () => randomBytes(16).toString('base64')
 export function securityHeaders(opts) {
   const headers = /** @type {Record<string, string>} */ ({
     'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': opts.path.startsWith('/orders/') ? 'no-referrer' : 'strict-origin-when-cross-origin',
+    // an order's address is its key: it must not travel in a Referer
+    'Referrer-Policy': /^(\/ur)?\/orders\//.test(opts.path) ? 'no-referrer' : 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
     'Cross-Origin-Opener-Policy': 'same-origin',
   })
+  // pages that belong to one visitor are not for a search engine, whatever its meta tags are read as
+  if (/^(\/ur)?\/(orders|track|cart|checkout)(\/|$)/.test(opts.path)) headers['X-Robots-Tag'] = 'noindex'
   // The Vite dev server injects inline scripts and styles, so the CSP is for built servers only.
   if (opts.production) {
     headers['Content-Security-Policy'] = [

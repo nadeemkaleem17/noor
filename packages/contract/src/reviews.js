@@ -49,6 +49,7 @@ export const ReviewInvite = z.strictObject({
   sized: z.boolean(),
   submitted: z.boolean(),
 })
+/** @typedef {z.infer<typeof ReviewInvite>} ReviewInvite */
 
 const Moderate = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('approved') }),
