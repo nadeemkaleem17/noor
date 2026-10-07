@@ -12,6 +12,7 @@ import { useHydrated } from '../catalog/filters'
 import { Dot, percentOff } from '../catalog/product-card'
 import { useLocalePath, useShell } from '../layout/use-shell'
 import { useCartDrawer } from '../cart/cart-drawer'
+import { WishlistButton } from '../wishlist/wishlist-button'
 import { CustomSize } from './custom-size'
 import { OptionGroup } from './option-group'
 import { SizeGuide } from './size-guide'
@@ -294,6 +295,7 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
         {mto && !mto.returnable ? <li>{t('pdp.mto.notReturnable')}</li> : null}
         {p.delivery.codAvailable ? <li>{t('pdp.delivery.cod')}</li> : null}
         {p.delivery.freeAbove ? <li>{t('pdp.delivery.freeAbove', { amount: formatMoney(p.delivery.freeAbove, locale, display) })}</li> : null}
+        <li><WishlistButton product={p} text /></li>
         {whatsapp ? (
           <li>
             <Link href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('pdp.whatsappText', { title: p.title, url }))}`} className="underline underline-offset-4">{t('pdp.whatsapp')}</Link>

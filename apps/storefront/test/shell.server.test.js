@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { StoreConfigPublic, themePresets } from '@noor/contract'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const state = /** @type {{ down: boolean, ur: boolean, cartBody: any, calls: string[], blocked: boolean, order: any }} */ ({ down: false, ur: false, cartBody: undefined, calls: [], blocked: false, order: undefined })
+const state = /** @type {{ down: boolean, ur: boolean, wishlist: boolean, cartBody: any, calls: string[], blocked: boolean, order: any }} */ ({ down: false, ur: false, wishlist: true, cartBody: undefined, calls: [], blocked: false, order: undefined })
 const image = { src: 'http://localhost/img/logo.webp', srcset: '', width: 120, height: 40, alt: 'Rubaya' }
 
 const config = () =>
@@ -20,7 +20,7 @@ const config = () =>
     contact: { whatsapp: '923001234567', phone: '0300 1234567', email: 'hello@rubaya.pk', socials: [{ platform: 'Instagram', url: 'https://instagram.com/rubaya' }] },
     priceDisplay: { showDecimals: false, rounding: 'none' },
     locale: { default: 'en', supported: state.ur ? ['en', 'ur'] : ['en'] },
-    features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false },
+    features: { wishlist: state.wishlist, reviews: true, notifyMe: true, customSizing: false },
     policies: { returnsDays: 7 },
     payments: [{ type: 'cod', label: 'Cash on delivery' }],
     shipping: { dispatchPromise: 'Dispatched within 2 days' },
@@ -55,6 +55,11 @@ const facets = [
 ]
 /** The listing calls (a page of a category, the new arrivals, a search ...): 24 products and a next page, then 24 more; the home page asks for 8 and never for facets. @param {URLSearchParams} q */
 function listing(q) {
+  // a lookup by ids (the wishlist): the ones the shop has, in the order asked; any other id is a product that is no longer for sale
+  if (q.has('ids')) {
+    const items = (q.get('ids') ?? '').split(',').flatMap((id) => { const n = Number(id.slice(-3)) - 100; return id.startsWith('0192f5aa-0000-7000-8000-0000000001') && n >= 1 && n <= 9 ? [product(n)] : [] })
+    return { items, total: items.length }
+  }
   if (q.get('q') === 'nothing') return { items: [], total: 0 }
   const size = Number(q.get('limit'))
   const second = q.get('cursor') === 'c1'
@@ -276,6 +281,8 @@ describe('the storefront through its whole stack', () => {
     const r = await get(url, { headers: { cookie: 'nc_cart=tok-123' } })
     expect(r.status).toBe(200)
     expect(r.headers.get('cache-control')).toBe(cache)
+    // a response that a cache may keep sets no cookie (plan/06-storefront/07-account-wishlist.md section 4)
+    if (cache.startsWith('public')) expect(r.headers.get('set-cookie'), url).toBeNull()
   })
 
   it('an address nobody has is the shop\'s own 404 page, cached for a minute, with a way on', async () => {
@@ -737,6 +744,49 @@ describe('the storefront through its whole stack', () => {
     })
   })
 
+  describe('the wishlist (DOC-06.7)', () => {
+    const id = (/** @type {number} */ n) => `0192f5aa-0000-7000-8000-0000000001${String(n).padStart(2, '0')}`
+    const saved = (/** @type {string} */ value) => ({ cookie: `nc_wishlist=${encodeURIComponent(value)}` })
+
+    it('the page lists the saved products in the order they were saved, and is the visitor\'s own', async () => {
+      const r = await get('/wishlist', { headers: saved([id(2), id(1)].join(',')) })
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toBe('private, no-store')
+      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      expect(r.headers.get('set-cookie')).toBeNull() // nothing to tidy
+      const html = await r.text()
+      expect(html).toMatch(/<h1[^>]*>Wishlist \(2\)</)
+      expect(html.indexOf('Dress 2')).toBeGreaterThan(0)
+      expect(html.indexOf('Dress 2')).toBeLessThan(html.indexOf('Dress 1<'))
+      expect(html).toContain('View product')
+    })
+
+    it('a product that is no longer sold, text that is not an id and a repeat are left out, and the cookie is written again without them', async () => {
+      const r = await get('/wishlist', { headers: saved([id(1), 'garbage', id(59), id(1), id(3)].join(',')) })
+      const html = await r.text()
+      expect((html.match(/<article/g) ?? []).length).toBe(2)
+      expect(r.headers.get('set-cookie')).toMatch(new RegExp(`^nc_wishlist=${encodeURIComponent(`${id(1)},${id(3)}`)}; Path=/; Max-Age=31536000; SameSite=Lax`))
+      expect(r.headers.get('set-cookie')).not.toMatch(/HttpOnly/) // the browser changes it itself
+    })
+
+    it('a cookie of three hundred ids or only rubbish is cut or ignored without an error; with nothing saved the page says so and sets nothing', async () => {
+      const many = Array.from({ length: 300 }, (_, i) => `0192f5aa-0000-7000-8000-${String(i + 1000).padStart(12, '0')}`).join(',')
+      expect((await get('/wishlist', { headers: saved(many) })).status).toBe(200)
+      const rubbish = await get('/wishlist', { headers: saved('<script>,,;;,12') })
+      expect(rubbish.status).toBe(200)
+      expect(await rubbish.text()).toContain('Nothing saved yet')
+      const none = await get('/wishlist')
+      expect(await none.text()).toContain('Nothing saved yet')
+      expect(none.headers.get('set-cookie')).toBeNull()
+    })
+
+    it('a page that a cache may keep draws every heart unpressed, whatever the visitor has saved', async () => {
+      const html = await (await get('/c/lawn', { headers: saved(id(1)) })).text()
+      expect(html).toMatch(/<button(?=[^>]*aria-pressed="false")(?=[^>]*aria-label="Save Dress 1")[^>]*>/)
+      expect(html).not.toContain('aria-pressed="true"')
+    })
+  })
+
   describe('the order page and the lookup (DOC-06.6)', () => {
     const plain = (/** @type {string} */ t) => t.replace(/\u00a0/g, ' ')
     const form = { 'content-type': 'application/x-www-form-urlencoded' }
@@ -872,6 +922,7 @@ describe('the storefront through its whole stack', () => {
 
     it('with Urdu on, /ur answers in Urdu, right to left, and its links stay in Urdu', async () => {
       state.ur = true
+      state.wishlist = false
       await new Promise((r) => setTimeout(r, 31_000)) // the shell is kept for 30 seconds
       const r = await get('/ur')
       expect(r.status).toBe(200)
@@ -884,11 +935,16 @@ describe('the storefront through its whole stack', () => {
       expect(html).toMatch(/<h1 class="sr-only">Rubaya</)
       expect(html).not.toMatch(/<article/)
       expect(html).not.toMatch(/fetchPriority/)
+      // the shop has the wishlist off: no heart, no link in the header, and no such page
+      expect(html).not.toContain('aria-pressed')
+      expect(html).not.toContain('href="/ur/wishlist"')
+      expect((await get('/ur/wishlist')).status).toBe(404)
       // a listing in Urdu: its links stay in Urdu
       const list = await (await get('/ur/c/lawn')).text()
       expect(list).toContain('href="/ur/c/printed"')
       expect(list).toContain('href="/ur/c/lawn?cursor=c1"')
       expect(list).toContain('پروڈکٹس')
+      state.wishlist = true
       state.ur = false
     }, 60_000)
   })

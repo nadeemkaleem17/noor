@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router'
 import { Image, imageProps } from '@noor/ui/image'
 import { Price } from '@noor/ui/price'
 import { useLocalePath, useShell } from '../layout/use-shell'
+import { WishlistButton } from '../wishlist/wishlist-button'
 
 /** @typedef {import('@noor/contract').ProductSummary} ProductSummary */
 
@@ -78,6 +79,8 @@ export function ProductCard({ product: p, priority = false }) {
           <Price money={p.priceFrom} {...(p.compareAtFrom && !range ? { compareAt: p.compareAtFrom } : {})} display={display} />
         </span>
       </RouterLink>
+      {/* beside the link, not in it: a link must not hold a button */}
+      <WishlistButton product={p} className="absolute end-2 top-2" />
       {p.colorways.length > 1 ? (
         <ul className="mt-2 flex items-center gap-1.5" aria-label={t('product.colour', { name: '' }).replace(/:\s*$/, '')}>
           {swatches.map((c) => (

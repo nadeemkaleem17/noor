@@ -481,5 +481,18 @@
       "size": "The picture is too big (5 MB at most).",
       "failed": "The picture could not be uploaded. Try another."
     }
+  },
+  "wishlist": {
+    "title": "Wishlist ({count})",
+    "empty": "Nothing saved yet",
+    "emptyBody": "Tap the heart on a piece you like and it will be kept here, on this phone or computer.",
+    "save": "Save {title}",
+    "remove": "Remove {title} from wishlist",
+    "saveShort": "Save",
+    "saved": "Saved",
+    "linkCount": "Wishlist, {count, plural, one {# saved item} other {# saved items}}",
+    "view": "View product",
+    "notify": "Notify me",
+    "removeShort": "Remove"
   }
 }

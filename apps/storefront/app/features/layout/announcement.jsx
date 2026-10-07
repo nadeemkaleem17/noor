@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from '@noor/ui/link'
 import { safeHref } from '@noor/ui/safe-href'
+import { cookieIn, readCookies, subscribeCookies, writeCookie } from '~/lib/browser-cookie'
 import { useLocalePath } from './use-shell'
 
 /** @typedef {{ id: string, text: string, href?: string | undefined }} Notice */
@@ -10,25 +11,8 @@ import { useLocalePath } from './use-shell'
 const COOKIE = 'nc_dismissed'
 const ROTATE_MS = 6_000
 
-/** @type {Set<() => void>} */
-const listeners = new Set()
-/** @param {() => void} callback */
-const subscribe = (callback) => {
-  listeners.add(callback)
-  return () => void listeners.delete(callback)
-}
-
-/** Writes the closed ids to the cookie and tells every reader. @param {string[]} ids */
-function remember(ids) {
-  document.cookie = COOKIE + "=" + encodeURIComponent(ids.join(",")) + "; path=/; SameSite=Lax"
-  for (const notify of listeners) notify()
-}
-
 /** The ids the visitor has closed, kept in a session cookie. Read in the browser only (the server answers "none"): the page itself is the same for everyone and is cached. @param {string} cookies */
-const idsIn = (cookies) => {
-  const found = cookies.split('; ').find((c) => c.startsWith(`${COOKIE}=`))
-  return found ? decodeURIComponent(found.slice(COOKIE.length + 1)).split(',').filter(Boolean) : []
-}
+const idsIn = (cookies) => (cookieIn(cookies, COOKIE) ?? '').split(',').filter(Boolean)
 
 /**
  * The shop's announcement and its current notices (plan/06-storefront/01-sitemap.md section 3): one at a time, changing every six seconds unless the visitor rests on it
@@ -38,7 +22,7 @@ const idsIn = (cookies) => {
 export function Announcement({ items }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
-  const cookies = useSyncExternalStore(subscribe, () => document.cookie, () => '')
+  const cookies = useSyncExternalStore(subscribeCookies, readCookies, () => '')
   const closed = idsIn(cookies)
   const [at, setAt] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -56,7 +40,7 @@ export function Announcement({ items }) {
 
   /** @param {string} id */
   const dismiss = (id) => {
-    remember([...closed, id])
+    writeCookie(COOKIE, [...closed, id].join(','))
   }
 
   return (
