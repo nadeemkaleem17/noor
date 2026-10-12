@@ -27,5 +27,4 @@ const pages = (id) => [
   ]),
 ]
 
-// ponytail: sitemap.xml and robots.txt come with the SEO task (M5-10).
-export default /** @satisfies {import('@react-router/dev/routes').RouteConfig} */ ([route('healthz', 'routes/healthz.js'), ...pages(''), ...prefix('ur', pages('-ur'))])
+export default /** @satisfies {import('@react-router/dev/routes').RouteConfig} */ ([route('healthz', 'routes/healthz.js'), route('robots.txt', 'routes/robots.js'), route('sitemap.xml', 'routes/sitemap.js'), route('sitemap/:n.xml', 'routes/sitemap-file.js'), ...pages(''), ...prefix('ur', pages('-ur'))])

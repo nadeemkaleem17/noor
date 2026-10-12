@@ -1,4 +1,5 @@
 import { data, redirect, useActionData, useLoaderData } from 'react-router'
+import { privateMeta } from '~/features/seo/meta'
 import { CheckoutForm } from '~/features/checkout/checkout-form'
 import { cacheControl } from '~/lib/cache'
 import { clearCartCookie, getCart } from '~/lib/cart.server'
@@ -9,7 +10,7 @@ import { loadShell } from '~/lib/shell.server'
 
 // one visitor's, with their address in it: never kept by a cache, never indexed
 export const headers = /** @type {import('./+types/checkout').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private }))
-export const meta = /** @type {import('./+types/checkout').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/checkout').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'checkout'))
 
 /**
  * The checkout page (plan/06-storefront/05-cart-checkout.md section 4): the cart as it is now, the cities the shop delivers to, the shop's extra fields and payment methods, and the

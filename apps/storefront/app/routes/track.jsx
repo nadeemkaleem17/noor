@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { privateMeta } from '~/features/seo/meta'
 import { data, Form, redirect, useActionData, useNavigation } from 'react-router'
 import { Button } from '@noor/ui/button'
 import { Field } from '@noor/ui/field'
@@ -11,7 +12,7 @@ import { trackOrder } from '~/lib/orders.server'
 import { localePath } from '~/lib/paths'
 
 export const headers = /** @type {import('./+types/track').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private, 'X-Robots-Tag': 'noindex' }))
-export const meta = /** @type {import('./+types/track').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/track').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'track'))
 
 /**
  * The lookup (plan/06-storefront/06-orders-tracking.md section 3): the order number and the mobile number together find the order; a match goes to its page, anything else says the same thing.

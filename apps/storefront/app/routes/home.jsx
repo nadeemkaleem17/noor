@@ -1,4 +1,9 @@
 import { Suspense } from 'react'
+import { useShell } from '~/features/layout/use-shell'
+import { useSite } from '~/features/seo/use-site'
+import { homeLd } from '~/features/seo/jsonld'
+import { JsonLd } from '~/features/seo/json-ld'
+import { buildMeta, clip, pageName, siteOf } from '~/features/seo/meta'
 import { useTranslation } from 'react-i18next'
 import { Await, useLoaderData } from 'react-router'
 import { CategoryTiles, CollectionsRow, EditorialBand, Hero, ProductSection, PromoBand, TrustStrip } from '~/features/home/sections'
@@ -41,7 +46,8 @@ export async function loader({ request }) {
   return {
     brand: config.brand.name,
     title: config.brand.tagline ? `${config.brand.name}: ${config.brand.tagline}` : config.brand.name,
-    description: config.seo.homeDescription ?? config.brand.tagline ?? '',
+    description: config.seo.homeDescription ?? clip(`${config.brand.tagline ?? ''} ${pageName(locale, 'homeDescription')}`.trim()),
+    ogImage: home.heroSlides[0] ? { src: home.heroSlides[0].image.src, width: home.heroSlides[0].image.width, height: home.heroSlides[0].image.height, alt: home.heroSlides[0].image.alt } : undefined,
     slides: home.heroSlides.map(withSafeButton),
     promo: home.promo && withSafeButton(home.promo),
     editorial: home.editorial && withSafeButton(home.editorial),
@@ -52,13 +58,17 @@ export async function loader({ request }) {
   }
 }
 
-export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ (({ loaderData }) => [{ title: loaderData.title }, ...(loaderData.description ? [{ name: 'description', content: loaderData.description }] : [])])
+export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ (({ loaderData, matches }) =>
+  buildMeta({ site: siteOf(matches), title: loaderData.title, ogTitle: loaderData.brand, description: loaderData.description, canonical: '/', alternates: true, ...(loaderData.ogImage ? { image: loaderData.ogImage } : {}) }))
 
 export default function Home() {
   const { t } = useTranslation('storefront')
   const { brand, slides, promo, editorial, categories, newArrivals, collections, bestsellers } = useLoaderData()
+  const site = useSite()
+  const config = useShell()?.config
   return (
     <>
+      {site && config ? <JsonLd data={homeLd(site, { logo: config.brand.logoLight?.src, socials: config.contact.socials.map((x) => x.url), phone: config.contact.phone })} /> : null}
       {slides.length ? <Hero slides={slides} /> : <h1 className="sr-only">{brand}</h1>}
       <TrustStrip />
       <CategoryTiles categories={categories} />

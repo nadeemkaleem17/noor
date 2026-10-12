@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto'
 export const makeNonce = () => randomBytes(16).toString('base64')
 
 /**
- * @param {{ nonce: string; imgOrigin: string; production: boolean; path: string; themeHash?: string | undefined; }} opts `themeHash` is the SHA-256 (base64) of the inline theme style
+ * @param {{ nonce: string; imgOrigin: string; production: boolean; path: string; themeHash?: string | undefined; indexable?: boolean; }} opts `themeHash` is the SHA-256 (base64) of the inline theme style
  * @returns {Record<string, string>}
  */
 export function securityHeaders(opts) {
@@ -22,6 +22,8 @@ export function securityHeaders(opts) {
   })
   // pages that belong to one visitor are not for a search engine, whatever its meta tags are read as
   if (/^(\/ur)?\/(orders|track|cart|checkout)(\/|$)/.test(opts.path)) headers['X-Robots-Tag'] = 'noindex'
+  // a copy that is not the shop's own address (a laptop, staging) is never to be indexed (plan/06-storefront/09-seo.md section 3)
+  if (opts.indexable === false) headers['X-Robots-Tag'] = 'noindex, nofollow'
   // The Vite dev server injects inline scripts and styles, so the CSP is for built servers only.
   if (opts.production) {
     headers['Content-Security-Policy'] = [

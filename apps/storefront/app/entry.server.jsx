@@ -6,6 +6,7 @@ import { renderToPipeableStream } from 'react-dom/server'
 import { ServerRouter } from 'react-router'
 import { getEnv } from '~/lib/env.server'
 import { makeNonce, securityHeaders } from '~/lib/security.server'
+import { isProductionHost } from '~/lib/seo'
 
 export const streamTimeout = 5_000
 
@@ -24,7 +25,7 @@ export default function handleRequest(request, status, headers, context) {
   // the hash of the theme block the root loader asked for (what the CSP allows as the page's one inline style)
   const theme = /** @type {{ themeCss?: string } | undefined} */ (context.staticHandlerContext.loaderData?.root)?.themeCss
   const themeHash = theme ? createHash('sha256').update(theme).digest('base64') : undefined
-  const security = securityHeaders({ nonce, imgOrigin: new URL(env.PUBLIC_IMG_URL).origin, production: import.meta.env.PROD, path, themeHash })
+  const security = securityHeaders({ nonce, imgOrigin: new URL(env.PUBLIC_IMG_URL).origin, production: import.meta.env.PROD, path, themeHash, indexable: isProductionHost(env.PUBLIC_SITE_URL) })
   for (const [name, value] of Object.entries(security)) headers.set(name, value)
 
   return new Promise((resolve, reject) => {

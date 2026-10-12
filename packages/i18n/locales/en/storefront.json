@@ -510,5 +510,22 @@
     "map": "Map",
     "hours": "Hours",
     "socials": "Find us on"
+  },
+  "seo": {
+    "cart": "Your cart",
+    "checkout": "Checkout",
+    "track": "Track your order",
+    "order": "Your order",
+    "review": "Write a review",
+    "wishlist": "Wishlist",
+    "search": "Search",
+    "notFound": "Page not found",
+    "newArrivals": "New arrivals",
+    "sale": "Sale",
+    "sizeGuide": "Size guide",
+    "homeDescription": "Shop stitched, unstitched and made-to-order online. Delivery across Pakistan, cash on delivery.",
+    "newDescription": "The newest stitched, unstitched and made-to-order pieces, fresh in the shop. Delivery across Pakistan, cash on delivery.",
+    "saleDescription": "Pieces on sale: lawn, formals and more at a lower price. Delivery across Pakistan, cash on delivery.",
+    "sizeGuideDescription": "Size charts in inches and centimetres, and how to take your measurements."
   }
 }

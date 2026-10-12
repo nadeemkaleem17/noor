@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { privateMeta } from '~/features/seo/meta'
 import { data, Link as RouterLink, useLoaderData } from 'react-router'
 import { LinkButton } from '@noor/ui/button'
 import { EmptyState } from '@noor/ui/empty-state'
@@ -21,7 +22,7 @@ export const headers = /** @type {import('./+types/wishlist').Route.HeadersFunct
   if (cookie) out.set('Set-Cookie', cookie)
   return out
 })
-export const meta = /** @type {import('./+types/wishlist').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/wishlist').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'wishlist'))
 
 /** The most the API gives in one answer. */
 const CHUNK = 48

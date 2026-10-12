@@ -1,4 +1,5 @@
 import { data, useActionData, useLoaderData } from 'react-router'
+import { privateMeta } from '~/features/seo/meta'
 import { OrderPage } from '~/features/order/order-page'
 import { cacheControl } from '~/lib/cache'
 import { loadOrder, orderAction } from '~/lib/orders.server'
@@ -7,7 +8,7 @@ import { localeOfPath } from '~/lib/locale'
 
 // the order of one customer, reached by its token: never kept, never indexed (the address is a key, so no referrer either: see security.server.js)
 export const headers = /** @type {import('./+types/order').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private, 'X-Robots-Tag': 'noindex' }))
-export const meta = /** @type {import('./+types/order').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/order').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'order'))
 
 /**
  * The order as the API sends it, masked, read again on every visit (plan/06-storefront/06-orders-tracking.md section 4.4).

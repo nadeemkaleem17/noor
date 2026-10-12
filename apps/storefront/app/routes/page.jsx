@@ -1,4 +1,8 @@
 import { useTranslation } from 'react-i18next'
+import { useSite } from '~/features/seo/use-site'
+import { breadcrumbLd } from '~/features/seo/jsonld'
+import { JsonLd } from '~/features/seo/json-ld'
+import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { data, redirect, useLoaderData } from 'react-router'
 import { Breadcrumb } from '@noor/ui/breadcrumb'
 import { Markdown } from '@noor/ui/markdown'
@@ -10,7 +14,6 @@ import { cacheControl } from '~/lib/cache'
 import { getEnv } from '~/lib/env.server'
 import { orNotFound } from '~/lib/listing.server'
 import { localeOfPath } from '~/lib/locale'
-import { pageTitle } from '~/lib/page-title'
 import { localePath } from '~/lib/paths'
 import { loadShell } from '~/lib/shell.server'
 
@@ -29,20 +32,23 @@ export async function loader({ params, request }) {
   return data({ page, brand: config.brand.name, imageOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin, locale })
 }
 
-export const meta = /** @type {import('./+types/page').Route.MetaFunction} */ (({ loaderData }) => {
+export const meta = /** @type {import('./+types/page').Route.MetaFunction} */ (({ loaderData, matches }) => {
   const p = loaderData?.page
   if (!p || 'redirectTo' in p) return []
-  return [{ title: pageTitle(p.seo.title ?? p.title, loaderData.brand) }, ...(p.seo.description ? [{ name: 'description', content: p.seo.description }] : [])]
+  const description = p.seo.description ?? (clip(plainText(p.bodyMd)) || undefined)
+  return buildMeta({ site: siteOf(matches), title: titleOf(p.seo.title ?? p.title, loaderData.brand), ogTitle: p.seo.title ?? p.title, ...(description ? { description } : {}), canonical: `/pages/${p.slug}`, alternates: true })
 })
 
 export default function Page() {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const { page, imageOrigin, locale } = useLoaderData()
+  const site = useSite()
   // the Urdu text is missing: the English one is shown, and said to be English
   const lang = page.locale !== locale ? page.locale : undefined
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
+      {site ? <JsonLd data={breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, { name: page.title }])} /> : null}
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: page.title }]} renderLink={asRouterLink} />
       <h1 className="mt-3 font-heading text-3xl" {...(lang ? { lang } : {})}>{page.title}</h1>
       <div className="max-w-[65ch]" {...(lang ? { lang, dir: lang === 'ur' ? 'rtl' : 'ltr' } : {})}>

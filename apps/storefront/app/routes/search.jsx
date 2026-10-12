@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { buildMeta, pageName, siteOf, titleOf } from '~/features/seo/meta'
 import { Link as RouterLink, useLoaderData } from 'react-router'
 import { LinkButton } from '@noor/ui/button'
 import { EmptyState } from '@noor/ui/empty-state'
@@ -8,7 +9,6 @@ import { useLocalePath, useShell } from '~/features/layout/use-shell'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { loadListing } from '~/lib/listing.server'
-import { pageTitle } from '~/lib/page-title'
 import { localeOfPath } from '~/lib/locale'
 import { loadShell } from '~/lib/shell.server'
 
@@ -29,7 +29,11 @@ export async function loader({ request }) {
   return { q, ...listing, newest }
 }
 
-export const meta = /** @type {import('./+types/search').Route.MetaFunction} */ (({ loaderData: data }) => [{ title: pageTitle(data?.q ?? '', data?.brand ?? '') }, { name: 'robots', content: 'noindex,follow' }])
+export const meta = /** @type {import('./+types/search').Route.MetaFunction} */ (({ loaderData: data, matches }) => {
+  const site = siteOf(matches)
+  const name = pageName(site?.locale ?? 'en', 'search')
+  return buildMeta({ site, title: titleOf(data?.q ? `${name}: ${data.q}` : name, data?.brand ?? ''), robots: 'noindex,follow' })
+})
 
 export default function Search() {
   const { t } = useTranslation('storefront')

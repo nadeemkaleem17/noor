@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { buildMeta, pageName, siteOf, titleOf } from '~/features/seo/meta'
 import { useTranslation } from 'react-i18next'
 import { data, useLoaderData } from 'react-router'
 import { Breadcrumb } from '@noor/ui/breadcrumb'
@@ -12,7 +13,6 @@ import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { loadShell } from '~/lib/shell.server'
 import { localeOfPath } from '~/lib/locale'
-import { pageTitle } from '~/lib/page-title'
 import { createI18n } from '@noor/i18n'
 
 export const headers = /** @type {import('./+types/size-guide').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.content }))
@@ -24,7 +24,11 @@ export async function loader({ request }) {
   return data({ charts: items, brand: config.brand.name, title: createI18n(locale).t('storefront:sizeGuide.title') })
 }
 
-export const meta = /** @type {import('./+types/size-guide').Route.MetaFunction} */ (({ loaderData }) => [{ title: pageTitle(loaderData?.title ?? '', loaderData?.brand ?? '') }])
+export const meta = /** @type {import('./+types/size-guide').Route.MetaFunction} */ (({ loaderData, matches }) => {
+  const site = siteOf(matches)
+  if (!loaderData || !site) return [{ title: loaderData?.title ?? '' }]
+  return buildMeta({ site, title: titleOf(loaderData.title, loaderData.brand), ogTitle: loaderData.title, description: pageName(site.locale, 'sizeGuideDescription'), canonical: '/size-guide', alternates: true })
+})
 
 /** One chart: its name, the in/cm switch (with JavaScript; without it both unit sets are shown), its tables and how to measure. @param {{ chart: import('@noor/contract').SizeChart }} props */
 function Chart({ chart }) {

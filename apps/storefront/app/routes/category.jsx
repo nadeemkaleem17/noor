@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { useSite } from '~/features/seo/use-site'
+import { breadcrumbLd, itemListLd } from '~/features/seo/jsonld'
+import { JsonLd } from '~/features/seo/json-ld'
+import { listingIndex } from '~/features/seo/listing'
+import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { redirect, useLoaderData } from 'react-router'
 import { ListingPage } from '~/features/catalog/listing'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { loadListing, orNotFound } from '~/lib/listing.server'
-import { pageTitle } from '~/lib/page-title'
 import { localeOfPath } from '~/lib/locale'
 import { localePath } from '~/lib/paths'
 
@@ -23,16 +27,29 @@ export async function loader({ request, params }) {
   return { category, ...(await loadListing({ request, filter: { category: handle }, sort: sorts[0] })) }
 }
 
-export const meta = /** @type {import('./+types/category').Route.MetaFunction} */ (({ loaderData: data }) => {
+export const meta = /** @type {import('./+types/category').Route.MetaFunction} */ (({ loaderData: data, matches, location }) => {
   const c = data?.category
   if (!c || 'redirectTo' in c) return []
-  return [{ title: pageTitle(c.seo.title ?? c.name, data.brand) }, ...(c.seo.description ? [{ name: 'description', content: c.seo.description }] : [])]
+  const { index, query } = listingIndex(new URLSearchParams(location.search), data.page.facets)
+  const name = c.seo.title ?? c.name
+  const description = c.seo.description ?? (c.description ? clip(plainText(c.description)) : undefined)
+  return buildMeta({
+    site: siteOf(matches), title: titleOf(name, data.brand), ogTitle: name, ...(description ? { description } : {}), canonical: `/c/${c.handle}${query}`,
+    ...(index ? {} : { robots: 'noindex,follow' }), alternates: index, ...(c.image ? { image: c.image } : {}),
+  })
 })
 
 export default function Category() {
   const { t } = useTranslation('storefront')
   const { category, page } = useLoaderData()
+  const site = useSite()
   if (!category || 'redirectTo' in category) return null
   const crumbs = [{ label: t('listing.home'), href: '/' }, ...category.breadcrumb.map((/** @type {{ handle: string, name: string }} */ b, /** @type {number} */ i, /** @type {unknown[]} */ all) => ({ label: b.name, ...(i < all.length - 1 ? { href: `/c/${b.handle}` } : {}) }))]
+  const ld = site ? [breadcrumbLd(site, crumbs.map((c) => ({ name: c.label, ...(c.href ? { path: c.href } : {}) }))), itemListLd(site, page.items)] : []
+  return (
+    <>
+      <JsonLd data={ld} />
   return <ListingPage crumbs={crumbs} title={category.name} {...(category.description ? { intro: category.description } : {})} subcategories={category.children} page={page} sorts={sorts} />
+    </>
+  )
 }

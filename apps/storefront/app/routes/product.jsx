@@ -1,14 +1,18 @@
 import { Suspense } from 'react'
+import { useSite } from '~/features/seo/use-site'
+import { breadcrumbLd, productLd } from '~/features/seo/jsonld'
+import { JsonLd } from '~/features/seo/json-ld'
+import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { useTranslation } from 'react-i18next'
 import { Await, data, redirect, useLoaderData } from 'react-router'
-import { ApiError } from '@noor/contract'
+import { ApiError, moneyToDecimalString } from '@noor/contract'
+import { formatMoney } from '@noor/i18n'
 import { addErrors } from '~/lib/cart.server'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { getEnv } from '~/lib/env.server'
 import { orNotFound } from '~/lib/listing.server'
 import { localeOfPath } from '~/lib/locale'
-import { pageTitle } from '~/lib/page-title'
 import { localePath, pagePath } from '~/lib/paths'
 import { loadShell } from '~/lib/shell.server'
 import { ProductPage } from '~/features/product/product-page'
@@ -71,16 +75,29 @@ export async function action({ request }) {
   }
 }
 
-export const meta = /** @type {import('./+types/product').Route.MetaFunction} */ (({ loaderData }) => {
+export const meta = /** @type {import('./+types/product').Route.MetaFunction} */ (({ loaderData, matches }) => {
   const p = loaderData?.product
   if (!p) return []
-  return [{ title: pageTitle(p.seo.title ?? p.title, loaderData.brand) }, ...(p.seo.description ? [{ name: 'description', content: p.seo.description }] : []), ...(p.status === 'active' ? [] : [{ name: 'robots', content: 'noindex,nofollow' }])]
+  const site = siteOf(matches)
+  const lowest = p.variants.reduce((a, b) => (b.price.amount < a.price.amount ? b : a), /** @type {typeof p.variants[number]} */ (p.variants[0]))
+  const name = p.seo.title ?? (p.colorway ? `${p.title} – ${p.colorway.label}` : p.title)
+  const picture = p.media.find((m) => m.kind === 'image')
+  const description = p.seo.description ?? clip([p.subtitle, plainText(p.descriptionMd).slice(0, 120), lowest && site ? formatMoney(lowest.price, site.locale, site.priceDisplay) : undefined].flatMap((x) => (x ? [x.replace(/[.\s]+$/, '')] : [])).join('. '))
+  return buildMeta({
+    site, title: titleOf(name, loaderData.brand), ogTitle: name, ...(description ? { description } : {}), canonical: `/p/${p.handle}`, type: 'product', alternates: true,
+    ...(p.status === 'active' ? {} : { robots: 'noindex,nofollow' }),
+    ...(picture ? { image: { src: picture.src, width: picture.width, height: picture.height, alt: picture.alt } } : {}),
+    ...(lowest ? { price: { amount: moneyToDecimalString(lowest.price), currency: lowest.price.currency } } : {}),
+  })
 })
 
 export default function Product() {
   const { t } = useTranslation('storefront')
   const { product, sizeChart, formSchema, reviews, related, whatsapp, url, imageOrigin, cartError, cartErrorN, sizeParam } = useLoaderData()
+  const site = useSite()
   return (
+    <>
+      {site && product.status === 'active' ? <JsonLd data={[breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, ...product.breadcrumb.map((/** @type {{ handle: string, name: string }} */ b) => ({ name: b.name, path: `/c/${b.handle}` })), { name: product.title }]), productLd(site, product)]} /> : null}
     <ProductPage product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} imageOrigin={imageOrigin} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam}>
       {reviews ? (
         <Suspense fallback={<section id="reviews" aria-label={t('pdp.reviews')} className="min-h-40" />}>
@@ -96,5 +113,6 @@ export default function Product() {
       </Suspense>
       <RecentlyViewed id={product.id} />
     </ProductPage>
+    </>
   )
 }

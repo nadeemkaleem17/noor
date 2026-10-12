@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { privateMeta } from '~/features/seo/meta'
 import { data, redirect, useLoaderData } from 'react-router'
 import { LinkButton } from '@noor/ui/button'
 import { EmptyState } from '@noor/ui/empty-state'
@@ -53,7 +54,7 @@ export async function loader({ request }) {
   return data({ cart: await getCart(request), error: cartErrors.find((e) => e === error), n: Number(url.searchParams.get('n')) || undefined, amount: Number(url.searchParams.get('amount')) || undefined })
 }
 
-export const meta = /** @type {import('./+types/cart').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/cart').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'cart'))
 
 export default function Cart() {
   const { t } = useTranslation('storefront')

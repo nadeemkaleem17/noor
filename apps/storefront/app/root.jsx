@@ -9,6 +9,7 @@ import { localeOfPath } from '~/lib/locale'
 import { pagePath } from '~/lib/paths'
 import { redirectFor } from '~/lib/redirects'
 import { navItems, safeItems } from '~/lib/nav'
+import { getEnv } from '~/lib/env.server'
 import { cached, loadShell } from '~/lib/shell.server'
 import './app.css'
 
@@ -43,6 +44,7 @@ export async function loader({ request }) {
   const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale') }
   return {
     locale,
+    siteUrl: getEnv().PUBLIC_SITE_URL,
     dir: dirOf(locale),
     themeCss: themeCss(theme),
     config,
@@ -108,6 +110,7 @@ export function ErrorBoundary({ error }) {
   const i18n = createI18n(data?.locale ?? 'en')
   return (
     <I18nextProvider i18n={i18n}>
+      {status === 404 ? <title>{`${i18n.t('storefront:seo.notFound')}${data ? ` | ${data.config.brand.name}` : ''}`}</title> : null}
       <main className="mx-auto max-w-xl p-8">{status === 404 ? <h1 className="font-heading text-3xl">404</h1> : <Failure status={status} />}</main>
     </I18nextProvider>
   )

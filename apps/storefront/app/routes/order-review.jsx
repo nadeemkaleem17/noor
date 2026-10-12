@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { privateMeta } from '~/features/seo/meta'
 import { data, Link as RouterLink, redirect, useActionData, useLoaderData } from 'react-router'
 import { useLocalePath } from '~/features/layout/use-shell'
 import { ReviewForm, Reviewed } from '~/features/order/review-form'
@@ -10,7 +11,7 @@ import { loadShell } from '~/lib/shell.server'
 
 // reached by the link of an order, so it keeps the order's rules: private, not indexed, no referrer (security.server.js)
 export const headers = /** @type {import('./+types/order-review').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private, 'X-Robots-Tag': 'noindex' }))
-export const meta = /** @type {import('./+types/order-review').Route.MetaFunction} */ (() => [{ name: 'robots', content: 'noindex,nofollow' }])
+export const meta = /** @type {import('./+types/order-review').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'review'))
 
 /** @param {import('./+types/order-review').Route.LoaderArgs} props */
 export async function loader({ params, request }) {

@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { useSite } from '~/features/seo/use-site'
+import { breadcrumbLd, itemListLd } from '~/features/seo/jsonld'
+import { JsonLd } from '~/features/seo/json-ld'
+import { listingIndex } from '~/features/seo/listing'
+import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { redirect, useLoaderData } from 'react-router'
 import { ListingPage } from '~/features/catalog/listing'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { loadListing, orNotFound } from '~/lib/listing.server'
-import { pageTitle } from '~/lib/page-title'
 import { localeOfPath } from '~/lib/locale'
 import { localePath } from '~/lib/paths'
 
@@ -22,15 +26,29 @@ export async function loader({ request, params }) {
   return { collection, ...(await loadListing({ request, filter: { collection: handle }, sort: sorts[0] })) }
 }
 
-export const meta = /** @type {import('./+types/collection').Route.MetaFunction} */ (({ loaderData: data }) => {
+export const meta = /** @type {import('./+types/collection').Route.MetaFunction} */ (({ loaderData: data, matches, location }) => {
   const c = data?.collection
   if (!c || 'redirectTo' in c) return []
-  return [{ title: pageTitle(c.seo.title ?? c.title, data.brand) }, ...(c.seo.description ? [{ name: 'description', content: c.seo.description }] : [])]
+  const { index, query } = listingIndex(new URLSearchParams(location.search), data.page.facets)
+  const name = c.seo.title ?? c.title
+  const description = c.seo.description ?? (c.description ? clip(plainText(c.description)) : undefined)
+  return buildMeta({
+    site: siteOf(matches), title: titleOf(name, data.brand), ogTitle: name, ...(description ? { description } : {}), canonical: `/collections/${c.handle}${query}`,
+    ...(index ? {} : { robots: 'noindex,follow' }), alternates: index, ...(c.image ? { image: c.image } : {}),
+  })
 })
 
 export default function Collection() {
   const { t } = useTranslation('storefront')
   const { collection, page } = useLoaderData()
+  const site = useSite()
   if (!collection || 'redirectTo' in collection) return null
-  return <ListingPage crumbs={[{ label: t('listing.home'), href: '/' }, { label: collection.title }]} title={collection.title} {...(collection.description ? { intro: collection.description } : {})} page={page} sorts={sorts} />
+  const crumbs = [{ label: t('listing.home'), href: '/' }, { label: collection.title }]
+  const ld = site ? [breadcrumbLd(site, crumbs.map((c) => ({ name: c.label, ...(c.href ? { path: c.href } : {}) }))), itemListLd(site, page.items)] : []
+  return (
+    <>
+      <JsonLd data={ld} />
+  return <ListingPage crumbs={crumbs} title={collection.title} {...(collection.description ? { intro: collection.description } : {})} page={page} sorts={sorts} />
+    </>
+  )
 }

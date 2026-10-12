@@ -208,6 +208,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
     return { cartToken: 'tok-123', lines: [], count: req.body.quantity, subtotal: money(0), discount: money(0), total: money(0), messages: [], hasBlockingIssues: false }
   }
+  if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
   if (p === '/api/v1/store/config') return config()
   if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
   if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed' }], seo: { title: 'Lawn suits' } }
@@ -782,7 +783,7 @@ describe('the storefront through its whole stack', () => {
       const html = await (await get('/pages/hostile')).text()
       const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'))
       expect(main).not.toContain('alert(1)')
-      expect(main).not.toContain('<script')
+      expect(main.replace(/<script type="application\/ld\+json">[^<]*<\/script>/g, '')).not.toContain('<script') // the page's own data is the only script
       expect(main).not.toContain('javascript:')
       expect(main).not.toContain('evil.example')
       expect(html.match(/<h1/g)).toHaveLength(1)
@@ -824,7 +825,7 @@ describe('the storefront through its whole stack', () => {
       const r = await get('/wishlist', { headers: saved([id(2), id(1)].join(',')) })
       expect(r.status).toBe(200)
       expect(r.headers.get('cache-control')).toBe('private, no-store')
-      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      expect(r.headers.get('x-robots-tag')).toContain('noindex')
       expect(r.headers.get('set-cookie')).toBeNull() // nothing to tidy
       const html = await r.text()
       expect(html).toMatch(/<h1[^>]*>Wishlist \(2\)</)
@@ -867,7 +868,7 @@ describe('the storefront through its whole stack', () => {
       const r = await get('/orders/Tok_pending_confirmation_Abc')
       expect(r.status).toBe(200)
       expect(r.headers.get('cache-control')).toBe('private, no-store')
-      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      expect(r.headers.get('x-robots-tag')).toContain('noindex')
       expect(r.headers.get('referrer-policy')).toBe('no-referrer')
       const html = plain(await r.text())
       expect(html).toContain('0300 ••••567')
@@ -939,7 +940,7 @@ describe('the storefront through its whole stack', () => {
     it('the lookup page: never cached, not indexed, what was typed comes back after a miss', async () => {
       const r = await get('/track')
       expect(r.headers.get('cache-control')).toBe('private, no-store')
-      expect(r.headers.get('x-robots-tag')).toBe('noindex')
+      expect(r.headers.get('x-robots-tag')).toContain('noindex')
       const missed = plain(await (await get('/track', { method: 'POST', body: new URLSearchParams({ orderNumber: 'RB-1', phone: '0300 1234567' }), headers: form })).text())
       expect(missed).toMatch(/<input(?=[^>]*name="orderNumber")(?=[^>]*value="RB-1")[^>]*>/)
     })
@@ -983,6 +984,75 @@ describe('the storefront through its whole stack', () => {
 
     it('an old product id that is not a product is a 404', async () => {
       expect((await get('/product/999')).status).toBe(404)
+    })
+  })
+
+  describe('search engines and link previews (DOC-06.9)', () => {
+    /** @param {string} html */
+    const ldTypes = (html) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1] ?? 'null')).flat().map((d) => d['@type'])
+    const head = (/** @type {string} */ html) => html.slice(html.indexOf('<head'), html.indexOf('</head>'))
+
+    it('the home page: canonical, both languages, preview tags, the shop and its search as data', async () => {
+      const r = await get('/')
+      const html = await r.text()
+      expect(r.headers.get('x-robots-tag')).toBe('noindex, nofollow') // a laptop is not the shop: nothing here is indexed
+      expect(html).toContain('<link rel="canonical" href="http://localhost:5174/"')
+      expect(html).toContain('property="og:site_name" content="Rubaya"')
+      expect(html).toContain('name="twitter:card" content="summary_large_image"')
+      expect(ldTypes(html)).toEqual(['Organization', 'WebSite'])
+    })
+
+    it('a listing: breadcrumbs and a list as data; sorting is not a page of its own and points at the plain listing', async () => {
+      const plain = await (await get('/c/lawn')).text()
+      expect(ldTypes(plain)).toEqual(['BreadcrumbList', 'ItemList'])
+      expect(head(plain)).toContain('<link rel="canonical" href="http://localhost:5174/c/lawn"')
+      expect(head(plain)).not.toContain('name="robots"')
+      const sorted = head(await (await get('/c/lawn?sort=newest')).text())
+      expect(sorted).toContain('name="robots" content="noindex,follow"')
+      expect(sorted).toContain('<link rel="canonical" href="http://localhost:5174/c/lawn"')
+      expect(head(await (await get('/search?q=lawn')).text())).toContain('name="robots" content="noindex,follow"')
+    })
+
+    it('the product: a group with a Product for each size, the shown price and availability, preview tags of a product, one escaped script', async () => {
+      const html = await (await get('/p/dress-1')).text()
+      expect(ldTypes(html)).toEqual(['BreadcrumbList', 'ProductGroup'])
+      const ld = JSON.parse(/** @type {string} */ (html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)?.[1]?.replace(/^<script[^>]*>|<\/script>$/g, '')))
+      expect(ld.hasVariant.map((/** @type {any} */ v) => [v.size, v.offers.price, v.offers.availability])).toEqual([
+        ['S', '6990.00', 'https://schema.org/InStock'],
+        ['M', '6990.00', 'https://schema.org/OutOfStock'],
+        ['L', '7490.00', 'https://schema.org/InStock'],
+      ])
+      expect(ld.aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: '4.6', reviewCount: '38' })
+      expect(head(html)).toContain('property="og:type" content="product"')
+      expect(head(html)).toContain('property="product:price:amount" content="6990.00"')
+      expect(head(html)).toContain('<link rel="canonical" href="http://localhost:5174/p/dress-1"')
+    })
+
+    it('a page of a visitor is told to stay out of every index, and so is the 404', async () => {
+      for (const p of ['/cart', '/track', '/wishlist']) {
+        const r = await get(p)
+        expect(r.headers.get('x-robots-tag'), p).toContain('noindex')
+        expect(head(await r.text()), p).toContain('name="robots" content="noindex,nofollow"')
+      }
+      const nf = await get('/nothing-here')
+      expect(nf.status).toBe(404)
+      expect(await nf.text()).toContain('<title>Page not found | Rubaya</title>')
+    })
+
+    it('robots.txt shuts out a copy of the shop; the sitemap lists its files, a file lists the addresses with their pictures, a file beyond the last is a 404', async () => {
+      const robots = await get('/robots.txt')
+      expect(robots.headers.get('content-type')).toContain('text/plain')
+      expect(await robots.text()).toBe('User-agent: *\nDisallow: /\n')
+      const index = await (await get('/sitemap.xml')).text()
+      expect(index).toContain('<loc>http://localhost:5174/sitemap/1.xml</loc>')
+      expect(index).not.toContain('/sitemap/2.xml')
+      const file = await get('/sitemap/1.xml')
+      expect(file.headers.get('content-type')).toContain('application/xml')
+      const xml = await file.text()
+      expect(xml).toContain('<loc>http://localhost:5174/p/dress-1</loc><lastmod>2026-10-02T00:00:00.000Z</lastmod><image:image><image:loc>http://localhost/img/p1.webp</image:loc>')
+      expect(xml).toContain('<loc>http://localhost:5174/size-guide</loc>')
+      expect((await get('/sitemap/2.xml')).status).toBe(404)
+      expect((await get('/sitemap/x.xml')).status).toBe(404)
     })
   })
 

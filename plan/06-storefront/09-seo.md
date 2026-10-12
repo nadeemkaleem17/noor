@@ -147,12 +147,12 @@ WhatsApp is the main sharing channel for this market, so the PDP preview (title,
 
 ## 10. Acceptance checklist
 
-- [ ] For one URL of each indexable page type, `curl` shows a unique `<title>`, a meta description, one canonical and the JSON-LD objects of §4.
+- [x] For one URL of each indexable page type, `curl` shows a unique `<title>`, a meta description, one canonical and the JSON-LD objects of §4.
 - [ ] Product JSON-LD passes Google's Rich Results Test for one single-variant and one multi-size product (manual, recorded in the PR).
-- [ ] `/search?q=x` and `/cart` send `X-Robots-Tag: noindex`.
-- [ ] A staging deploy serves `Disallow: /` and `X-Robots-Tag: noindex` on every page.
-- [ ] `/sitemap.xml` lists every active product exactly once and no draft or archived one.
-- [ ] `/c/lawn?sort=price_asc` is `noindex` with canonical `/c/lawn`.
+- [x] `/search?q=x` and `/cart` send `X-Robots-Tag: noindex`.
+- [x] A staging deploy serves `Disallow: /` and `X-Robots-Tag: noindex` on every page.
+- [x] `/sitemap.xml` lists every active product exactly once and no draft or archived one.
+- [x] `/c/lawn?sort=price_asc` is `noindex` with canonical `/c/lawn`.
 - [ ] Sharing a PDP link in WhatsApp shows title, price and image.
 
 ## 11. Open questions and assumptions
@@ -170,3 +170,4 @@ WhatsApp is the main sharing channel for this market, so the PDP preview (title,
 |---|---|
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Owner answer: domain `rubaya.pk` (A-08) |
+| 2026-10-12 | M5-10 built. Differences from the text above: the title separator is ` | ` (not `│`); the category title has no "for Women"; the sitemap files are `/sitemap/:n.xml` (not `/sitemap-:n.xml`: a route with a dash in the middle of a segment is not worth a second pattern); `og:image` is the API's own picture, not a 1200×630 crop; `FAQPage` and `isVariantOf` are not built (nothing on the page shows them). "Staging" is any host that is not `rubaya.pk` or a subdomain of it. Not done by hand: the Rich Results Test and the WhatsApp preview (both need a public address). |

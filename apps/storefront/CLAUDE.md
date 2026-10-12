@@ -36,17 +36,20 @@ lib/                     server + shared pure code (no features/ imports allowed
   cart.server.js         cart cookie `nc_cart` (HttpOnly, forwarded as X-Cart-Token), addToCart/cartAction/getCart/cartCount, customizationOf (form -> customization)
   checkout.server.js     deliveryCities, quote, placeOrder (checks CreateOrderBody from the contract BEFORE the API), error mapping
   orders.server.js       loadOrder, orderAction, trackOrder, review (ReviewInput) + photo proxy upload
-  seo.server.js          isProductionHost (rubaya.pk only is indexable), robotsTxt, sitemap files
+  seo.js                 PURE: isProductionHost (rubaya.pk only is indexable), robotsTxt, sitemapIndexXml, sitemapXml
+  seo.server.js          sitemapFiles (walks the API cursor, cached, 5,000 per file)
   redirects.js           old-shop URL redirects, clean URL (lower case, no trailing slash, but /orders/ keeps case), canonicalQuery (the one canonical param order)
   paths.js               localePath, pagePath(url) (**use this, never url.pathname, in redirects: the router's data requests end in `.data`**)
   selection.js           PURE: variantFor / valueSoldOut / stockLine / buttonState / maxQuantity (used by PDP and by the no-JS add action)
-  wishlist.js, browser-cookie.js, listing-url.js, order-number.js, page-title.js, locale.js, cache.js (cache class strings), env.server.js (Zod env: API_INTERNAL_URL, PUBLIC_SITE_URL, PUBLIC_IMG_URL)
+  wishlist.js, browser-cookie.js, listing-url.js, order-number.js, locale.js, cache.js (cache class strings), env.server.js (Zod env: API_INTERNAL_URL, PUBLIC_SITE_URL, PUBLIC_IMG_URL)
 features/                UI by area: layout (shell, header, footer, announcement, checkout-header, use-shell, as-router-link), catalog (product-card, listing, filters, shop-price,
                          listing-memory), product, cart, checkout, order, wishlist, content, home, seo
 test/                    unit tests + `shell.server.test.js` (builds the app and runs it against a STAND-IN API server defined in that file: add a stub there for any new API call)
 ```
 
 ## Rules that bite
+
+- **Head of a page**: a route's `meta` is `buildMeta({ site: siteOf(matches), ... })` (or `privateMeta(matches, key)` for a visitor's own page); JSON-LD is `<JsonLd data={...}/>`; listing robots/canonical come from `listingIndex`. Titles are `name | brand`. Never write a `title` by hand.
 
 - **Cache classes** (`lib/cache.js`): `listing` (public, s-maxage 60), `content` (3600), `private` (`no-store`), `resource`. Every route exports `headers`. Cacheable responses never set a cookie.
 - **Redirects inside loaders**: `redirect(pagePath(url) + ...)`; the URL parser and RR data requests: compare query by meaning (`new URLSearchParams(a).toString()`), not by string.

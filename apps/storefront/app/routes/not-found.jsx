@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { privateMeta } from '~/features/seo/meta'
 import { data, Link } from 'react-router'
 import { useLocalePath, useShell } from '~/features/layout/use-shell'
 
@@ -9,7 +10,7 @@ export function loader() {
   return data(null, { status: 404 })
 }
 
-export const meta = /** @type {import('./+types/not-found').Route.MetaFunction} */ (() => [{ title: '404' }, { name: 'robots', content: 'noindex' }])
+export const meta = /** @type {import('./+types/not-found').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'notFound'))
 
 export default function NotFound() {
   const { t } = useTranslation('storefront')
