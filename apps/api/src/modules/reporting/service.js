@@ -49,7 +49,7 @@ const bucketSize = (/** @type {string} */ metric) => (metric === 'CLS' ? 0.01 : 
  * @param {object} deps
  * @param {import('../../platform/db.js').Database['db']} deps.db
  * @param {import('../../platform/config.js').Config} deps.config
- * @param {{ value: (key: 'payments', x: Db) => Promise<{ value: any }> }} deps.settings
+ * @param {{ value: (key: 'payments' | 'store', x: Db) => Promise<{ value: any }> }} deps.settings
  * @param {{ imagesFor: (ids: string[]) => Promise<Record<string, import('@noor/contract').Image>> }} deps.media
  */
 export function createReporting({ db, config, settings, media }) {
@@ -98,7 +98,8 @@ export function createReporting({ db, config, settings, media }) {
       /** @type {{ ordersNeedingAction?: number, reviewsPending?: number }} */
       const out = {}
       if (may(actor, 'orders:read')) out.ordersNeedingAction = (await db.select({ n: count() }).from(orders).where(inArray(orders.status, ['pending_confirmation', 'confirmed'])))[0]?.n ?? 0
-      if (may(actor, 'reviews:read')) out.reviewsPending = (await db.select({ n: count() }).from(reviews).where(eq(reviews.status, 'pending')))[0]?.n ?? 0
+      // with reviews switched off in the store settings the menu has no Reviews: the count is left out
+      if (may(actor, 'reviews:read') && (await settings.value('store', db)).value.features.reviews) out.reviewsPending = (await db.select({ n: count() }).from(reviews).where(eq(reviews.status, 'pending')))[0]?.n ?? 0
       return out
     },
 

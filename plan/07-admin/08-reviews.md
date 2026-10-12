@@ -60,11 +60,11 @@ Filters: `q` (text, product, order number), `rating`, `product`, `hasPhotos`, `s
 
 ## 5. Acceptance checklist
 
-- [ ] A submitted review is invisible on the storefront until approved, and visible within the cache window after.
-- [ ] Reject without a reason is impossible.
-- [ ] Removing one photo then approving publishes the review without that photo.
-- [ ] Rejecting an approved review lowers the product's review count.
-- [ ] With `features.reviews` off, `/reviews` is absent from the sidebar and returns the not-found state.
+- [x] A submitted review is invisible on the storefront until approved, and visible within the cache window after. (API: only approved reviews are listed and counted, M4-09; the storefront shows what the API lists. The queue starts on the pending ones.)
+- [x] Reject without a reason is impossible. (The contract needs `reason` to reject; the dialog keeps its button off until one is chosen: `reviews.test.jsx`.)
+- [x] Removing one photo then approving publishes the review without that photo. (API `removePhoto`; the drawer asks first and shows the review without the photo: `reviews.test.jsx`.)
+- [x] Rejecting an approved review lowers the product's review count. (API: `recomputeRating`, M4-09; an approved review offers Reject and no second Approve: `reviews.test.jsx`.)
+- [x] With `features.reviews` off, `/reviews` is absent from the sidebar and returns the not-found state. (`admin.nav.counts` leaves `reviewsPending` out when the store setting is off, `reporting.int.test.js`; the menu shows Reviews only when it is there and the page says "Page not found" without it, `reviews.test.jsx`.)
 
 ## 6. Open questions and assumptions
 
@@ -79,3 +79,4 @@ Filters: `q` (text, product, order number), `rating`, `product`, `hasPhotos`, `s
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-12 | M6-04 built (`/reviews`, drawer at `?review=<id>`). Differences: no product filter (the list filter bar has no product picker yet); the queue has its own tabs, the address holds `status` and `tab=all`; the reply is removed by saving it empty; the row decision buttons are inline for pending rows and a rejection from a selection takes no note (the bulk call has none); "History" is the audit history of the review. The menu now shows the number waiting beside Orders and Reviews (`admin.nav.counts`). |

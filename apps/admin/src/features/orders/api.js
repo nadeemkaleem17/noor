@@ -37,6 +37,7 @@ export function useOrderMutations(/** @type {string} */ id) {
     queryClient.setQueriesData({ queryKey: [...orderKeys.all, 'detail'] }, (/** @type {AdminOrder | undefined} */ old) => (old?.id === order.id ? order : old))
     void queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
     void queryClient.invalidateQueries({ queryKey: orderKeys.counts() })
+    void queryClient.invalidateQueries({ queryKey: ['nav'] }) // the badge beside Orders
   }
   const refetch = () => queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'detail'] })
   return {

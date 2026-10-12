@@ -113,6 +113,12 @@ describe.skipIf(!dbAvailable)('reporting (MySQL, through HTTP)', () => {
       expect(todo).toMatchObject({ reviewsPending: { count: 0 }, failedJobs: { count: 0 } })
       expect(todo.awaitingPayment).toBeUndefined() // only cash on delivery is on
       expect((await q('/nav/counts')).body).toEqual({ ordersNeedingAction: 3, reviewsPending: 0 })
+      // with reviews switched off in the store settings the menu has no Reviews: its count is not given
+      const store = (await S.owner.call('GET', '/admin/settings/store')).body
+      const off = await S.owner.call('PUT', '/admin/settings/store', { body: { value: { ...store.value, features: { ...store.value.features, reviews: false } }, version: store.version } })
+      expect(off.status).toBe(200)
+      expect((await q('/nav/counts')).body).toEqual({ ordersNeedingAction: 3 })
+      await S.owner.call('PUT', '/admin/settings/store', { body: { value: store.value, version: off.body.version } })
 
       const catalog = (await signedIn('catalog')).b
       const theirs = (await q('/dashboard/todo', catalog)).body

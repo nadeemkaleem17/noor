@@ -21,7 +21,7 @@ Admin paths under `/api/v1/admin`; auth `staff`; `no-store`.
 
 | Key | Method & path | Permission | Request | Response | Notes |
 |---|---|---|---|---|---|
-| `admin.nav.counts` | `GET /nav/counts` | any signed-in user | — | 200 `{ ordersNeedingAction?: int, reviewsPending?: int }` | A field is absent when the user lacks the permission for that area. One query each, both on indexed status columns |
+| `admin.nav.counts` | `GET /nav/counts` | any signed-in user | — | 200 `{ ordersNeedingAction?: int, reviewsPending?: int }` | A field is absent when the user lacks the permission for that area, and `reviewsPending` is also absent while `features.reviews` is off in the store settings (the menu then has no Reviews). One query each, both on indexed status columns |
 | `admin.dashboard.todo` | `GET /dashboard/todo` | `dashboard:read` | — | 200 `TodoCounts` | Fields absent by permission |
 | `admin.dashboard.summary` | `GET /dashboard/summary` | `dashboard:read` + `orders:read` | Q: `from`, `to` (dates, ≤ 366 days) | 200 `SalesSummary` | Days are Asia/Karachi |
 | `admin.dashboard.topProducts` | `GET /dashboard/top-products` | `dashboard:read` + `orders:read` | Q: `from`, `to`, `limit?` (≤ 20, default 10) | 200 `{ items: { productId: Id, title: string, image?: Image, units: int, sales: Money }[] }` | |

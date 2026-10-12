@@ -31,6 +31,7 @@ const orderNew = () => import('@/routes/order-new')
 const customers = () => import('@/routes/customers')
 const customer = () => import('@/routes/customer')
 const promos = () => import('@/routes/promos')
+const reviews = () => import('@/routes/reviews')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -42,6 +43,8 @@ const soon = () => import('@/routes/soon')
  * @property {import('@noor/contract').Permission} [permission] - without one, any signed-in user may open it
  * @property {'Overview' | 'Sales' | 'Catalog' | 'Content' | 'Settings'} [group] - in the sidebar under this heading
  * @property {import('react').ComponentType<{ className?: string; 'aria-hidden'?: boolean; }>} [icon]
+ * @property {'ordersNeedingAction' | 'reviewsPending'} [badge] - the number of `admin.nav.counts` shown beside the item
+ * @property {'reviews'} [feature] - the item is in the menu only while the store has this feature on (the server leaves its count out when it is off)
  * @property {() => Promise<object>} lazy
  */
 
@@ -49,13 +52,13 @@ const soon = () => import('@/routes/soon')
 export const screens = [
   { path: '/', title: 'Dashboard', permission: 'dashboard:read', group: 'Overview', icon: Gauge, lazy: soon },
 
-  { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, lazy: orders },
+  { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, badge: 'ordersNeedingAction', lazy: orders },
   { path: '/orders/new', title: 'New order', permission: 'orders:edit', lazy: orderNew },
   { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: order },
   { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: customers },
   { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: customer },
   { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: promos },
-  { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, lazy: soon },
+  { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, badge: 'reviewsPending', feature: 'reviews', lazy: reviews },
 
   { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: products },
   { path: '/products/new', title: 'New product', permission: 'products:write', lazy: productNew },

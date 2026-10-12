@@ -2,6 +2,7 @@ import { cn } from '@noor/ui/cn'
 import { Tooltip } from '@noor/ui/tooltip'
 import { NavLink } from 'react-router'
 import { groups, screens } from '@/lib/screens'
+import { useNavCounts } from '@/lib/nav-counts'
 import { useCan } from '@/lib/session'
 
 /**
@@ -11,8 +12,11 @@ import { useCan } from '@/lib/session'
  */
 export function SidebarNav({ collapsed = false, onNavigate }) {
   const can = useCan()
+  const counts = useNavCounts()
+  // a feature that is off has no menu item: the server does not give its count then
+  const shown = (/** @type {import('@/lib/screens').Screen} */ s) => s.feature !== 'reviews' || counts?.reviewsPending !== undefined
   const visible = groups
-    .map((group) => ({ group, items: screens.filter((s) => s.group === group && (!s.permission || can(s.permission))) }))
+    .map((group) => ({ group, items: screens.filter((s) => s.group === group && shown(s) && (!s.permission || can(s.permission))) }))
     .filter((g) => g.items.length > 0)
   return (
     <nav aria-label="Main" className="space-y-4 overflow-y-auto px-2 py-3">
@@ -37,6 +41,9 @@ export function SidebarNav({ collapsed = false, onNavigate }) {
                 >
                   {Icon ? <Icon aria-hidden className="size-5 shrink-0" /> : null}
                   <span className={cn(collapsed && 'sr-only')}>{item.title}</span>
+                  {item.badge && counts?.[item.badge] ? (
+                    <span className={cn('ms-auto rounded-full bg-accent px-2 text-xs font-medium text-on-accent', collapsed && 'sr-only')}>{counts[item.badge]}<span className="sr-only"> waiting</span></span>
+                  ) : null}
                 </NavLink>
               )
               return (
