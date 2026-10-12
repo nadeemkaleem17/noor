@@ -1,5 +1,6 @@
 import { Radio } from '@base-ui/react/radio'
 import { RadioGroup as BaseRadioGroup } from '@base-ui/react/radio-group'
+import { useId } from 'react'
 import { cn } from '../cn'
 
 /**
@@ -23,13 +24,14 @@ import { cn } from '../cn'
  * @param {RadioGroupProps} props
  */
 export function RadioGroup({ options, onValueChange, orientation = 'vertical', variant = 'default', className, ...props }) {
+  const base = useId()
   return (
     <BaseRadioGroup
       onValueChange={(v) => onValueChange?.(String(v))}
       className={cn('flex gap-3', orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap', className)}
       {...props}
     >
-      {options.map((o) => (
+      {options.map((o, i) => (
         <label
           key={o.value}
           className={cn(
@@ -41,11 +43,13 @@ export function RadioGroup({ options, onValueChange, orientation = 'vertical', v
           <Radio.Root
             value={o.value}
             disabled={o.disabled}
+            // the round control is a span: it is named by the words beside it, not by the wrapping label
+            aria-labelledby={`${base}-${i}`}
             className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface data-[checked]:border-accent"
           >
             <Radio.Indicator className="size-2.5 rounded-full bg-accent" />
           </Radio.Root>
-          <span className="flex flex-col text-(length:--control-text)">
+          <span id={`${base}-${i}`} className="flex flex-col text-(length:--control-text)">
             {o.label}
             {o.description ? <span className="text-sm text-muted">{o.description}</span> : null}
           </span>

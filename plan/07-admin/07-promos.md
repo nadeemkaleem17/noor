@@ -70,12 +70,12 @@ A live sentence under the form reads the rule back: "10% off Lawn and Stitched, 
 
 ## 6. Acceptance checklist
 
-- [ ] Creating `eid10` saves as `EID10`; a second `EID10` is rejected.
-- [ ] A scheduled code shows `scheduled` and is refused by the storefront before its start with `promo_not_started`.
-- [ ] After one use, the code and type fields are read-only and Delete is replaced by Disable.
-- [ ] Cancelling an order that used the code decrements its usage.
-- [ ] The preview result equals the discount the storefront cart shows for the same cart.
-- [ ] Every storefront error code in DOC-06.5 §2.1 can be produced by a configuration made on this screen.
+- [x] Creating `eid10` saves as `EID10`; a second `EID10` is rejected. (The field makes capitals as it is typed and the body is upper-cased; the server answers a second one with `validation_failed` and the issue `code: not_unique`, which the form shows as "This code already exists": `promos.test.jsx`, and once against the real API.)
+- [x] A scheduled code shows `scheduled` and is refused by the storefront before its start with `promo_not_started`. (Status comes from the server; seen once against the real API: a code starting tomorrow was `scheduled` and the preview said `promo_not_started`. The storefront side is the cart tests of M4-03.)
+- [x] After one use, the code and type fields are read-only and Delete is replaced by Disable. (`promos.test.jsx`.)
+- [x] Cancelling an order that used the code decrements its usage. (API: `reverse` in the cancel transaction, M4-02 and M4-05; the screen shows the count the server keeps.)
+- [x] The preview result equals the discount the storefront cart shows for the same cart. (Both are `evaluatePromo`; the screen computes nothing: "Try this code" sends the form and a cart to `admin.promos.preview` and shows the answer: `promos.test.jsx`.)
+- [x] Every storefront error code in DOC-06.5 §2.1 can be produced by a configuration made on this screen. (not started: a future start; expired: a past end; usage limit; not applicable: a scope that covers nothing in the cart; customer limit; first order only; minimum spend. `promo_not_found` is a code nobody made.)
 
 ## 7. Open questions and assumptions
 
@@ -90,3 +90,4 @@ A live sentence under the form reads the rule back: "10% off Lawn and Stitched, 
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-12 | M6-03 built (`/promos`, drawer at `?new=1` and `?edit=<id>`). Differences: the drawer reads the rule back in words (`promo-form.js` `describePromo`, a sentence, never an amount); "Duplicate" copies the rule with no code and no dates; the list has no "bulk delete"; the orders list opens with the code as a hidden filter (`/orders?promo=CODE`, all statuses) because it has no chip for it yet; "Try this code" takes a cart of products and variants (the preview endpoint takes variants, not a total). The shared `RadioGroup` now names each round control by its words (`aria-labelledby`), which it did not before. |

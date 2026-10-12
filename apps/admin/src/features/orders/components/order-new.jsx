@@ -18,9 +18,9 @@ import { useDebounced } from '@/lib/use-debounced'
 import { useCan } from '@/lib/session'
 import { customerByPhoneQuery, customerDetailQuery, orderLookupsQuery } from '@/lib/sales'
 import { humanise, orderMessage } from '../labels'
-import { VariantPicker } from './variant-picker'
+import { VariantPicker } from '@/components/variant-picker'
 
-/** @typedef {import('./variant-picker').OrderLine} OrderLine */
+/** @typedef {import('@/components/variant-picker').OrderLine} OrderLine */
 
 const rupees = (/** @type {{ amount: number; currency: 'PKR' }} */ m) => formatMoney(m, 'en')
 

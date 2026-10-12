@@ -105,6 +105,7 @@ export function VariantPicker({ onAdd }) {
       <Field label="Find a product" hint="Title, SKU or handle.">
         <Input
           type="search"
+          onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()} // Enter finds nothing new here and must not save the form this sits in
           value={text}
           onChange={(e) => {
             setText(e.target.value)

@@ -30,6 +30,7 @@ const order = () => import('@/routes/order')
 const orderNew = () => import('@/routes/order-new')
 const customers = () => import('@/routes/customers')
 const customer = () => import('@/routes/customer')
+const promos = () => import('@/routes/promos')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -53,7 +54,7 @@ export const screens = [
   { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: order },
   { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: customers },
   { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: customer },
-  { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: soon },
+  { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: promos },
   { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, lazy: soon },
 
   { path: '/products', title: 'Products', permission: 'products:read', group: 'Catalog', icon: Package, lazy: products },
