@@ -1,0 +1,11 @@
+# packages/: shared code (read this instead of scanning)
+
+| Package | What it is | Key facts |
+|---|---|---|
+| `@noor/contract` | **The one source of truth for the API**: Zod 4 schemas + the route table (`routes.js` `defineRoutes`), enums, error codes, money, phone, permissions, the typed client | Node-run (plain Node imports): relative imports need `.js`. `createClient(routes, {baseUrl, headers, fetch, timeoutMs})` returns `call(key, {params, query, body, headers, idempotencyKey, signal})`; it **parses the query and body client-side** (a bad value throws `ZodError` before any request) and parses every response. `z` is re-exported (`import { z } from '@noor/contract'`). Typedefs exported with `@typedef {z.infer<...>}` next to each schema (`ProductDetail`, `ProductListing`, `Facet`, `Cart`, `CartLine`, `OrderPublic`, `ReviewListing`, `SizeChart`, `CustomSizeForm`, `StoreConfigPublic`...) |
+| `@noor/ui` | Owned components on Base UI + Tailwind v4 tokens (`tokens.css`), imported as `@noor/ui/<name>` (Button, Field, Input, NativeSelect, Dialog, Drawer, ConfirmDialog, Toast, Breadcrumb, Price, Image, Markdown, Carousel, QuantityStepper, StatusBadge, EmptyState, ErrorState, Skeleton, Table, Tabs...) | Stories (`*.stories.jsx`) are axe-checked by `test/stories.a11y.test.jsx`; component tests use jsdom via `test/dom.tsx`; `themeCss`, `safeHref` (link rule), contrast gate; `Markdown` renders CMS text through an allow-list (no raw HTML, images only from the image origin with a `"WxH"` title) |
+| `@noor/i18n` | `createI18n(locale)` (i18next + ICU), `formatMoney/Date/Number`, catalogs `locales/{en,ur}/{common,storefront,errors,notifications}.json` + staff catalog | `escapeValue:false` (React escapes). `formatMoney` writes "Rs 6,990" with a **no-break space**: tests compare after replacing ` ` |
+| `@noor/config` | shared lint/tsconfig/tooling configs | |
+
+Cross-cutting rules: money = `{ amount (integer paisa), currency: 'PKR' }`; ids are UUIDv7 strings; dates are ISO strings; the client never sends a price. A change to a contract schema usually
+needs: the handler, `apps/api/test/openapi.snapshot.json` (`-u`), `plan/10-api/*`, and `pnpm route-keys`.
