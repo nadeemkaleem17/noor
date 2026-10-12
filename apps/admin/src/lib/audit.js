@@ -50,6 +50,8 @@ export function entityHref(type, id) {
   if (!id) return undefined
   const to = /** @type {Record<string, string>} */ ({
     product: `/products/${id}`,
+    customer: id === 'export' ? undefined : `/customers/${id}`,
+    order: `/orders/${id}`,
     staff: `/staff/${id}`,
     collection: `/collections/${id}`,
     page: `/content/pages/${id}`,

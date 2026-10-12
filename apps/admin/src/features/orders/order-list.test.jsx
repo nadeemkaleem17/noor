@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { fakeApi, json, me, renderApp, resetApp } from '@/test/app'
-import { countsAnswer, lookupsAnswer, oid, rowFixture } from './test-data'
+import { countsAnswer, lookupsAnswer, oid, rowFixture } from '@/test/sales-data'
 
 afterEach(resetApp)
 

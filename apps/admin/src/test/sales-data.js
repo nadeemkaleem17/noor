@@ -86,3 +86,84 @@ export const invoiceFixture = (over = {}) => ({
   paymentMethod: 'cod',
   ...over,
 })
+
+const sid = (/** @type {number} */ n) => `0194f1b2-7c3a-7000-8000-${String(n).padStart(12, '0')}`
+export const pid = { product: sid(1000), variantM: sid(1001), variantL: sid(1002), optionSize: sid(1003), valM: sid(1004), valL: sid(1005), schema: sid(1006), method: sid(1007), method2: sid(1008) }
+
+/** The product the picker opens: sizes M and L. @param {Record<string, unknown>} [over] */
+export const pickProductFixture = (over = {}) => ({
+  id: pid.product,
+  handle: 'lawn-suit',
+  status: 'active',
+  kind: 'stitched',
+  title: 'Lawn Suit',
+  primaryCategoryId: sid(2000),
+  categoryIds: [],
+  attributes: [],
+  media: [],
+  options: [{ id: pid.optionSize, name: 'Size', role: 'size', display: 'buttons', values: [{ id: pid.valM, key: 'm', label: 'M' }, { id: pid.valL, key: 'l', label: 'L' }] }],
+  variants: [
+    { id: pid.variantM, key: 'm', sku: 'LS-M', optionValueKeys: ['m'], price: money(699000), stockMode: 'counted', maxPerOrder: 10, enabled: true, stockStatus: 'in_stock', hasOrders: false },
+    { id: pid.variantL, key: 'l', sku: 'LS-L', optionValueKeys: ['l'], price: money(699000), stockMode: 'counted', maxPerOrder: 10, enabled: true, stockStatus: 'sold_out', hasOrders: false },
+  ],
+  badges: [],
+  version: 2,
+  createdAt: at,
+  updatedAt: at,
+  siblings: [],
+  collections: [],
+  checks: [],
+  ...over,
+})
+
+export const productRowFixture = () => ({
+  id: pid.product, handle: 'lawn-suit', title: 'Lawn Suit', status: 'active', kind: 'stitched', primaryCategory: { id: sid(2000), name: 'Women' }, variantCount: 2, stockStatus: 'in_stock', priceFrom: money(699000), updatedAt: at, hasIssues: false,
+})
+
+/** What `admin.orders.quote` answers for one Lawn Suit in M. @param {Record<string, unknown>} [over] */
+export const quoteFixture = (over = {}) => ({
+  lines: [
+    { id: sid(1100), productId: pid.product, variantId: pid.variantM, handle: 'lawn-suit', title: 'Lawn Suit', variantLabel: 'M', kind: 'stitched', quantity: 1, unitPrice: money(699000), lineSubtotal: money(699000), lineDiscount: money(0), maxPerOrder: 10, issues: [] },
+  ],
+  count: 1,
+  subtotal: money(699000),
+  discount: money(0),
+  shipping: { methodId: pid.method, label: 'Standard', fee: money(25000), etaMinDays: 3, etaMaxDays: 5 },
+  total: money(724000),
+  shippingOptions: [
+    { methodId: pid.method, label: 'Standard', fee: money(25000), etaMinDays: 3, etaMaxDays: 5, codAllowed: true },
+    { methodId: pid.method2, label: 'Express', fee: money(45000), etaMinDays: 1, etaMaxDays: 2, codAllowed: true },
+  ],
+  paymentOptions: [{ method: 'cod', label: 'Cash on delivery', allowed: true }],
+  messages: [],
+  hasBlockingIssues: false,
+  ...over,
+})
+
+/** A customer as `admin.customers.get` gives it. @param {Record<string, unknown>} [over] */
+export const customerFixture = (over = {}) => ({
+  id: oid.customer,
+  name: 'Ayesha Khan',
+  phone: '+923001234567',
+  email: 'ayesha@example.com',
+  city: 'Lahore',
+  ordersCount: 3,
+  deliveredCount: 2,
+  refusedCount: 0,
+  cancelledCount: 1,
+  spent: money(2048000),
+  averageOrder: money(1024000),
+  lastOrderAt: at,
+  firstOrderAt: '2026-08-01T10:00:00.000Z',
+  noCod: false,
+  vip: false,
+  marketingConsent: false,
+  addresses: [{ city: 'Lahore', address: 'House 12, Street 4, DHA Phase 5', lastUsedAt: at }],
+  notes: [],
+  version: 4,
+  ...over,
+})
+
+const rowKeys = ['id', 'name', 'phone', 'city', 'ordersCount', 'deliveredCount', 'refusedCount', 'spent', 'lastOrderAt', 'noCod', 'vip', 'marketingConsent']
+/** @param {Record<string, unknown>} [over] */
+export const customerRowFixture = (over = {}) => ({ ...Object.fromEntries(Object.entries(customerFixture()).filter(([k]) => rowKeys.includes(k))), ...over })

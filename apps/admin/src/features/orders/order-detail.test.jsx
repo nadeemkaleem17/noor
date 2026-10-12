@@ -1,7 +1,7 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
-import { lookupsAnswer, oid, orderFixture } from './test-data'
+import { lookupsAnswer, oid, orderFixture } from '@/test/sales-data'
 
 afterEach(resetApp)
 

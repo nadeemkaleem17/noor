@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
-import { invoiceFixture, oid } from './test-data'
+import { invoiceFixture, oid } from '@/test/sales-data'
 
 afterEach(resetApp)
 

@@ -1,13 +1,13 @@
 import { routes } from '@noor/contract'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { orderLookupsQuery } from '@/lib/sales'
 
 export const orderKeys = {
   all: ['orders'],
   lists: () => [...orderKeys.all, 'list'],
   list: (/** @type {object} */ params) => [...orderKeys.lists(), params],
   counts: () => [...orderKeys.all, 'counts'],
-  lookups: () => [...orderKeys.all, 'lookups'],
   detail: (/** @type {string} */ id) => [...orderKeys.all, 'detail', id],
   invoice: (/** @type {string} */ id) => [...orderKeys.all, 'invoice', id],
 }
@@ -22,8 +22,7 @@ export const orderQueries = {
   /** @param {object} params parsed from the address with `orderListSchema` */
   list: (params) => queryOptions({ queryKey: orderKeys.list(params), queryFn: ({ signal }) => api('admin.orders.list', { query: /** @type {never} */ (params), signal }) }),
   counts: () => queryOptions({ queryKey: orderKeys.counts(), queryFn: ({ signal }) => api('admin.orders.counts', { signal }), refetchInterval: 60_000 }),
-  /** The couriers and cities the dispatch dialog and the city filter choose from. */
-  lookups: () => queryOptions({ queryKey: orderKeys.lookups(), queryFn: ({ signal }) => api('admin.orders.lookups', { signal }), staleTime: 5 * 60_000 }),
+  lookups: () => orderLookupsQuery,
   /** Refetched when the window gets focus and every minute while the order is open (plan/07-admin/05-orders.md section 3). */
   detail: (/** @type {string} */ id) => queryOptions({ queryKey: orderKeys.detail(id), queryFn: ({ signal }) => api('admin.orders.get', { params: { id }, signal }), refetchInterval: 60_000, refetchOnWindowFocus: true }),
   invoice: (/** @type {string} */ id) => queryOptions({ queryKey: orderKeys.invoice(id), queryFn: ({ signal }) => api('admin.orders.invoice', { params: { id }, signal }) }),
