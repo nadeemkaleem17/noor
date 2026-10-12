@@ -16,13 +16,13 @@ import { InfoSections } from './sections'
  * @param {import('./custom-size').FormSchema | null} props.formSchema
  * @param {string | undefined} props.whatsapp
  * @param {string} props.url
- * @param {string} props.imageOrigin
+ * @param {string} props.descriptionHtml
  * @param {string | undefined} props.cartError
  * @param {number | undefined} props.cartErrorN
  * @param {string | null} props.sizeParam
  * @param {import('react').ReactNode} [props.children]
  */
-export function ProductPage({ product, sizeChart, formSchema, whatsapp, url, imageOrigin, cartError, cartErrorN, sizeParam, children }) {
+export function ProductPage({ product, sizeChart, formSchema, whatsapp, url, descriptionHtml, cartError, cartErrorN, sizeParam, children }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const [focusValue, setFocusValue] = useState(/** @type {string | undefined} */ (undefined))
@@ -38,7 +38,7 @@ export function ProductPage({ product, sizeChart, formSchema, whatsapp, url, ima
         <Gallery media={product.media} title={product.title} focusValue={focusValue} />
         <div className="flex flex-col gap-6">
           <BuyBox product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam} onFocusValue={setFocusValue} />
-          <InfoSections product={product} imageOrigin={imageOrigin} />
+          <InfoSections product={product} descriptionHtml={descriptionHtml} />
         </div>
       </div>
       <div className="mt-12 flex flex-col gap-12">{children}</div>

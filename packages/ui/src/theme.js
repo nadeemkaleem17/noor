@@ -8,7 +8,7 @@ export { deriveColors, resolveColors } from '@noor/contract'
 
 const fontStack = /** @type {const} */ ({
   'Playfair Display': '"Playfair Display", Georgia, serif',
-  Inter: '"Inter", system-ui, sans-serif',
+  Inter: '"Inter", "Inter Fallback", system-ui, sans-serif', // the storefront declares "Inter Fallback" (Arial sized like Inter) so the font swap does not move the layout
   'Instrument Sans': '"Instrument Sans", system-ui, sans-serif',
 })
 

@@ -89,7 +89,7 @@ export function ReviewsSection({ listing, productId }) {
   const { summary } = listing
   if (!summary.count) return null
   return (
-    <section id="reviews" aria-labelledby="reviews-h" className="scroll-mt-24">
+    <section id="reviews" aria-labelledby="reviews-h" className="defer-render scroll-mt-24">
       <h2 id="reviews-h" className="font-heading text-2xl">{t('pdp.reviews')}</h2>
       <div className="mt-4 flex flex-wrap items-center gap-8">
         <p className="text-4xl tabular-nums">
@@ -120,7 +120,7 @@ export function RelatedSection({ items, title }) {
   const { t } = useTranslation('storefront')
   const id = useId()
   return (
-    <section aria-labelledby={id}>
+    <section aria-labelledby={id} className="defer-render">
       <h2 id={id} className="font-heading text-2xl">{title ?? t('pdp.related')}</h2>
       <ul className="mt-4 flex snap-x gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
         {items.map((p) => (

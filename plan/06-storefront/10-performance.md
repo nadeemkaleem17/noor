@@ -37,6 +37,20 @@ Context: published 2026 figures put smartphones at over 80% of e-commerce orders
 
 The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budget must either fix it or change this table with a reason.
 
+**Measured at M5-11 (first real build, 2026-10-12; Q-06.10-4).** The targets above were estimates and the build does not meet the JavaScript ones. The gates (`pnpm --filter @noor/storefront budget` and `... lighthouse`) therefore hold the first build's numbers as **ceilings that may only come down**, and the targets stay the goal:
+
+| Page | JS gzip measured | Ceiling now | Target | LCP lab (median of 3) | LCP ceiling now | Target |
+|---|---|---|---|---|---|---|
+| Home | 283.2 kB | 300 | 150 | 4.13 s | 4.5 s | 2.5 s |
+| PLP | 287.8 kB | 305 | 170 | 4.17 s | 4.5 s | 2.5 s |
+| PDP | 302.7 kB | 320 | 170 | 4.10 s | 4.5 s | 2.5 s |
+| Cart | 279.2 kB | 295 | 190 | 3.63 s | 4.0 s | 3.0 s |
+| Checkout | 293.0 kB | 310 | 190 | not run | not run | 3.0 s |
+
+Other numbers met: CSS 9.2 kB (≤ 25), HTML 8 to 19 kB (≤ 30 to 60), CLS 0.000 (≤ 0.05), server response 42 to 326 ms (≤ 600), third-party requests 0. Over: fonts 86 kB for English (≤ 80; Playfair Display 38 kB + Inter 48 kB, variable, Latin) and 259 kB for Urdu (≤ 150; the Nastaliq file alone is 239 kB, no smaller subset exists); the Urdu figure stands until a lighter Urdu face is chosen (ADR-0018).
+
+**Why the JavaScript is twice the estimate.** React 19 with React Router 8 is about 105 kB gzip before any page code; i18next with the ICU plugin and both catalogs is about 65 kB; the Base UI parts behind the header, drawers and dialogs are about 45 kB. The lab is Lighthouse's simulated Slow 4G over HTTP/1.1 against the Node server (35 script requests queue on 6 connections; a CDN with HTTP/2 and Brotli, DOC-14, will do better), so its LCP is a ceiling for trend, not a forecast. **Ways down, in order of size:** load the cart drawer, mobile menu, filter drawer, size-guide drawer and gallery zoom only when first opened (about 35 kB); drop the ICU plugin for i18next's own plurals (about 15 kB, an ADR-0018 change); Brotli (about 15 %).
+
 ## 3. Images (the largest cost)
 
 | Rule | Detail |
@@ -47,7 +61,7 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 | Quality | AVIF 50, WebP 70, JPEG 75 (transform defaults); hero may use +10 |
 | `sizes` | Card: `(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw`. PDP main: `(min-width:1024px) 50vw, 100vw`. Hero: `100vw` |
 | Dimensions | `width` and `height` always set from the media record; the wrapper uses `aspect-(--media-ratio)`; this is what keeps CLS near 0 |
-| Priority | Exactly the LCP image per page gets `priority` (`loading="eager"`, `fetchpriority="high"`, and a `<link rel="preload" as="image" imagesrcset imagesizes>` from the route's `links`). PLP: the first 4 cards eager without `fetchpriority`. Everything else `loading="lazy" decoding="async"` |
+| Priority | Exactly the LCP image per page gets `priority` (`loading="eager"`, `fetchpriority="high"`; React adds the `<link rel="preload" as="image">` for it by itself, so there is no `links` entry). PLP: the first 4 cards eager without `fetchpriority` (`priority="eager"` of the `Image` component). Everything else `loading="lazy" decoding="async"` |
 | Placeholder | `lqip` (≤ 1 kB blurred data URI from the media record) as the wrapper background; no JS fade-in logic |
 | Caching | Image responses `Cache-Control: public, max-age=31536000, immutable` (URL contains the content key) |
 | Video | `preload="none"`, poster image, never auto-loaded |
@@ -56,10 +70,10 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 
 | Rule | Detail |
 |---|---|
-| Hosting | Self-hosted woff2 only (DOC-04a §7); `font-display: swap` |
+| Hosting | Self-hosted woff2 only (DOC-04a §7); `font-display: swap`. The `@font-face` rules of the two families the theme names (and the Urdu face on `/ur`) are written by `lib/fonts.server.js` into the same inline block as the theme, so the CSP hash covers them; the files are Vite assets (`/assets/`, hashed, immutable) |
 | Preload | Only the two files needed for above-the-fold text: body regular and heading 600 (`<link rel="preload" as="font" type="font/woff2" crossorigin>`) |
 | Subsets | `latin` only on English pages; the Urdu font is requested only on `/ur` pages |
-| Fallback metrics | `size-adjust`, `ascent-override` on the fallback `@font-face` so the swap does not shift layout |
+| Fallback metrics | `size-adjust`, `ascent-override` on the fallback `@font-face` so the swap does not shift layout. Built for Inter only (`"Inter Fallback"`, Arial sized like it, figures from the font's published metrics); Playfair Display and Instrument Sans have none because their metrics were not measured here. Measured CLS is 0.000 without them |
 | Weights | Variable fonts: one file per family covers all weights |
 
 ## 5. JavaScript
@@ -123,12 +137,12 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 
 ## 11. Acceptance checklist
 
-- [ ] Lighthouse CI on the reference profile meets every lab number in §2 for the four routes.
-- [ ] The built client bundle for PLP and PDP is ≤ 170 kB gzip; the report is attached to the PR.
-- [ ] Network panel on a PDP: one eager image, the rest lazy; AVIF served to Chrome; no request to a third-party host before interaction.
-- [ ] CLS is ≤ 0.05 while fonts swap and deferred sections arrive.
-- [ ] `curl -I` on an L page shows the CDN cache header as a hit on the second request and no `Set-Cookie`.
-- [ ] No long task over 50 ms in a Performance recording of: open filter drawer, change quantity, open cart drawer.
+- [ ] Lighthouse CI on the reference profile meets every lab number in §2 for the four routes. *Not met: CLS, server response, third-party requests and document size are; LCP and JavaScript are held at the ceilings of §2 (measured), not at the targets. The runs are local (`pnpm --filter @noor/storefront lighthouse`); there is no CI yet (needs a push).*
+- [ ] The built client bundle for PLP and PDP is ≤ 170 kB gzip; the report is attached to the PR. *Not met: 287.8 and 302.7 kB (ceilings 305 and 320, §2); `pnpm --filter @noor/storefront budget` prints the report and fails above a ceiling.*
+- [ ] Network panel on a PDP: one eager image, the rest lazy; AVIF served to Chrome; no request to a third-party host before interaction. *One `fetchpriority=high` image and no third-party request (Lighthouse). AVIF is not served: the local image layer makes WebP and JPEG only (`IMAGE_TRANSFORM=none`, M0-08 skipped).*
+- [x] CLS is ≤ 0.05 while fonts swap and deferred sections arrive. *0.000 on Home, PLP, PDP and Cart (Lighthouse, median of 3).*
+- [ ] `curl -I` on an L page shows the CDN cache header as a hit on the second request and no `Set-Cookie`. *No `Set-Cookie` and the L class header are tested (`shell.server.test.js`); a CDN hit needs a CDN.*
+- [ ] No long task over 50 ms in a Performance recording of: open filter drawer, change quantity, open cart drawer. *Not recorded.*
 
 ## 12. Open questions and assumptions
 
@@ -137,7 +151,7 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 | Q-06.10-1 | CDN features (tag purge, Early Hints, `Accept`-aware image caching) | Available on the chosen provider | DOC-14 provider choice |
 | Q-06.10-2 | Hosting region latency to Pakistan | TTFB budget assumes ≤ 150 ms RTT; ADR-0019 requires measuring it | Measurement from Karachi/Lahore |
 | Q-06.10-3 | Core Web Vitals thresholds | Taken from 2026 secondary sources citing Google's definitions | Google changes them |
-| Q-06.10-4 | Bundle budgets | Estimated, not measured (no storefront build exists yet) | First real build at M1: adjust the table once, with numbers |
+| Q-06.10-4 | Bundle budgets | **Measured at M5-11** (§2): about twice the estimate; held as ceilings that only come down | The reductions of §2 are built |
 
 ## 13. Changelog
 
@@ -146,3 +160,4 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 | 2026-10-02 | Initial version (Phase 2) |
 | 2026-10-02 | Phase 4: width ladder aligned with ADR-0011; URLs are built and signed by the API |
 | 2026-10-02 | Phase 5: field metrics go to our own `POST /api/v1/vitals` (DOC-12 §6.1); third-party analytics rules in DOC-12 §6.2 |
+| 2026-10-12 | M5-11: first measured build (§2 "Measured at M5-11"), budgets held as ceilings. Built: `scripts/bundle-budget.mjs` and `scripts/lighthouse.mjs` (`pnpm --filter @noor/storefront budget` and `lighthouse`; `lighthouse` is a dev dependency, Chrome or Edge must be installed), self-hosted variable fonts with preload, `web-vitals` (own chunk, loaded after `load`, sent with `sendBeacon` to the storefront's `POST /vitals`, which passes it to the API; not in development), Markdown rendered on the server (`lib/markdown.server.jsx`, PDP −47 kB), `prefetch="intent"` on product cards and menu links, `content-visibility` on below-the-fold sections, a 2 px navigation bar with a CSS delay of 150 ms, `preconnect` to the image host when it is another origin, `Image priority="eager"`. Not built: lazy drawers and dialogs, `React.lazy` forms, Early Hints, optimistic quantity (the cart round trip shows the button's own loading state). The API's rate limit counts the storefront server as one visitor (no `X-Internal-Key` or visitor address is forwarded yet): see DOC-16 M7. |

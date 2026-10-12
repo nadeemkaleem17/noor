@@ -186,7 +186,8 @@ flowchart LR
 | M7-05 | Content: drafted privacy, terms, shipping and returns pages (A-09); base seed reviewed; real store settings entered (contact, WhatsApp, policies) | DOC-06.8 §3, DOC-14 §5.2 | M5-09 | 1.5 | Owner has read the four pages |
 | M7-06 | Real-device purchase on a mid-range Android phone on throttled data; fix findings | DOC-13 §9, DOC-06.10 | M7-01 | 1.5 | Recorded in DOC-13 §12 |
 | M7-07 | Documentation close-out: `CLAUDE.md` and `AGENTS.md` describe the finished repo; every doc's checklist reviewed; ADRs moved from Proposed to Accepted by the owner; spike results and open questions updated | README §6, DOC-02 | M7-04 | 1.5 | No doc refers to deleted code |
-| M7-08 | Owner walkthrough of the complete local product against DOC-06 and DOC-07; sign-off or a fix list | all | M7-05, M7-06, M7-07 | 1.5 | Sign-off recorded in README changelog. **This closes the local build** |
+| M7-08 | Owner walkthrough of the complete local product against DOC-06 and DOC-07; sign-off or a fix list | all | M7-05, M7-06, M7-07, M7-09 | 1.5 | Sign-off recorded in README changelog. **This closes the local build** |
+| M7-09 | Storefront to API trust and speed: send `X-Internal-Key` and the visitor's address (`X-Forwarded-For`) on every storefront call so the API's per-address limits count visitors, not the one storefront server (today the `default` bucket of 300 a minute covers the whole shop); then bring the storefront down to the ceilings-to-targets of DOC-06.10 §2 (lazy drawers and dialogs, ICU plugin, Brotli) | DOC-11 §2, DOC-06.10 §2 | M7-01 | 2 | A load test shows limits applying per visitor; `pnpm --filter @noor/storefront budget` passes with the DOC-06.10 §2 targets, or the table says why not |
 
 ### LAUNCH — production phase (not scheduled; started by the owner after M7-08)
 
@@ -280,9 +281,9 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 | M2 | 5 | 5 (M2-01 to 05, milestone done) |
 | M3 | 7 | 7 (M3-01 to M3-07, milestone done) |
 | M4 | 12 | 12 (M4-01 to M4-12): **M4 is complete** |
-| M5 | 11 | 10 (M5-01 to M5-10) |
+| M5 | 11 | 11 (M5-01 to M5-11): **M5 is complete** |
 | M6 | 7 | 0 |
-| M7 | 8 | 0 |
+| M7 | 9 | 0 |
 
 Updated by the PR that finishes a task.
 
@@ -375,3 +376,4 @@ Updated by the PR that finishes a task.
 | 2026-10-07 | M5-08 done: the wishlist (cookie `nc_wishlist` read in one place, hearts on cards and the product page, header heart with its number, `/wishlist` in saved order with stale ids dropped and the cookie rewritten, off when the shop has it off) and the cookie rules (no cached response sets a cookie; hearts of cached pages unpressed). Tests: `wishlist.test.js`, the wishlist block and the cookie check in `shell.server.test.js`. Seen in the browser pane against the real API. DOC-06.7 §6 passes; §4's cookie list corrected. |
 | 2026-10-07 | M5-09 done: `/pages/:slug` (allow-list Markdown, redirects, 404 for what is not active, language fallback), `/pages/contact` with the shop's own details, `/size-guide` with both units, the footer link, shared size-table component. Tests: the pages and size guide block of `shell.server.test.js`. Seen in the browser pane against the real API. DOC-06.8 §6 passes; two items (360 px, a settings change seen end to end) were not looked at. |
 | 2026-10-12 | M5-10 done: `buildMeta` and `privateMeta` (`features/seo/meta.js`) build the head of every route (title, description, canonical, hreflang, Open Graph, Twitter); JSON-LD (`features/seo/jsonld.js`: Organization+WebSite, BreadcrumbList, ItemList, Product or ProductGroup, rating only with approved reviews, serialised with `<` escaped); `listingIndex` (sorting and filters are `noindex,follow` with canonical to the plain listing, one facet marked `seoIndexable` is its own page); `robots.txt`, `sitemap.xml`, `sitemap/:n.xml` (files of at most 5,000, pure part in `lib/seo.js`); every page carries `X-Robots-Tag: noindex, nofollow` unless the site address is `rubaya.pk` or a subdomain; visitor pages and the 404 say `noindex`. Tests: `test/seo.test.js` (17) and the "search engines" block of `shell.server.test.js`. Seen live against the real API. DOC-06.9 §10 passes except the manual Rich Results check and the WhatsApp preview (need a public address). |
+| 2026-10-12 | M5-11 done: `scripts/bundle-budget.mjs` and `scripts/lighthouse.mjs` (`pnpm --filter @noor/storefront budget`, `lighthouse`); first measured build held as ceilings in DOC-06.10 §2 (JS 279 to 303 kB gzip against targets of 150 to 190; lab LCP 3.6 to 4.2 s on simulated Slow 4G over HTTP/1.1; CLS 0.000; no third-party request); self-hosted variable fonts declared in the theme block with two preloads and an Inter stand-in face (`lib/fonts.server.js`); `web-vitals` to `POST /vitals` and on to `reporting.vitals` (rows seen in `web_vitals_daily`); Markdown rendered on the server (PDP −47 kB); `prefetch="intent"`, `content-visibility`, navigation bar, `Image priority="eager"`. Tests: `test/{vitals,fonts}.test.js` and the "speed" block of `shell.server.test.js`. DOC-06.10 §11: only the CLS item is ticked, the others carry what was and was not met. New task M7-09 (visitor address to the API, reductions to the targets). |

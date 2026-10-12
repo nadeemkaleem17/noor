@@ -10,6 +10,7 @@ import { pagePath } from '~/lib/paths'
 import { redirectFor } from '~/lib/redirects'
 import { navItems, safeItems } from '~/lib/nav'
 import { getEnv } from '~/lib/env.server'
+import { fontsFor } from '~/lib/fonts.server'
 import { cached, loadShell } from '~/lib/shell.server'
 import './app.css'
 
@@ -41,12 +42,16 @@ export async function loader({ request }) {
   // Only what the frame needs goes to the browser, already worked out: the page data carries every byte of it, and an unsafe menu address never gets there.
   const t = createI18n(locale).t
   const { theme, ...config } = shell.config
+  const fonts = fontsFor(theme?.fonts ?? { heading: 'Playfair Display', body: 'Inter' }, locale)
   const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale') }
   return {
     locale,
     siteUrl: getEnv().PUBLIC_SITE_URL,
     dir: dirOf(locale),
-    themeCss: themeCss(theme),
+    // the fonts are declared in the same inline block as the theme: one block, one hash for the CSP
+    themeCss: fonts.css + themeCss(theme),
+    fontFiles: fonts.preload,
+    imgOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin,
     config,
     notices: [...(shell.home.announcement ? [{ id: 'announcement', text: shell.home.announcement.text, href: shell.home.announcement.href }] : []), ...shell.home.notices.map((n) => ({ id: n.id, text: n.text, href: n.href }))],
     about: shell.home.footer.about,
@@ -71,6 +76,8 @@ export function Layout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        {data?.fontFiles.map((href) => <link key={href} rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" href={href} />)}
+        {data && data.imgOrigin !== new URL(data.siteUrl).origin ? <link rel="preconnect" href={data.imgOrigin} /> : null}
         {/* the theme: the one inline block, allowed in the CSP by its hash (entry.server.jsx), because a cached page cannot carry a nonce */}
         {data ? <style dangerouslySetInnerHTML={{ __html: data.themeCss }} /> : null}
       </head>

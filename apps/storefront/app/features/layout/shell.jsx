@@ -7,6 +7,7 @@ import { Announcement } from './announcement'
 import { CheckoutHeader } from './checkout-header'
 import { Footer } from './footer'
 import { Header } from './header'
+import { NavProgress } from './nav-progress'
 import { useShell } from './use-shell'
 
 /** The same page in the other language: `/ur` goes in front or comes off (plan/03 section 8). @param {string} pathname @param {string} search @param {'en' | 'ur'} to */
@@ -64,6 +65,7 @@ export default function Shell() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent">
         {t('shell.skip')}
       </a>
+      <NavProgress />
       {checkout ? null : <Announcement items={notices} />}
       {checkout ? <CheckoutHeader brand={config.brand.name} logo={config.brand.logoLight} /> : <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} />}
       <main id="main" tabIndex={-1}>

@@ -48,13 +48,13 @@ export function ProductCard({ product: p, priority = false }) {
 
   return (
     <article className="group relative flex flex-col">
-      <RouterLink to={path(`/p/${p.handle}`)} className="flex flex-col gap-2 rounded-card focus-visible:outline-2">
+      <RouterLink to={path(`/p/${p.handle}`)} prefetch="intent" className="flex flex-col gap-2 rounded-card focus-visible:outline-2">
         <span className="relative block overflow-hidden rounded-media bg-surface-2">
           <Image
             {...imageProps(p.primaryImage)}
             alt={p.primaryImage.alt || p.title}
             sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw"
-            priority={priority}
+            priority={priority ? 'eager' : false}
             ratio="var(--media-ratio, 3 / 4)"
             className={`w-full ${soldOut ? 'opacity-60' : ''}`}
           />

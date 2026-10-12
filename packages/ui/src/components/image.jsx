@@ -8,7 +8,7 @@ import { cn } from '../cn'
  * width: number;
  * height: number;
  * sizes?: string;
- * priority?: boolean;
+ * priority?: boolean | 'eager'; // true: the page's one largest image, fetched first; 'eager': loaded at once, with no claim on the queue (the first cards of a listing)
  * ratio?: string;
  * lqip?: string;
  * }} ImageProps
@@ -34,7 +34,7 @@ export function Image({ src, srcSet, alt, width, height, sizes, priority, ratio,
       width={width}
       height={height}
       loading={priority ? 'eager' : 'lazy'}
-      fetchPriority={priority ? 'high' : undefined}
+      fetchPriority={priority === true ? 'high' : undefined}
       decoding={priority ? 'sync' : 'async'}
       className={cn('h-auto max-w-full bg-surface-2 bg-cover object-cover', className)}
       style={{ aspectRatio: ratio ?? `${width} / ${height}`, ...(lqip ? { backgroundImage: `url(${lqip})` } : null), ...style }}

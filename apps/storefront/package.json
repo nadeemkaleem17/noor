@@ -10,9 +10,15 @@
     "start": "node --env-file-if-exists=.env node_modules/@react-router/serve/bin.cjs ./build/server/index.js",
     "typecheck": "react-router typegen && tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "budget": "node scripts/bundle-budget.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/noto-nastaliq-urdu": "^5.3.0",
+    "@fontsource-variable/playfair-display": "^5.3.0",
     "@noor/contract": "workspace:*",
     "@noor/i18n": "workspace:*",
     "@noor/ui": "workspace:*",
@@ -24,7 +30,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-i18next": "^17.0.15",
-    "react-router": "~8.4.0"
+    "react-router": "~8.4.0",
+    "web-vitals": "^6.2.2"
   },
   "devDependencies": {
     "@noor/config": "workspace:*",
@@ -38,6 +45,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "lighthouse": "^13.5.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",

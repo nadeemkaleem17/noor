@@ -208,6 +208,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
     return { cartToken: 'tok-123', lines: [], count: req.body.quantity, subtotal: money(0), discount: money(0), total: money(0), messages: [], hasBlockingIssues: false }
   }
+  if (p === '/api/v1/vitals') { state.calls.push('VITALS ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
   if (p === '/api/v1/store/config') return config()
   if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
@@ -1053,6 +1054,48 @@ describe('the storefront through its whole stack', () => {
       expect(xml).toContain('<loc>http://localhost:5174/size-guide</loc>')
       expect((await get('/sitemap/2.xml')).status).toBe(404)
       expect((await get('/sitemap/x.xml')).status).toBe(404)
+    })
+  })
+
+  describe('speed (DOC-06.10)', () => {
+    it('the fonts are the shop own: declared in the theme block, the two the theme names started early, none from another host, a stand-in face against layout shift', async () => {
+      const html = await (await get('/')).text()
+      const style = html.slice(html.indexOf('<style'), html.indexOf('</style>'))
+      expect(style).toContain('font-family:"Playfair Display"')
+      expect(style).toContain('font-family:"Inter"')
+      expect(style).toContain('font-family:"Inter Fallback"')
+      expect(style).toMatch(/font-display:swap/)
+      expect(style).not.toMatch(/Noto Nastaliq/) // the Urdu face is for Urdu pages
+      expect(html.match(/<link[^>]*rel="preload"[^>]*as="font"[^>]*crossorigin="anonymous"[^>]*>/g)).toHaveLength(2)
+      expect(html).not.toMatch(/fonts.(googleapis|gstatic).com/)
+    })
+
+    it('the product and CMS pages do not send the Markdown library to the browser, and their text is already in the HTML', async () => {
+      for (const p of ['/p/dress-1', '/pages/hostile']) {
+        const html = await (await get(p)).text()
+        expect(html, p).not.toMatch(/modulepreload[^>]*markdown-|src="[^"]*markdown-/)
+      }
+      expect(await (await get('/p/dress-1')).text()).toContain('Soft <strong>lawn</strong> with care.')
+    })
+
+    it('the first cards of a listing load at once without claiming the queue; the hero alone is fetched first', async () => {
+      const html = await (await get('/c/lawn')).text()
+      expect(html.match(/<img[^>]*loading="eager"/g)?.length).toBeGreaterThanOrEqual(1)
+      expect(html).not.toMatch(/<img[^>]*fetchPriority="high"/)
+    })
+
+    it('the speed numbers of a browser are passed on as the contract has them, and anything else is dropped with the same quiet answer', async () => {
+      state.calls.length = 0
+      const post = (/** @type {unknown} */ body) => get('/vitals', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      const ok = await post({ name: 'LCP', value: 1800.5, route: 'product', navigationType: 'navigate' })
+      expect(ok.status).toBe(204)
+      expect(state.calls).toEqual(['VITALS {"name":"LCP","value":1800.5,"route":"product","navigationType":"navigate"}'])
+      state.calls.length = 0
+      expect((await post({ name: 'FID', value: 1, route: 'x' })).status).toBe(204)
+      expect((await post('not an object')).status).toBe(204)
+      expect((await get('/vitals', { method: 'POST', body: '{broken' })).status).toBe(204)
+      expect(state.calls).toEqual([])
+      expect((await get('/vitals')).status).toBeGreaterThanOrEqual(400) // there is nothing to read here
     })
   })
 

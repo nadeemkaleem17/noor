@@ -95,7 +95,7 @@ export function ProductSection({ id, title, href, items }) {
   const path = useLocalePath()
   if (items.length < 4) return null
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8" aria-labelledby={id}>
+    <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby={id}>
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <h2 id={id} className="font-heading text-2xl">
           {title}
@@ -128,7 +128,7 @@ export function PromoBand({ promo }) {
 /** The editorial band: a picture beside a short story and a link. @param {{ editorial: NonNullable<HomePublic['editorial']> }} props */
 export function EditorialBand({ editorial }) {
   return (
-    <section className="mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 md:grid-cols-2">
+    <section className="defer-render mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 md:grid-cols-2">
       {editorial.image ? <Image {...imageProps(editorial.image)} sizes="(min-width:768px) 50vw, 100vw" className="w-full rounded-media" /> : null}
       <div className="flex flex-col items-start gap-3">
         {editorial.eyebrow ? <p className="text-sm uppercase tracking-wide text-fg-soft">{editorial.eyebrow}</p> : null}
@@ -146,7 +146,7 @@ export function CollectionsRow({ collections }) {
   const path = useLocalePath()
   if (!collections.length) return null
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-collections">
+    <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-collections">
       <h2 id="home-collections" className="mb-4 font-heading text-2xl">
         {t('home.collections')}
       </h2>

@@ -1,2 +1,23 @@
 @import "@noor/ui/tokens.css";
 @source "../../../packages/ui/src";
+
+/* Below-the-fold sections are laid out when they come near the screen (plan/06-storefront/10-performance.md section 8); the size hint keeps the scroll bar from jumping. */
+@utility defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
+/* A 2 px bar across the top while the router is loading a page. The delay is the animation's, so a quick navigation never shows it and no timer is needed. */
+@keyframes nav-progress {
+  0% { opacity: 0; transform: scaleX(0); }
+  1% { opacity: 1; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(0.9); }
+}
+.nav-progress {
+  transform-origin: 0 50%;
+  animation: nav-progress 4s cubic-bezier(0.1, 0.6, 0.3, 1) 150ms both;
+}
+:dir(rtl) .nav-progress { transform-origin: 100% 50%; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress { animation: none; transform: scaleX(0.5); }
+}

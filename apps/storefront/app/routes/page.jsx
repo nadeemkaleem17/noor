@@ -5,7 +5,8 @@ import { JsonLd } from '~/features/seo/json-ld'
 import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { data, redirect, useLoaderData } from 'react-router'
 import { Breadcrumb } from '@noor/ui/breadcrumb'
-import { Markdown } from '@noor/ui/markdown'
+import { RichText } from '~/features/content/rich-text'
+import { markdownHtml } from '~/lib/markdown.server'
 import { ContactDetails } from '~/features/content/contact-details'
 import { asRouterLink } from '~/features/layout/as-router-link'
 import { useLocalePath } from '~/features/layout/use-shell'
@@ -29,7 +30,7 @@ export async function loader({ params, request }) {
   const { config } = await loadShell(locale)
   const page = await api('content.getPage', { params: { slug: params.slug ?? '' }, query: { locale } }).catch(orNotFound)
   if ('redirectTo' in page) throw redirect(localePath(locale, `/pages/${page.redirectTo}`), 301)
-  return data({ page, brand: config.brand.name, imageOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin, locale })
+  return data({ page, bodyHtml: markdownHtml(page.bodyMd, new URL(getEnv().PUBLIC_IMG_URL).origin), brand: config.brand.name, locale })
 }
 
 export const meta = /** @type {import('./+types/page').Route.MetaFunction} */ (({ loaderData, matches }) => {
@@ -42,7 +43,7 @@ export const meta = /** @type {import('./+types/page').Route.MetaFunction} */ ((
 export default function Page() {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
-  const { page, imageOrigin, locale } = useLoaderData()
+  const { page, bodyHtml, locale } = useLoaderData()
   const site = useSite()
   // the Urdu text is missing: the English one is shown, and said to be English
   const lang = page.locale !== locale ? page.locale : undefined
@@ -52,7 +53,7 @@ export default function Page() {
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: page.title }]} renderLink={asRouterLink} />
       <h1 className="mt-3 font-heading text-3xl" {...(lang ? { lang } : {})}>{page.title}</h1>
       <div className="max-w-[65ch]" {...(lang ? { lang, dir: lang === 'ur' ? 'rtl' : 'ltr' } : {})}>
-        {page.bodyMd.trim() ? <Markdown source={page.bodyMd} imageOrigin={imageOrigin} /> : null}
+        <RichText html={bodyHtml} />
         {page.slug === 'contact' ? <ContactDetails /> : null}
       </div>
     </div>

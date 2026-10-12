@@ -19,7 +19,7 @@ const linkClass = 'rounded-control px-3 py-2 text-fg hover:bg-surface-2'
 function NavLink({ item, onClick, className }) {
   const inside = item.href.startsWith('/')
   return inside ? (
-    <RouterLink to={item.href} onClick={onClick} className={className}>
+    <RouterLink to={item.href} prefetch="intent" onClick={onClick} className={className}>
       {item.label}
     </RouterLink>
   ) : (

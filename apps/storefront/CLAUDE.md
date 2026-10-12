@@ -36,6 +36,9 @@ lib/                     server + shared pure code (no features/ imports allowed
   cart.server.js         cart cookie `nc_cart` (HttpOnly, forwarded as X-Cart-Token), addToCart/cartAction/getCart/cartCount, customizationOf (form -> customization)
   checkout.server.js     deliveryCities, quote, placeOrder (checks CreateOrderBody from the contract BEFORE the API), error mapping
   orders.server.js       loadOrder, orderAction, trackOrder, review (ReviewInput) + photo proxy upload
+  fonts.server.js        fontsFor(theme.fonts, locale) -> { css, preload }: @font-face of the theme's families (Vite `?url` woff2), written into the theme `<style>` block in root.jsx
+  markdown.server.jsx    markdownHtml(source, imageOrigin): CMS/PDP Markdown -> HTML string on the server (the Markdown library never reaches the browser; shown by `features/content/rich-text.jsx`)
+  vitals.js, vitals.client.js   routeName/vitalReport (pure) and the browser reporter (web-vitals -> sendBeacon `/vitals`, production only); `routes/vitals.js` passes it to the API
   seo.js                 PURE: isProductionHost (rubaya.pk only is indexable), robotsTxt, sitemapIndexXml, sitemapXml
   seo.server.js          sitemapFiles (walks the API cursor, cached, 5,000 per file)
   redirects.js           old-shop URL redirects, clean URL (lower case, no trailing slash, but /orders/ keeps case), canonicalQuery (the one canonical param order)
@@ -67,4 +70,6 @@ test/                    unit tests + `shell.server.test.js` (builds the app and
 pnpm --filter @noor/storefront dev            # :5174, needs API :3000 + MySQL :3307
 pnpm --filter @noor/storefront typecheck | lint | test   # test builds the app and starts it (slow, ~1-2 min; one test waits 31 s for the shell cache)
 pnpm --filter @noor/storefront build && pnpm --filter @noor/storefront start   # production server (CSP only here)
+pnpm --filter @noor/storefront budget        # after build: gzip JS/CSS per page against the ceilings in scripts/bundle-budget.mjs (DOC-06.10 section 2)
+pnpm --filter @noor/storefront lighthouse    # needs the production server + API running and Chrome/Edge installed; 3 runs per page, medians, ceilings in scripts/lighthouse.mjs
 ```

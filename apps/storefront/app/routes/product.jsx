@@ -15,6 +15,7 @@ import { orNotFound } from '~/lib/listing.server'
 import { localeOfPath } from '~/lib/locale'
 import { localePath, pagePath } from '~/lib/paths'
 import { loadShell } from '~/lib/shell.server'
+import { markdownHtml } from '~/lib/markdown.server'
 import { ProductPage } from '~/features/product/product-page'
 import { RecentlyViewed, RelatedSection, ReviewsSection } from '~/features/product/deferred'
 
@@ -50,7 +51,7 @@ export async function loader({ params, request }) {
     related,
     brand: config.brand.name,
     whatsapp: config.contact.whatsapp,
-    imageOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin,
+    descriptionHtml: markdownHtml(product.descriptionMd, new URL(getEnv().PUBLIC_IMG_URL).origin),
     url: `${getEnv().PUBLIC_SITE_URL}${pagePath(url)}`,
     cartError: addErrors.find((e) => e === error),
     cartErrorN: Number(url.searchParams.get('n')) || undefined,
@@ -93,12 +94,12 @@ export const meta = /** @type {import('./+types/product').Route.MetaFunction} */
 
 export default function Product() {
   const { t } = useTranslation('storefront')
-  const { product, sizeChart, formSchema, reviews, related, whatsapp, url, imageOrigin, cartError, cartErrorN, sizeParam } = useLoaderData()
+  const { product, sizeChart, formSchema, reviews, related, whatsapp, url, descriptionHtml, cartError, cartErrorN, sizeParam } = useLoaderData()
   const site = useSite()
   return (
     <>
       {site && product.status === 'active' ? <JsonLd data={[breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, ...product.breadcrumb.map((/** @type {{ handle: string, name: string }} */ b) => ({ name: b.name, path: `/c/${b.handle}` })), { name: product.title }]), productLd(site, product)]} /> : null}
-    <ProductPage product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} imageOrigin={imageOrigin} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam}>
+    <ProductPage product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} descriptionHtml={descriptionHtml} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam}>
       {reviews ? (
         <Suspense fallback={<section id="reviews" aria-label={t('pdp.reviews')} className="min-h-40" />}>
           <Await resolve={reviews} errorElement={null}>

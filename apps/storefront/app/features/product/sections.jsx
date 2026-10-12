@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
-import { Markdown } from '@noor/ui/markdown'
+import { RichText } from '../content/rich-text'
 import { useLocalePath } from '../layout/use-shell'
 
 /** @typedef {import('~/lib/selection').ProductDetail} ProductDetail */
@@ -20,9 +20,9 @@ function Section({ title, open, children }) {
 
 /**
  * Details, what is included, fabric and care, delivery and returns (plan/06-storefront/04-pdp.md sections 4 and 5). "Details" is open; a section with nothing to say is left out.
- * @param {{ product: ProductDetail, imageOrigin: string }} props
+ * @param {{ product: ProductDetail, descriptionHtml: string }} props
  */
-export function InfoSections({ product: p, imageOrigin }) {
+export function InfoSections({ product: p, descriptionHtml }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const hasDetails = Boolean(p.descriptionMd) || p.highlights.length > 0
@@ -31,7 +31,7 @@ export function InfoSections({ product: p, imageOrigin }) {
     <div className="border-t border-line">
       {hasDetails ? (
         <Section title={t('pdp.sections.details')} open>
-          {p.descriptionMd ? <Markdown source={p.descriptionMd} imageOrigin={imageOrigin} /> : null}
+          <RichText html={descriptionHtml} />
           {p.highlights.length ? <ul className="mt-2 list-disc ps-5">{p.highlights.map((h) => <li key={h}>{h}</li>)}</ul> : null}
         </Section>
       ) : null}
