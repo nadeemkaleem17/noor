@@ -32,9 +32,8 @@ const customers = () => import('@/routes/customers')
 const customer = () => import('@/routes/customer')
 const promos = () => import('@/routes/promos')
 const reviews = () => import('@/routes/reviews')
+const dashboard = () => import('@/routes/dashboard')
 
-/** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
-const soon = () => import('@/routes/soon')
 
 /**
  * @typedef {object} Screen
@@ -50,7 +49,7 @@ const soon = () => import('@/routes/soon')
 
 /** @type {Screen[]} */
 export const screens = [
-  { path: '/', title: 'Dashboard', permission: 'dashboard:read', group: 'Overview', icon: Gauge, lazy: soon },
+  { path: '/', title: 'Dashboard', permission: 'dashboard:read', group: 'Overview', icon: Gauge, lazy: dashboard },
 
   { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, badge: 'ordersNeedingAction', lazy: orders },
   { path: '/orders/new', title: 'New order', permission: 'orders:edit', lazy: orderNew },

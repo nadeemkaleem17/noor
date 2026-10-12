@@ -10,7 +10,7 @@ authenticator code when it is on.
 ## Shape of `src/`
 
 ```
-main.jsx, app/router.jsx   router built from lib/screens.js (every URL + permission + sidebar group); `routes` is exported for tests; unbuilt screens use routes/soon.jsx
+main.jsx, app/router.jsx   router built from lib/screens.js (every URL + permission + sidebar group); `routes` is exported for tests
 lib/screens.js             THE registry of admin URLs: path, title, permission, sidebar group, icon, lazy route module. Add a screen here, nowhere else for navigation
 lib/api.js                 the typed client (createClient(routes)); session is a cookie; `x-csrf-token` from `admin.me.get` is sent on every call (setCsrfToken)
 lib/session.js             useMe / useCan(permission) / requireMe (route loader guard) / useLogout; lib/safe-next.js (only same-site `next=` redirects)
@@ -35,7 +35,8 @@ Built (M6-01): Orders list (`features/orders/components/order-list.jsx`: tabs fr
 Built (M6-02): Customers list and page (`features/customers/`), staff-created orders (`/orders/new`: `order-new.jsx` + `variant-picker.jsx`). **A feature never imports another** (eslint `no-restricted-imports`): shared reads live in `lib/` (`sales.js`, `phone-links.js`, `catalog.js`) and a route composes features (`routes/customer.jsx` hands the orders block to the customer page).
 Built (M6-03): Promo codes (`features/promos/`: list, drawer at `?new=1`/`?edit=<id>` through `useDrawer`, the rule in words, "Try this code" through `admin.promos.preview`). `components/variant-picker.jsx` finds a product and a variant for any screen that needs one (orders, promo preview).
 Built (M6-04): Reviews queue and drawer (`features/reviews/`; drawer at `?review=<id>`), and the menu badges (`lib/nav-counts.js`; a screen with `feature: 'reviews'` shows only while `reviewsPending` is given).
-**Not built yet (`routes/soon.jsx`)**: Dashboard, Inventory screens beyond the product stock dialog.
+**Built (M6-05)**: the Dashboard (`features/dashboard/`: to-do cards, figures, SVG chart, panels; every panel has its own query, its own loading and its own failure). `lib/age.js` has the waiting-time texts.
+**Not built yet**: keyboard shortcuts, help sheet and command palette (M6-06), Inventory screens beyond the product stock dialog.
 The API for all of these already exists (M4: `admin.orders.*`, `admin.customers.*`, `admin.promos.*`, `admin.reviews.*`, `admin.dashboard.*`, `admin.search`...): M6 is screens only.
 
 ## Conventions

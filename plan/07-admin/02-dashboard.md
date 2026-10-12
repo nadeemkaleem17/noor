@@ -99,12 +99,12 @@ Each panel loads and fails independently (its own error boundary and `ErrorState
 
 ## 8. Acceptance checklist
 
-- [ ] Each to-do card's count equals the row count of the list it links to.
-- [ ] Killing one dashboard endpoint leaves the other panels working.
-- [ ] Changing the period updates the URL; reloading restores it.
-- [ ] The chart has a text alternative (data table) and bars are focusable.
-- [ ] A user with only `catalog` permissions sees no sales figures.
-- [ ] Net sales for a seeded period matches a hand-computed SQL sum in the test.
+- [x] Each to-do card's count equals the row count of the list it links to. (API: the count of "to confirm" equals the orders tab, `reporting.int.test.js`; each card links to the list with its filter in the address.)
+- [x] Killing one dashboard endpoint leaves the other panels working. (`dashboard.test.jsx`: the top-products call fails, the rest stay.)
+- [x] Changing the period updates the URL; reloading restores it. (`dashboard.test.jsx`, `period.test.js`.)
+- [x] The chart has a text alternative (data table) and bars are focusable. (`dashboard.test.jsx`.)
+- [x] A user with only `catalog` permissions sees no sales figures. (The API refuses them the sales calls and the page does not make them: `dashboard.test.jsx` uses a role with `products:read` only and any call that is not allowed fails the test.)
+- [x] Net sales for a seeded period matches a hand-computed SQL sum in the test. (API: `reporting.int.test.js`. Looked at once against the real API: the net sales of the period, 53,990, are the sum of the days in the chart.)
 
 ## 9. Open questions and assumptions
 
@@ -121,3 +121,4 @@ Each panel loads and fails independently (its own error boundary and `ErrorState
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
 | 2026-10-02 | Phase 7 consistency review: admin lists page with `size`, not `limit` |
+| 2026-10-12 | M6-05 built (`/`). Differences: a role without `orders:read` gets the to-do cards the API gives it and the searches with no results, and no top products (the API needs `orders:read` for them, so "a catalog role sees stock cards and top products only" is "stock cards" in practice); the failed-jobs card links to `/audit` (there is no job filter there); the card for reviews is left out while the store has reviews off (the API gives no count then); the definition of each figure is written under it, not in a tooltip, so it can be read by everyone; the change against the period before is shown only when there was something before. |

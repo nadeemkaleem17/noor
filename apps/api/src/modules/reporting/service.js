@@ -125,7 +125,7 @@ export function createReporting({ db, config, settings, media }) {
         out.lowStock = { count: rows.find((r) => r.status === 'low_stock')?.n ?? 0 }
         out.soldOut = { count: rows.find((r) => r.status === 'sold_out')?.n ?? 0 }
       }
-      if (may(actor, 'reviews:read')) out.reviewsPending = { count: (await db.select({ n: count() }).from(reviews).where(eq(reviews.status, 'pending')))[0]?.n ?? 0 }
+      if (may(actor, 'reviews:read') && (await settings.value('store', db)).value.features.reviews) out.reviewsPending = { count: (await db.select({ n: count() }).from(reviews).where(eq(reviews.status, 'pending')))[0]?.n ?? 0 }
       if (may(actor, 'audit:read')) out.failedJobs = { count: (await db.select({ n: count() }).from(jobsDead))[0]?.n ?? 0 }
       return out
     },
