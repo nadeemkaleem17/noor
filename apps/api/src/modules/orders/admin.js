@@ -6,6 +6,7 @@ import { formatPkMobileLocal, maskPkMobile } from '@noor/contract'
 import { staffUsers } from '../../db/schema/auth.js'
 import { customers } from '../../db/schema/customers.js'
 import { orderLines, orders } from '../../db/schema/orders.js'
+import { cities, couriers } from '../../db/schema/shipping.js'
 import { rupees, toCsv } from '../../platform/csv.js'
 import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { transaction } from '../../platform/db.js'
@@ -247,6 +248,15 @@ export function createAdminOrders({ db, config, orders: orderService, cart, paym
       const [{ n: total } = { n: 0 }] = await db.select({ n: count() }).from(orders).where(where)
       const rows = await db.select().from(orders).where(where).orderBy(dir(by), desc(orders.id)).limit(q.size).offset((q.page - 1) * q.size)
       return { items: await rowsOf(rows, seeCustomer), total, page: q.page, size: q.size }
+    },
+
+    /** The couriers in use and every city, by name: what the dispatch dialog and the city filter offer. */
+    async lookups() {
+      const [cs, cts] = await Promise.all([
+        db.select().from(couriers).where(eq(couriers.enabled, true)).orderBy(asc(couriers.sortOrder), asc(couriers.name)),
+        db.select({ id: cities.id, name: cities.name }).from(cities).orderBy(asc(cities.name)),
+      ])
+      return { couriers: cs.map((c) => ({ id: c.id, name: c.name, trackingRequired: c.trackingRequired, ...(c.trackingUrlPattern ? { trackingUrlPattern: c.trackingUrlPattern } : {}) })), cities: cts }
     },
 
     async counts() {

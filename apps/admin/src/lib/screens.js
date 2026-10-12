@@ -25,6 +25,8 @@ const account = () => import('@/routes/account')
 const staff = () => import('@/routes/staff')
 const staffMember = () => import('@/routes/staff-member')
 const audit = () => import('@/routes/audit')
+const orders = () => import('@/routes/orders')
+const order = () => import('@/routes/order')
 
 /** Screens that are not rebuilt yet share one placeholder module; each milestone task swaps in its own. */
 const soon = () => import('@/routes/soon')
@@ -43,9 +45,9 @@ const soon = () => import('@/routes/soon')
 export const screens = [
   { path: '/', title: 'Dashboard', permission: 'dashboard:read', group: 'Overview', icon: Gauge, lazy: soon },
 
-  { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, lazy: soon },
+  { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, lazy: orders },
   { path: '/orders/new', title: 'New order', permission: 'orders:edit', lazy: soon },
-  { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: soon },
+  { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: order },
   { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: soon },
   { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: soon },
   { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: soon },

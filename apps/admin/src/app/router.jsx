@@ -14,6 +14,12 @@ async function shellLoader({ request }) {
   return null
 }
 
+/** @param {{ request: Request; }} args */
+async function printLoader({ request }) {
+  await requireMe(request)
+  return null
+}
+
 const Loading = () => (
   <div className="grid min-h-dvh place-items-center">
     <Spinner label="Loading" />
@@ -49,6 +55,8 @@ export const routes = [
   { path: '/accept-invite/:token', lazy: () => import('@/routes/accept-invite'), HydrateFallback: Loading },
   { path: '/enrol-2fa', lazy: () => import('@/routes/enrol-2fa'), HydrateFallback: Loading },
   ...moved.map(([from, to]) => ({ path: from, loader: () => redirect(to) })),
+  // the invoice pages have no shell: they are for the printer (plan/07-admin/05-orders.md section 5.2)
+  ...['/orders/print', '/orders/:id/print'].map((path) => ({ path, loader: printLoader, lazy: () => import('@/routes/order-print'), HydrateFallback: Loading })),
   {
     path: '/',
     loader: shellLoader,

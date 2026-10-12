@@ -164,6 +164,11 @@ const staffRoute = { auth: /** @type {const} */ ('staff') }
 export const adminOrderRoutes = defineRoutes({
   'admin.orders.list': { method: 'GET', path: '/admin/orders', ...staffRoute, permission: 'orders:read', query: OrderListQuery, response: Page(AdminOrderRow) },
   'admin.orders.counts': { method: 'GET', path: '/admin/orders/counts', ...staffRoute, permission: 'orders:read', response: z.record(Enum.orderStatus, z.int()) },
+  // what the order screens choose from (the dispatch dialog, the city filter): given to everyone who reads orders, since a fulfilment role may not read settings
+  'admin.orders.lookups': {
+    method: 'GET', path: '/admin/orders/lookups', ...staffRoute, permission: 'orders:read',
+    response: z.strictObject({ couriers: z.array(z.strictObject({ id: Id, name: z.string(), trackingRequired: z.boolean(), trackingUrlPattern: z.string().optional() })), cities: z.array(z.strictObject({ id: Id, name: z.string() })) }),
+  },
   'admin.orders.get': { method: 'GET', path: '/admin/orders/:id', ...staffRoute, permission: 'orders:read', params: OrderRef, response: AdminOrder },
   // the permission depends on where the order is going (confirm, dispatch, deliver, cancel, return): the handler checks it
   'admin.orders.transition': { method: 'POST', path: '/admin/orders/:id/transitions', ...staffRoute, permission: 'orders:read', params: OrderRef, body: TransitionBody, response: AdminOrder },

@@ -15,6 +15,7 @@ export function ordersHandlers(s, admin) {
   return {
     'admin.orders.list': async ({ actor, query }) => admin.list(query, actor),
     'admin.orders.counts': async () => admin.counts(),
+    'admin.orders.lookups': async () => admin.lookups(),
     'admin.orders.get': async ({ actor, params }) => admin.get(params.id, actor),
     'admin.orders.transition': async ({ actor, params, body, http, requestId }) => admin.transition(actor, params.id, body, info(http, requestId)),
     'admin.orders.edit': async ({ actor, params, body, http, requestId }) => admin.edit(actor, params.id, body, info(http, requestId)),

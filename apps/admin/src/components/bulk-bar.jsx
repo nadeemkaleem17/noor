@@ -11,7 +11,7 @@ import { AppLink } from './app-link'
  * What a bulk action sends and gets back (plan/07-admin/14-tables-bulk.md section 5; the wire shape is plan/10-api/00 section 10).
  * @typedef {{ ids: string[]; } | { filter: Record<string, unknown>; expectedTotal: number; }} BulkTarget
  * @typedef {{ succeeded: string[]; failed: { id: string; code: string; detail?: string; }[]; }} BulkResult
- * @typedef {BulkResult | { jobId: string; } | { download: { filename: string; blob: Blob; }; }} BulkOutcome
+ * @typedef {BulkResult | { jobId: string; } | { download: { filename: string; blob: Blob; }; } | { cancelled: true; }} BulkOutcome
  * @typedef {object} BulkAction
  * @property {string} id
  * @property {string} label

@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router'
 import { downloadBlob } from '@/lib/download'
 import { messageFor } from '@/lib/errors'
 import { useListParams } from '@/lib/list-params'
+import { useMediaQuery } from '@/lib/use-media-query'
 import { setHiddenColumns, usePrefs } from '@/lib/prefs'
 import { useCan } from '@/lib/session'
 import { AppLink } from './app-link'
@@ -41,7 +42,7 @@ const fmt = (n) => n.toLocaleString('en')
 /**
  * The one list component of the admin (plan/07-admin/14-tables-bulk.md). Search, filters, sort, page and page size live in the address;
  * the server sorts, filters and pages. Declare columns, filters and actions; do not build a `<table>` by hand.
- * Not built yet: card layout on small screens (`cardBelow`, with Orders), column resizing, virtualised rows (100 plain rows need none), the `async` filter.
+ * Below the `md` width a list that gives `renderCard` becomes a list of cards (no column sorting there). Not built yet: column resizing, virtualised rows (100 plain rows need none), the `async` filter.
  *
  * @template T
  * @param {object} props
@@ -60,8 +61,10 @@ const fmt = (n) => n.toLocaleString('en')
  * @param {(row: T) => import('@noor/ui/menu').MenuItem[]} [props.rowActions]
  * @param {{ title: string; body?: string; action?: import('react').ReactNode; }} props.empty - shown when the list is empty and unfiltered
  * @param {string} [props.searchPlaceholder]
+ * @param {(row: T, selection: { selected: boolean; onSelect: (on: boolean) => void; } | null) => import('react').ReactNode} [props.renderCard] - one row as a card on a phone; `selection` is null when the table has no bulk actions
+ * @param {boolean} [props.selectAllMatching] - offer "select all matching this filter" (an action that can only take ids sets it to false)
  */
-export function DataTable({ id, label, schema, query, columns, filters = [], defaultSort, rowId, rowLabel, rowHref, bulkActions = [], getJob, rowActions, empty, searchPlaceholder }) {
+export function DataTable({ id, label, schema, query, columns, filters = [], defaultSort, rowId, rowLabel, rowHref, bulkActions = [], getJob, rowActions, empty, searchPlaceholder, renderCard, selectAllMatching = true }) {
   const { params, set } = useListParams(schema)
   const result = useQuery({ ...query(params), placeholderData: keepPreviousData })
   const queryClient = useQueryClient()
@@ -69,6 +72,7 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
   const toast = useToast()
   const can = useCan()
   const prefs = usePrefs()
+  const cards = useMediaQuery('(max-width: 767px)') && renderCard !== undefined
 
   const actions = bulkActions.filter((a) => !a.permission || can(a.permission))
   const hidden = prefs.tables[id]?.hidden ?? columns.filter((c) => c.defaultHidden).map((c) => c.id)
@@ -116,6 +120,7 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
     const target = current.all ? { filter: /** @type {Record<string, unknown>} */ (matching), expectedTotal: total } : { ids: current.ids }
     try {
       const outcome = await action.run(target)
+      if ('cancelled' in outcome) return // the action asked something first and the person backed out
       if ('jobId' in outcome) {
         toast.push({ title: `Working on ${fmt(count)} items…` })
         setJobs((j) => [...j, { jobId: outcome.jobId, action }])
@@ -176,6 +181,26 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
         <ErrorState title={`${label} could not be loaded`} retryLabel="Try again" onRetry={() => void result.refetch()} />
       ) : (
         <div aria-busy={refreshing} className={refreshing ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+          {cards ? (
+            <ul className="space-y-2" aria-label={label}>
+              {result.isPending ? (
+                Array.from({ length: 6 }, (_, i) => (
+                  <li key={i}>
+                    <Skeleton className="h-24 w-full" />
+                  </li>
+                ))
+              ) : rows.length === 0 ? (
+                <li>
+                  {filtered ? <EmptyState title="No results" body="Nothing matches the search and filters." action={<Button variant="secondary" onClick={() => set({ q: undefined, ...Object.fromEntries(filters.flatMap(filterKeys).map((k) => [k, undefined])) })}>Clear filters</Button>} /> : <EmptyState title={empty.title} body={empty.body} action={empty.action} />}
+                </li>
+              ) : (
+                rows.map((row) => {
+                  const key = rowId(row)
+                  return <li key={key}>{renderCard?.(row, actions.length ? { selected: current.all || current.ids.includes(key), onSelect: (on) => toggle([key], on) } : null)}</li>
+                })
+              )}
+            </ul>
+          ) : (
           <Table label={label}>
             <caption className="sr-only">{label}</caption>
             <thead>
@@ -266,10 +291,11 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
                     })}
             </tbody>
           </Table>
+          )}
         </div>
       )}
 
-      {actions.length && pageAllSelected && !current.all && total > rows.length ? (
+      {actions.length && selectAllMatching && pageAllSelected && !current.all && total > rows.length ? (
         <p className="text-sm">
           All {fmt(rows.length)} on this page are selected.{' '}
           <Button variant="link" onClick={() => setSelection({ key: matchKey, ids: [], all: true })}>

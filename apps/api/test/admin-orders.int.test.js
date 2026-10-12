@@ -112,6 +112,11 @@ describe.skipIf(!dbAvailable)('admin orders (MySQL, through HTTP)', () => {
       const row = (await list(`?q=${a.number}`)).items[0]
       expect(row).toMatchObject({ orderNumber: a.number, customerName: 'Sana Malik', city: 'Lahore', itemCount: 1, firstItemTitle: expect.any(String), total: { amount: 225000 }, paymentMethod: 'cod', paymentStatus: 'unpaid' })
       expect((await S.owner.call('GET', '/admin/orders/counts')).body).toEqual({ pending: 0, pending_confirmation: 2, confirmed: 1, dispatched: 0, delivered: 0, cancelled: 0, returned: 0 })
+      // the dispatch dialog and the city filter read their choices without settings:read
+      const look = await (await signedIn('fulfilment')).b.call('GET', '/admin/orders/lookups')
+      expect(look.status).toBe(200)
+      expect(look.body.couriers).toEqual([{ id: tcs, name: 'TCS', trackingRequired: false }])
+      expect(look.body.cities.some((/** @type {{ name: string }} */ c) => c.name === 'Lahore')).toBe(true)
       // a tab of orders waiting for somebody lists the oldest first
       expect((await list('?status=pending_confirmation')).items.map((/** @type {{ id: string }} */ r) => r.id)).toEqual([a.id, c.id])
     }, 120_000)

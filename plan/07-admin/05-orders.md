@@ -149,15 +149,15 @@ Stable codes stored on events (labels are message keys): cancel: `customer_reque
 
 ## 8. Acceptance checklist
 
-- [ ] The UI offers exactly the server's `allowedActions` for each status (test iterates all statuses with an `owner` and a `support` user). (The server side exists and is tested per status: `allowedActions` in `modules/orders/rules.js`; the UI check is M6.)
+- [x] The UI offers exactly the server's `allowedActions` for each status (test iterates all statuses with an `owner` and a `support` user). (`order-detail.test.jsx`; the server side is `allowedActions` in `modules/orders/rules.js`. Exceptions: `switch_to_cod` is for the customer only, and "Record payment" is left out of a cash on delivery order unless a deposit is owed.)
 - [x] Confirm is blocked while a deposit is due and unpaid. (API: `deposit_unpaid`; `order-changes.int.test.js`.)
 - [x] Dispatch assigns an invoice number once; printing twice shows the same number. (API; the print view is M6.)
 - [x] Cancel releases reserved stock (variant "reserved" drops) and the timeline shows the reason and actor. (API: the variant's `reserved` drops; the timeline event carries the reason and the actor.)
 - [x] Returning 1 of 2 units with "Restock: no" does not increase on-hand stock. (API.)
-- [ ] Two staff acting on one order: the second sees the "order was updated" banner, not a silent overwrite. (API: the second gets `stale_write` and nothing is overwritten; the banner is M6.)
-- [ ] Bulk dispatch with one invalid row applies the valid ones and lists the failure. (M4-10 and M6.)
-- [ ] List and detail are usable at 360 px; call and WhatsApp buttons work on a phone.
-- [ ] The print view contains no unescaped customer input (test with `<script>` in the address).
+- [x] Two staff acting on one order: the second sees the "order was updated" banner, not a silent overwrite. (API: the second gets `stale_write` and nothing is overwritten; the screen refetches and shows the banner: `order-detail.test.jsx`.)
+- [x] Bulk dispatch with one invalid row applies the valid ones and lists the failure. (API: M4-10; the screen reports "N done, M failed" with a list of the failures: `order-list.test.jsx` for confirm, the dispatch dialog and its paste box are tested apart.)
+- [x] List and detail are usable at 360 px; call and WhatsApp buttons work on a phone. (Looked at in the browser at 375 px against the real API: a card list, no sideways scroll, 44 px call and WhatsApp buttons that are `tel:` and `wa.me` links. Not tried on a real phone.)
+- [x] The print view contains no unescaped customer input (test with `<script>` in the address). (`order-print.test.jsx`.)
 
 ## 9. Open questions and assumptions
 
@@ -176,3 +176,4 @@ Stable codes stored on events (labels are message keys): cancel: `customer_reque
 | 2026-10-02 | Initial version (Phase 3) |
 | 2026-10-02 | Phase 4: `orders:note` permission for attempts and notes (DOC-11) |
 | 2026-10-02 | Phase 7 consistency review: table name `order_events` |
+| 2026-10-12 | M6-01 built. Differences and gaps: the `kind` filter (made to order) is not offered, the API has no such filter; the tab "All" is every status in the address and the address without a status is "To confirm"; "Switch to COD" is not offered to staff (the API lets only the customer do it); the edit dialog changes the address, the city and quantities (0 removes a line) with the server's old and new totals, but does not add a line by SKU (that comes with staff-created orders, DOC-07.6); the "Confirm" bulk action asks how the customers were reached and sends one answer for all; "Print invoices" opens one print page for the selected orders (`/orders/print?ids=`); the sidebar badge of orders needing action is not built; the Code 128 barcode was checked against the standard's check-symbol rule and the 11-module rule, not with a scanner. New API route `admin.orders.lookups` (couriers and cities for the dispatch dialog and the city filter, `orders:read`) because the fulfilment role has no `settings:read`. |
