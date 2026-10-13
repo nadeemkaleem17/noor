@@ -31,6 +31,8 @@ export function registerSecurity(app, config) {
 
   app.decorateRequest('clientIp', '')
   app.addHook('onRequest', async (req, reply) => {
+    // a caller that claims to be the storefront with the wrong key is refused, not quietly treated as a visitor: a mismatched key must be seen at once (DOC-11 section 9)
+    if (internalKey !== null && req.headers['x-internal-key'] !== undefined && !fromStorefront(req)) throw new DomainError('unauthenticated')
     const forwarded = fromStorefront(req) ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0]?.trim() : ''
     ;/** @type {{ clientIp: string }} */ (/** @type {unknown} */ (req)).clientIp = forwarded && isIP(forwarded) ? forwarded : req.ip
 

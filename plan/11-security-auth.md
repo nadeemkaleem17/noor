@@ -2,6 +2,7 @@
 
 | Field | Value |
 |---|---|
+| 2026-10-13 | M7-03: review against sections 11 to 13 (13.1). Changes: the admin's headers have a source (`apps/admin/security-headers.js`, `dist/_headers`) and its theme script is a file, so the policy of section 5.3 holds; the storefront policy gains `style-src-attr 'unsafe-inline'`; a wrong `X-Internal-Key` is a 401; the log redaction list is longer (credentials in headers, password fields, database errors); the order token is compared with `safeEqual`; `scripts/check-secrets.mjs` replaces the lint rule and gitleaks for the banned strings and well-known credential shapes; `import.meta.env` is never passed whole in the admin. Every box of section 13 is ticked with the test that covers it |
 | ID | DOC-11 |
 | Title | Staff authentication, sessions, 2FA, RBAC matrix, CSRF/CORS/headers, rate limits, audit trail, secrets, personal data, OWASP checklist |
 | Status | Draft |
@@ -211,6 +212,7 @@ Storefront CSP (nonce generated per request in `entry.server.tsx`):
 default-src 'self';
 script-src 'self' 'nonce-<n>';
 style-src 'self' 'nonce-<n>';
+style-src-attr 'unsafe-inline';
 img-src 'self' https://img.rubaya.pk data:;
 font-src 'self';
 connect-src 'self';
@@ -219,9 +221,9 @@ frame-ancestors 'none';
 base-uri 'self';
 object-src 'none'
 ```
-The inline theme `<style>` and JSON-LD scripts carry the nonce. A cacheable page must not embed a per-request nonce, so for L and S routes the theme CSS is served as a **hash-allowed** inline block instead: the CSP header for those routes lists `'sha256-<hash of the theme CSS>'` (computed when the store config is loaded, cached with it) and JSON-LD blocks need no allowance (`type="application/ld+json"` is not executed). Private routes use the nonce.
+The inline theme `<style>` and JSON-LD scripts carry the nonce. `style-src-attr 'unsafe-inline'` allows style *attributes* only (the aspect ratio of a picture, a colour swatch, the position Base UI gives a popup: none can carry a hash or a nonce); a `<style>` element can still only be the theme. Without it a normal purchase made 77 violations (found by E2E-19 at M7-03). A cacheable page must not embed a per-request nonce, so for L and S routes the theme CSS is served as a **hash-allowed** inline block instead: the CSP header for those routes lists `'sha256-<hash of the theme CSS>'` (computed when the store config is loaded, cached with it) and JSON-LD blocks need no allowance (`type="application/ld+json"` is not executed). Private routes use the nonce.
 
-Admin CSP: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'` (Base UI positions popups with inline styles) `; img-src 'self' https://img.rubaya.pk data: blob:; connect-src 'self' https://api.rubaya.pk https://<storage host>` (presigned uploads) `; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'`.
+Admin CSP (written by `apps/admin/security-headers.js` into `dist/_headers` at build and sent by `vite preview`; the admin has no inline script, its theme is resolved by `public/theme-init.js`): `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'` (Base UI positions popups with inline styles) `; img-src 'self' https://img.rubaya.pk data: blob:; connect-src 'self' https://api.rubaya.pk https://<storage host>` (presigned uploads) `; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'`.
 
 Analytics or payment hosts are added to these policies only by the DOC-12 change that introduces them.
 
@@ -288,7 +290,7 @@ Written by `audit.record(tx, …)` inside the mutating transaction (ADR-0012). E
 | `TRACKING_KEY` (derives order tracking tokens, DOC-10.3 §4) | API, worker | Only on compromise: rotating it invalidates every customer order link |
 | CDN purge token, provider keys (later) | Worker | Per provider guidance |
 
-Rules: no secret in the repository, in the contract, in the database, in logs or in any client bundle; `.env` files are gitignored and `.env.example` holds names only; CI runs a secret scanner (gitleaks) on every push and fails on a finding; the string `VITE_ADMIN_KEY` is banned by a lint rule (ADR-0012). The current `mock-api/.env` key `dev-key` is a development value and is deleted with the mock.
+Rules: no secret in the repository, in the contract, in the database, in logs or in any client bundle; `.env` files are gitignored and `.env.example` holds names only; CI runs a secret scanner (gitleaks) on every push and fails on a finding; the string `VITE_ADMIN_KEY` (and `dev-key`) is banned by `scripts/check-secrets.mjs`, which is part of `pnpm check` (ADR-0012). The admin reads its two settings by name (`src/lib/env.js`), never `import.meta.env` whole, because Vite puts every `VITE_` variable it is handed into the bundle.
 
 ## 8. Personal data
 
@@ -329,7 +331,7 @@ Payment card data is never collected or stored by us (hosted redirect only, ADR-
 | Tracking token | 32 random bytes base64url, stored hashed (SHA-256) like sessions; compared by hash lookup; `Referrer-Policy: no-referrer` on order pages |
 | Order lookup | Uniform failure response; database rate limits (§5.4) |
 | Preview links | `admin.products.previewLink` returns a URL with an HMAC-signed, 15-minute token; the storefront verifies it and renders the draft with `noindex, no-store` |
-| Internal key | Storefront → API header; requests with a wrong key are rejected (`401`), requests with none are treated as external |
+| Internal key | Storefront → API header (`X-Internal-Key`); a request with a wrong key is rejected (`401 unauthenticated`), one with none is any visitor. With the key, the visitor address in `X-Forwarded-For` is believed and the API's limits count it |
 | Bots on checkout | Rate limits (§5.4) and COD confirmation (ADR-0017). No CAPTCHA in v1. Trigger to add one: more than 5% of orders in a week cancelled as `suspected_fake` |
 
 ## 10. Supply chain
@@ -369,18 +371,37 @@ Reviewed before each release that touches auth, orders, payments or uploads.
 
 ## 13. Acceptance checklist
 
-- [ ] Route × role matrix test passes for every admin route.
-- [ ] Every non-GET admin route produces one audit row (table-driven test).
-- [ ] 6 wrong passwords for one email → `429`; the correct password is also refused until the window ends.
-- [ ] Session id changes after login and after 2FA; the old id is rejected.
-- [ ] A cross-origin `POST` to an admin route with a valid cookie but wrong `Origin` or missing `X-CSRF-Token` → `403 csrf_failed`.
-- [ ] `orders.create` with `"total": 1` in the body → `400` (unknown key).
-- [ ] The eleventh `orders.track` attempt from one IP in an hour → `429`.
-- [ ] Database dump inspection: no plaintext passwords, session ids, tokens or TOTP secrets.
-- [ ] `grep -rn "VITE_ADMIN_KEY\|dev-key" apps packages` returns nothing; gitleaks passes.
-- [ ] Response headers on storefront, API and admin match §5.3 (automated header test).
-- [ ] The API database user cannot `UPDATE` or `DELETE` `audit_log` (integration test expects the trigger's error `audit_log is append-only`).
-- [ ] A `viewer` receives masked phones in `admin.orders.get`.
+- [x] Route × role matrix test passes for every admin route. (`auth.int.test.js`: "route x role" and "route x stranger".)
+- [x] Every non-GET admin route produces one audit row (table-driven test). (`audit.int.test.js`.)
+- [x] 6 wrong passwords for one email → `429`; the correct password is also refused until the window ends. (`auth.int.test.js`: "blocks the sixth failed attempt".)
+- [x] Session id changes after login and after 2FA; the old id is rejected. (`auth.int.test.js`: enrolment, "asks for a code after the password" (the half-finished id is dead after the code), password change.)
+- [x] A cross-origin `POST` to an admin route with a valid cookie but wrong `Origin` or missing `X-CSRF-Token` → `403 csrf_failed`. (`auth.int.test.js`: "refuses a state change from another origin" and "without the CSRF token".)
+- [x] `orders.create` with `"total": 1` in the body → `400` (unknown key). (`orders.int.test.js`: money keys in the body.)
+- [x] The eleventh `orders.track` attempt from one IP in an hour → `429`. (`public-orders.int.test.js`.)
+- [x] Database dump inspection: no plaintext passwords, session ids, tokens or TOTP secrets. (`secrets-at-rest.int.test.js` makes each through the real flows and searches every text and binary column of every table; it first proves the search finds an email, which is kept as it is.)
+- [x] `grep -rn "VITE_ADMIN_KEY\|dev-key" apps packages` returns nothing; gitleaks passes. (`node scripts/check-secrets.mjs`, in `pnpm check`: private keys, well-known tokens, passwords in connection addresses, untracked-example env files, the old key; clean on the tree and on the history. gitleaks itself needs a download and was not run. The grep found `dev-key` in a built admin bundle at M7-03: a stale `VITE_ADMIN_KEY` in the local `.env.local` that `import.meta.env` put into it; fixed at the source.)
+- [x] Response headers on storefront, API and admin match §5.3 (automated header test). (`security.test.js` and `server.test.js` for the code; `apps/e2e/tests/19-security-headers.spec.js` on the real responses of all three, and the shop and the admin used under their policies with no violation.)
+- [x] The API database user cannot `UPDATE` or `DELETE` `audit_log` (integration test expects the trigger's error `audit_log is append-only`). (`audit.int.test.js`: "append-only".)
+- [x] A `viewer` receives masked phones in `admin.orders.get`. (`admin-orders.int.test.js`.)
+
+### 13.1 Review at M7-03
+
+Read against section 11, with the controls run rather than only read. What was checked, and what it found:
+
+| Risk | Checked | Found and fixed |
+|---|---|---|
+| A01 Access control | Route × role and route × stranger tests; masking; object access only by cookie or token (cart token, order token); admin `?next=` and the cart's `returnTo` accept same-site paths only (anchored patterns) | Order token compared with `!==` after the hash lookup (not exploitable: the lookup by hash comes first): now `safeEqual`, as rule 12 says |
+| A02 Misconfiguration | Config validated at boot; `RELAXED_PASSWORDS` and `TWO_FACTOR_REQUIRED=0` refused outside local and CI; headers of all three apps on real responses; CSP exercised by use | **The admin had no source for its headers** (now `security-headers.js`); **its inline theme script would have been blocked by its own policy** (moved to `public/theme-init.js`); **the storefront policy blocked every style attribute** (`style-src-attr`) |
+| A03 Supply chain | `pnpm audit --prod`; `minimumReleaseAge`; install scripts allow-list; lock file | Two moderate advisories, both in `legacy/storefront` (old `react-router-dom`), which M7-04 deletes. None in the apps |
+| A04 Cryptography | Argon2id parameters; hashed session ids and tokens; AES-256-GCM for TOTP; `randomBytes` for tokens; the dump search (§13) | Nothing |
+| A05 Injection | Every `sql.raw` (a constant list, constant sort keys, a constant offset); `dangerouslySetInnerHTML` (server-made Markdown from the allow-list renderer, JSON-LD escaped for `<`, the validated theme); CSV prefixing; strict bodies | Nothing |
+| A06 Design | Server pricing, idempotency, stock and state-machine tests | The storefront's calls carried no visitor address, so the limits counted the whole shop as one customer (10 orders in 10 minutes for everybody): fixed at M7-01 (§9) |
+| A07 Authentication | Throttling, lockout, rotation, 2FA replay, recovery codes, step-up (existing integration tests) | Nothing |
+| A08 Integrity | Webhook signature compared in constant time over the raw body; migrations immutable | Nothing |
+| A09 Logging | Redaction list on a real logger (`logger.test.js`) | The list lacked the internal key, the CSRF and cart tokens, `Set-Cookie`, password-change fields, recovery codes and **the SQL of a database error (statement with values, duplicate entry)**: added |
+| A10 Exceptional conditions | One error handler; no stack or SQL in a problem; checks fail closed | A caller that sent a wrong `X-Internal-Key` was quietly treated as a visitor; the plan says 401, and a mismatched key should be seen at once: now 401 |
+
+Not done, and why: no penetration test (Q-11-7; before online payments), TLS and the database `ssl` setting are for the production phase, a WAF is not needed yet (Q-11-6), gitleaks was not run (a download; `check-secrets` stands in), `/readyz` names the failing dependency to anyone (kept: it helps the platform's health check; revisit with DOC-14).
 
 ## 14. Open questions and assumptions
 

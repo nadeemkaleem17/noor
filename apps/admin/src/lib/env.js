@@ -7,5 +7,6 @@ const parsed = z
     /** Where "View storefront" points. */
     VITE_STOREFRONT_URL: z.url().default('http://localhost:5174'),
   })
-  .parse(import.meta.env)
+  // the two names are read one by one: handing over `import.meta.env` whole would put every VITE_ variable of the machine into the bundle
+  .parse({ VITE_API_URL: import.meta.env.VITE_API_URL, VITE_STOREFRONT_URL: import.meta.env.VITE_STOREFRONT_URL })
 export const env = { apiUrl: parsed.VITE_API_URL.replace(/\/+$/, ''), storefrontUrl: parsed.VITE_STOREFRONT_URL }

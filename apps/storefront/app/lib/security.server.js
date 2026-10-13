@@ -31,6 +31,8 @@ export function securityHeaders(opts) {
       `script-src 'self' 'nonce-${opts.nonce}'`,
       // the theme is the one inline style, allowed by its hash: a page that a CDN keeps cannot carry a per-visitor nonce
       `style-src 'self'${opts.themeHash ? ` 'sha256-${opts.themeHash}'` : ''}`,
+      // style *attributes* (a picture's aspect ratio, a colour swatch, the position Base UI gives a popup) cannot carry a hash or a nonce; elements still can only be the theme
+      "style-src-attr 'unsafe-inline'",
       `img-src 'self' ${opts.imgOrigin} data:`,
       "font-src 'self'",
       "connect-src 'self'",

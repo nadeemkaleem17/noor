@@ -121,7 +121,8 @@ describe('the CSP of a page with a theme (plan/04-design-system/tokens.md sectio
     const csp = securityHeaders({ ...opts, themeHash: 'HASH123=' })['Content-Security-Policy'] ?? ''
     expect(csp).toContain("style-src 'self' 'sha256-HASH123='")
     expect(csp).not.toMatch(/style-src[^;]*nonce/)
-    expect(csp).not.toMatch(/style-src[^;]*unsafe-inline/)
+    expect(csp).not.toMatch(/(^|; )style-src [^;]*unsafe-inline/)
+    expect(csp).toContain("style-src-attr 'unsafe-inline'") // attributes only: see security.server.js
   })
   it('allows no inline style when there is no theme block', () => {
     expect(securityHeaders(opts)['Content-Security-Policy']).toContain("style-src 'self';")

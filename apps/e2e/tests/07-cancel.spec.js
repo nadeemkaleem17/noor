@@ -14,7 +14,9 @@ test('E2E-07 cancelling a pending order gives the stock back', async ({ page }) 
   await fillCheckout(page)
   await page.getByRole('button', { name: 'Place order' }).click()
   const number = await orderNumber(page)
-  expect((await publicProduct('embroidered-clutch')).variants[0].available).toBe(4)
+  // the public figure follows the stock through the outbox (a cache purge), so it is waited for, not read once
+  const available = async () => (await publicProduct('embroidered-clutch')).variants[0].available
+  await expect.poll(available, { timeout: 15_000 }).toBe(4)
 
   await page.getByRole('button', { name: 'Cancel order' }).click()
   await expect(page.getByRole('alertdialog')).toContainText(`Cancel order ${number}?`)
@@ -22,6 +24,6 @@ test('E2E-07 cancelling a pending order gives the stock back', async ({ page }) 
 
   await expect(page.getByText('Cancelled').first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0)
-  expect((await publicProduct('embroidered-clutch')).variants[0].available).toBe(5)
+  await expect.poll(available, { timeout: 15_000 }).toBe(5)
   await api.dispose()
 })

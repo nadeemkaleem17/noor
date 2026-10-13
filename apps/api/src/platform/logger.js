@@ -11,6 +11,24 @@ export const redactPaths = [
   '*.landmark',
   '*.secret',
   '*.promoCode',
+  // what a request or a response carries that works as a credential
+  'req.headers["x-internal-key"]',
+  'req.headers["x-csrf-token"]',
+  'req.headers["x-cart-token"]',
+  'res.headers["set-cookie"]',
+  '*.currentPassword',
+  '*.newPassword',
+  '*.recoveryCode',
+  '*.otpauthUri',
+  // a database error carries the statement with its values (a phone, an address) and the duplicate value in its message
+  'err.sql',
+  'err.sqlMessage',
+  'err.query',
+  'err.params',
+  'err.cause.sql',
+  'err.cause.sqlMessage',
+  'err.cause.query',
+  'err.cause.params',
 ]
 
 /**

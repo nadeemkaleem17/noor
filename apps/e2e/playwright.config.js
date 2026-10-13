@@ -3,7 +3,7 @@
 // The smoke set also runs on WebKit when E2E_WEBKIT=1 (needs `playwright install webkit`).
 import { defineConfig, devices } from '@playwright/test'
 import path from 'node:path'
-import { apiEnv, dataDir, ports, root, storefrontEnv, urls } from './env.mjs'
+import { adminBuildEnv, apiEnv, dataDir, ports, root, storefrontEnv, urls } from './env.mjs'
 
 const channel = (process.env.E2E_CHANNEL ?? 'chrome') === 'chromium' ? undefined : (process.env.E2E_CHANNEL ?? 'chrome')
 
@@ -37,6 +37,7 @@ export default defineConfig({
     {
       command: `node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${ports.admin} --strictPort`,
       cwd: path.join(root, 'apps/admin'),
+      env: adminBuildEnv(), // `vite preview` sends the admin's security headers, which name the API's address
       url: urls.admin,
       reuseExistingServer: false,
       timeout: 60_000,

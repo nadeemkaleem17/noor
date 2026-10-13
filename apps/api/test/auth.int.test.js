@@ -143,8 +143,14 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
       expect((await b.call('POST', '/admin/auth/login', { body: { email: u.email, password: PASSWORD } })).body).toEqual({ next: 'two_factor' })
       expect((await b.call('GET', '/admin/me')).body.code).toBe('two_factor_required')
       expect((await b.call('POST', '/admin/auth/2fa', { body: { code: '123456' } })).body.code).toBe('invalid_code')
+      const pending = /** @type {string} */ (b.state.cookie)
       expect((await b.twoFactor(secret)).body).toEqual({ next: 'ok' })
       expect((await b.call('GET', '/admin/me')).status).toBe(200)
+      // the session id changes with the code, and the half-finished one is dead (DOC-11 section 13)
+      expect(b.state.cookie).not.toBe(pending)
+      const old = browser()
+      old.state.cookie = pending
+      expect((await old.call('GET', '/admin/me')).status).toBe(401)
     }, 60_000)
 
     it('a code cannot be used twice', async () => {

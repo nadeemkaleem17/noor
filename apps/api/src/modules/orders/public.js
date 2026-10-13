@@ -6,6 +6,7 @@ import { now } from '../../platform/clock.js'
 import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
 import { reviews } from '../../db/schema/reviews.js'
+import { safeEqual } from '../auth/tokens.js'
 import { reviewState } from '../reviews/window.js'
 import * as repo from './repository.js'
 import { isFinal } from './transitions.js'
@@ -109,7 +110,7 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
   const byToken = async (token) => {
     const o = await repo.orderByTokenHash(db, trackingHash(token))
     // the hash says the link was ours once; the derived value says it still is (a new TRACKING_KEY ends every old link)
-    if (!o || token !== trackingToken(config, o.id)) throw new DomainError('not_found')
+    if (!o || !safeEqual(token, trackingToken(config, o.id))) throw new DomainError('not_found')
     return o
   }
 

@@ -118,8 +118,16 @@ describe('client address and the internal key', () => {
     expect(await ipFor({ 'x-internal-key': KEY, 'x-forwarded-for': '203.0.113.5, 10.0.0.2' })).toBe('203.0.113.5')
     expect(await ipFor({ 'x-internal-key': KEY, 'x-forwarded-for': '2001:db8::1' })).toBe('2001:db8::1')
     expect(await ipFor({ 'x-forwarded-for': '203.0.113.5' })).toBe('10.9.9.9')
-    expect(await ipFor({ 'x-internal-key': 'x'.repeat(40), 'x-forwarded-for': '203.0.113.5' })).toBe('10.9.9.9')
-    expect(await ipFor({ 'x-internal-key': 'short', 'x-forwarded-for': '203.0.113.5' })).toBe('10.9.9.9')
+  })
+
+  it('refuses a caller that sends the wrong key with 401, and treats one with no key as any visitor', async () => {
+    const app = await makeTest(keyed)
+    for (const key of ['x'.repeat(40), 'short', '']) {
+      const res = await app.inject({ url: '/api/v1/test/me', remoteAddress: '10.9.9.9', headers: { 'x-internal-key': key, 'x-forwarded-for': '203.0.113.5' } })
+      expect(res.statusCode, key).toBe(401)
+      expect(res.json()).toMatchObject({ code: 'unauthenticated' })
+    }
+    expect(await ipFor({ 'x-forwarded-for': '203.0.113.5' })).toBe('10.9.9.9')
   })
 
   it('ignores a forwarded value that is not an address, and everything when no key is configured', async () => {

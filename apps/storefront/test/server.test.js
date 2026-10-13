@@ -41,7 +41,7 @@ describe('securityHeaders', () => {
     expect(csp).toContain('img-src \'self\' https://img.rubaya.pk data:')
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("object-src 'none'")
-    expect(csp).not.toContain('unsafe-inline')
+    expect((csp ?? '').replace("style-src-attr 'unsafe-inline'", '')).not.toContain('unsafe-inline') // the one exception is for style attributes
   })
   it('sends no CSP from the dev server, but keeps the other headers', () => {
     const h = securityHeaders({ ...opts, production: false })

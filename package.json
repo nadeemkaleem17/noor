@@ -13,7 +13,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run typecheck lint test --concurrency=3 && node scripts/check-logical.mjs",
+    "check": "turbo run typecheck lint test --concurrency=3 && node scripts/check-logical.mjs && node scripts/check-secrets.mjs",
     "route-keys": "node scripts/route-keys.mjs",
     "postinstall": "node scripts/fix-pnpm-links.mjs",
     "test:e2e": "pnpm --filter @noor/e2e e2e"

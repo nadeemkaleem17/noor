@@ -347,7 +347,7 @@ describe('the storefront through its whole stack', () => {
     const hash = createHash('sha256').update(/** @type {string} */ (style).replaceAll('&amp;', '&')).digest('base64')
     const csp = r.headers.get('content-security-policy') ?? ''
     expect(csp).toContain(`style-src 'self' 'sha256-${hash}'`)
-    expect(csp).not.toMatch(/style-src[^;]*unsafe-inline/)
+    expect(csp).not.toMatch(/(^|; )style-src [^;]*unsafe-inline/)
   })
 
   it('order pages are never sent with a referrer', async () => {
