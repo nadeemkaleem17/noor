@@ -7,8 +7,9 @@ import { expect } from '@playwright/test'
  * look through the page at a place that is not on the screen, and says so differently from one run to the next (the same link passes and fails on two loads
  * of the same page); a target that is really too small is reported by its size and is not skipped.
  * @param {import('@playwright/test').Page} page
+ * @returns {Promise<string[]>} one line for each rule that fails: its id, impact and the first elements
  */
-export async function expectNoViolations(page) {
+export async function axeFindings(page) {
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze()
   const real = violations
     .map((v) => ({
@@ -16,5 +17,10 @@ export async function expectNoViolations(page) {
       nodes: v.nodes.filter((n) => v.id !== 'target-size' || !n.any.some((c) => /partially obscured/.test(c.message))),
     }))
     .filter((v) => v.nodes.length > 0)
-  expect(real.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 4).join(' | ')}`)).toEqual([])
+  return real.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 4).join(' | ')}`)
+}
+
+/** @param {import('@playwright/test').Page} page */
+export async function expectNoViolations(page) {
+  expect(await axeFindings(page)).toEqual([])
 }

@@ -115,7 +115,7 @@ export function Header({ brand, logo, items, wishlist }) {
     <header className="sticky top-0 z-30 border-b border-line bg-bg">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-2">
         <MobileMenu items={items} />
-        <RouterLink to={path('/')} className="me-4 flex items-center font-heading text-2xl font-semibold text-fg">
+        <RouterLink to={path('/')} className="me-1 flex items-center sm:me-4 font-heading text-2xl font-semibold text-fg">
           {logo ? <img src={logo.src} srcSet={logo.srcset} alt={brand} width={logo.width} height={logo.height} className="h-9 w-auto" /> : brand}
         </RouterLink>
         <DesktopNav items={items} />

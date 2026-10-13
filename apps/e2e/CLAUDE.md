@@ -1,7 +1,7 @@
 # apps/e2e: the end-to-end journeys (read this before touching a journey)
 
 Playwright against the **built** storefront and admin, a **real API** and a **scratch MySQL database**. The 17 journeys of `plan/13-quality.md` §4 are `tests/NN-*.spec.js`;
-accessibility (axe, WCAG 2.2 AA) runs on the pages E2E-01, 08, 09 and others visit (`support/axe.js`). Plan: `plan/13-quality.md` §4, §7, §11.
+accessibility (axe, WCAG 2.2 AA) runs on the pages E2E-01, 08, 09 and others visit (`support/axe.js`); `tests/18-accessibility-sweep.spec.js` (not a journey) scans every storefront and admin screen and the storefront at 320 px. Plan: `plan/13-quality.md` §4, §7, §11.
 
 ```
 pnpm test:e2e                    # from the repo root: prepare (database + builds), start the three servers, run every journey (~8 min)
