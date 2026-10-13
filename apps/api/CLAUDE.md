@@ -75,7 +75,7 @@ test/                  *.test.js (pure) and *.int.test.js (a scratch MySQL datab
 ## Commands
 
 ```
-pnpm --filter @noor/api start | db:migrate | db:generate | db:seed [--base-only|--no-demo|--perf] | cli owner:create ...
+pnpm --filter @noor/api start | db:migrate | db:generate | db:seed [--base-only|--no-demo|--perf] | cli owner:create ... | cli launch:check (what stands between this shop and opening)
 pnpm --filter @noor/api test            # needs MySQL on :3307 for *.int.test.js (they skip with a warning otherwise: check MySQL is up when tests look "skipped")
 pnpm --filter @noor/api test:perf | test:coverage
 ```

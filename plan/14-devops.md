@@ -2,6 +2,7 @@
 
 | Field | Value |
 |---|---|
+| 2026-10-13 | M7-05: `cli launch:check` (section 5.2) |
 | ID | DOC-14 |
 | Title | Environments, local setup, configuration, migrations, seed data, CI/CD, deployment topology, backups, runbooks |
 | Status | Draft |
@@ -177,6 +178,8 @@ Each app has a committed `.env.example` with names, comments and no real values.
 | Owner account | Local seed creates `owner@rubaya.test` and prints a random password once (never stored in clear). `owner:create --email <e>` is the CLI for any other environment | local, ci, staging |
 | Demo | Built through the real services (so it obeys the publish checks, writes the stock ledger and the audit log): 8 categories, 4 attributes, 24 products with two generated placeholder pictures each (made with `sharp`, processed by the real media pipeline), colourways, a made-to-order bridal line with a custom-size form, 3 collections, store contact details and home content. About 45 seconds. The old `fixtures.js` is not converted: it was built for a different schema and the new data covers every product kind | local, ci, staging |
 | `--perf` | 3,000 more products (`perf-00000`…), about 25,000 variants with sizes, stock, attributes and pictures from a pool of 12 media rows, written with bulk inserts in the shape the services write; seeded random numbers so every run is the same. The 20,000 orders wait for the order tables (M4) | local, ci |
+
+**Is the shop ready to open?** `pnpm --filter @noor/api cli launch:check` reads the database and lists what stands between this shop and opening (`apps/api/src/launch.js`): blockers (the shop's telephone, WhatsApp, email and address; the return days; no delivery method on; delivery zones still named "(review fees before launch)" by the seed; cash on delivery off; one of the four required pages not published; no published product; the local development owner `owner@rubaya.test` still present on a shop that is not local) and advice (no logo). It exits 1 while there is a blocker, so the launch runbook can use it as a gate. The base seed deliberately holds no real contact details.
 
 Measured on the dev machine (M1-13): the whole `--perf` run (base, owner, demo and 3,000 products, including the search reindex) takes 80 seconds, under the 2-minute budget. Tests do not depend on the demo seed: each integration test builds its own data with factory helpers (DOC-13); `test/seed.int.test.js` runs the real seed on a scratch database.
 

@@ -2,6 +2,7 @@
 
 | Field | Value |
 |---|---|
+| 2026-10-13 | M7-05: the drafts of the four required pages are fuller (shipping and following an order, advance payment on very large orders, damaged or wrong items, the two cookies and the speed measurements, how long records are kept, delivery times as estimates, made-to-order terms, limits of responsibility, governing law). No new token; a test (`apps/api/test/launch.test.js`) checks that every token they use is one the shop knows and every link goes to a page that exists |
 | ID | DOC-06.8 |
 | Title | Content pages, policies, contact, size guide, safe Markdown rendering |
 | Status | Draft |
@@ -45,6 +46,8 @@ Seeded by `db:seed` and listed in the footer menu. Staff can edit but not delete
 | `terms` | Terms of service | Pricing and availability, order confirmation by phone, cancellation, COD refusal policy |
 | `contact` | Contact us | Rendered from `StoreConfig.contact` by the route, **not** from Markdown: phone (`tel:`), WhatsApp, email (`mailto:`), address, map link, opening hours, socials. Optional intro from the page's `bodyMd`. No contact form in v1 |
 | `about` | About us | Optional; shown in the footer only when active |
+
+The drafts are in `apps/api/src/seed/pages.js` and say only what the shop's software does (cash on delivery, a phone call to confirm, cancel before dispatch, the tracking link, made-to-order pieces, two cookies and no advertising or tracking services, anonymising on request). Every number and contact detail is a token (`{{shipping.fee}}`, `{{returns.days}}`, `{{store.phone}}`...); a token whose setting is empty prints nothing, which is why `launch:check` (DOC-14 §5.2) refuses to open a shop with an empty contact setting. They are drafts, not legal advice: the owner reads every word before launch (README A-09, DOC-16 LAUNCH-10). Pages already in a database are never overwritten by the seed.
 
 `StoreConfig.policies.*` (short strings) are used for one-line summaries elsewhere (PDP delivery accordion, checkout footer); the full text lives in these pages.
 

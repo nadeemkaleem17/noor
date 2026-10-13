@@ -3,6 +3,12 @@
 
 /** @typedef {{ freeAbove?: string, fee?: string }} ShippingFacts ready-to-print amounts, e.g. "Rs. 3,000" */
 
+/** A WhatsApp number is kept as digits (923001234567); a page prints it the way a person reads a number: +92 300 1234567. Anything else is printed as it is. @param {string | undefined} digits */
+const readable = (digits) => {
+  const m = /^92(\d{3})(\d{7})$/.exec(digits ?? '')
+  return m ? `+92 ${m[1]} ${m[2]}` : digits
+}
+
 /**
  * @param {string} text
  * @param {import('@noor/contract').StoreSettings} store
@@ -13,7 +19,7 @@ export function resolveTokens(text, store, shipping) {
   const values = {
     'store.phone': store.contact.phone,
     'store.email': store.contact.email,
-    'store.whatsapp': store.contact.whatsapp,
+    'store.whatsapp': readable(store.contact.whatsapp),
     'store.address': store.contact.address,
     'shipping.freeAbove': shipping.freeAbove,
     'shipping.fee': shipping.fee,
