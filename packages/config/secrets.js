@@ -16,8 +16,8 @@ export const shapes = [
   { name: 'the old shared admin key', pattern: /VITE_ADMIN_KEY|\bdev-key\b/ },
 ]
 
-/** Files that are not looked at: this scanner itself and its test (they name the shapes), the plan (it names the banned strings), the old code that is going, the lock file. */
-const skipped = [/^plan\//, /^legacy\//, /^pnpm-lock\.yaml$/, /^packages\/config\/secrets\.js$/, /^packages\/config\/test\/secrets\.test\.js$/, /\.(png|jpe?g|webp|avif|gif|ico|woff2?|zip|pdf)$/i]
+/** Files that are not looked at: this scanner itself and its test (they name the shapes), the plan (it names the banned strings), the lock file. */
+const skipped = [/^plan\//,/^pnpm-lock\.yaml$/, /^packages\/config\/secrets\.js$/, /^packages\/config\/test\/secrets\.test\.js$/, /\.(png|jpe?g|webp|avif|gif|ico|woff2?|zip|pdf)$/i]
 
 /**
  * @param {string} file path relative to the repository root
