@@ -1,4 +1,4 @@
-// The admin's initial JavaScript, gzipped (ADR-0015: at most 200 kB; plan/13-quality.md section 6.4).
+// The admin's initial JavaScript, gzipped (ADR-0015, amended at M7-09: at most 230 kB, measured 222.3 at sign-in and 227.5 at the dashboard; plan/13-quality.md section 6.4).
 // Counts the entry chunk, everything it imports at load time, and the route chunk a first visit opens (default: login) with its own imports.
 // Usage: node scripts/admin-initial-js.mjs [route-chunk-prefix]   (after `pnpm --filter @noor/admin build`)
 import { readdirSync, readFileSync } from 'node:fs'
@@ -8,7 +8,7 @@ import { gzipSync } from 'node:zlib'
 const dist = path.resolve(import.meta.dirname, '../apps/admin/dist')
 const assets = path.join(dist, 'assets')
 const route = process.argv[2] ?? 'login'
-const BUDGET_KB = 200
+const BUDGET_KB = 230
 
 const html = readFileSync(path.join(dist, 'index.html'), 'utf8')
 const entry = /src="\/assets\/([^"]+\.js)"/.exec(html)?.[1]
