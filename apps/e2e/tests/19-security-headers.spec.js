@@ -37,6 +37,15 @@ test('headers: the API, the storefront and the admin send the headers of the tab
   expect(adminCsp).toContain("frame-ancestors 'none'")
 })
 
+test('icons: the shop and the admin each serve their favicon and touch icon', async ({ request }) => {
+  for (const origin of [urls.storefront, urls.admin]) {
+    const icon = await request.get(`${origin}/favicon.svg`)
+    expect(icon.headers()['content-type']).toContain('image/svg+xml')
+    expect(await icon.text()).toContain('>R</text>')
+    expect((await request.get(`${origin}/apple-touch-icon.png`)).headers()['content-type']).toContain('image/png')
+  }
+})
+
 test('headers: an order page sends no referrer', async ({ page, request }) => {
   await addToCart(page, 'embroidered-clutch')
   await page.goto('/checkout')

@@ -3,7 +3,7 @@
 import { ApiError } from '@noor/contract'
 import { variantFor } from '~/lib/selection'
 import { api } from './api.server'
-import { getEnv } from './env.server'
+import { cookieSecure } from './env.server'
 import { localeOfPath } from './locale'
 
 export const CART_COOKIE = 'nc_cart'
@@ -25,7 +25,7 @@ export function cartHeaders(request) {
 }
 
 /** @param {string} token */
-export const cartCookie = (token) => `${CART_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${THIRTY_DAYS}; HttpOnly; SameSite=Lax${getEnv().NODE_ENV === 'production' ? '; Secure' : ''}`
+export const cartCookie = (token) => `${CART_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${THIRTY_DAYS}; HttpOnly; SameSite=Lax${cookieSecure()}`
 
 /** What a customer attached to a line, from the add form: the answers to the custom-size form (`m.<key>`), a note, and the chosen variant of each child of a bundle (`bundle.<productId>`). @param {FormData} form @returns {import('@noor/contract').LineCustomization | undefined} */
 export function customizationOf(form) {
@@ -97,7 +97,7 @@ export async function addToCart(request, form) {
 }
 
 /** The cookie that ends the cart: after the order is placed the cart belongs to the order. */
-export const clearCartCookie = () => `${CART_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${getEnv().NODE_ENV === 'production' ? '; Secure' : ''}`
+export const clearCartCookie = () => `${CART_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${cookieSecure()}`
 
 /** What a visitor with no cart sees; the API makes a cart only when something is added (plan/06-storefront/05-cart-checkout.md section 2). @type {import('@noor/contract').Cart} */
 export const emptyCart = { lines: [], count: 0, subtotal: { amount: 0, currency: 'PKR' }, discount: { amount: 0, currency: 'PKR' }, total: { amount: 0, currency: 'PKR' }, messages: [], hasBlockingIssues: false }

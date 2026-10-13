@@ -34,3 +34,6 @@ let cached
  * @returns {Env}
  */
 export const getEnv = () => (cached ??= parseEnv(process.env))
+
+/** `; Secure` for a cookie when the shop's public address is https (a browser such as Safari drops a Secure cookie on plain http, as the local test servers are). */
+export const cookieSecure = () => (getEnv().PUBLIC_SITE_URL.startsWith('https:') ? '; Secure' : '')

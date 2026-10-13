@@ -5,7 +5,7 @@ import { enrolTwoFactor, signIn } from '../support/admin.js'
 import { expectNoViolations } from '../support/axe.js'
 import { recall } from '../support/state.js'
 
-test('E2E-08 staff confirm, dispatch and deliver an order @smoke', async ({ browser }) => {
+test('E2E-08 staff confirm, dispatch and deliver an order @smoke @staff', async ({ browser }) => {
   const { number, url: orderUrl } = recall('order')
 
   // first sign-in of a new owner: the forced two-step set-up

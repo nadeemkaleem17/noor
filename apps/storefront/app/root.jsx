@@ -79,6 +79,8 @@ export function Layout({ children }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <Links />
         {data?.fontFiles.map((href) => <link key={href} rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" href={href} />)}
         {data && data.imgOrigin !== new URL(data.siteUrl).origin ? <link rel="preconnect" href={data.imgOrigin} /> : null}

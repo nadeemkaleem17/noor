@@ -10,7 +10,7 @@ import { toggleSaved, useWishlist } from '~/features/wishlist/use-wishlist'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { cookieValue } from '~/lib/cart.server'
-import { getEnv } from '~/lib/env.server'
+import { cookieSecure } from '~/lib/env.server'
 import { localeOfPath } from '~/lib/locale'
 import { loadShell } from '~/lib/shell.server'
 import { parseWishlist, serializeWishlist, WISHLIST_COOKIE, WISHLIST_MAX_AGE } from '~/lib/wishlist'
@@ -45,7 +45,7 @@ export async function loader({ request }) {
   const live = serializeWishlist(items.map((p) => p.id.toLowerCase()))
   // the cookie is only touched when it holds something the shop no longer sells or something that is not an id
   const rewrite = raw !== undefined && raw !== live
-  const cookie = `${WISHLIST_COOKIE}=${encodeURIComponent(live)}; Path=/; Max-Age=${live ? WISHLIST_MAX_AGE : 0}; SameSite=Lax${getEnv().NODE_ENV === 'production' ? '; Secure' : ''}`
+  const cookie = `${WISHLIST_COOKIE}=${encodeURIComponent(live)}; Path=/; Max-Age=${live ? WISHLIST_MAX_AGE : 0}; SameSite=Lax${cookieSecure()}`
   return data({ items, notifyMe: config.features.notifyMe }, rewrite ? { headers: { 'Set-Cookie': cookie } } : undefined)
 }
 

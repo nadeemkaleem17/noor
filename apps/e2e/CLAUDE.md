@@ -16,7 +16,7 @@ pnpm --filter @noor/e2e serve    # the three servers by hand (API 3100, storefro
 - `scripts/prepare.mjs` drops and makes the database, migrates, seeds (base + demo shop), creates the staff (`e2e-owner`, `e2e-fresh`, `e2e-viewer`), then builds the storefront and the admin with the scratch API address baked in. It also clears `.data/e2e`.
 - `playwright.config.js` starts the API (`APP_ENV=ci`, two-step sign-in **on**), the storefront's production server and `vite preview` of the admin. One worker: the journeys share a database.
 - `global-setup.js` signs `e2e-owner` in through the real screens, does the forced two-step set-up and saves the browser state (`.data/e2e/owner.json`) and the authenticator secret (`secrets.json`). `support/admin.js` signs in with a code (a code is used once per 30 s: the last one used is kept in a file).
-- Browser: the Chrome on this machine (`E2E_CHANNEL=chromium` for the one Playwright downloads, as CI does). `E2E_WEBKIT=1` adds the smoke set on WebKit (`playwright install webkit` first).
+- Browser: the Chrome on this machine (`E2E_CHANNEL=chromium` for the one Playwright downloads, as CI does). `E2E_WEBKIT=1` adds the smoke set on WebKit (journeys tagged `@staff` are left out there: the staff cookie is Secure and these servers are plain http) (`playwright install webkit` first).
 
 ## State, and why the order matters
 

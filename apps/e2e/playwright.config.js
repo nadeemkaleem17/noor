@@ -1,6 +1,6 @@
 // End-to-end run (plan/13-quality.md section 4). `pnpm --filter @noor/e2e test` prepares the scratch database and the builds, then starts the three
 // servers below and runs every journey. The browser is the Chrome on this machine (E2E_CHANNEL=chromium for the one Playwright downloads, as CI does).
-// The smoke set also runs on WebKit when E2E_WEBKIT=1 (needs `playwright install webkit`).
+// The smoke set also runs on WebKit when E2E_WEBKIT=1 (needs `playwright install webkit`), except journeys tagged @staff: the staff session cookie is Secure and these servers are plain http, which Safari refuses (staff use a desktop browser).
 import { defineConfig, devices } from '@playwright/test'
 import path from 'node:path'
 import { adminBuildEnv, apiEnv, dataDir, ports, root, storefrontEnv, urls } from './env.mjs'
@@ -22,7 +22,7 @@ export default defineConfig({
   use: { baseURL: urls.storefront, locale: 'en-GB', timezoneId: 'Asia/Karachi', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'], ...(channel ? { channel } : {}) } },
-    ...(process.env.E2E_WEBKIT ? [{ name: 'webkit', grep: /@smoke/, use: { ...devices['Desktop Safari'] } }] : []),
+    ...(process.env.E2E_WEBKIT ? [{ name: 'webkit', grep: /@smoke/, grepInvert: /@staff/, use: { ...devices['Desktop Safari'] } }] : []),
   ],
   webServer: [
     { command: 'node src/main.js', cwd: path.join(root, 'apps/api'), env: apiEnv(), url: `${urls.api}/readyz`, reuseExistingServer: false, timeout: 60_000 },
