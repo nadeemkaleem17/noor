@@ -271,6 +271,8 @@ The 75th percentile per route and day is computed from the buckets. This is the 
 
 ### 12.1 Script for the screen-reader passes (M7-02)
 
+**A helper for the first rows (M7-09, not yet run):** `apps/e2e/screen-reader/product-page.sr.spec.js` drives real NVDA through the product page with Guidepup and checks the heading, the size radios and the add button were announced (`pnpm --filter @noor/e2e test:sr` after `npx @guidepup/setup` as an administrator; see `apps/e2e/CLAUDE.md`). It does not replace a person listening: the table below still has to be signed by one.
+
 What a machine can check is checked by `apps/e2e/tests/18-accessibility-sweep.spec.js` (axe, WCAG 2.2 AA, on every storefront and admin screen, with the checkout showing its errors, a dialog and a side panel open, and the storefront at 320 px); it passes. What follows is for a person with the real tools. **Nothing in the table above is filled in until somebody has done this and signed it.**
 
 **Set-up.** Windows with the latest NVDA and Chrome (and Firefox once), the shop run locally: `pnpm dev` (admin and API) and `pnpm --filter @noor/storefront dev`, or the prepared copy with `pnpm --filter @noor/e2e prepare:data` then `pnpm --filter @noor/e2e serve` (shop :4174, admin :4173, sign in as `e2e-owner@rubaya.test`, password in `apps/e2e/env.mjs`, two-step set-up asks for an authenticator). Android with TalkBack and Chrome for the phone pass (the shop reached through the computer's address on the same network, or a tunnel). Turn the screen off or look away from it: the pass is by ear.

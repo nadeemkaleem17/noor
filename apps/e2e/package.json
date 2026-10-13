@@ -9,16 +9,19 @@
     "serve": "node scripts/serve.mjs",
     "e2e": "node scripts/prepare.mjs && playwright test",
     "test:only": "playwright test",
+    "test:sr": "playwright test -c playwright.sr.config.js",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint ."
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@guidepup/guidepup": "^0.35.0",
+    "@guidepup/playwright": "^0.19.1",
     "@noor/config": "workspace:*",
     "@playwright/test": "^1.63.0",
-    "otplib": "13.5.0",
     "@types/node": "^24",
     "eslint": "^10.10.0",
+    "otplib": "13.5.0",
     "typescript": "~6.0.3"
   }
 }

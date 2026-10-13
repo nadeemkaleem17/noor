@@ -202,6 +202,12 @@ importers:
       '@axe-core/playwright':
         specifier: ^4.13.0
         version: 4.13.0(playwright-core@1.63.0)
+      '@guidepup/guidepup':
+        specifier: ^0.35.0
+        version: 0.35.0
+      '@guidepup/playwright':
+        specifier: ^0.19.1
+        version: 0.19.1(@guidepup/guidepup@0.35.0)(@playwright/test@1.63.0)
       '@noor/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -1263,6 +1269,15 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
+
+  '@guidepup/guidepup@0.35.0':
+    resolution: {integrity: sha512-US64a++RucCtLfoq/DqnjzaHYpKzERVYmhtsWViz38MyklICICDpb50AKLn9sbxUwTceK2rS0fjDy7fYpWK/QA==}
+
+  '@guidepup/playwright@0.19.1':
+    resolution: {integrity: sha512-d0FMH6LFbRbV71l2NGzv2gqV3vQbHDfTVctXsKm6d1ZahpS2/Ozq1WCEoZ7QTAR6iuNzwy03tZfvyijGH+zUDw==}
+    peerDependencies:
+      '@guidepup/guidepup': '>=0.33.0'
+      '@playwright/test': ^1.57.0
 
   '@hookform/resolvers@5.9.1':
     resolution: {integrity: sha512-7b7vsbraJxKgjVSA1Nur9tLwj539WGJUBLA7QNvXnFoT2pM5Z7G+6rlukk4B2/QrTZy6huRtH6wKeESPKuIr6w==}
@@ -2629,6 +2644,10 @@ packages:
 
   '@webcontainer/env@1.1.1':
     resolution: {integrity: sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng==}
+
+  '@xmldom/xmldom@0.9.12':
+    resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
+    engines: {node: '>=14.6'}
 
   abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
@@ -4248,6 +4267,10 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
+  plist@4.0.0:
+    resolution: {integrity: sha512-4dOqNo0Y2NpfSf9q4+zr4bh7pzNWeckIam34Z0KYJhg8qtNNfh59VbD+Yna5SjwcxawVvLKx5w5FtuCijpEF4Q==}
+    engines: {node: '>=18'}
+
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
@@ -5014,6 +5037,10 @@ packages:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
 
+  xmlbuilder@15.1.1:
+    resolution: {integrity: sha512-yMqGBqtXyeN1e3TGYvgNgDVZ3j84W4cwkOXQswghol6APgZWaff9lnbvN7MHYJOiXsvGPXtjTYJEiC9J2wv9Eg==}
+    engines: {node: '>=8.0'}
+
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
@@ -5664,6 +5691,18 @@ snapshots:
   '@formatjs/intl-localematcher@0.6.2':
     dependencies:
       tslib: 2.8.1
+
+  '@guidepup/guidepup@0.35.0':
+    dependencies:
+      debug: 4.4.3
+      plist: 4.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@guidepup/playwright@0.19.1(@guidepup/guidepup@0.35.0)(@playwright/test@1.63.0)':
+    dependencies:
+      '@guidepup/guidepup': 0.35.0
+      '@playwright/test': 1.63.0
 
   '@hookform/resolvers@5.9.1(ajv@8.20.0)(react-hook-form@7.89.0(@types/react@19.3.0)(react@19.3.0))(valibot@1.5.0(typescript@6.0.3))(zod@3.25.76)':
     dependencies:
@@ -6726,6 +6765,8 @@ snapshots:
       tinyrainbow: 2.0.0
 
   '@webcontainer/env@1.1.1': {}
+
+  '@xmldom/xmldom@0.9.12': {}
 
   abstract-logging@2.0.1: {}
 
@@ -8571,6 +8612,11 @@ snapshots:
     dependencies:
       playwright-core: 1.63.0
 
+  plist@4.0.0:
+    dependencies:
+      '@xmldom/xmldom': 0.9.12
+      xmlbuilder: 15.1.1
+
   postcss@8.5.28:
     dependencies:
       nanoid: 3.3.19
@@ -9345,6 +9391,8 @@ snapshots:
   xdg-basedir@5.1.0: {}
 
   xml-name-validator@5.0.0: {}
+
+  xmlbuilder@15.1.1: {}
 
   xmlchars@2.2.0: {}
 

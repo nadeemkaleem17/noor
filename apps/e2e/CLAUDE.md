@@ -30,3 +30,7 @@ Set-up that is not what the journey is about goes through the API as the owner (
 - The shop keeps its settings in memory for 30 s: a saved theme or language shows within that (poll with reloads).
 - The session cookie is `Secure`; a Playwright request context does not send it over http, so `support/api.js` sends it by hand.
 - Do not write regular expressions with backslashes through the shell here (`cat <<EOF`, `node -e`): use the Edit tool.
+
+## Screen reader (NVDA), not part of `pnpm test:e2e`
+
+`screen-reader/*.sr.spec.js` with `playwright.sr.config.js`: real NVDA on Windows driven by Guidepup (`@guidepup/playwright`), in a headed Firefox, on the same servers. It asserts what NVDA *said*, loosely (never a snapshot of the log: NVDA's wording changes between versions). **Written at M7-09, not yet run**: it needs NVDA installed, which changes the machine and needs an administrator (`npx @guidepup/setup`, then `npx playwright install firefox`). Run: `pnpm --filter @noor/e2e prepare:data && pnpm --filter @noor/e2e test:sr`. If a phrase differs on a real run, fix the pattern in the test and say so here. TalkBack has no automation: it stays a manual pass (`plan/13-quality.md` §12.1).
