@@ -1,11 +1,12 @@
 import { Breadcrumb } from '@noor/ui/breadcrumb'
 import { IconButton } from '@noor/ui/button'
 import { Menu } from '@noor/ui/menu'
-import { LogOut, Menu as MenuIcon, Monitor, Moon, Store, Sun, User } from 'lucide-react'
+import { LogOut, Menu as MenuIcon, Monitor, Moon, Search, Store, Sun, User } from 'lucide-react'
 import { useMatches, useNavigate } from 'react-router'
 import { env } from '@/lib/env'
 import { setPrefs, usePrefs } from '@/lib/prefs'
 import { useLogout, useMe } from '@/lib/session'
+import { withKeys } from '@/lib/shortcuts'
 
 const themeIcons = /** @type {const} */ ({ light: Sun, dark: Moon, system: Monitor })
 
@@ -19,10 +20,10 @@ function Crumbs() {
 }
 
 /**
- * Menu button (below `lg`), breadcrumb, theme and user menus. The command palette (`Ctrl/Cmd K`) arrives with DOC-07.15.
- * @param {{ onOpenMenu: () => void; }} props
+ * Menu button (below `lg`), breadcrumb, the search and commands button, theme and user menus.
+ * @param {{ onOpenMenu: () => void; onOpenPalette: () => void; }} props
  */
-export function TopBar({ onOpenMenu }) {
+export function TopBar({ onOpenMenu, onOpenPalette }) {
   const me = useMe()
   const navigate = useNavigate()
   const logout = useLogout()
@@ -36,6 +37,7 @@ export function TopBar({ onOpenMenu }) {
       <div className="min-w-0 flex-1">
         <Crumbs />
       </div>
+      <IconButton label={withKeys('Search and commands', 'mod+k')} icon={<Search aria-hidden className="size-5" />} onClick={onOpenPalette} />
       <Menu
         align="end"
         trigger={<IconButton label={`Theme: ${theme}`} icon={<ThemeIcon aria-hidden className="size-5" />} />}

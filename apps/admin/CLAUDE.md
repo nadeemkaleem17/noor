@@ -36,7 +36,8 @@ Built (M6-02): Customers list and page (`features/customers/`), staff-created or
 Built (M6-03): Promo codes (`features/promos/`: list, drawer at `?new=1`/`?edit=<id>` through `useDrawer`, the rule in words, "Try this code" through `admin.promos.preview`). `components/variant-picker.jsx` finds a product and a variant for any screen that needs one (orders, promo preview).
 Built (M6-04): Reviews queue and drawer (`features/reviews/`; drawer at `?review=<id>`), and the menu badges (`lib/nav-counts.js`; a screen with `feature: 'reviews'` shows only while `reviewsPending` is given).
 **Built (M6-05)**: the Dashboard (`features/dashboard/`: to-do cards, figures, SVG chart, panels; every panel has its own query, its own loading and its own failure). `lib/age.js` has the waiting-time texts.
-**Not built yet**: keyboard shortcuts, help sheet and command palette (M6-06), Inventory screens beyond the product stock dialog.
+**Built (M6-06)**: keyboard shortcuts (`lib/shortcuts.js`: register with `useShortcut`, never add a `keydown` listener; `components/global-shortcuts.jsx` has the global ones, `DataTable` the list ones, the order screen its own), the `?` sheet and the Ctrl/Cmd K palette (`components/shortcut-help.jsx`, `command-palette.jsx`); `lib/list-context.js` remembers the rows of the last list for `]` on an order. In tests that change a preference, do it in `beforeEach`, not `afterEach` (a mounted screen would redraw).
+**Not built yet**: Inventory screens beyond the product stock dialog.
 The API for all of these already exists (M4: `admin.orders.*`, `admin.customers.*`, `admin.promos.*`, `admin.reviews.*`, `admin.dashboard.*`, `admin.search`...): M6 is screens only.
 
 ## Conventions

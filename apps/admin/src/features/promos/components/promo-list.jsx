@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/page-header'
 import { formatDateTime } from '@/lib/dates'
 import { messageFor } from '@/lib/errors'
 import { useCan } from '@/lib/session'
+import { useShortcut } from '@/lib/shortcuts'
 import { useDrawer } from '@/lib/use-drawer'
 import { promoListSchema, promoQueries, usePromoMutations } from '../api'
 import { emptyForm, toForm } from '../promo-form'
@@ -76,6 +77,7 @@ export function PromoList() {
   const { remove, bulk } = usePromoMutations()
   const [deleting, setDeleting] = useState(/** @type {Row | null} */ (null))
   const [seed, setSeed] = useState(/** @type {PromoForm | null} */ (null))
+  useShortcut('c', () => (setSeed(null), drawer.create()), { label: 'New promo code', when: can('promos:write') })
 
   /** @param {Row} p @param {'enable' | 'disable'} action */
   const toggle = (p, action) => bulk.mutate({ ids: [p.id], action }, { onSuccess: () => toast.push({ title: `${p.code} ${action === 'enable' ? 'switched on' : 'switched off'}`, tone: 'success' }), onError: (e) => toast.push({ title: messageFor(e), tone: 'danger' }) })

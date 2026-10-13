@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from '@noor/contract'
 import { Badge } from '@noor/ui/badge'
 import { Button } from '@noor/ui/button'
+import { Checkbox } from '@noor/ui/checkbox'
 import { ConfirmDialog } from '@noor/ui/confirm-dialog'
 import { Dialog } from '@noor/ui/dialog'
 import { Field, RHFField } from '@noor/ui/field'
@@ -257,6 +258,12 @@ function PreferencesCard() {
           />
         </Field>
       </div>
+      <Checkbox
+        label="Enable single-key shortcuts"
+        checked={prefs.singleKeyShortcuts}
+        onCheckedChange={(on) => setPrefs({ singleKeyShortcuts: on })}
+      />
+      <p className="text-sm text-muted">Keys like j, k, c and g then o work when you are not typing. Switched off, only the ones with Ctrl or Command remain. Press ? to see them.</p>
     </SectionCard>
   )
 }

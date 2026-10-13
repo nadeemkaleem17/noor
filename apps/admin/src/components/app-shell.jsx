@@ -7,8 +7,12 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet, useMatches } from 'react-router'
 import { sessionEvents } from '@/lib/events'
+import { startShortcuts } from '@/lib/shortcuts'
 import { setPrefs, usePrefs } from '@/lib/prefs'
 import { meKey, useCan, useMe } from '@/lib/session'
+import { CommandPalette } from './command-palette'
+import { GlobalShortcuts } from './global-shortcuts'
+import { ShortcutHelp } from './shortcut-help'
 import { SidebarNav } from './sidebar'
 import { TopBar } from './top-bar'
 
@@ -22,9 +26,14 @@ function Shell() {
   const queryClient = useQueryClient()
   const { sidebarCollapsed } = usePrefs()
   const [drawer, setDrawer] = useState(false)
+  const [palette, setPalette] = useState(false)
+  const [help, setHelp] = useState(false)
   const handles = useMatches().flatMap((m) => (m.handle ? [/** @type {Handle} */ (m.handle)] : []))
   const required = handles.findLast((h) => h.permission)?.permission
   const title = handles.at(-1)?.title
+
+  // the one listener of every shortcut (plan/07-admin/15-shortcuts.md section 5)
+  useEffect(() => startShortcuts(), [])
 
   // a 403 from a screen that was still showing something the role no longer allows: say so and re-read the permissions
   useEffect(() => {
@@ -38,6 +47,9 @@ function Shell() {
 
   return (
     <div className="flex min-h-dvh bg-bg text-fg">
+      <GlobalShortcuts onPalette={() => setPalette((p) => !p)} onHelp={() => setHelp(true)} />
+      <CommandPalette open={palette} onClose={() => setPalette(false)} />
+      <ShortcutHelp open={help} onClose={() => setHelp(false)} />
       <title>{title ? `${title} · Rubaya admin` : 'Rubaya admin'}</title>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
@@ -65,7 +77,7 @@ function Shell() {
             {me.environment === 'staging' ? 'Staging' : 'Local'}: test data
           </p>
         )}
-        <TopBar onOpenMenu={() => setDrawer(true)} />
+        <TopBar onOpenMenu={() => setDrawer(true)} onOpenPalette={() => setPalette(true)} />
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none lg:p-6">
           {required && !can(required) ? <ErrorState title="You don't have access to this page" body="Ask an owner or manager." /> : <Outlet />}
         </main>

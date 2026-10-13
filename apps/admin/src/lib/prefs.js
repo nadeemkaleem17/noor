@@ -7,6 +7,8 @@ const Prefs = z.object({
   theme: z.enum(['light', 'dark', 'system']).catch('system'),
   sidebarCollapsed: z.boolean().catch(false),
   density: z.enum(['comfortable', 'compact']).catch('comfortable'),
+  /** One-key shortcuts (j, k, c, g then o ...). Off leaves only the ones with Ctrl or Command (WCAG 2.1.4). */
+  singleKeyShortcuts: z.boolean().catch(true),
   /** Columns a person hid, per table id. */
   tables: z.record(z.string(), z.object({ hidden: z.array(z.string()) })).catch({}),
 })
@@ -46,6 +48,9 @@ export function startTheme() {
   applyTheme(state.theme)
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => state.theme === 'system' && applyTheme('system'))
 }
+
+/** The preferences now, for code that is not a component (the shortcut listener). */
+export const getPrefs = () => state
 
 export const usePrefs = () =>
   useSyncExternalStore(

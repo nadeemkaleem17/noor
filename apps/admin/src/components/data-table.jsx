@@ -12,14 +12,16 @@ import { Table, Td, Th } from '@noor/ui/table'
 import { useToast } from '@noor/ui/toast'
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, Ellipsis } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { downloadBlob } from '@/lib/download'
 import { messageFor } from '@/lib/errors'
 import { useListParams } from '@/lib/list-params'
 import { useMediaQuery } from '@/lib/use-media-query'
+import { setListContext } from '@/lib/list-context'
 import { setHiddenColumns, usePrefs } from '@/lib/prefs'
 import { useCan } from '@/lib/session'
+import { useShortcut } from '@/lib/shortcuts'
 import { AppLink } from './app-link'
 import { BulkBar, FailuresDialog, failureReason, JobWatcher } from './bulk-bar'
 import { chipText, FilterChips, FilterControls, filterKeys, SearchBox } from './list-filters'
@@ -134,6 +136,52 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
 
   /** @param {import('./bulk-bar').BulkAction} action */
   const start = (action) => (action.destructive || selectedCount > 50 ? setConfirming(action) : void run(action).catch(() => {}))
+
+  // ---- keys (plan/07-admin/15-shortcuts.md section 3): move over the rows, open one, select, page, refresh. The rows are found in the page, so a row of any shape works.
+  const idsKey = rows.map(rowId).join(',')
+  // the focused row belongs to the rows it was set on: a new page or a new filter starts with none
+  const [focusAt, setFocusAt] = useState({ key: idsKey, i: -1 })
+  const focus = focusAt.key === idsKey ? focusAt.i : -1
+  const setFocus = (/** @type {number} */ i) => setFocusAt({ key: idsKey, i })
+  const listKeys = rows.length > 0 && !cards
+  const rowAt = (/** @type {number} */ i) => document.querySelector(`[data-row-index="${i}"]`)
+  /** @param {number} to */
+  const moveTo = (to) => {
+    const i = Math.max(0, Math.min(to, rows.length - 1))
+    setFocus(i)
+    rowAt(i)?.scrollIntoView?.({ block: 'nearest' })
+  }
+  const pages = Math.max(1, Math.ceil(total / params.size))
+  useShortcut('j', () => moveTo(focus + 1), { group: 'Lists', label: 'Next row', when: listKeys })
+  useShortcut('arrowdown', () => moveTo(focus + 1), { group: 'Lists', label: 'Next row', when: listKeys })
+  useShortcut('k', () => moveTo(focus - 1), { group: 'Lists', label: 'Previous row', when: listKeys })
+  useShortcut('arrowup', () => moveTo(focus - 1), { group: 'Lists', label: 'Previous row', when: listKeys })
+  const openRow = () => /** @type {HTMLElement | null | undefined} */ (rowAt(focus)?.querySelector('a[href], button:not([role=checkbox]):not([aria-haspopup])'))?.click()
+  useShortcut('enter', openRow, { group: 'Lists', label: 'Open the row', when: listKeys && focus >= 0 })
+  useShortcut('o', openRow, { group: 'Lists', label: 'Open the row', when: listKeys && focus >= 0 })
+  const tick = (/** @type {boolean} */ range) => {
+    const box = /** @type {HTMLElement | null | undefined} */ (rowAt(focus)?.querySelector('[role=checkbox]'))
+    // the same click a person makes, with the Shift key for a range: the table's own handler does the rest
+    box?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: range }))
+  }
+  const canSelect = listKeys && focus >= 0 && actions.length > 0
+  useShortcut('x', () => tick(false), { group: 'Lists', label: 'Select the row', when: canSelect })
+  useShortcut('space', () => tick(false), { group: 'Lists', label: 'Select the row', when: canSelect })
+  useShortcut('shift+x', () => tick(true), { group: 'Lists', label: 'Select up to the row', when: canSelect })
+  useShortcut(
+    'mod+a',
+    () => (pageAllSelected && selectAllMatching && total > rows.length ? setSelection({ key: matchKey, ids: [], all: true }) : toggle(pageIds, true)),
+    { group: 'Lists', label: 'Select the page, and again all that match', when: listKeys && actions.length > 0 },
+  )
+  useShortcut('escape', () => setSelection({ key: matchKey, ids: [], all: false }), { group: 'Lists', label: 'Clear the selection', when: selectedCount > 0 })
+  useShortcut('n', () => set({ page: Math.min(params.page + 1, pages) }), { group: 'Lists', label: 'Next page', when: params.page < pages })
+  useShortcut('p', () => set({ page: Math.max(params.page - 1, 1) }), { group: 'Lists', label: 'Previous page', when: params.page > 1 })
+  useShortcut('r', () => void result.refetch(), { group: 'Lists', label: 'Refresh the list', when: result.isSuccess })
+  useShortcut('.', () => /** @type {HTMLElement | null | undefined} */ (rowAt(focus)?.querySelector('button[aria-haspopup=menu]'))?.click(), { group: 'Lists', label: 'Open the row menu', when: listKeys && focus >= 0 && rowActions !== undefined })
+  // the rows of this list, for the order screen's next and previous keys
+  useEffect(() => {
+    if (idsKey) setListContext(id, idsKey.split(','), location.pathname + location.search)
+  }, [id, idsKey])
 
   // ---- rendering
   const filtered = Boolean(params.q) || filters.some((f) => chipText(f, params))
@@ -255,8 +303,9 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
                       return (
                         <tr
                           key={key}
+                          data-row-index={index}
                           aria-selected={actions.length ? current.ids.includes(key) || current.all : undefined}
-                          className={href ? 'cursor-pointer' : undefined}
+                          className={`${href ? 'cursor-pointer' : ''} ${focus === index ? 'outline-2 -outline-offset-2 outline-focus' : ''}`}
                           onClick={(e) => {
                             if (href && !(/** @type {HTMLElement} */ (e.target).closest('a,button,input,label,[role=checkbox],[role=menuitem]'))) void navigate(href)
                           }}

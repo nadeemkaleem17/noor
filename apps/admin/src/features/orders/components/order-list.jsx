@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/page-header'
 import { formatDateTime } from '@/lib/dates'
 import { useListParams } from '@/lib/list-params'
 import { useCan } from '@/lib/session'
+import { useShortcut } from '@/lib/shortcuts'
 import { orderListSchema, orderQueries } from '../api'
 import { ageText, ageTone, isWholePhone, waLink } from '../format'
 import { humanise } from '../labels'
@@ -173,6 +174,7 @@ export function OrderList() {
   const lookups = useQuery(orderQueries.lookups())
   const [bulk, setBulk] = useState(/** @type {{ kind: 'confirm' | 'dispatch' | 'deliver'; ids: string[]; resolve: (o: import('@/components/bulk-bar').BulkOutcome) => void } | null} */ (null))
   const [exporting, setExporting] = useState(false)
+  useShortcut('c', () => void navigate('/orders/new'), { label: 'New order', when: can('orders:edit') })
 
   const status = /** @type {string[]} */ (params.status ?? [DEFAULT_STATUS]).join(',')
   const waiting = status === 'pending_confirmation' || status === 'confirmed'

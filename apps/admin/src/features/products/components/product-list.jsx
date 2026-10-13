@@ -14,6 +14,7 @@ import { categoriesQuery, categoryOptions } from '@/lib/catalog'
 import { env } from '@/lib/env'
 import { messageFor } from '@/lib/errors'
 import { useCan } from '@/lib/session'
+import { useShortcut } from '@/lib/shortcuts'
 import { productListSchema, productQueries, useProductMutations } from '../api'
 
 /** @typedef {import('@noor/contract').z.infer<typeof import('@noor/contract').AdminProductRow>} Row */
@@ -75,6 +76,7 @@ export function ProductList() {
   const { duplicate, remove, archive, previewLink } = useProductMutations()
   const categories = useQuery(categoriesQuery)
   const [deleting, setDeleting] = useState(/** @type {Row | null} */ (null))
+  useShortcut('c', () => void navigate('/products/new'), { label: 'New product', when: can('products:write') })
   /** @type {import('@/components/list-filters').FilterDef[]} */
   const filters = [...(categories.data ? [/** @type {const} */ ({ key: 'category', label: 'Category', type: 'select', options: categoryOptions(/** @type {any} */ (categories.data.items)) })] : []), ...staticFilters]
   const fail = (/** @type {unknown} */ e) => toast.push({ title: messageFor(e), tone: 'danger' })

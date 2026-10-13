@@ -118,13 +118,13 @@ A `Dialog` with a `Combobox`.
 
 ## 8. Acceptance checklist
 
-- [ ] Typing `j`, `x`, `c` inside a text field types the letters and triggers nothing.
-- [ ] Every shortcut in §2–§4 appears in the `?` sheet, generated from registrations.
-- [ ] `Shift D` on an order that cannot be dispatched does nothing; on one that can, it opens the dispatch dialog and commits nothing until confirmed.
-- [ ] With "Enable single-key shortcuts" off, only `Mod` shortcuts respond.
-- [ ] The palette finds an order by number, phone digits and tracking number, and a product by SKU.
-- [ ] A `catalog` user's palette returns no orders or customers.
-- [ ] `grep -rn "addEventListener('keydown'" apps/admin/src` matches only `lib/shortcuts.ts`.
+- [x] Typing `j`, `x`, `c` inside a text field types the letters and triggers nothing. (`shortcuts.test.jsx`.)
+- [x] Every shortcut in §2–§4 appears in the `?` sheet, generated from registrations. (The sheet shows what the screen under it has registered: Global everywhere, Lists on a list, This screen on an order; an order key is listed only while it would work, so the dispatch key is not shown for an order that cannot be dispatched. `Esc` and `Mod S` are listed as Global and Lists.)
+- [x] `Shift D` on an order that cannot be dispatched does nothing; on one that can, it opens the dispatch dialog and commits nothing until confirmed. (`shortcuts.test.jsx`.)
+- [x] With "Enable single-key shortcuts" off, only `Mod` shortcuts respond. (My account, Preferences; `shortcuts.test.jsx`.)
+- [x] The palette finds an order by number, phone digits and tracking number, and a product by SKU. (The palette sends what is typed to `admin.search` after 250 ms and two characters; what the API finds is its test (M4-11). Seen once against the real API: "10005" found RB-10005.)
+- [x] A `catalog` user's palette returns no orders or customers. (The API gives only what the role may read, and "Go to" lists only the screens it may open: `shortcuts.test.jsx`.)
+- [x] `grep -rn "addEventListener('keydown'" apps/admin/src` matches only `lib/shortcuts.js`. (A test reads the source files: `shortcuts.test.js`.)
 
 ## 9. Open questions and assumptions
 
@@ -139,3 +139,4 @@ A `Dialog` with a `Combobox`.
 | Date | Change |
 |---|---|
 | 2026-10-02 | Initial version (Phase 3) |
+| 2026-10-12 | M6-06 built (`lib/shortcuts.js`, `components/{global-shortcuts,shortcut-help,command-palette}.jsx`, keys in `DataTable`, the order screen and the lists). Differences: the file is JavaScript, not TypeScript; a `when` may be a function asked at the key press; `Mod S` submits the form the person is in, or the one form of the dialog or screen, and always stops the browser's save dialog; `c` is built on Products, Orders, Promos and Staff; tooltips with the key are on the order screen's main button and Print invoice, not yet on every button; "recent" in the palette holds what was opened from the palette (not every screen visited); `]` and `Shift ]` follow the rows of the last list shown (kept in memory, not in router state), and are quiet after a reload; the palette's "Invite staff" opens `/staff?invite=1`. The key `.` opens the row menu; the keys `n` and `p` turn pages. |

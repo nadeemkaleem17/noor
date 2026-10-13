@@ -6,15 +6,18 @@ import { ErrorState } from '@noor/ui/error-state'
 import { Link } from '@noor/ui/link'
 import { Menu } from '@noor/ui/menu'
 import { Skeleton } from '@noor/ui/skeleton'
+import { Tooltip } from '@noor/ui/tooltip'
 import { Textarea } from '@noor/ui/textarea'
 import { useToast } from '@noor/ui/toast'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ChevronDown, Copy, MessageCircle, Phone, Printer } from 'lucide-react'
 import { useState } from 'react'
-import { Link as RouterLink } from 'react-router'
+import { Link as RouterLink, useNavigate } from 'react-router'
 import { AppLink } from '@/components/app-link'
 import { formatDateTime, relativeTime } from '@/lib/dates'
+import { neighbour } from '@/lib/list-context'
 import { useCan } from '@/lib/session'
+import { useShortcut, withKeys } from '@/lib/shortcuts'
 import { orderQueries, useOrderMutations } from '../api'
 import { ageText, ageTone, isWholePhone, telLink, waLink } from '../format'
 import { describeEvent, humanise, orderMessage } from '../labels'
@@ -44,6 +47,14 @@ const offers = {
   return: { action: 'return', label: 'Mark returned', permission: 'orders:return', danger: true },
   cancel: { action: 'cancel', label: 'Cancel order', permission: 'orders:cancel', danger: true },
 }
+/** The note box of the order, for the key that goes to it. */
+function focusNote() {
+  const box = document.querySelector('textarea[aria-label="New note"]')
+  if (box instanceof HTMLElement) box.focus()
+}
+
+/** The key of each action that has one, for its tooltip. */
+const keysOf = /** @type {Record<string, string>} */ ({ confirm: 'shift+c', dispatch: 'shift+d', deliver: 'shift+l' })
 /** The one action a status is waiting for. */
 const primaryFor = /** @type {Record<string, string>} */ ({ pending: 'record_payment', pending_confirmation: 'confirm', confirmed: 'dispatch', dispatched: 'deliver' })
 
@@ -308,6 +319,22 @@ export function OrderDetail({ id }) {
   const [seen, setSeen] = useState(/** @type {number | null} */ (null))
   const [conflict, setConflict] = useState(false)
   const order = query.data
+  const navigate = useNavigate()
+
+  // keys of this screen (plan/07-admin/15-shortcuts.md section 4): each only opens the dialog of its button, and only while the server allows the action and the role may do it
+  const may = (/** @type {string} */ a) => order !== undefined && order.allowedActions.includes(/** @type {never} */ (a)) && can(/** @type {import('@noor/contract').Permission} */ (offers[a]?.permission ?? 'orders:read'))
+  const wa = order ? (order.whatsappConfirmUrl ?? waLink(order.customer.phone)) : undefined
+  const next = neighbour('orders', order ? [id, order.id, order.orderNumber] : [id], 1)
+  const previous = neighbour('orders', order ? [id, order.id, order.orderNumber] : [id], -1)
+  useShortcut('a', () => setAction('attempt'), { label: 'Log a confirmation attempt', when: order?.status === 'pending_confirmation' && can('orders:note') })
+  useShortcut('shift+c', () => setAction('confirm'), { label: 'Confirm order', when: may('confirm') })
+  useShortcut('shift+d', () => setAction('dispatch'), { label: 'Mark dispatched', when: may('dispatch') })
+  useShortcut('shift+l', () => setAction('deliver'), { label: 'Mark delivered', when: may('deliver') })
+  useShortcut('w', () => window.open(wa, '_blank', 'noopener'), { label: 'Open WhatsApp to the customer', when: wa !== undefined })
+  useShortcut('i', () => window.open(`/orders/${order?.id}/print`, '_blank', 'noopener'), { label: 'Print the invoice', when: order !== undefined })
+  useShortcut('m', focusNote, { label: 'Write an internal note', when: order !== undefined && can('orders:note') })
+  useShortcut(']', () => void navigate(`/orders/${next}`), { label: 'Next order of the list', when: next !== undefined })
+  useShortcut('shift+]', () => void navigate(`/orders/${previous}`), { label: 'Previous order of the list', when: previous !== undefined })
 
   if (query.isPending) return <Skeleton className="h-96 w-full" />
   if (query.isError || !order) return <ErrorState title="This order could not be loaded" retryLabel="Try again" onRetry={() => void query.refetch()} />
@@ -345,9 +372,11 @@ export function OrderDetail({ id }) {
             {order.status === 'pending_confirmation' ? <Badge tone={tone}>Waiting {ageText(order.statusChangedAt)}</Badge> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <LinkButton href={`/orders/${order.id}/print`} size="md" variant="secondary" iconStart={<Printer aria-hidden className="size-4" />} render={<RouterLink to={`/orders/${order.id}/print`} target="_blank" />}>
-              Print invoice
-            </LinkButton>
+            <Tooltip content={withKeys('Print invoice', 'i')}>
+              <LinkButton href={`/orders/${order.id}/print`} size="md" variant="secondary" iconStart={<Printer aria-hidden className="size-4" />} render={<RouterLink to={`/orders/${order.id}/print`} target="_blank" />}>
+                Print invoice
+              </LinkButton>
+            </Tooltip>
             {others.length ? (
               <Menu
                 align="end"
@@ -355,7 +384,13 @@ export function OrderDetail({ id }) {
                 items={others.map((a) => ({ label: offers[a]?.label ?? a, tone: offers[a]?.danger ? /** @type {const} */ ('danger') : undefined, onSelect: () => open(a) }))}
               />
             ) : null}
-            {primary ? <Button size="md" onClick={() => open(primary)}>{offers[primary]?.label}</Button> : null}
+            {primary ? (
+              <Tooltip content={keysOf[primary] ? withKeys(offers[primary]?.label ?? '', keysOf[primary]) : (offers[primary]?.label ?? '')}>
+                <Button size="md" onClick={() => open(primary)}>
+                  {offers[primary]?.label}
+                </Button>
+              </Tooltip>
+            ) : null}
           </div>
         </div>
       </header>

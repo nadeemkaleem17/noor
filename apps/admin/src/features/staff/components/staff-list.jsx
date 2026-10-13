@@ -2,10 +2,13 @@ import { Badge } from '@noor/ui/badge'
 import { Button } from '@noor/ui/button'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
+import { useEffect } from 'react'
+import { useSearchParams } from 'react-router'
 import { DataTable } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
 import { formatDateTime, relativeTime } from '@/lib/dates'
 import { useCan } from '@/lib/session'
+import { useShortcut } from '@/lib/shortcuts'
 import { rolesQuery, staffListSchema, staffQueries } from '../api'
 import { PermissionsButton } from './permissions-dialog'
 import { useStaffActions } from './staff-actions'
@@ -71,6 +74,19 @@ const filters = [
 export function StaffList() {
   const can = useCan()
   const { menuFor, invite, dialogs } = useStaffActions()
+  const [search, setSearch] = useSearchParams()
+  useShortcut('c', invite, { label: 'Invite staff', when: can('staff:manage') })
+  // the palette's "Invite staff" arrives as ?invite=1: open the dialog once and take the mark off the address
+  const wantsInvite = search.get('invite') === '1' && can('staff:manage')
+  useEffect(() => {
+    if (!wantsInvite) return
+    invite()
+    setSearch((s) => {
+      const next = new URLSearchParams(s)
+      next.delete('invite')
+      return next
+    }, { replace: true })
+  }, [wantsInvite]) // eslint-disable-line react-hooks/exhaustive-deps -- once per arrival
   return (
     <>
       <PageHeader
