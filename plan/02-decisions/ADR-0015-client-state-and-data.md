@@ -52,7 +52,7 @@ Deletes the dual-mode code paths and ~4 duplicated utilities; admin needs the AP
 ## Acceptance checklist
 - [x] No `apiEnabled` / `API_MODE` branches remain. (Run at M7-07: no match.)
 - [ ] Admin product and order lists use server pagination and a virtualized body above 100 rows. **Server pagination yes; no virtualised body (dropped, DOC-07.14). TanStack Table and Virtual and Zustand are not used: the admin has its own `DataTable`, and the cart drawer is a React context.**
-- [ ] Every admin route is lazy-loaded; initial admin JS ≤ 200 kB gzip. **Every admin route is lazy; the initial admin JavaScript is 222.6 kB gzip against 200 (M7-09).**
+- [ ] Every admin route is lazy-loaded; initial admin JS ≤ 200 kB gzip. **Every admin route is lazy; the initial admin JavaScript is 222.3 kB gzip against 200 (M7-09); what it is made of and why a route-table split is not enough: plan/16-roadmap.md, M7-09 log line.**
 
 ## Revisit trigger
 Storefront needs rich client-side caching (e.g., infinite catalog browsing offline) that loaders cannot serve, or Zustand state grows beyond cart UI/wishlist.
