@@ -57,6 +57,8 @@ export function createAuthService({ db, config }) {
   const sealer = createSealer(config.DATA_ENCRYPTION_KEY)
   /** Whether this role must use two-step sign-in in this process (TWO_FACTOR_REQUIRED=0 is allowed only in local development and CI). @param {import('@noor/contract').StaffRole} role */
   const needsTwoFactor = (role) => config.TWO_FACTOR_REQUIRED && requiresTwoFactor(role)
+  /** The password rules; `RELAXED_PASSWORDS=1` (local development only) keeps just a short minimum. @param {string} password @param {string} email */
+  const weakness = (password, email) => passwordProblem(password, { email, relaxed: config.RELAXED_PASSWORDS })
   const adminUrl = (/** @type {string} */ path) => `${config.ADMIN_ORIGIN.replace(/\/$/, '')}${path}`
 
   /** @param {StaffActor | { staffId: string, name: string, role: string }} a @param {RequestInfo} req */
@@ -235,7 +237,7 @@ export function createAuthService({ db, config }) {
     async acceptInvite(token, password, req) {
       const { row, user } = await this._findUsableToken('invite', token)
       if (user.status !== 'invited') throw new DomainError('token_expired')
-      const problem = passwordProblem(password, { email: user.email })
+      const problem = weakness(password, user.email)
       if (problem) throw new DomainError('password_too_weak', { reason: problem })
       const passwordHash = await hashPassword(password)
       const at = now()
@@ -254,7 +256,7 @@ export function createAuthService({ db, config }) {
     async resetPassword(token, password, req) {
       const { row, user } = await this._findUsableToken('password_reset', token)
       if (user.status !== 'active') throw new DomainError('token_expired')
-      const problem = passwordProblem(password, { email: user.email })
+      const problem = weakness(password, user.email)
       if (problem) throw new DomainError('password_too_weak', { reason: problem })
       const passwordHash = await hashPassword(password)
       const at = now()
@@ -311,7 +313,7 @@ export function createAuthService({ db, config }) {
     /** Ends the other sessions and replaces this one: the new cookie value is returned. @param {StaffActor} actor @param {{ currentPassword: string, newPassword: string }} body @param {RequestInfo} req */
     async changePassword(actor, { currentPassword, newPassword }, req) {
       const user = await this._checkPassword(actor, currentPassword)
-      const problem = passwordProblem(newPassword, { email: user.email })
+      const problem = weakness(newPassword, user.email)
       if (problem) throw new DomainError('password_too_weak', { reason: problem })
       const passwordHash = await hashPassword(newPassword)
       const at = now()
@@ -583,7 +585,7 @@ export function createAuthService({ db, config }) {
     // ------------------------------------------------------------------ bootstrap (CLI owner:create)
     /** Creates the first owner, active, with a password and no 2FA yet (the first sign-in enrols it). @param {{ email: string, name: string, password: string }} input */
     async createOwner({ email, name, password }) {
-      const problem = passwordProblem(password, { email })
+      const problem = weakness(password, email)
       if (problem) throw new DomainError('password_too_weak', { reason: problem })
       if (await repo.findUserByEmail(db, email)) throw new DomainError('email_taken')
       const at = now()

@@ -49,7 +49,7 @@ export default function Category() {
   return (
     <>
       <JsonLd data={ld} />
-  return <ListingPage crumbs={crumbs} title={category.name} {...(category.description ? { intro: category.description } : {})} subcategories={category.children} page={page} sorts={sorts} />
+      <ListingPage crumbs={crumbs} title={category.name} {...(category.description ? { intro: category.description } : {})} subcategories={category.children} page={page} sorts={sorts} />
     </>
   )
 }

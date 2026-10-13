@@ -12,7 +12,11 @@ import { navItems, safeItems } from '~/lib/nav'
 import { getEnv } from '~/lib/env.server'
 import { fontsFor } from '~/lib/fonts.server'
 import { cached, loadShell } from '~/lib/shell.server'
+import { visitorMiddleware } from '~/lib/visitor.server'
 import './app.css'
+
+/** Every request, loaders and actions included, runs knowing who the visitor is (for the API's limits). */
+export const middleware = [visitorMiddleware]
 
 /**
  * Everything every page is given: the language, the shop's settings, its announcement, menus and categories, and the theme as CSS. None of it belongs to one visitor.

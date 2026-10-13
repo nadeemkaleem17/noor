@@ -1,8 +1,9 @@
 // The storefront server's one way to the API (plan/03 section 7): the typed client, parsed responses, a time limit. Never imported by browser code.
 import { createClient, routes } from '@noor/contract'
 import { getEnv } from './env.server'
+import { visitorHeaders } from './visitor.server'
 
-export const api = createClient(routes, { baseUrl: `${getEnv().API_INTERNAL_URL}/api/v1`, timeoutMs: 8_000 })
+export const api = createClient(routes, { baseUrl: `${getEnv().API_INTERNAL_URL}/api/v1`, timeoutMs: 8_000, headers: visitorHeaders })
 
 /**
  * The handle of a product known by an old id or by anything the API accepts (`/product/42` of the old shop). Only the handle is wanted, so this reads just that

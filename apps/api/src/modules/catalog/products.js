@@ -588,6 +588,44 @@ export function createProducts({ db, config, media, stock, filtersOf }) {
       }
     },
 
+    /**
+     * One status change for each product, each in its own transaction: the ones that cannot go are listed, the rest go (DOC-10.0 section 10).
+     * Going live runs the same publish checks as a save. A product already in the wanted state counts as done.
+     * @param {Staff} actor @param {string[]} ids @param {'publish' | 'unpublish' | 'archive'} action @param {RequestInfo} req
+     * @returns {Promise<{ succeeded: string[], failed: { id: string, code: string }[] }>}
+     */
+    async bulk(actor, ids, action, req) {
+      const to = /** @type {const} */ ({ publish: 'active', unpublish: 'draft', archive: 'archived' })[action]
+      /** @type {string[]} */
+      const succeeded = []
+      /** @type {{ id: string, code: string }[]} */
+      const failed = []
+      for (const id of ids) {
+        try {
+          await transaction(db, async (tx) => {
+            const p = (await tx.select().from(products).where(eq(products.id, id)).for('update'))[0]
+            if (!p) throw new DomainError('not_found')
+            if (p.status === to) return
+            if (to === 'active') {
+              const doc = (await load(tx, [id]))[0]
+              const bad = doc ? (await checksOf(tx, /** @type {ProductInput} */ (/** @type {unknown} */ (doc)))).filter((c) => !c.ok) : []
+              if (bad.length) throw new DomainError('publish_checks_failed', { checks: bad })
+            }
+            const at = now()
+            await tx.update(products).set({ status: to, publishedAt: p.publishedAt ?? (to === 'active' ? at : null), ...(to === 'active' ? { publishAt: null } : {}), version: p.version + 1, updatedAt: at }).where(eq(products.id, id))
+            await record(tx, { ...actorOf(actor, req), action: to === 'active' ? 'product.published' : 'product.updated', entityType: 'product', entityId: id, entityLabel: p.handle, diff: { status: [p.status, to] } })
+            await purge(tx, ['products', `product:${p.handle}`], req.requestId)
+            await productChanged(tx, id)
+          })
+          succeeded.push(id)
+        } catch (e) {
+          if (!(e instanceof DomainError)) throw e
+          failed.push({ id, code: e.code })
+        }
+      }
+      return { succeeded, failed }
+    },
+
     /** A draft copy: handle gets `-copy`, SKUs get `-COPY` (they must stay unique), nothing is in stock. @param {Staff & { canPublish: boolean }} actor @param {string} id @param {RequestInfo} req */
     async duplicate(actor, id, req) {
       const doc = (await load(db, [id]))[0]

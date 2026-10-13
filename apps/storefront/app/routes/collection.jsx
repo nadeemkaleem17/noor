@@ -48,7 +48,7 @@ export default function Collection() {
   return (
     <>
       <JsonLd data={ld} />
-  return <ListingPage crumbs={crumbs} title={collection.title} {...(collection.description ? { intro: collection.description } : {})} page={page} sorts={sorts} />
+      <ListingPage crumbs={crumbs} title={collection.title} {...(collection.description ? { intro: collection.description } : {})} page={page} sorts={sorts} />
     </>
   )
 }

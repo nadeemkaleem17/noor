@@ -230,6 +230,12 @@ describe('config', () => {
     expect(parseConfig({ ...base, APP_ENV: 'local' }).TRACKING_KEY).toBeUndefined()
     expect(() => parseConfig({ ...base, APP_ENV: 'production', TRACKING_KEY: 'too short' })).toThrow('TRACKING_KEY')
   })
+  it('allows weak passwords only when the process is local', () => {
+    const base = { NODE_ENV: 'development', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }
+    expect(parseConfig({ ...base, APP_ENV: 'local' }).RELAXED_PASSWORDS).toBe(false)
+    expect(parseConfig({ ...base, APP_ENV: 'local', RELAXED_PASSWORDS: '1' }).RELAXED_PASSWORDS).toBe(true)
+    for (const APP_ENV of ['ci', 'staging', 'production']) expect(() => parseConfig({ ...base, APP_ENV, RELAXED_PASSWORDS: '1', TWO_FACTOR_REQUIRED: '1' })).toThrow('RELAXED_PASSWORDS')
+  })
   it('keeps two-step sign-in required unless the process is local or CI', () => {
     const base = { NODE_ENV: 'development', ADMIN_ORIGIN: 'https://admin.rubaya.pk', ...dbEnv }
     expect(parseConfig({ ...base, APP_ENV: 'production' }).TWO_FACTOR_REQUIRED).toBe(true)

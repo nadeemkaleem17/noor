@@ -9,6 +9,8 @@ const ARGON = { memoryCost: 19_456, timeCost: 2, parallelism: 1, algorithm: 2 } 
 
 export const MIN_LENGTH = 12
 export const MAX_LENGTH = 128
+/** The only rule left when `RELAXED_PASSWORDS=1` (local development): five characters, so a throwaway account is quick to make. */
+export const RELAXED_MIN_LENGTH = 5
 
 /** @param {string} password */
 export const hashPassword = (password) => hash(password, ARGON)
@@ -43,12 +45,13 @@ const core = (p) => p.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '')
 /**
  * Checks a new password. Returns the reason for the first problem (the API answers `password_too_weak` with that reason), or null.
  * @param {string} password
- * @param {{ email?: string, storeName?: string }} [context]
+ * @param {{ email?: string, storeName?: string, relaxed?: boolean }} [context] `relaxed` (local development only, see config) keeps just the length rule
  * @returns {'too_short' | 'too_long' | 'common' | 'repetitive' | 'contains_name' | null}
  */
-export function passwordProblem(password, { email, storeName = 'rubaya' } = {}) {
-  if ([...password].length < MIN_LENGTH) return 'too_short'
+export function passwordProblem(password, { email, storeName = 'rubaya', relaxed = false } = {}) {
+  if ([...password].length < (relaxed ? RELAXED_MIN_LENGTH : MIN_LENGTH)) return 'too_short'
   if ([...password].length > MAX_LENGTH) return 'too_long'
+  if (relaxed) return null
   const lower = password.toLowerCase()
   const set = commonSet()
   if (set.has(lower) || (core(password).length >= 4 && set.has(core(password)))) return 'common'

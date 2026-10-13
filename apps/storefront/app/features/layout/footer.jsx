@@ -5,6 +5,9 @@ import { safeHref } from '@noor/ui/safe-href'
 import { Ltr } from '@noor/ui/ltr'
 import { useLocalePath } from './use-shell'
 
+/** A line of text is about 20 px tall: WCAG 2.2 (2.5.8) wants a target of 24 px, so these links are padded to it. */
+const tapLine = 'inline-block py-0.5'
+
 /** @typedef {import('~/lib/nav').NavItem} NavItem */
 
 const dialable = (/** @type {string} */ phone) => phone.replace(/[^\d+]/g, '')
@@ -55,25 +58,25 @@ export function Footer({ brand, about, items, contact, payments, languageSwitch 
           <ul className="mt-2 flex flex-col gap-1 text-fg-soft">
             {contact.phone ? (
               <li>
-                <Link href={`tel:${dialable(contact.phone)}`}>
+                <Link href={`tel:${dialable(contact.phone)}`} className={tapLine}>
                   <Ltr>{contact.phone}</Ltr>
                 </Link>
               </li>
             ) : null}
             {contact.email ? (
               <li>
-                <Link href={`mailto:${contact.email}`}>{contact.email}</Link>
+                <Link href={`mailto:${contact.email}`} className={tapLine}>{contact.email}</Link>
               </li>
             ) : null}
             {whatsapp ? (
               <li>
-                <Link href={whatsapp}>WhatsApp</Link>
+                <Link href={whatsapp} className={tapLine}>WhatsApp</Link>
               </li>
             ) : null}
             {contact.address ? <li>{contact.address}</li> : null}
             {socials.map((s) => (
               <li key={s.url}>
-                <Link href={s.url}>{s.platform}</Link>
+                <Link href={s.url} className={tapLine}>{s.platform}</Link>
               </li>
             ))}
           </ul>

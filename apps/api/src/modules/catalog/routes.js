@@ -69,6 +69,7 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
       await products.remove(staff(actor), params.id, info(http, requestId))
     },
     'admin.products.duplicate': async ({ actor, params, http, requestId }) => products.duplicate(publisher(actor), params.id, info(http, requestId)),
+    'admin.products.bulk': async ({ actor, body, http, requestId }) => products.bulk(staff(actor), body.ids, body.action, info(http, requestId)),
     'admin.products.previewLink': async ({ params }) => products.previewLink(params.id),
 
     'admin.collections.list': async ({ query }) => collections.list(query),

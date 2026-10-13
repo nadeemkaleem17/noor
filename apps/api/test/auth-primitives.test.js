@@ -39,6 +39,14 @@ describe('passwords', () => {
     expect(passwordProblem('my-rubaya-secret-1')).toBe('contains_name')
   })
 
+  it('keeps only a five-character minimum when the relaxed switch is on (local development)', () => {
+    expect(passwordProblem('abcde', { relaxed: true })).toBeNull()
+    expect(passwordProblem('password', { relaxed: true })).toBeNull() // no blocklist, no name check
+    expect(passwordProblem('1234', { relaxed: true })).toBe('too_short')
+    expect(passwordProblem('x'.repeat(129), { relaxed: true })).toBe('too_long')
+    expect(passwordProblem('abcde')).toBe('too_short') // off by default
+  })
+
   it('counts characters, not bytes, for the length rules', () => {
     expect(passwordProblem('پاکستان زندہ باد ہے')).toBeNull() // 19 characters
   })

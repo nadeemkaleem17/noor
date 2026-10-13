@@ -52,6 +52,11 @@ export function useProductMutations() {
       },
       onSuccess: remember,
     }),
+    /** One status for many products: the answer lists the ones that could not change (DOC-10.0 section 10). */
+    bulk: useMutation({
+      mutationFn: (/** @type {{ ids: string[]; action: 'publish' | 'unpublish' | 'archive'; }} */ body) => api('admin.products.bulk', { body }),
+      onSuccess: () => void queryClient.invalidateQueries({ queryKey: productKeys.lists() }),
+    }),
     previewLink: useMutation({ mutationFn: (/** @type {string} */ id) => api('admin.products.previewLink', { params: { id } }) }),
   }
 }

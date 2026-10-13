@@ -7,6 +7,10 @@ const schema = z.object({
   PUBLIC_SITE_URL: z.url(),
   PUBLIC_IMG_URL: z.url(),
   PORT: z.coerce.number().int().default(5174),
+  /** Shared secret that makes the API believe the visitor's address this server sends (same value as INTERNAL_KEY in the API's environment). */
+  API_INTERNAL_KEY: z.string().min(32).optional(),
+  /** Proxies in front of this server that write `X-Forwarded-For`. 0 = the header is not believed (and the API counts this server as the visitor). */
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 })
 
 /**

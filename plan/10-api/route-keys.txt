@@ -89,6 +89,7 @@ admin.pages.get
 admin.pages.list
 admin.pages.preview
 admin.pages.update
+admin.products.bulk
 admin.products.checkSku
 admin.products.checks
 admin.products.create

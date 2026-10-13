@@ -473,6 +473,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     samples['admin.products.update'] = { prepare: withProduct, act: ({ b, product, categoryId }) => b.call('PUT', `/admin/products/${product.id}`, { body: { ...productBody(categoryId), title: 'Changed', variants: [{ ...productBody(categoryId).variants[0], id: product.variants[0].id }], version: 1 } }) }
     samples['admin.products.delete'] = { prepare: withProduct, act: ({ b, product }) => b.call('DELETE', `/admin/products/${product.id}`) }
     samples['admin.products.duplicate'] = { prepare: withProduct, act: ({ b, product }) => b.call('POST', `/admin/products/${product.id}/duplicate`) }
+    samples['admin.products.bulk'] = { prepare: withProduct, act: ({ b, product }) => b.call('POST', '/admin/products/bulk', { body: { ids: [product.id], action: 'archive' } }) }
     samples['admin.inventory.adjust'] = {
       prepare: withProduct,
       act: ({ b, product }) => b.call('POST', '/admin/inventory/adjustments', { body: { variantId: product.variants[0].id, mode: 'add', quantity: 5, reason: 'restock' } }),

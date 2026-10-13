@@ -7,6 +7,10 @@ to the API (`app/lib/api.server.js`, the typed contract client with an 8 s timeo
 Every page works without JavaScript (forms are real forms, links are real links); JavaScript only enhances. Pages a cache may keep (`listing`/`content` classes) hold **nothing of a
 visitor**: cart count, wishlist hearts, recently viewed are filled in after hydration.
 
+## Who is asking (M7-01)
+
+Every call to the API carries `X-Internal-Key` (`API_INTERNAL_KEY`) and, behind `TRUSTED_PROXY_HOPS` proxies, the visitor's address in `X-Forwarded-For`: `app/lib/visitor.server.js` (a route middleware in `root.jsx` keeps the address per request; the API client's `headers` option reads it). Without it the API counts the whole shop as one address. `visitorIp` takes the entry the nearest trusted proxy appended, never what the visitor wrote.
+
 ## Routes (`app/routes.js`; every page route exists twice: plain and `/ur/...` with distinct ids)
 
 | URL | Module | Notes |

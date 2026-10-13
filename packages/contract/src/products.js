@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Slug } from './content.js'
 import { Enum } from './enums.js'
 import { Money } from './money.js'
-import { Page, PageQuery } from './pagination.js'
+import { BulkResult, Page, PageQuery } from './pagination.js'
 import { InitialStock } from './inventory.js'
 import { Id, Image, IsoDate, Swatch } from './primitives.js'
 import { defineRoutes } from './routes.js'
@@ -211,6 +211,11 @@ export const productRoutes = defineRoutes({
   'admin.products.update': { method: 'PUT', path: '/admin/products/:id', auth: 'staff', permission: 'products:write', params: IdParams, body: ProductInput.safeExtend({ version: z.int().min(1) }), response: AdminProduct },
   'admin.products.delete': { method: 'DELETE', path: '/admin/products/:id', auth: 'staff', permission: 'products:delete', params: IdParams, status: 204, response: z.undefined() },
   'admin.products.duplicate': { method: 'POST', path: '/admin/products/:id/duplicate', auth: 'staff', permission: 'products:write', params: IdParams, status: 201, response: AdminProduct },
+  'admin.products.bulk': {
+    method: 'POST', path: '/admin/products/bulk', auth: 'staff', permission: 'products:publish',
+    body: z.strictObject({ ids: z.array(Id).min(1).max(100), action: z.enum(['publish', 'unpublish', 'archive']) }),
+    response: BulkResult,
+  },
   'admin.products.previewLink': {
     method: 'POST', path: '/admin/products/:id/preview-link', auth: 'staff', permission: 'products:read', params: IdParams,
     response: z.strictObject({ url: z.string(), expiresAt: IsoDate }),

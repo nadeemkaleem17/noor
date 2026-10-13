@@ -406,6 +406,41 @@ describe.skipIf(!dbAvailable)('products and collections (MySQL, through HTTP)', 
     }, 60_000)
   })
 
+  describe('bulk status change', () => {
+    it('publishes what passes its checks, lists what does not, and every change is written down', async () => {
+      const { b } = await signedIn('manager')
+      await setup()
+      const make = async (/** @type {string} */ handle, /** @type {object} */ extra = {}) =>
+        (await b.call('POST', '/admin/products', { body: draft({ handle, title: handle, variants: [{ key: 'v', sku: handle.toUpperCase(), optionValueKeys: [], price: pkr(900), stockMode: 'counted', maxPerOrder: 5, enabled: true }], media: [{ mediaId: pic, alt: handle }], ...extra }) })).body
+      const a = await make('bulk-a')
+      const c = await make('bulk-c')
+      const noPicture = await make('bulk-no-picture', { media: [] })
+      const ids = [a.id, noPicture.id, c.id, uuidv7()]
+
+      const r = await b.call('POST', '/admin/products/bulk', { body: { ids, action: 'publish' } })
+      expect(r.status, JSON.stringify(r.body)).toBe(200)
+      expect(r.body.succeeded).toEqual([a.id, c.id])
+      expect(r.body.failed.map((/** @type {{ id: string, code: string }} */ f) => [f.id, f.code])).toEqual([[noPicture.id, 'publish_checks_failed'], [ids[3], 'not_found']])
+      const status = async () => Object.fromEntries((await t.db.select().from(products)).map((p) => [p.handle, p.status]))
+      expect(await status()).toEqual({ 'bulk-a': 'active', 'bulk-c': 'active', 'bulk-no-picture': 'draft' })
+      expect((await t.db.select().from(products).where(eq(products.id, a.id)))[0]).toMatchObject({ version: 2 })
+      expect((await t.db.select().from(auditLog).where(eq(auditLog.action, 'product.published'))).map((e) => e.entityLabel).sort()).toEqual(['bulk-a', 'bulk-c'])
+
+      // again: what is already live counts as done and is not written twice
+      expect((await b.call('POST', '/admin/products/bulk', { body: { ids: [a.id], action: 'publish' } })).body.succeeded).toEqual([a.id])
+      expect((await t.db.select().from(products).where(eq(products.id, a.id)))[0]).toMatchObject({ version: 2 })
+
+      expect((await b.call('POST', '/admin/products/bulk', { body: { ids: [a.id], action: 'unpublish' } })).body.succeeded).toEqual([a.id])
+      expect((await b.call('POST', '/admin/products/bulk', { body: { ids: [c.id], action: 'archive' } })).body.succeeded).toEqual([c.id])
+      expect(await status()).toEqual({ 'bulk-a': 'draft', 'bulk-c': 'archived', 'bulk-no-picture': 'draft' })
+    }, 90_000)
+
+    it('belongs to people who may publish', async () => {
+      const { b } = await signedIn('support')
+      expect((await b.call('POST', '/admin/products/bulk', { body: { ids: [uuidv7()], action: 'publish' } })).status).toBe(403)
+    }, 60_000)
+  })
+
   describe('deleting, duplicating, previewing', () => {
     it('delete removes the product and everything it owns', async () => {
       const { b } = await signedIn('manager')

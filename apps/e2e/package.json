@@ -1,0 +1,24 @@
+{
+  "name": "@noor/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "End-to-end journeys of plan/13-quality.md section 4, run in a real browser against the built apps and a scratch database.",
+  "scripts": {
+    "prepare:data": "node scripts/prepare.mjs",
+    "serve": "node scripts/serve.mjs",
+    "e2e": "node scripts/prepare.mjs && playwright test",
+    "test:only": "playwright test",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@noor/config": "workspace:*",
+    "@playwright/test": "^1.63.0",
+    "otplib": "13.5.0",
+    "@types/node": "^24",
+    "eslint": "^10.10.0",
+    "typescript": "~6.0.3"
+  }
+}

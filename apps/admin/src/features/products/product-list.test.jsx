@@ -82,6 +82,32 @@ describe('product list (plan/07-admin/03-products.md section 2)', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe(`/products/${copy}`))
   })
 
+  it('publishes the selected products in one call and lists the one that cannot go live', async () => {
+    const second = '0194f1b2-7c3a-7000-8000-0000000000b2'
+    /** @type {any[]} */
+    const sent = []
+    fakeApi({
+      ...session(all),
+      'GET /admin/products': () => page([row({ status: 'draft' }), row({ id: second, handle: 'lawn-suit', title: 'Lawn Suit', status: 'draft' })]),
+      'POST /admin/products/bulk': ({ body }) => (sent.push(body), json(200, { succeeded: [ids2.product], failed: [{ id: second, code: 'publish_checks_failed' }] })),
+    })
+    const { user } = renderApp('/products')
+    await user.click(await screen.findByRole('checkbox', { name: 'Select this page' }))
+    await user.click(await screen.findByRole('button', { name: 'Publish' }))
+    await waitFor(() => expect(sent).toEqual([{ ids: [ids2.product, second], action: 'publish' }]))
+    await user.click(await screen.findByRole('button', { name: 'View failures' }))
+    const failed = await screen.findByRole('dialog', { name: 'Some items failed' })
+    expect(within(failed).getByText('Lawn Suit')).toBeTruthy()
+    expect(within(failed).getByText(/not ready to publish/)).toBeTruthy()
+  })
+
+  it('offers no selection to someone who may not publish', async () => {
+    fakeApi({ ...session(['dashboard:read', 'products:read', 'products:write', 'catalog:read']), 'GET /admin/products': () => page([row({ status: 'draft' })]) })
+    renderApp('/products')
+    await screen.findByRole('link', { name: /Cotton Kurta/ })
+    expect(screen.queryByRole('checkbox', { name: 'Select this page' })).toBeNull()
+  })
+
   it('offers a viewer only Edit and View', async () => {
     fakeApi({ ...session(['dashboard:read', 'products:read', 'catalog:read']), 'GET /admin/products': () => page([row({ status: 'draft' })]) })
     const { user } = renderApp('/products')

@@ -40,6 +40,8 @@ const Env = z.object({
   MAIL_FROM: z.string().min(3).default('Rubaya <no-reply@rubaya.pk>'),
   /** Owners and managers must use two-step sign-in. Can be switched off only in local development and CI (the check below). */
   TWO_FACTOR_REQUIRED: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
+  /** Accept any password of five or more characters (no blocklist, no name check). Allowed only when APP_ENV is local: for a throwaway account on a development machine. */
+  RELAXED_PASSWORDS: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
   /** Secret that tracking tokens are derived from (HMAC of the order id). Staging and production must set it; local and CI derive one from DATA_ENCRYPTION_KEY. Changing it breaks every existing order link. */
   TRACKING_KEY: z.string().min(32).optional(),
   /** Git SHA of the running build, shown to owners in admin.system.info. */
@@ -49,6 +51,7 @@ const Env = z.object({
   if (!env.TWO_FACTOR_REQUIRED && env.APP_ENV !== 'local' && env.APP_ENV !== 'ci') {
     ctx.addIssue({ code: 'custom', path: ['TWO_FACTOR_REQUIRED'], message: 'two-step sign-in can be switched off only when APP_ENV is local or ci' })
   }
+  if (env.RELAXED_PASSWORDS && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['RELAXED_PASSWORDS'], message: 'weak passwords can be allowed only when APP_ENV is local' })
   // plan/14-devops.md section 6: a production process never keeps files on its own disk
   if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
     ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for development only' })

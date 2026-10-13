@@ -66,7 +66,8 @@ test/                  *.test.js (pure) and *.int.test.js (a scratch MySQL datab
 - Money is integer paisa everywhere; JSON-LD/decimal strings come from `moneyToDecimalString`. The client never sends a price/discount/fee/total (`expectedTotal` is only a guard).
 - The API runs on **plain Node**, not Vite: JSON imports need `with { type: 'json' }`, relative imports need `.js`; tests run under Vite and hide this, `test/node-esm.test.js` guards it.
 - Status, stock and payment status change only through the single functions named above. Adding a status writer elsewhere breaks invariants.
-- `X-Internal-Key` (config `INTERNAL_KEY`) is how the storefront server proves itself so its forwarded client IP is believed; not wired in local dev yet.
+- `X-Internal-Key` (config `INTERNAL_KEY`) is how the storefront server proves itself so its forwarded client IP is believed; the storefront sends it since M7-01 (set `TRUSTED_PROXY_HOPS` there for the address to be passed).
+- `RELAXED_PASSWORDS=1` (only with `APP_ENV=local`) turns the password rule into 5 to 128 characters; the API refuses to start with it anywhere else.
 - Unsafe methods under `/api/v1/admin` and the dev upload link require `Origin === ADMIN_ORIGIN`, except a signed upload PUT with **no** Origin (the storefront server's review photo): the signature is the credential.
 - Local sign-in: `TWO_FACTOR_REQUIRED=0` in `.env` (allowed only in local/CI). Cookie `rb_admin_dev`. First owner: seed prints `owner@rubaya.test` + random password once.
 - `node --env-file-if-exists=.env src/main.js` has NO watch: restart the API after changing backend code (`preview_start` name `api`, or `pnpm --filter @noor/api start`).

@@ -38,13 +38,13 @@ async function askHidden(question) {
   return answer
 }
 
-/** @type {Record<string, (flags: Record<string, string>, auth: ReturnType<typeof createAuthService>) => Promise<void>>} */
+/** @type {Record<string, (flags: Record<string, string>, auth: ReturnType<typeof createAuthService>, config: import('./platform/config.js').Config) => Promise<void>>} */
 const commands = {
-  async 'owner:create'(flags, auth) {
+  async 'owner:create'(flags, auth, config) {
     const email = (flags.email ?? '').trim().toLowerCase()
     const name = (flags.name ?? '').trim()
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !name) throw new Error('usage: owner:create --email owner@rubaya.pk --name "Owner Name"')
-    const password = await askHidden('Password (12 or more characters): ')
+    const password = await askHidden(config.RELAXED_PASSWORDS ? 'Password (5 or more characters): ' : 'Password (12 or more characters): ')
     if (password !== (await askHidden('Again: '))) throw new Error('the two passwords differ')
     const id = await auth.createOwner({ email, name, password })
     console.log(`Owner created: ${email} (${id}). Sign in at the admin site; two-factor enrolment is required on first sign-in.`)
@@ -62,7 +62,7 @@ if (path.basename(process.argv[1] ?? '') === 'cli.js') {
     const config = loadConfig()
     const { pool, db } = createAppDatabase(config)
     try {
-      await run(parseFlags(rest), createAuthService({ db, config }))
+      await run(parseFlags(rest), createAuthService({ db, config }), config)
     } finally {
       await pool.end()
     }

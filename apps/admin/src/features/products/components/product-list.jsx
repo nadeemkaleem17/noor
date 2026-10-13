@@ -68,12 +68,12 @@ const staticFilters = [
   },
 ]
 
-/** `/products` (plan/07-admin/03-products.md section 2). Bulk actions and export need endpoints that are not built yet. */
+/** `/products` (plan/07-admin/03-products.md section 2). Status changes in bulk are built; export and import need endpoints that are not built yet. */
 export function ProductList() {
   const can = useCan()
   const navigate = useNavigate()
   const toast = useToast()
-  const { duplicate, remove, archive, previewLink } = useProductMutations()
+  const { duplicate, remove, archive, previewLink, bulk } = useProductMutations()
   const categories = useQuery(categoriesQuery)
   const [deleting, setDeleting] = useState(/** @type {Row | null} */ (null))
   useShortcut('c', () => void navigate('/products/new'), { label: 'New product', when: can('products:write') })
@@ -111,6 +111,12 @@ export function ProductList() {
         rowLabel={(p) => p.title}
         rowHref={(p) => `/products/${p.id}`}
         rowActions={rowActions}
+        selectAllMatching={false}
+        bulkActions={[
+          { id: 'publish', label: 'Publish', permission: 'products:publish', done: (n) => `${n} published`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'publish' }) : { cancelled: true }) },
+          { id: 'unpublish', label: 'Move to draft', permission: 'products:publish', done: (n) => `${n} moved to draft`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'unpublish' }) : { cancelled: true }) },
+          { id: 'archive', label: 'Archive', permission: 'products:publish', done: (n) => `${n} archived`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'archive' }) : { cancelled: true }) },
+        ]}
         empty={{ title: 'No products yet', body: can('products:write') ? 'Create the first product to start selling.' : undefined }}
       />
       <ConfirmDialog

@@ -1,0 +1,21 @@
+{
+  "extends": "@noor/config/tsconfig.base.json",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "tests",
+    "support",
+    "scripts",
+    "playwright.config.js",
+    "global-setup.js",
+    "env.mjs"
+  ]
+}
