@@ -1,2 +1,8 @@
+/* the admin's own fonts, self-hosted, Latin only (plan/04-design-system/tokens.md section 7): Instrument Sans for the screens, IBM Plex Mono for codes and numbers */
+@import '@fontsource/instrument-sans/latin-400.css';
+@import '@fontsource/instrument-sans/latin-500.css';
+@import '@fontsource/instrument-sans/latin-600.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
 @import "@noor/ui/tokens.css";
 @source "../../../packages/ui/src";

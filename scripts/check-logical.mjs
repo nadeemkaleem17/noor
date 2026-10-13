@@ -4,8 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { scan } from '../packages/config/logical.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-// apps/admin is not scanned: its old code is rewritten screen by screen from M3 and joins this list then
-const found = scan(root, ['packages/ui', 'apps/storefront'])
+const found = scan(root, ['packages/ui', 'apps/storefront', 'apps/admin'])
 
 if (found.length) {
   for (const h of found) console.error(`${h.file}:${h.line}  ${h.text}`)

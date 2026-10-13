@@ -1,9 +1,8 @@
 import { base, browser, appRules } from '@noor/config/eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 
-// old/ has its own config (old/eslint.config.js) and is not held to these rules.
 export default [
-  { ignores: ['dist/**', 'old/**'] },
+  { ignores: ['dist/**'] },
   ...base,
   ...browser,
   reactHooks.configs.flat.recommended,

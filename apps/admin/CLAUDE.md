@@ -2,7 +2,7 @@
 
 React 19 SPA (Vite, JSX with JSDoc), React Router (data router, lazy routes), TanStack Query, React Hook Form + the contract's Zod schemas, `@noor/ui` components, Tailwind v4 with
 logical (RTL-safe) utilities. Dev: `pnpm dev` -> http://localhost:5173, API on :3000. Plan: `plan/07-admin/` (`01-ia-roles.md` = screens + permissions). No localStorage domain data,
-no mock mode: everything goes through the real API. `apps/admin/old/` is the previous dashboard, kept runnable (`dev:old`) until replaced; do not add to it.
+no mock mode: everything goes through the real API. The previous dashboard (`apps/admin/old`) is deleted.
 
 Sign in: `owner@rubaya.test` + the password the seed printed once (two-step is off locally: `TWO_FACTOR_REQUIRED=0` in `apps/api/.env`). A forced two-step set-up asks for an
 authenticator code when it is on.
