@@ -148,12 +148,12 @@ WhatsApp is the main sharing channel for this market, so the PDP preview (title,
 ## 10. Acceptance checklist
 
 - [x] For one URL of each indexable page type, `curl` shows a unique `<title>`, a meta description, one canonical and the JSON-LD objects of §4.
-- [ ] Product JSON-LD passes Google's Rich Results Test for one single-variant and one multi-size product (manual, recorded in the PR).
+- [ ] Product JSON-LD passes Google's Rich Results Test for one single-variant and one multi-size product (manual, recorded in the PR). **Open: manual, with Google's tool.**
 - [x] `/search?q=x` and `/cart` send `X-Robots-Tag: noindex`.
 - [x] A staging deploy serves `Disallow: /` and `X-Robots-Tag: noindex` on every page.
 - [x] `/sitemap.xml` lists every active product exactly once and no draft or archived one.
 - [x] `/c/lawn?sort=price_asc` is `noindex` with canonical `/c/lawn`.
-- [ ] Sharing a PDP link in WhatsApp shows title, price and image.
+- [ ] Sharing a PDP link in WhatsApp shows title, price and image. **Open: manual, in WhatsApp.**
 
 ## 11. Open questions and assumptions
 

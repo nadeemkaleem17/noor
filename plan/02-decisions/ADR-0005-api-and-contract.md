@@ -57,9 +57,9 @@ One source of truth; drift (K2) becomes a compile error. Contract package change
 **Always:** add the route to the table first, then the handler, then the client call. **Never:** define a request/response shape inside an app; return a bare string error. **Common mistake:** adding a field to the DB and forgetting the contract (response validation in tests catches it).
 
 ## Acceptance checklist
-- [ ] `packages/contract` has no dependency except `zod`.
-- [ ] CI regenerates OpenAPI and fails on diff against the committed snapshot.
-- [ ] No app imports `zod` schemas that duplicate a contract schema.
+- [x] `packages/contract` has no dependency except `zod`. (`packages/contract/package.json` depends on `zod` only.)
+- [x] CI regenerates OpenAPI and fails on diff against the committed snapshot. (`apps/api/test/app.test.js` (snapshot) in `pnpm check`.)
+- [x] No app imports `zod` schemas that duplicate a contract schema. (`packages/config/test/eslint.test.js` refuses a direct `zod` import in an app.)
 
 ## Revisit trigger
 Reconsider GraphQL if three or more distinct client apps with very different read shapes appear; reconsider RPC if no third-party consumer exists after 12 months and CDN caching of GETs is not used.

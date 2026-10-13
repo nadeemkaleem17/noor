@@ -197,13 +197,13 @@ A draft can be saved with any of these failing; the failures are listed with lin
 
 ## 12. Acceptance checklist
 
-- [ ] One test product per kind can be created, published and viewed on the storefront with its kind-specific blocks (DOC-06.4 §5). (Editor side done in M3-03: every kind has its section. Storefront half: the page shows each kind's blocks (M5-04, DOC-06.4 §12); created and published in the editor then viewed on the storefront was done by hand for the seeded demo products only.)
+- [x] One test product per kind can be created, published and viewed on the storefront with its kind-specific blocks (DOC-06.4 §5). (Editor side done in M3-03: every kind has its section. Storefront half: the page shows each kind's blocks (M5-04, DOC-06.4 §12); created and published in the editor then viewed on the storefront was done by hand for the seeded demo products only.) (E2E-09: one product of each of five kinds (stitched, unstitched, made to order, footwear, accessory) is made in the editor and read on the storefront; bundle, home and beauty are not covered.)
 - [x] Adding a size value generates only the new variants and keeps existing SKUs, prices and stock. (`variants.test.js`, `variants-editor.test.jsx`)
 - [x] Two editors saving the same product: the second gets the stale-write dialog. (Reload their version; Overwrite with mine only with `products:publish`.)
 - [x] Selling a unit while the editor is open, then saving, does not change stock. (By construction: stock is not in the saved document, `toBody` drops it; adjustments go through their own dialog.)
 - [x] "Remove 5" with 3 unreserved units is rejected with the reserved explanation. (Dialog shows the server's `stock_below_reserved`.)
 - [x] Publishing with a missing alt text is blocked and the check links to the image. (The Checks card lists the server's checks with a Fix link that focuses the field; the save is refused by the API.)
-- [ ] A 200-row variant table scrolls smoothly (virtualized) and remains keyboard-navigable. **Dropped**: a product has at most 100 variants and the table is plain rows (same decision as DOC-07.14 section 2).
+- [ ] A 200-row variant table scrolls smoothly (virtualized) and remains keyboard-navigable. **Dropped**: a product has at most 100 variants and the table is plain rows (same decision as DOC-07.14 section 2). **Decided: dropped (a product has at most 100 variants).**
 - [x] An uploaded `.jpg` that is really HTML is rejected at `confirm`. (Server: M1-05. The editor shows the server's reason under the file.)
 
 ## 13. Open questions and assumptions

@@ -131,7 +131,7 @@ A new dependency needs a line in the PR: name, size, why existing code or the pl
 - Do not interpolate admin- or customer-supplied text into HTML, CSS or URLs without the validators named in DOC-04a §6 and DOC-04b (`LinkButton`).
 - Do not log phone numbers, addresses or emails.
 - Do not edit an applied migration, an Accepted ADR's meaning, or a stable error code / enum value / i18n key.
-- Do not copy code from the old `admin-panel/`, `ecommerce-website/` or `mock-api/` without reading the audit finding that covers it (DOC-01 §7); several defects live inside working code.
+- The old `admin-panel/`, `ecommerce-website/` and `mock-api/` were deleted (M6-07, M7-04) and live in git history: do not bring code back without reading the audit finding that covers it (DOC-01 §7); several defects live inside working code.
 - Do not build what the task did not ask for: no speculative options, abstractions or config.
 - Do not push to `master`, skip hooks, or merge with a failing check.
 - Do not read or commit the `*-codebase.zip` archives.
@@ -161,9 +161,9 @@ Report honestly: if a check fails or a step was skipped, say it with the output.
 
 ## 11. Acceptance checklist
 
-- [ ] The root `CLAUDE.md` links to this file and does not duplicate its rules.
-- [ ] Every rule here names its owning doc or ADR, or is a repo-wide working rule.
-- [ ] Commands in §4 exist in the root `package.json` once M0 is complete.
+- [x] The root `CLAUDE.md` links to this file and does not duplicate its rules. (Checked at M7-07.)
+- [ ] Every rule here names its owning doc or ADR, or is a repo-wide working rule. **Open: not re-read rule by rule.**
+- [x] Commands in §4 exist in the root `package.json` once M0 is complete. (Every command of §4 is in the root `package.json` (`test:integration` was added at M7-07).)
 
 ## 12. Open questions and assumptions
 

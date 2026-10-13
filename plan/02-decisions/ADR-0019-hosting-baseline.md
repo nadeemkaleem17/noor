@@ -40,9 +40,9 @@ Always-on service removes cold starts. Provider choice stays reversible because 
 **Always:** keep config in env vars validated at boot; make containers stateless. **Never:** deploy on a free sleeping tier; keep uploads or sessions on local disk. **Common mistake:** choosing a region by price alone.
 
 ## Acceptance checklist
-- [ ] p95 TTFB from a Karachi and a Lahore mobile connection measured and recorded in DOC-14.
-- [ ] Restore from backup rehearsed once before launch.
-- [ ] `api` survives killing one instance without failed checkouts.
+- [ ] p95 TTFB from a Karachi and a Lahore mobile connection measured and recorded in DOC-14. **Production phase.**
+- [ ] Restore from backup rehearsed once before launch. **Production phase.**
+- [ ] `api` survives killing one instance without failed checkouts. **Production phase.**
 
 ## Revisit trigger
 Monthly cost over A-02, p95 TTFB over 600 ms from Pakistan, or an outage traced to single-region failure.

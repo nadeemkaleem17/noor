@@ -256,11 +256,11 @@ Result: **Base UI passes; no Radix fallback needed** (ADR-0007). `DirectionProvi
 
 ## 10. Acceptance checklist
 
-- [ ] Every component in §4 exists with stories for each variant and state, an `RTL` story and a `Dark` story.
+- [ ] Every component in §4 exists with stories for each variant and state, an `RTL` story and a `Dark` story. **Open: the stories are in 7 files and every one is axe-checked (`packages/ui/test/stories.a11y.test.jsx`); not every component has a story for each variant, an RTL story and a Dark story.**
 - [x] `pnpm --filter @noor/ui test` runs the a11y check on every story with zero violations (M2-05, 35 stories).
 - [x] Each row of §5 has an interaction test, except `F6` and `Esc` on a focused toast (Base UI behaviour, not yet asserted).
-- [ ] `grep -rn "@radix-ui\|@base-ui" apps` returns nothing.
-- [ ] `grep -rn "asChild" apps packages` returns nothing.
+- [x] `grep -rn "@radix-ui\|@base-ui" apps` returns nothing. (Run at M7-07: no match.)
+- [x] `grep -rn "asChild" apps packages` returns nothing. (Run at M7-07: no match.)
 - [x] `M0-11` RTL spike table in §8 is filled in (M0-11, 2 Oct 2026).
 
 ## 11. Open questions and assumptions

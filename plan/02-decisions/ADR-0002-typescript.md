@@ -44,9 +44,9 @@ Typed contract end to end; first weeks of admin work include rename noise in dif
 **Always:** `unknown` plus a Zod parse at every boundary (network, storage, URL). **Never:** `any`, `// @ts-ignore` (use `@ts-expect-error` with a reason), non-null `!` outside tests. **Common mistake:** casting API JSON to a type instead of parsing it.
 
 ## Acceptance checklist
-- [ ] `pnpm typecheck` passes in CI for every package.
-- [ ] ESLint `@typescript-eslint/no-explicit-any` is `error`.
-- [ ] Admin TS ratio never decreases.
+- [x] `pnpm typecheck` passes in CI for every package. (Superseded by ADR-0021: `pnpm typecheck` (`tsc --checkJs`) passes for every package.)
+- [ ] ESLint `@typescript-eslint/no-explicit-any` is `error`. **Superseded by ADR-0021 (JavaScript with JSDoc).**
+- [ ] Admin TS ratio never decreases. **Superseded by ADR-0021.**
 
 ## Revisit trigger
 Admin TS share below 50% six weeks after M1 starts, or TypeScript's native compiler becoming the default toolchain (re-evaluate settings).

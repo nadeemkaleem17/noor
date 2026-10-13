@@ -379,15 +379,15 @@ Results are recorded in §18. A failed spike changes this document before any mo
 
 ## 17. Acceptance checklist
 
-- [ ] `dependency-cruiser` passes with the allowed-edges file matching §5; adding an import of `modules/orders/repository` from `modules/cart` fails CI.
-- [ ] Startup fails when a contract route has no handler (test) and when a required env var is missing (test).
-- [ ] OpenAPI generated in CI equals the committed snapshot.
-- [ ] Killing the worker mid-job and restarting neither loses nor duplicates a notification (integration test, ADR-0009).
-- [ ] Two workers never run the same job (integration test with 1,000 jobs).
-- [ ] A forced deadlock (two transactions locking variants in opposite order via a test hook) is retried and both orders resolve correctly.
-- [ ] `grep -rn "process.env" apps/api/src` matches only `platform/config.ts`.
-- [ ] A log capture of a full checkout contains no phone, address or email.
-- [ ] Uploading a renamed HTML file as `.jpg` ends with the media rejected and the object deleted.
+- [ ] `dependency-cruiser` passes with the allowed-edges file matching §5; adding an import of `modules/orders/repository` from `modules/cart` fails CI. **Open: `dependency-cruiser` is not installed; the admin and storefront boundaries are ESLint rules, the API modules' are by convention.**
+- [x] Startup fails when a contract route has no handler (test) and when a required env var is missing (test). (`apps/api/test/app.test.js` (a route with no handler; a missing or malformed variable).)
+- [x] OpenAPI generated in CI equals the committed snapshot. (`apps/api/test/app.test.js` ("generates the OpenAPI document from the table"), in `pnpm check`.)
+- [ ] Killing the worker mid-job and restarting neither loses nor duplicates a notification (integration test, ADR-0009). **Open: the worker has not been killed mid-job in a test.**
+- [x] Two workers never run the same job (integration test with 1,000 jobs). (`apps/api/test/platform.int.test.js`: 200 jobs, two workers.)
+- [x] A forced deadlock (two transactions locking variants in opposite order via a test hook) is retried and both orders resolve correctly. (`apps/api/test/inventory.int.test.js` ("orders that name the same variants in opposite order never deadlock") and `db.test.js` (the retry).)
+- [x] `grep -rn "process.env" apps/api/src` matches only `platform/config.ts`. (Run at M7-07: no match; ESLint also refuses it (`packages/config/test/eslint.test.js`).)
+- [ ] A log capture of a full checkout contains no phone, address or email. **Open: `apps/api/test/logger.test.js` tests the redaction list; no log of a whole checkout is captured.**
+- [x] Uploading a renamed HTML file as `.jpg` ends with the media rejected and the object deleted. (`apps/api/test/media.int.test.js` ("a renamed HTML file is rejected and deleted").)
 
 ## 18. Open questions and assumptions
 

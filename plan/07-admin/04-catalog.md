@@ -143,8 +143,8 @@ The checkout-fields form (`StoreConfig.checkout.fields`) is edited in settings (
 ## 7. Acceptance checklist
 
 - [x] Deleting a category that is some product's primary category is blocked and shows the count. (`categories.test.jsx`)
-- [ ] Reordering a category updates the storefront menu fallback order after the cache purge. (The screen saves the order at once and undoes it if the server refuses; the storefront side waits for M5.)
-- [ ] Setting a category's "Filters shown" changes the facets on its storefront listing, in the same order. (The drawer saves the ordered list with Indexable and Required flags; the facets are served by the API from M1-12; the storefront side waits for M5-03.)
+- [ ] Reordering a category updates the storefront menu fallback order after the cache purge. (The screen saves the order at once and undoes it if the server refuses; the storefront side waits for M5.) **Open: the storefront side exists (M5); no journey reorders a category and reads the menu.**
+- [ ] Setting a category's "Filters shown" changes the facets on its storefront listing, in the same order. (The drawer saves the ordered list with Indexable and Required flags; the facets are served by the API from M1-12; the storefront side waits for M5-03.) **Open: same.**
 - [x] An attribute key cannot be edited after creation (field read-only, API rejects). (Type is fixed too.)
 - [x] Pasting a 5 × 4 block from a spreadsheet fills a size-chart table. (`pasteBlock`, and a paste into the grid.)
 - [x] A fourth featured collection triggers the replace prompt. (The API names the three; the dialog sends `replaceFeaturedId`.)

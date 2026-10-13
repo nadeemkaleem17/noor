@@ -39,9 +39,9 @@ Durable media, smaller bytes, safe uploads. Adds a storage account and a transfo
 **Always:** store the original untouched; serve via signed transform URLs. **Never:** trust `Content-Type` or filename; serve user uploads from the API origin; ship an unsized `<img>`. **Common mistake:** loading the original 4000 px file on the PLP.
 
 ## Acceptance checklist
-- [ ] A renamed `.exe` with an image MIME is rejected.
-- [ ] Uploaded image still resolves after an API redeploy.
-- [ ] PLP images over 100 kB each fail the DOC-13 budget test.
+- [x] A renamed `.exe` with an image MIME is rejected. (`apps/api/test/media.int.test.js` (a file that is not an image is rejected by its bytes and deleted).)
+- [ ] Uploaded image still resolves after an API redeploy. **Open: local storage only; the S3 driver is for the production phase.**
+- [ ] PLP images over 100 kB each fail the DOC-13 budget test. **Open: no image budget test.**
 
 ## Revisit trigger
 Monthly egress or storage cost over the A-02 budget share, or transform p95 over 400 ms on cache miss.

@@ -264,9 +264,9 @@ Recorded per provider in §11 with the date and the document version read.
 - [x] Every template renders in English with sample variables under 600 characters and contains no address or full phone (snapshot test). (`notification-templates.test.js`.)
 - [x] A repeated `notify.customer` job produces one `notification_log` row and (with a fake channel) one send. (`notifications.int.test.js`; the job is `notify.order`; with a fake mailer, a failed send is retried and sent once.)
 - [x] The fake payment provider's webhook with a bad signature is rejected and stored nowhere; a valid duplicate is a no-op.
-- [ ] `track()` is a no-op and loads no script when analytics is not configured; a Playwright run asserts zero third-party requests.
+- [ ] `track()` is a no-op and loads no script when analytics is not configured; a Playwright run asserts zero third-party requests. **Open: no analytics adapter exists; E2E-17 asserts zero third-party requests on the shop.**
 - [x] Enabling bank transfer shows instructions on the order page and activates the reservation-expiry job with the 48-hour window. (The instructions come back in the `orders.create` answer; the order page that shows them again is M4-07 and M5-07. `payments.int.test.js`.)
-- [ ] No adapter file is merged without its §11 record.
+- [ ] No adapter file is merged without its §11 record. **Open: no adapter has been merged.**
 
 ## 11. Verification records
 

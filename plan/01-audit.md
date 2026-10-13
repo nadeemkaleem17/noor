@@ -134,9 +134,9 @@ Severity: **C** critical (money or access), **H** high, **M** medium, **L** low.
 
 ## 8. Acceptance checklist
 
-- [ ] Every Critical/High row maps to a DOC-16 task ID.
-- [ ] Every row names the doc or ADR that resolves it.
-- [ ] No finding is marked fixed without a merged PR referencing its ID.
+- [ ] Every Critical/High row maps to a DOC-16 task ID. **Checked at Phase 7 (DOC-16 §6); not re-run.**
+- [ ] Every row names the doc or ADR that resolves it. **Checked at Phase 7; not re-run.**
+- [ ] No finding is marked fixed without a merged PR referencing its ID. **No pull request was ever made (the work is on one branch, not pushed): findings are cited by id in the commits instead.**
 
 ## 9. Open questions and assumptions
 

@@ -175,10 +175,10 @@ Two renames against today's contract: product kind `made-to-order` → `made_to_
 
 ## 8. Acceptance checklist
 
-- [ ] `db:migrate` on an empty database creates exactly the 67 tables of §3.
-- [ ] A schema test asserts: every `*_id` column has a foreign key and an index; every `*_minor` column is `bigint`; no column is `float`, `double`, `decimal`, `enum` or `timestamp`.
-- [ ] Every enum `CHECK` list equals the corresponding Zod enum (test generated from the contract).
-- [ ] Every JSON column has a named Zod schema and a write-path test that rejects an invalid document.
+- [ ] `db:migrate` on an empty database creates exactly the 67 tables of §3. **Open: no test counts the tables.**
+- [ ] A schema test asserts: every `*_id` column has a foreign key and an index; every `*_minor` column is `bigint`; no column is `float`, `double`, `decimal`, `enum` or `timestamp`. **Open: no schema test of these rules.**
+- [ ] Every enum `CHECK` list equals the corresponding Zod enum (test generated from the contract). **Open: the enum lists are generated from the contract (`inList`), so they cannot drift; no test says so.**
+- [ ] Every JSON column has a named Zod schema and a write-path test that rejects an invalid document. **Open: not tested column by column.**
 
 ## 9. Open questions and assumptions
 

@@ -114,12 +114,12 @@ X-CSRF-Token: …
 
 ## 8. Acceptance checklist
 
-- [ ] Every `PUT` here with a stale `version` returns `409 stale_write`.
-- [ ] A theme failing the contrast gate is rejected by the API even if the UI check is bypassed.
-- [ ] Disabling the last payment method → `422 no_payment_method`.
-- [ ] Moving a city between zones through `updateZone` leaves it in exactly one zone.
-- [ ] Each write produces one audit entry whose diff lists only changed fields.
-- [ ] After each write the corresponding public endpoint (DOC-10.1) reflects it once the cache tag is purged.
+- [ ] Every `PUT` here with a stale `version` returns `409 stale_write`. **Open: tested for the documents of `settings.int.test.js`, not every `PUT`.**
+- [x] A theme failing the contrast gate is rejected by the API even if the UI check is bypassed. (`apps/api/test/settings.int.test.js` ("refuses a theme that fails the contrast gate").)
+- [x] Disabling the last payment method → `422 no_payment_method`. (`apps/api/test/settings.int.test.js` (`no_payment_method`).)
+- [x] Moving a city between zones through `updateZone` leaves it in exactly one zone. (`apps/api/test/shipping.int.test.js` ("keep a city in exactly one zone: claiming it moves it").)
+- [ ] Each write produces one audit entry whose diff lists only changed fields. **Open.**
+- [ ] After each write the corresponding public endpoint (DOC-10.1) reflects it once the cache tag is purged. **Open: the shop reads its settings within 30 s (E2E-13, theme and Urdu).**
 
 ## 9. Open questions and assumptions
 

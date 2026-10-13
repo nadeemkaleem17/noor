@@ -329,11 +329,11 @@ A 401 from any query clears the cache and redirects to `/login`. A 403 shows `Er
 
 ## 13. Acceptance checklist
 
-- [ ] `grep -rnE "useEffect\([^)]*fetch|forwardRef|useContext\(" apps packages` returns nothing in new code.
-- [ ] Every `features/*/api.ts` in the admin exports a key factory; `grep -rn "queryKey: \[" apps/admin/src --include=*.tsx` returns nothing (keys only come from factories).
-- [ ] Every `useMemo`/`useCallback`/`memo` has a comment citing case 1, 2 or 3 of §4.
-- [ ] Storefront PDP HTML (curl, no JS) contains title, price and the add-to-cart form.
-- [ ] Throttled to "Slow 4G", changing a cart quantity updates the number immediately and the total after the response.
+- [x] `grep -rnE "useEffect\([^)]*fetch|forwardRef|useContext\(" apps packages` returns nothing in new code. (Run at M7-07 (the one `useContext` became `use`).)
+- [ ] Every `features/*/api.ts` in the admin exports a key factory; `grep -rn "queryKey: \[" apps/admin/src --include=*.tsx` returns nothing (keys only come from factories). **Open: the main areas have key factories, but four private keys remain (`bulk-bar` job, `command-palette`, `history-panel`, `link-input`).**
+- [ ] Every `useMemo`/`useCallback`/`memo` has a comment citing case 1, 2 or 3 of §4. **Open: four `useMemo` uses; not all carry the comment.**
+- [x] Storefront PDP HTML (curl, no JS) contains title, price and the add-to-cart form. (`apps/storefront/test/shell.server.test.js` ("server HTML: heading, the price, the options, a form that posts to the cart") and E2E-02.)
+- [ ] Throttled to "Slow 4G", changing a cart quantity updates the number immediately and the total after the response. **Open: manual, needs a throttled browser.**
 
 ## 14. Open questions and assumptions
 

@@ -2,6 +2,7 @@
 
 | Field | Value |
 |---|---|
+| 2026-10-13 | M7-07: the state of every ADR after the local build (section 5), for the owner to accept them; the acceptance boxes of the ADRs were reviewed one by one |
 | ID | DOC-02 |
 | Title | ADR index and research register |
 | Status | Draft |
@@ -41,6 +42,34 @@ Index of every architecture decision record (ADR) and the single place where res
 | [0021](ADR-0021-javascript-with-jsdoc.md) | JavaScript with JSDoc types (supersedes 0002) | Accepted | Owner decision |
 
 Status values: **Proposed** (this phase), **Accepted** (you approve), **Superseded by ADR-xxxx**.
+
+### 2.1 State of every ADR after the local build (M7-07)
+
+Every ADR below is still **Proposed**: moving it to **Accepted** is the owner's act, not ours. This table is what the owner needs to do it: what was decided, whether it was built as decided, and what differs. The build is the local one; the production phase (hosting, CDN, S3, backups) is not yet.
+
+| ADR | Built as decided? | What differs or is still to come |
+|---|---|---|
+| 0001 custom modular monolith | Yes | The revisit trigger (a) was not hit: checkout, orders and inventory pass their acceptance tests (M4). |
+| 0002 TypeScript | Superseded by 0021 | |
+| 0003 pnpm + Turborepo | Yes | Four apps now: `apps/e2e` was added at M7-01. |
+| 0004 storefront on React Router 8, SSR, CDN cache | Yes, SSR and cache classes | No CDN yet (production). The shop keeps its settings 30 s in memory. |
+| 0005 REST, OpenAPI, one Zod contract | Yes | OpenAPI is a snapshot test, not a published page. |
+| 0006 Tailwind v4, tokens, logical properties | Yes | `check-logical` and the contrast gate are in `pnpm check`. |
+| 0007 owned components on Base UI | Yes | 50 components; stories in 7 files, all axe-checked. |
+| 0008 MySQL 8.4 + Drizzle | Yes | Drizzle `~0.45.3`. |
+| 0009 MySQL jobs and outbox; HTTP cache first | Yes | No test kills the worker mid-job (open box). |
+| 0010 FULLTEXT, synonyms, SQL facets | Yes | |
+| 0011 S3 and on-the-fly transforms | **In part** | Local storage and sizes made with `sharp` (M0-08 skipped: no Docker); the S3 driver and imgproxy are for the production phase. |
+| 0012 sessions, Argon2id, TOTP, RBAC | Yes | `RELAXED_PASSWORDS` (local only) was added at the owner's request; the `__Host-` cookie prefix applies where there is HTTPS. |
+| 0013 money in paisa | Yes | |
+| 0014 style, colourway, size | Yes | |
+| 0015 loaders, TanStack Query/Table/Virtual, Zustand | **In part** | Loaders and TanStack Query yes. The admin has its own `DataTable` (no TanStack Table), no virtualised bodies (dropped), and the cart drawer is a React context (no Zustand). The admin's initial JavaScript is over its budget (M7-09). |
+| 0016 Fastify 5 modular monolith | Yes | Module boundaries are by convention and review; `dependency-cruiser` was not set up. |
+| 0017 COD first, provider interface, signed webhooks | Yes | COD only at launch; `manual`, `bank_transfer` and a test provider exist. |
+| 0018 English, Urdu and RTL ready | Yes | Urdu is switched on in Settings and its texts are partly translated; E2E-16 checks RTL. |
+| 0019 single-region host, managed MySQL, CDN | Not built | Production phase. |
+| 0020 order and inventory consistency | Yes | All five acceptance tests are ticked in the ADR. |
+| 0021 JavaScript with JSDoc | Yes (Accepted) | |
 
 ## 3. ADR template (every ADR file follows it)
 
@@ -121,9 +150,9 @@ Anything older than 12 months must be flagged here. None of the sources above is
 
 ## 6. Acceptance checklist
 
-- [ ] ADR file exists for every row in §2 and follows §3.
-- [ ] Every research claim in an ADR appears in §4 with source and date.
-- [ ] Every ADR has a revisit trigger.
+- [x] ADR file exists for every row in §2 and follows §3. (21 rows, 21 files; checked at M7-07.)
+- [ ] Every research claim in an ADR appears in §4 with source and date. **Open: not re-read at M7-07.**
+- [x] Every ADR has a revisit trigger. (Checked at M7-07.)
 
 ## 7. Open questions and assumptions
 

@@ -99,10 +99,10 @@ There is **no** "reset all data" in the admin. Development resets use `pnpm --fi
 
 - [x] The appearance preview and the storefront produce the same CSS for the same theme (shared function, unit test). (`appearance.test.jsx` compares the preview style with `themeCss`, the function the storefront uses.)
 - [x] A theme with `#C9A227` text on `#FBF8F3` cannot be saved; the panel names the failing pair and ratio. (Test; Save is disabled and the API refuses it too.)
-- [ ] An uploaded SVG logo containing `<script>` is stored without it. (Images only are accepted today, so an SVG is refused outright; the sanitiser question is Q-07.11-2.)
-- [ ] Changing the WhatsApp number changes every `wa.me` link on the storefront after the cache purge. (Admin side done: stored as digits; the storefront links come with M5.)
-- [ ] Turning "Reviews" off removes reviews from the PDP and the Reviews item from the admin sidebar. (The switch is saved; the PDP and the sidebar item follow with the reviews screens, M6.)
-- [ ] An export larger than 1,000 rows completes as a job and its link stops working after 24 h. (The Data screen shows backup and queue status; the exports and the job list wait for the endpoints, M4-10.)
+- [ ] An uploaded SVG logo containing `<script>` is stored without it. (Images only are accepted today, so an SVG is refused outright; the sanitiser question is Q-07.11-2.) **Not applicable: images only are accepted; SVG is refused.**
+- [ ] Changing the WhatsApp number changes every `wa.me` link on the storefront after the cache purge. (Admin side done: stored as digits; the storefront links come with M5.) **Open: the shop reads its settings within 30 s; no journey changes the number.**
+- [ ] Turning "Reviews" off removes reviews from the PDP and the Reviews item from the admin sidebar. (The switch is saved; the PDP and the sidebar item follow with the reviews screens, M6.) **Open: the admin half is tested (`nav-counts`, reviews screen); the PDP half is not.**
+- [ ] An export larger than 1,000 rows completes as a job and its link stops working after 24 h. (The Data screen shows backup and queue status; the exports and the job list wait for the endpoints, M4-10.) **Superseded: exports answer at once up to 5,000 rows and are audited (M4-10); there is no export job.**
 - [x] No reset or delete-all control exists. (`data.test.jsx`.)
 
 ## 7. Open questions and assumptions

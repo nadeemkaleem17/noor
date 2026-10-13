@@ -46,8 +46,8 @@ One datastore to run and back up; exactly-once-effect through idempotency, at-le
 **Always:** write the event in the same transaction; make handlers idempotent. **Never:** call an external provider inside a request transaction; publish events after commit from app code. **Common mistake:** a handler that sends an SMS then crashes before recording success (use an idempotency key per message).
 
 ## Acceptance checklist
-- [ ] Killing the worker mid-job and restarting does not duplicate or lose a notification (integration test).
-- [ ] Every event type in DOC-08 has a handler test.
+- [ ] Killing the worker mid-job and restarting does not duplicate or lose a notification (integration test). **Open.**
+- [ ] Every event type in DOC-08 has a handler test. **Open.**
 
 ## Revisit trigger
 Job latency p95 over 30 s at normal load, queue table over 5 GB, or more than 50 jobs/s sustained.

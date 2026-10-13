@@ -58,9 +58,9 @@ One token vocabulary across apps; dark mode and RTL are properties of the system
 **Always:** use semantic tokens; verify 4.5:1 text contrast in both schemes. **Never:** hard-code hex in components; use physical-direction utilities; interpolate admin-supplied strings into CSS without validation. **Common mistake:** using a primitive token directly "just once".
 
 ## Acceptance checklist
-- [ ] `grep -rE "(^|[^-a-z])(ml|mr|pl|pr|left|right)-" apps packages` returns nothing (outside DOC-04 exceptions).
-- [ ] Both schemes pass axe contrast checks on every shipped component story.
-- [ ] No `@import url(https://fonts.googleapis…)` anywhere.
+- [x] `grep -rE "(^|[^-a-z])(ml|mr|pl|pr|left|right)-" apps packages` returns nothing (outside DOC-04 exceptions). (`node scripts/check-logical.mjs`, in `pnpm check`.)
+- [x] Both schemes pass axe contrast checks on every shipped component story. (`packages/ui/test/stories.a11y.test.jsx` and `contrast.test.js`.)
+- [x] No `@import url(https://fonts.googleapis…)` anywhere. (Run at M7-07: no match; E2E-17 fails on any request to another host.)
 
 ## Revisit trigger
 Tailwind build or upgrade cost exceeds 2 dev-days twice in 6 months, or admin-driven theming needs more than CSS variables can express.

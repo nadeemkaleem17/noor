@@ -203,12 +203,12 @@ X-CSRF-Token: …
 
 ## 10. Acceptance checklist
 
-- [ ] Updating a product with one new size keeps every existing variant id.
-- [ ] Saving with a stale `version` → `409 stale_write` and nothing changed.
-- [ ] `admin.products.update` to `active` with a missing alt → `409 publish_checks_failed` listing the path.
-- [ ] `admin.inventory.adjust` never produces `on_hand < reserved`.
-- [ ] Import: the applied rows equal the previewed rows even if the CSV changes in between (token-bound).
-- [ ] A `catalog` role can call every route here except `admin.products.delete`; a `fulfilment` role only `admin.products.list/get`, `admin.inventory.*` (matrix test).
+- [x] Updating a product with one new size keeps every existing variant id. (`apps/api/test/products.int.test.js` ("keeps every variant and option id when a size is added").)
+- [x] Saving with a stale `version` → `409 stale_write` and nothing changed. (`apps/api/test/products.int.test.js` ("refuses a stale version").)
+- [x] `admin.products.update` to `active` with a missing alt → `409 publish_checks_failed` listing the path. (`apps/api/test/products.int.test.js` ("publish checks").)
+- [ ] `admin.inventory.adjust` never produces `on_hand < reserved`. **Open: no test names the rule; E2E set-up meets `stock_below_reserved`.**
+- [ ] Import: the applied rows equal the previewed rows even if the CSV changes in between (token-bound). **Open: the product import is not built.**
+- [x] A `catalog` role can call every route here except `admin.products.delete`; a `fulfilment` role only `admin.products.list/get`, `admin.inventory.*` (matrix test). (`apps/api/test/auth.int.test.js` ("route x role").)
 
 ## 11. Open questions and assumptions
 

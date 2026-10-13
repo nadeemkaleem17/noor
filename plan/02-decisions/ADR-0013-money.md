@@ -45,9 +45,9 @@ Removes the K4/F-01 class; requires touching every price display and form.
 **Always:** pass `Money` objects across module boundaries. **Never:** store or transmit rupees as floats; compute totals in the browser as the source of truth (ADR-0020). **Common mistake:** `Math.round(price * qty * 0.9)` in a component.
 
 ## Acceptance checklist
-- [ ] Property test: for random carts, sum of line allocations equals the order discount exactly.
-- [ ] `grep -rnE "\* ?100|/ ?100" apps/*/src` finds only the money helpers.
-- [ ] Storefront and admin render the same amount for the same `Money`.
+- [ ] Property test: for random carts, sum of line allocations equals the order discount exactly. **Open: no property test; the discount sums are tested on examples (`packages/contract/test/money.test.js`).**
+- [ ] `grep -rnE "\* ?100|/ ?100" apps/*/src` finds only the money helpers. **Open: `percentOff` (a display number) and a few others match.**
+- [ ] Storefront and admin render the same amount for the same `Money`. **Open.**
 
 ## Revisit trigger
 Multi-currency is approved (then add currency exponents and an ADR for FX), or any total can exceed 2^53 paisa (not plausible).

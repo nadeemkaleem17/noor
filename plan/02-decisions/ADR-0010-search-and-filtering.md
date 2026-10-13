@@ -37,9 +37,9 @@ Good enough for 3,000 products; relevance is basic. Search and listing share one
 **Always:** return facet counts for the *current* filter set; cap `limit`. **Never:** return unpaginated product arrays; expose internal tags as facets (v2 evidence from a live 865-product listing). **Common mistake:** facet counts that ignore the active filters.
 
 ## Acceptance checklist
-- [ ] PLP/PDP payloads for 3,000 products stay under 60 kB per page of 24 (DOC-13 budget).
-- [ ] Search for "shalwar" and "shalwaar" returns the same set.
-- [ ] `EXPLAIN` shows index use on listing queries (DOC-13).
+- [ ] PLP/PDP payloads for 3,000 products stay under 60 kB per page of 24 (DOC-13 budget). **Open.**
+- [x] Search for "shalwar" and "shalwaar" returns the same set. (`apps/api/test/search.int.test.js`.)
+- [x] `EXPLAIN` shows index use on listing queries (DOC-13). (`apps/api/test/search.int.test.js` and the query-plan run (`apps/api/perf`).)
 
 ## Revisit trigger
 More than 10,000 products, search "zero result" rate over 8%, listing p95 over 300 ms, or a need for typo tolerance (any script): move search to Meilisearch (option B), fed from the outbox.

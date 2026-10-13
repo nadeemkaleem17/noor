@@ -111,12 +111,12 @@ Guard rails (enforced by the API, reflected in the UI by hiding or disabling wit
 
 ## 8. Acceptance checklist
 
-- [ ] An invite link works once, expires after 7 days, and cannot be used after "Resend invite" issued a new one. (Server rules, M1-02; the screen shows the link once and "Resend invite" says the old one stops working.)
+- [x] An invite link works once, expires after 7 days, and cannot be used after "Resend invite" issued a new one. (Server rules, M1-02; the screen shows the link once and "Resend invite" says the old one stops working.) (`apps/api/test/auth.int.test.js` ("invites by a link that works once", "an expired invite is refused, and resending replaces the old link").)
 - [x] An owner or manager without 2FA can reach nothing but the enrolment screen after signing in. (Router loader redirects to `/enrol-2fa`, M3-01; `enrol.test.jsx`.)
 - [x] Demoting or deactivating the last owner is refused with an explanation. (`staff.test.jsx`: the server's `last_owner` is explained and the dialog stays open.)
-- [ ] Changing a user's role ends that user's sessions (their next request returns 401). (Server rule; the edit dialog warns about it.)
+- [x] Changing a user's role ends that user's sessions (their next request returns 401). (Server rule; the edit dialog warns about it.) (`apps/api/test/auth.int.test.js` ("a role change ends that person's sessions").)
 - [x] Recovery codes are displayed once; reloading the page does not show them again. (`RecoveryCodes`: Done waits for the tick; nothing keeps the codes after the dialog closes.)
-- [ ] "Sign out all other sessions" leaves the current session working. (The button calls `admin.me.sessions.revokeOthers`; the "This device" row has no sign-out.)
+- [x] "Sign out all other sessions" leaves the current session working. (The button calls `admin.me.sessions.revokeOthers`; the "This device" row has no sign-out.) (`apps/api/test/auth.int.test.js` ("lists own sessions, revokes one by its public id, and revokes the others").)
 - [x] The permissions table shown in the UI is rendered from `admin.roles.list`, not from a constant in the client. (`staff.test.jsx`.)
 
 ## 9. Open questions and assumptions

@@ -139,8 +139,8 @@ One definition per term, used identically in every doc, code identifier and UI s
 **Always:** reuse these terms in identifiers (`colorway`, `reservation`, `paisa`). **Never:** use "component" for a garment piece in code outside the `Component` contract type; use "price" for a float. **Common mistake:** calling the order number a secret; it is public, the `tracking_token` is the secret.
 
 ## 4. Acceptance checklist
-- [ ] Every domain/technical term introduced in a new doc is added here in the same PR.
-- [ ] No term has two definitions across docs.
+- [ ] Every domain/technical term introduced in a new doc is added here in the same PR. **A rule for authors, kept per change; not a state.**
+- [ ] No term has two definitions across docs. **A rule for authors, kept per change; not a state.**
 
 ## 5. Open questions and assumptions
 Order and payment status sets are provisional until DOC-09 (Phase 5); Phase 7 reconciles them.

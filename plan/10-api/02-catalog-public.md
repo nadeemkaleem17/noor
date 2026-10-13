@@ -187,12 +187,12 @@ GET /api/v1/products/old-handle
 ## 8. Acceptance checklist
 
 - [x] Listing for 3,000 seeded products: page of 24 with facets ≤ 60 kB gzip and under 100 ms at the database (ADR-0010, DOC-09.3 §9). Measured in M1-13: 3.0–3.8 kB gzip; slowest single query 45 ms; whole call 70–150 ms on the dev machine. The facet counts run concurrently and the size facet reads `product_sizes`.
-- [ ] Walking all pages with the cursor returns every product exactly once while a product is published mid-walk.
-- [ ] `facets=0` skips the facet queries (asserted by query count).
-- [ ] An archived product is `404` on `getProduct` and absent from listings, related, siblings and the sitemap.
-- [ ] `available` never exceeds `maxPerOrder`.
-- [ ] `sort=relevance` without `q` → `400`; `attr.unknown=x` → `400`.
-- [ ] A preview token for product A does not open product B and expires after 15 minutes.
+- [ ] Walking all pages with the cursor returns every product exactly once while a product is published mid-walk. **Open.**
+- [x] `facets=0` skips the facet queries (asserted by query count). (`apps/api/test/catalog-public.int.test.js` ("facets=0 leaves the facet queries out").)
+- [ ] An archived product is `404` on `getProduct` and absent from listings, related, siblings and the sitemap. **Open: tested for `getProduct` and listings (`catalog-public.int.test.js`), not for related, siblings and the sitemap.**
+- [x] `available` never exceeds `maxPerOrder`. (`apps/api/test/catalog-public.int.test.js` ("never says more than maxPerOrder is left").)
+- [ ] `sort=relevance` without `q` → `400`; `attr.unknown=x` → `400`. **Open.**
+- [x] A preview token for product A does not open product B and expires after 15 minutes. (`apps/api/test/catalog-public.int.test.js` ("a preview token opens its own product ... it opens no other").)
 
 ## 9. Open questions and assumptions
 

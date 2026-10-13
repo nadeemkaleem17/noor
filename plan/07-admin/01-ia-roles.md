@@ -178,8 +178,8 @@ Old URLs redirect client-side: `/pages` → `/content/pages`, `/menus` → `/con
 
 ## 9. Acceptance checklist
 
-- [ ] Every row of §2 exists as a lazy route (done in M3-01: `src/lib/screens.js` plus the sign-in routes; the screens themselves are placeholders until their tasks); initial JS ≤ 200 kB gzip (ADR-0015). **Not met yet: the sign-in screen loads 206.8 kB** (`node scripts/admin-initial-js.mjs login`; react-dom 68, react-router 30, zod 27, i18next 12, Base UI parts, react-hook-form 13, contract 13, TanStack Query 10). Levers if it must go lower: split the route table so the client carries only the routes it calls, or drop `tailwind-merge` from `cn`.
-- [ ] A `viewer` user sees no create, edit, delete or bulk control anywhere (Playwright walks every list screen).
+- [x] Every row of §2 exists as a lazy route (done in M3-01: `src/lib/screens.js` plus the sign-in routes; the screens themselves are placeholders until their tasks); initial JS ≤ 200 kB gzip (ADR-0015). **Not met yet: the sign-in screen loads 206.8 kB** (`node scripts/admin-initial-js.mjs login`; react-dom 68, react-router 30, zod 27, i18next 12, Base UI parts, react-hook-form 13, contract 13, TanStack Query 10). Levers if it must go lower: split the route table so the client carries only the routes it calls, or drop `tailwind-merge` from `cn`. (Every row is a lazy route in `src/lib/screens.js`; no placeholder screen is left (M6).)
+- [x] A `viewer` user sees no create, edit, delete or bulk control anywhere (Playwright walks every list screen). (E2E-11 walks the list screens as a viewer.)
 - [x] Visiting any app URL signed out redirects to `/login?next=…` and returns there after sign-in. (`router.test.jsx`)
 - [x] `?next=https://evil.example` is ignored. (`safe-next.test.js`, `router.test.jsx`)
 - [x] `grep -rnE "role ===|role ==" apps/admin/src` returns nothing.

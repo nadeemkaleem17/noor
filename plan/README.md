@@ -71,9 +71,9 @@ I proceeded under the assumptions above rather than blocking Phase 0 on them.
 **Always:** update the status table and the changelog of every doc you change. **Never:** copy a spec into a second doc; leave "TBD" (write the assumption and trigger). **Common mistake:** treating the v2/v3 `.docx` files as truth; see DOC-01 §5 for where they disagree with the code.
 
 ## 7. Acceptance checklist
-- [ ] Every doc listed in §3 exists once it is marked written.
-- [ ] Each written doc has the header table, scope, rules, acceptance checklist, open questions and changelog.
-- [ ] Assumptions A-01…A-05 are referenced, never restated.
+- [ ] Every doc listed in §3 exists once it is marked written. **Not re-checked.**
+- [ ] Each written doc has the header table, scope, rules, acceptance checklist, open questions and changelog. **Not re-checked.**
+- [ ] Assumptions A-01…A-05 are referenced, never restated. **Not re-checked.**
 
 ## 8. Open questions and assumptions
 CQ-1…CQ-3 above; audit questions Q-1…Q-3 are in DOC-01 §9.

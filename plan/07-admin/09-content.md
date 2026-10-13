@@ -103,13 +103,13 @@ Two fixed menus: **Main** (`main`) and **Footer** (`footer`). No others can be c
 
 ## 6. Acceptance checklist
 
-- [ ] The Markdown preview and the storefront page render identical HTML for the same body (shared component, snapshot test). (The editor previews with `@noor/ui/markdown` after the server resolved the tokens; the storefront page and the snapshot test come with M5.)
+- [ ] The Markdown preview and the storefront page render identical HTML for the same body (shared component, snapshot test). (The editor previews with `@noor/ui/markdown` after the server resolved the tokens; the storefront page and the snapshot test come with M5.) **Open: both use `@noor/ui/markdown`; no snapshot test.**
 - [x] A hero slide with a link but no button text cannot be saved.
 - [x] `javascript:alert(1)` is rejected by `LinkInput` (home form and menus).
-- [ ] Changing the store phone (DOC-07.11) changes the resolved token in the page preview. (The preview calls `admin.pages.preview`, which resolves from the stored settings; seen with the seeded phone. Waits for the store settings screen, M3-06, to change it.)
+- [ ] Changing the store phone (DOC-07.11) changes the resolved token in the page preview. (The preview calls `admin.pages.preview`, which resolves from the stored settings; seen with the seeded phone. Waits for the store settings screen, M3-06, to change it.) **Open: seen by hand only.**
 - [x] A menu item whose category was hidden shows "Target not live". (From the API's `targetLive`.)
 - [x] Required pages have no Delete and no Draft option. (Seen on the real contact page.)
-- [ ] Saving the home form updates the storefront home within the cache window (tag purge verified in an integration test). (Server side: M1-06. The form saves the whole document with its version.)
+- [ ] Saving the home form updates the storefront home within the cache window (tag purge verified in an integration test). (Server side: M1-06. The form saves the whole document with its version.) **Open: no journey edits the home form; E2E-13 proves the same path for the theme (the shop reads its settings within 30 s).**
 
 ## 7. Open questions and assumptions
 

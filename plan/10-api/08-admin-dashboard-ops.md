@@ -119,9 +119,9 @@ The route keys are defined across DOC-10.1 … 10.8 and have **not been tallied*
 - [x] `admin.dashboard.todo.toConfirm.count` equals `admin.orders.counts.pending_confirmation`. (`reporting.int.test.js`.)
 - [x] `netSales` for a seeded range equals a hand-written SQL sum (test), and excludes cancelled and returned orders. (`reporting.int.test.js`: against a sum in SQL, with a cancelled order left out, and with days at the Pakistan day boundary.)
 - [x] `admin.search` as a `catalog` user returns only `products`. (`reporting.int.test.js`: orders and customers come back empty.)
-- [ ] Every search path uses an index (`EXPLAIN` in the query-plan test set, DOC-13).
-- [ ] A bulk job's result is still readable 10 minutes after it finished.
-- [ ] `/readyz` returns 503 with `failing: ["migrations"]` when a migration is pending.
+- [ ] Every search path uses an index (`EXPLAIN` in the query-plan test set, DOC-13). **Open: `apps/api/perf` covers the listed queries.**
+- [ ] A bulk job's result is still readable 10 minutes after it finished. **Open.**
+- [ ] `/readyz` returns 503 with `failing: ["migrations"]` when a migration is pending. **Open.**
 
 ## 9. Open questions and assumptions
 

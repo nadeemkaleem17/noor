@@ -159,12 +159,12 @@ Seed (`apps/api/src/modules/shipping/seed.js`, called by the base seed): TCS, Le
 
 ## 6. Acceptance checklist
 
-- [ ] Writing an invalid document (unknown key, wrong type, bad hex colour) is rejected and nothing is stored.
-- [ ] Two staff saving the same document: the second gets `stale_write`.
-- [ ] Inserting a second zone for a city fails on the primary key.
-- [ ] Changing a method's fee does not change any existing order.
-- [ ] `db:seed --base-only` creates the five documents, both menus, the locked pages, the couriers and the city list, and is idempotent.
-- [ ] Deleting a media item used by a hero slide is refused with `409 in_use`.
+- [ ] Writing an invalid document (unknown key, wrong type, bad hex colour) is rejected and nothing is stored. **Open: not tested for every document.**
+- [ ] Two staff saving the same document: the second gets `stale_write`. **Open: tested for shipping zones and products; not for each settings document.**
+- [x] Inserting a second zone for a city fails on the primary key. (`apps/api/test/shipping.int.test.js` ("the database refuses a second row").)
+- [ ] Changing a method's fee does not change any existing order. **Open: orders copy their fee at creation; no test changes a fee afterwards.**
+- [x] `db:seed --base-only` creates the five documents, both menus, the locked pages, the couriers and the city list, and is idempotent. (`apps/api/test/seed.int.test.js` (base layer: creates what a shop needs, nothing twice) and `launch.int.test.js`.)
+- [x] Deleting a media item used by a hero slide is refused with `409 in_use`. (`apps/api/test/media.int.test.js` ("a file that something refers to cannot be deleted").)
 
 ## 7. Open questions and assumptions
 

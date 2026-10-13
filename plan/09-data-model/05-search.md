@@ -95,12 +95,12 @@ The expression is built from sanitised tokens and passed as a bound parameter; b
 
 ## 5. Acceptance checklist
 
-- [ ] "shalwar" and "shalwaar" return the same products (ADR-0010).
-- [ ] A two-letter size or word ("xl", "3 pc") matches.
-- [ ] Typing a full SKU returns that product first.
-- [ ] A query of `+++"` or `*` returns an empty result, not an SQL error.
-- [ ] Archiving a product removes it from results within the job latency.
-- [ ] `EXPLAIN` shows the FULLTEXT index in use.
+- [x] "shalwar" and "shalwaar" return the same products (ADR-0010). (`apps/api/test/search.int.test.js`.)
+- [x] A two-letter size or word ("xl", "3 pc") matches. (`apps/api/test/search.int.test.js` ("matches two-letter words").)
+- [ ] Typing a full SKU returns that product first. **Open: SKU-first is built; no test by that name.**
+- [ ] A query of `+++"` or `*` returns an empty result, not an SQL error. **Open: the query text is cleaned of syntax (`search.int.test.js`); no test posts `+++"` to the endpoint.**
+- [x] Archiving a product removes it from results within the job latency. (`apps/api/test/search.int.test.js` ("archiving removes it on the next reindex").)
+- [x] `EXPLAIN` shows the FULLTEXT index in use. (`apps/api/test/search.int.test.js` ("EXPLAIN shows the FULLTEXT index").)
 
 ## 6. Open questions and assumptions
 

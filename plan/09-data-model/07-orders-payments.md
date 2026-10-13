@@ -292,7 +292,7 @@ Allowed in `pending_confirmation` (address, city, method, notes, line quantities
 - [x] Dispatch twice (retry) assigns one invoice number. (`order-changes.int.test.js`: a retry is `invalid_transition` or `stale_write`, and a refused dispatch takes no number.)
 - [x] Refused-at-door return: COD payment `failed`, stock handled per line, customer `refused_count` + 1. (`order-changes.int.test.js` and `payments.int.test.js`.)
 - [x] Cancel after a manual deposit payment sets `payment_status = refund_due`; recording a refund of the same amount sets `refunded`. (`payments.int.test.js`: also the partial step, and a refund above what is paid is refused.)
-- [ ] Order lookup by `number` + phone and by token hash each use a unique index (`EXPLAIN`). (The unique indexes `orders_number_uq` and `orders_tracking_token_uq` exist; the lookup itself is M4-07.)
+- [ ] Order lookup by `number` + phone and by token hash each use a unique index (`EXPLAIN`). (The unique indexes `orders_number_uq` and `orders_tracking_token_uq` exist; the lookup itself is M4-07.) **Open.**
 - [x] After a randomised sequence of transitions, `customers` counters equal a fresh aggregate over orders. (`order-changes.int.test.js`: 40 random steps over 8 orders; stock held also checked.)
 
 ## 9. Open questions and assumptions

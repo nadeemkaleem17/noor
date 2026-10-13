@@ -138,10 +138,10 @@ Privileges: the application database user has `INSERT, SELECT` only on this tabl
 
 ## 4. Acceptance checklist
 
-- [ ] A database dump contains no session id, token or recovery code that works when replayed.
-- [ ] Deactivating the last active owner fails inside the service transaction even under two concurrent requests.
-- [ ] `UPDATE audit_log …` as the application user fails with a privilege error.
-- [ ] Audit list pagination by `id` cursor returns stable pages while new rows are inserted.
+- [x] A database dump contains no session id, token or recovery code that works when replayed. (`apps/api/test/secrets-at-rest.int.test.js` (M7-03).)
+- [ ] Deactivating the last active owner fails inside the service transaction even under two concurrent requests. **Open: the last owner is kept (`auth.int.test.js`); not under two concurrent requests.**
+- [x] `UPDATE audit_log …` as the application user fails with a privilege error. (`apps/api/test/audit.int.test.js` ("append-only").)
+- [ ] Audit list pagination by `id` cursor returns stable pages while new rows are inserted. **Open: not tested while rows are inserted.**
 
 ## 5. Open questions and assumptions
 

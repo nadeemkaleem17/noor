@@ -16,6 +16,7 @@
     "check": "turbo run typecheck lint test --concurrency=3 && node scripts/check-logical.mjs && node scripts/check-secrets.mjs",
     "route-keys": "node scripts/route-keys.mjs",
     "postinstall": "node scripts/fix-pnpm-links.mjs",
+    "test:integration": "pnpm --filter @noor/api test",
     "test:e2e": "pnpm --filter @noor/e2e e2e"
   },
   "devDependencies": {

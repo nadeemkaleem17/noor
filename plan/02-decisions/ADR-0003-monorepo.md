@@ -50,8 +50,8 @@ One place for the contract; atomic cross-app changes; CI can run only affected t
 **Always:** declare workspace deps as `workspace:*`. **Never:** deep-import another package's `src/` path; copy code between packages. **Common mistake:** putting a helper in an app because "only one app uses it today"; if two apps do, move it in the same PR.
 
 ## Acceptance checklist
-- [ ] `pnpm install && pnpm turbo run build typecheck lint test` passes on a clean clone.
-- [ ] No duplicated `Money`, `ApiError`, `usePersistentState` implementations remain (K3).
+- [ ] `pnpm install && pnpm turbo run build typecheck lint test` passes on a clean clone. **Open: not tried on a clean clone.**
+- [x] No duplicated `Money`, `ApiError`, `usePersistentState` implementations remain (K3). (The old copies were deleted (M6-07, M7-04); one `Money` and one `ApiError` live in `@noor/contract`.)
 
 ## Revisit trigger
 More than 8 workspaces, or CI over 10 minutes with Turborepo caching on, or a need for enforced module boundaries beyond ESLint (consider Nx).

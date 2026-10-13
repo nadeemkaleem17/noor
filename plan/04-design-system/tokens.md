@@ -321,12 +321,12 @@ Directional icons (chevrons, arrows, "back") flip with `rtl:-scale-x-100`. Icons
 
 ## 12. Acceptance checklist
 
-- [ ] `packages/ui/src/tokens.css` is the only file in the repo containing a hex colour, apart from `theme-presets.ts`, SVG assets and tests (`grep -rnE "#[0-9a-fA-F]{6}" apps packages`).
-- [ ] `node packages/ui/scripts/check-contrast.mjs` passes.
-- [ ] `node scripts/check-logical.mjs` passes.
-- [ ] `grep -rn "dark:" apps packages/ui/src/components` returns only asset swaps.
-- [ ] No network request to a Google Fonts host on any page (Playwright assertion, DOC-13).
-- [ ] A store theme with `colors.accent = "red;}body{display:none"` renders with the default accent (unit test for `themeCss`).
+- [x] `packages/ui/src/tokens.css` is the only file in the repo containing a hex colour, apart from `theme-presets.ts`, SVG assets and tests (`grep -rnE "#[0-9a-fA-F]{6}" apps packages`). (Run at M7-07: the other files are the theme presets and colour maths of `@noor/contract`, the seed's generated pictures, the image processor's background, and the admin colour pickers (a fallback value).)
+- [x] The contrast gate passes (`packages/ui/test/contrast.test.js`, in `pnpm test`). (The contrast gate is `packages/ui/test/contrast.test.js` (there is no script of that name).)
+- [x] `node scripts/check-logical.mjs` passes. (Run at M7-07.)
+- [x] `grep -rn "dark:" apps packages/ui/src/components` returns only asset swaps. (Run at M7-07: the one match is an object key (`dark: Moon`).)
+- [x] No network request to a Google Fonts host on any page (Playwright assertion, DOC-13). (E2E-17 fails on any request to another host.)
+- [x] A store theme with `colors.accent = "red;}body{display:none"` renders with the default accent (unit test for `themeCss`). (`packages/ui/test/contrast.test.js` ("a hostile theme").)
 
 ## 13. Open questions and assumptions
 

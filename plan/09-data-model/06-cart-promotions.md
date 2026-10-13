@@ -128,7 +128,7 @@ At order creation `promotions.redeem(tx, …)` locks the promo row `FOR UPDATE`,
 - [x] A fixed Rs. 500 code over three eligible lines produces line discounts summing to exactly 50000 paisa. (`promo-evaluate.test.js`: the spare paisa goes to the earlier of the two largest remainders.)
 - [x] Two concurrent orders using the last allowed use of a code → one succeeds, one gets `promo_usage_limit`. (`promos.int.test.js`, repeated; `redeem` locks the promo row `FOR UPDATE`. The per-customer count is also a locking read, so two orders of one customer cannot both pass.)
 - [x] Cancelling an order decrements `usage_count` and the customer can use the code again. (`reverse(tx, orderId)`; a second call does nothing; a promo with a reversed redemption still counts as used, so it cannot be deleted.)
-- [ ] The storefront quote, the order created from it and the admin preview (`admin.promos.preview`) return identical amounts for the same cart. (The preview and the cart quote both call `evaluatePromo` through `priceCart`; the order created from it is M4-04.)
+- [ ] The storefront quote, the order created from it and the admin preview (`admin.promos.preview`) return identical amounts for the same cart. (The preview and the cart quote both call `evaluatePromo` through `priceCart`; the order created from it is M4-04.) **Open: they share `priceCart` and `evaluatePromo`; no test compares the three.**
 
 ## 7. Open questions and assumptions
 

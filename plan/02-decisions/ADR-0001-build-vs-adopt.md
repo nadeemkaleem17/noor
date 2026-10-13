@@ -58,9 +58,9 @@ apps/api/src/modules/
 **Always:** put money-moving logic behind a module's public API with tests. **Never:** add a feature from the cut list without a new ADR. **Common mistake:** re-implementing a hosted-gateway feature (retries, 3-D Secure) in our code.
 
 ## Acceptance checklist
-- [ ] Every module in `apps/api/src/modules` has an `index.ts` and a README row in DOC-08.
-- [ ] No imports cross module internals (lint rule, DOC-08).
-- [ ] Cut-list features are absent from the contract.
+- [ ] Every module in `apps/api/src/modules` has an `index.ts` and a README row in DOC-08. **Open: the modules have an `index.js` (JavaScript); the README rows were not kept.**
+- [ ] No imports cross module internals (lint rule, DOC-08). **Open: no `dependency-cruiser`; by convention.**
+- [ ] Cut-list features are absent from the contract. **Open: not re-read against the cut-list.**
 
 ## Revisit trigger
 Reopen with a 3-day Medusa spike if **any**: (a) checkout + orders + inventory do not pass the DOC-13 acceptance suite within 6 weeks of backend start; (b) team drops to one developer; (c) a required feature on the cut list becomes launch-critical; (d) COD/shipping logic turns out to fit Medusa workflows without forking.

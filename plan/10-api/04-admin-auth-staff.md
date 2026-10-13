@@ -121,11 +121,11 @@ Set-Cookie: __Host-rb_admin=…; Path=/; HttpOnly; Secure; SameSite=Lax
 
 ## 8. Acceptance checklist
 
-- [ ] Every DOC-11 §13 acceptance item that names an endpoint passes against these routes.
-- [ ] `admin.roles.list` output equals the code matrix (snapshot test); the UI table renders from it.
-- [ ] `admin.staff.update` demoting the last owner → `409 last_owner`.
-- [ ] Step-up routes return `403 step_up_required` when `lastAuthAt` is older than 15 minutes and succeed after `admin.me.confirmPassword`.
-- [ ] No response in this file contains `passwordHash`, `totpSecret`, `tokenHash` or a session cookie value (schema test).
+- [x] Every DOC-11 §13 acceptance item that names an endpoint passes against these routes. (DOC-11 §13 is ticked box by box (M7-03).)
+- [x] `admin.roles.list` output equals the code matrix (snapshot test); the UI table renders from it. (`apps/api/test/auth.int.test.js` ("the roles list equals the matrix in code").)
+- [x] `admin.staff.update` demoting the last owner → `409 last_owner`. (`apps/api/test/auth.int.test.js` ("keeps the last owner").)
+- [x] Step-up routes return `403 step_up_required` when `lastAuthAt` is older than 15 minutes and succeed after `admin.me.confirmPassword`. (`apps/api/test/auth.int.test.js` ("step-up routes need a recent password confirmation").)
+- [x] No response in this file contains `passwordHash`, `totpSecret`, `tokenHash` or a session cookie value (schema test). (`apps/api/test/auth.int.test.js` ("never exposes credentials") and `secrets-at-rest.int.test.js`.)
 
 ## 9. Open questions and assumptions
 

@@ -33,6 +33,43 @@ jobs:
       - run: pnpm route-keys --check
       - run: pnpm build
 
+  # The integration tests and the end-to-end journeys need the real database (plan/14-devops.md section 6): a test that is skipped because MySQL is
+  # missing is a failure here, not a green run. Written at M7-01 and not yet run (it needs a push to GitHub).
+  mysql-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: mysql://rubaya_app:ci-app-password@127.0.0.1:3306/rubaya
+      DATABASE_MIGRATION_URL: mysql://rubaya_migrate:ci-migrate-password@127.0.0.1:3306/rubaya
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: MySQL 8.4 with the flags of plan/14-devops.md section 3.2
+        run: |
+          docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=ci-root mysql:8.4             --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci --default-time-zone=+00:00 --innodb-ft-min-token-size=2
+          until docker exec mysql mysqladmin ping -pci-root --silent; do sleep 2; done
+          # the two users, as infra/mysql/init/01-users.sql says; '%' because the client comes from outside the container
+          sed -e "s/__APP_DB_PASSWORD__/ci-app-password/; s/__MIGRATE_DB_PASSWORD__/ci-migrate-password/; s/'localhost'/'%'/g" infra/mysql/init/01-users.sql | docker exec -i mysql mysql -uroot -pci-root
+      - run: pnpm --filter @noor/api db:migrate
+      - name: API integration tests (none may be skipped)
+        run: |
+          pnpm --filter @noor/api test 2>&1 | tee api-test.log
+          ! grep -q "integration tests skipped" api-test.log
+      - name: End-to-end journeys (Chromium; the smoke set on WebKit)
+        run: |
+          pnpm exec playwright install --with-deps chromium webkit
+          E2E_CHANNEL=chromium E2E_WEBKIT=1 pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: e2e-report
+          path: .data/e2e/results
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, use, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFetcher } from 'react-router'
 import { Drawer } from '@noor/ui/drawer'
@@ -10,7 +10,7 @@ import { CartSummary } from './summary'
 const DrawerState = createContext(/** @type {{ open: boolean, setOpen: (open: boolean) => void }} */ ({ open: false, setOpen: () => {} }))
 
 /** Opens and closes the cart drawer from anywhere in the shop: the cart link of the header, the product page after an add. */
-export const useCartDrawer = () => useContext(DrawerState)
+export const useCartDrawer = () => use(DrawerState)
 
 /**
  * The cart in a panel (plan/06-storefront/05-cart-checkout.md section 3): the same lines and totals as the cart page, a bottom sheet on a phone and a side panel from `md`.

@@ -56,9 +56,9 @@ Real transactions and constraints replace client-side invariants. We carry a sma
 **Always:** write the migration, then the code; wrap order/stock writes in a transaction. **Never:** edit an applied migration; use `float`/`double`/`decimal` for money; use `timestamp` or a native `ENUM`; use `SELECT *` in repositories. **Common mistake:** relying on ORM defaults for `updated_at`.
 
 ## Acceptance checklist
-- [ ] `pnpm db:migrate` on an empty database yields the schema in DOC-09.
-- [ ] Every FK and every column used in a `WHERE`/`ORDER BY` of a list endpoint has an index (DOC-09 tables).
-- [ ] No `push` in scripts or CI.
+- [x] `pnpm db:migrate` on an empty database yields the schema in DOC-09. (Every integration test and `pnpm test:e2e` migrate an empty database.)
+- [ ] Every FK and every column used in a `WHERE`/`ORDER BY` of a list endpoint has an index (DOC-09 tables). **Open: no test of the indexes.**
+- [x] No `push` in scripts or CI. (Run at M7-07: no `push` in scripts or CI.)
 
 ## Revisit trigger
 Drizzle 1.0 stable migration costs more than 2 dev-days, a security or maintenance event hits the project, or Prisma 8 stable removes the reasons in the table. Reopen the engine choice only if search (ADR-0010) or the job queue (ADR-0009) hits its own revisit trigger and the fix needs a Postgres-only feature.

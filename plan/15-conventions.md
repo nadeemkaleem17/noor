@@ -161,6 +161,8 @@ Rules: at least one approving review from a human; the author merges; a PR that 
 
 ## 7. Code review checklist
 
+*These boxes are for the reviewer of each pull request (and the template in section 5 for its author): they are ticked on the pull request, not here.*
+
 **Correctness and scope**
 - [ ] Does what the linked task and doc section say; nothing extra.
 - [ ] Acceptance checklist of each cited doc still holds.
@@ -212,10 +214,10 @@ Rules: at least one approving review from a human; the author merges; a PR that 
 
 ## 10. Acceptance checklist
 
-- [ ] Branch protection on `master`: PR required, 1 approval, all §6 checks required.
-- [ ] `.github/pull_request_template.md` exists with the §5 content.
-- [ ] A commit-message lint (commitlint with the config-conventional preset, run on the PR title in CI) rejects a non-conforming title.
-- [ ] `grep -rnE "TODO(?!\()" apps packages` (run with `grep -P`) returns nothing.
+- [ ] Branch protection on `master`: PR required, 1 approval, all §6 checks required. **Open: a setting of the GitHub repository; the repository has not been pushed.**
+- [x] `.github/pull_request_template.md` exists with the §5 content. (`.github/pull_request_template.md` exists; checked at M7-07.)
+- [x] A commit-message lint (commitlint with the config-conventional preset, run on the PR title in CI) rejects a non-conforming title. (The `pr-title` job of `.github/workflows/ci.yml` (semantic pull request); it has not run.)
+- [x] `grep -rnE "TODO(?!\()" apps packages` (run with `grep -P`) returns nothing. (Run at M7-07: the only match is the lint rule's own message (`packages/config/eslint.js`).)
 
 ## 11. Open questions and assumptions
 

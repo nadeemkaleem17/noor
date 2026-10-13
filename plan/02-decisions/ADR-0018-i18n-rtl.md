@@ -48,9 +48,9 @@ Urdu launch becomes translation + QA work, not engineering. Admin stays English-
 **Always:** use message keys; use logical utilities; test every new component under `dir="rtl"` in Storybook. **Never:** concatenate translated fragments; embed text in images; hard-code `left/right`. **Common mistake:** formatting prices with string templates instead of `formatMoney`.
 
 ## Acceptance checklist
-- [ ] Switching Storybook to RTL shows no overlapping or mirrored-wrong component.
-- [ ] Lint finds no JSX string literals in `apps/storefront` and `packages/ui`.
-- [ ] A product with only `en` renders on `/ur` using the fallback without errors.
+- [ ] Switching Storybook to RTL shows no overlapping or mirrored-wrong component. **Open: E2E-16 checks the Urdu shop and the admin in RTL; Storybook was not walked.**
+- [ ] Lint finds no JSX string literals in `apps/storefront` and `packages/ui`. **Open.**
+- [x] A product with only `en` renders on `/ur` using the fallback without errors. (E2E-16 loads `/ur` pages of products that have only English text.)
 
 ## Revisit trigger
 Urdu share of traffic over 20%, or Urdu launch date set (then schedule translation and font QA).

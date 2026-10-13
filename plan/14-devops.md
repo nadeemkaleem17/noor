@@ -305,13 +305,13 @@ Each is a short checklist kept in `plan/runbooks/` when production exists; the c
 
 ## 13. Acceptance checklist
 
-- [ ] On a clean Windows machine and a clean Linux machine, §3.3 goes from clone to a working `pnpm dev` with no manual steps beyond those listed.
-- [ ] `docker compose down -v && docker compose up -d && db:migrate && db:seed` rebuilds a working local stack; running `db:seed` twice changes nothing the second time.
-- [ ] CI applies all migrations to an empty MySQL 8.4 and reports no schema drift.
-- [ ] The API refuses to boot with `STORAGE_DRIVER=local` and `NODE_ENV=production`, and with any missing variable in §4.1.
-- [ ] The `rubaya_app` user cannot run DDL or modify `audit_log`.
-- [ ] CI completes in under 10 minutes on a typical PR.
-- [ ] (At launch) Restore rehearsal completed and recorded below; p95 TTFB from Karachi and Lahore measured and recorded (ADR-0019).
+- [ ] On a clean Windows machine and a clean Linux machine, §3.3 goes from clone to a working `pnpm dev` with no manual steps beyond those listed. **Open: not tried on a clean machine.**
+- [ ] `docker compose down -v && docker compose up -d && db:migrate && db:seed` rebuilds a working local stack; running `db:seed` twice changes nothing the second time. **Superseded: no Docker, by decision; the same is drop the database, migrate, seed twice (`seed.int.test.js`; `pnpm test:e2e` prepares a scratch database each time).**
+- [ ] CI applies all migrations to an empty MySQL 8.4 and reports no schema drift. **Open: the CI job `mysql-tests` migrates an empty database; it has not run (no push).**
+- [x] The API refuses to boot with `STORAGE_DRIVER=local` and `NODE_ENV=production`, and with any missing variable in §4.1. (`apps/api/test/app.test.js` ("STORAGE_DRIVER (local storage is for development only)").)
+- [x] The `rubaya_app` user cannot run DDL or modify `audit_log`. (`apps/api/test/audit.int.test.js` ("append-only"); the DDL half is by the grants of `infra/mysql/init/01-users.sql`, not tested.)
+- [ ] CI completes in under 10 minutes on a typical PR. **Open: CI has not run.**
+- [ ] (At launch) Restore rehearsal completed and recorded below; p95 TTFB from Karachi and Lahore measured and recorded (ADR-0019). **Open: launch task.**
 
 | Rehearsal / measurement | Date | Result |
 |---|---|---|

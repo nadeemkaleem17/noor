@@ -58,9 +58,9 @@ Clear places for code and reviews; agents can follow a fixed template. Fastify's
 **Always:** keep routes thin; return contract types. **Never:** import another module's `repository.ts`/`service.ts`; read `process.env` outside `config.ts`; log request bodies. **Common mistake:** adding "just one query" to a route handler.
 
 ## Acceptance checklist
-- [ ] CI dependency-cruiser passes with the module rules.
-- [ ] App fails fast on invalid config (test).
-- [ ] Every route is registered from the contract route table; an unregistered route is a test failure.
+- [ ] CI dependency-cruiser passes with the module rules. **Open: no `dependency-cruiser`.**
+- [x] App fails fast on invalid config (test). (`apps/api/test/app.test.js`.)
+- [x] Every route is registered from the contract route table; an unregistered route is a test failure. (`apps/api/test/app.test.js` ("refuses to start when a route has no handler").)
 
 ## Revisit trigger
 A module needs independent scaling or deployment (extract it behind its `index.ts`), or Fastify maintenance stalls.

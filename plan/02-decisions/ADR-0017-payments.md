@@ -49,9 +49,9 @@ Customers on wallets/cards leave the site briefly; COD gets real fraud controls;
 **Always:** verify webhook signatures on raw bytes; make handlers idempotent; keep amounts in paisa. **Never:** trust a redirect/return URL as proof of payment; log full card/wallet data; mark an order paid from the browser. **Common mistake:** parsing JSON before verifying the signature.
 
 ## Acceptance checklist
-- [ ] Replaying the same webhook twice changes nothing (test).
-- [ ] A forged webhook (bad signature) returns 401 and creates no event.
-- [ ] COD above `codLimit` is rejected server-side.
+- [ ] Replaying the same webhook twice changes nothing (test). **Open.**
+- [x] A forged webhook (bad signature) returns 401 and creates no event. (`apps/api/test/payments.int.test.js` ("a bad signature is refused and nothing is stored").)
+- [ ] COD above `codLimit` is rejected server-side. **Open: `codBlocked` is tested for customers (`cart.int.test.js`); the limit by name is not.**
 
 ## Revisit trigger
 A gateway lacks a hosted checkout or webhooks (reconsider option B/C for that rail), or COD share drops below 40% for 3 months (invest in prepaid UX).

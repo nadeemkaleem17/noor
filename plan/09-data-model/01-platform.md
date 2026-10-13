@@ -127,11 +127,11 @@ Indexes: `exports_requested_idx (requested_by, created_at)`, `exports_expires_id
 
 ## 4. Acceptance checklist
 
-- [ ] 50 concurrent `orders.create` calls produce 50 consecutive order numbers with no duplicate and no gap.
-- [ ] A rolled-back order does not consume a number.
-- [ ] Same idempotency key and body twice → one order, identical response; same key, different body → `422`.
-- [ ] Inserting two jobs with the same `unique_key` leaves one row.
-- [ ] `rate_limit_hits` contains no phone number or email in clear.
+- [x] 50 concurrent `orders.create` calls produce 50 consecutive order numbers with no duplicate and no gap. (`apps/api/test/orders.int.test.js` (50 orders at once, no gap) and `platform.int.test.js` (50 concurrent callers).)
+- [ ] A rolled-back order does not consume a number. **Open: no test of a rolled-back order and its number.**
+- [x] Same idempotency key and body twice → one order, identical response; same key, different body → `422`. (`apps/api/test/orders.int.test.js` ("the same Idempotency-Key twice").)
+- [x] Inserting two jobs with the same `unique_key` leaves one row. (`apps/api/test/platform.int.test.js`.)
+- [ ] `rate_limit_hits` contains no phone number or email in clear. **Open: subjects are hashed (`subjectHash`); no test reads the table.**
 
 ## 5. Open questions and assumptions
 

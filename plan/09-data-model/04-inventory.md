@@ -125,13 +125,13 @@ stateDiagram-v2
 
 ## 6. Acceptance checklist
 
-- [ ] Cart with two lines of one variant (2 + 2) and 3 available → `409 insufficient_stock`, `reserved` unchanged (ADR-0020 test).
-- [ ] 50 concurrent orders for the last unit → exactly one succeeds; `reserved = 1`, `on_hand = 1`.
-- [ ] Place → cancel leaves `on_hand` and `reserved` as before and writes no movement.
-- [ ] Place → dispatch → return (restock) ends with the original `on_hand` and three ledger rows netting to zero.
-- [ ] `adjust` "remove 5" with `on_hand 6, reserved 3` is rejected with `stock_below_reserved`.
-- [ ] For every variant after a randomised test run: `on_hand = Σ delta` and `reserved = Σ active reservations`.
-- [ ] A direct `UPDATE inventory_levels SET reserved = on_hand + 1` is rejected by the check constraint.
+- [x] Cart with two lines of one variant (2 + 2) and 3 available → `409 insufficient_stock`, `reserved` unchanged (ADR-0020 test). (`apps/api/test/inventory.int.test.js` and `orders.int.test.js` (2 + 2 of 3).)
+- [x] 50 concurrent orders for the last unit → exactly one succeeds; `reserved = 1`, `on_hand = 1`. (`apps/api/test/orders.int.test.js` (50 orders at once for the last unit).)
+- [x] Place → cancel leaves `on_hand` and `reserved` as before and writes no movement. (`apps/api/test/inventory.int.test.js`.)
+- [x] Place → dispatch → return (restock) ends with the original `on_hand` and three ledger rows netting to zero. (`apps/api/test/inventory.int.test.js`.)
+- [ ] `adjust` "remove 5" with `on_hand 6, reserved 3` is rejected with `stock_below_reserved`. **Open: no test names `stock_below_reserved` (E2E set-up meets it).**
+- [ ] For every variant after a randomised test run: `on_hand = Σ delta` and `reserved = Σ active reservations`. **Open: the seed test checks level = ledger once; not after a randomised run.**
+- [ ] A direct `UPDATE inventory_levels SET reserved = on_hand + 1` is rejected by the check constraint. **Open: no test of the check constraint.**
 
 ## 7. Open questions and assumptions
 

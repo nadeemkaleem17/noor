@@ -164,8 +164,8 @@ select rows ──► bar appears: "3 selected  [Publish] [Archive] [⋯]  ✕ c
 - [x] Network panel: a bulk action on 30 rows is exactly one request. (Tested with a fake action: `data-table.test.jsx`. No bulk endpoint exists yet; `admin.products.bulk` comes with M3-03.)
 - [x] "Select all 2,310 matching" sends the filter, not 2,310 ids, and completes as a job with a result toast. (Tested with a fake action and job; `admin.jobs.get` is not built yet.)
 - [x] A mixed result keeps the failed rows selected and lists their reasons.
-- [ ] With 100 rows per page the body is virtualized and arrow-key row navigation still works. **Dropped for now**: not virtualised, see section 2; keyboard use is the native one (Tab through links, checkboxes and buttons). Arrow-key row navigation arrives with DOC-07.15.
-- [ ] An exported cell containing `=HYPERLINK(...)` opens as text in a spreadsheet. (Server side: arrives with the export endpoints. `DataTable` already downloads a `download` outcome and reports a job that ends in an export.)
+- [ ] With 100 rows per page the body is virtualized and arrow-key row navigation still works. **Dropped for now**: not virtualised, see section 2; keyboard use is the native one (Tab through links, checkboxes and buttons). Arrow-key row navigation arrives with DOC-07.15. **Decided: dropped.**
+- [x] An exported cell containing `=HYPERLINK(...)` opens as text in a spreadsheet. (Server side: arrives with the export endpoints. `DataTable` already downloads a `download` outcome and reports a job that ends in an export.) (`apps/api/src/platform/csv.js` prefixes a cell that starts like a formula, tested through the exports (`apps/api/test/admin-orders.int.test.js`).)
 - [x] Sort headers expose `aria-sort`; the result count change is announced. (`role="status"` line, tested for aria-sort.)
 
 ## 9. Open questions and assumptions

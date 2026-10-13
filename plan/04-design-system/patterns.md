@@ -190,11 +190,11 @@ Rules: a spinner alone is used only inside buttons and for waits under about 1 s
 
 ## 11. Acceptance checklist
 
-- [ ] Every list and async section in a PR shows loading, empty and error in Storybook or a test.
-- [ ] Reloading any admin list URL restores search, filters, sort and page.
-- [ ] Submitting an invalid form focuses the first invalid field.
-- [ ] Storefront pages are usable at 360 px with no horizontal scroll (Playwright viewport test, DOC-13).
-- [ ] Tabbing through any page shows a visible focus ring on each stop, starting with the skip link.
+- [ ] Every list and async section in a PR shows loading, empty and error in Storybook or a test. **Open: `DataTable` and the dashboard panels have loading, empty and error in tests; not audited list by list.**
+- [x] Reloading any admin list URL restores search, filters, sort and page. (`apps/admin/src/components/data-table.test.jsx` ("restores search, filters, sort, page and page size from the address").)
+- [ ] Submitting an invalid form focuses the first invalid field. **Open: React Hook Form focuses the first invalid field by default; no test says so.**
+- [x] Storefront pages are usable at 360 px with no horizontal scroll (Playwright viewport test, DOC-13). (E2E-14 and the 320 px sweep (`apps/e2e/tests/14-mobile.spec.js`, `18-accessibility-sweep.spec.js`).)
+- [x] Tabbing through any page shows a visible focus ring on each stop, starting with the skip link. (E2E-15 (`apps/e2e/tests/15-keyboard.spec.js`) checks a visible focus ring at every stop of a whole purchase, starting with the skip link.)
 
 ## 12. Open questions and assumptions
 

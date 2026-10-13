@@ -45,9 +45,9 @@ Real authentication, revocation and auditability. A login screen and 2FA UX must
 **Always:** check permission server-side on every route; hash with Argon2id; log security events. **Never:** put secrets in `VITE_*` variables; store a session token in `localStorage`; trust client-side role checks. **Common mistake:** hiding a button and calling that authorization.
 
 ## Acceptance checklist
-- [ ] `grep -r "ADMIN_KEY\|x-admin-key" apps packages` is empty.
-- [ ] Every admin route has a declared permission (contract route table, ADR-0005) and a test that a lower role gets 403.
-- [ ] Tracking endpoint returns 429 after the stated limit.
+- [x] `grep -r "ADMIN_KEY\|x-admin-key" apps packages` is empty. (Run at M7-07: only the scanner that bans the names (`packages/config/secrets.js`) matches.)
+- [x] Every admin route has a declared permission (contract route table, ADR-0005) and a test that a lower role gets 403. (`apps/api/test/auth.int.test.js` ("route x role").)
+- [x] Tracking endpoint returns 429 after the stated limit. (`apps/api/test/public-orders.int.test.js`.)
 
 ## Revisit trigger
 More than 15 staff, a need for SSO, or a customer-account launch (then add OTP provider ADR).

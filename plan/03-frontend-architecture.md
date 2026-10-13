@@ -64,7 +64,7 @@ noor/
   turbo.json  pnpm-workspace.yaml  package.json  .nvmrc
 ```
 
-The existing folders map as: `admin-panel/` → `apps/admin/` (moved with `git mv`, migrated in place, ADR-0002); `ecommerce-website/` → rewritten as `apps/storefront/`; `mock-api/` → deleted when `apps/api` serves the same routes (DOC-16 orders this).
+The folders of the old code mapped as follows (all of it is done: the old code is deleted, M6-07 and M7-04): `admin-panel/` → `apps/admin/` (moved with `git mv`, migrated in place, ADR-0002); `ecommerce-website/` → rewritten as `apps/storefront/`; `mock-api/` → deleted when `apps/api` serves the same routes (DOC-16 orders this).
 
 `pnpm-workspace.yaml`:
 ```yaml
@@ -306,10 +306,10 @@ Local ports: API 3000, admin 5173, storefront 5174, Storybook 6006.
 
 ## 12. Acceptance checklist
 
-- [ ] `pnpm install && pnpm check` passes on a clean clone.
-- [ ] ESLint fails on a cross-feature import, a direct `@base-ui/react` import in an app, and a direct `zod` import in an app (one fixture test each in `packages/config`).
-- [ ] `grep -rE "apiEnabled|API_MODE|VITE_ADMIN_KEY" apps` returns nothing.
-- [ ] `grep -r "localStorage" apps/storefront/app` returns nothing; in `apps/admin/src` only `lib/prefs.ts` matches.
+- [ ] `pnpm install && pnpm check` passes on a clean clone. **Open: `pnpm check` runs green on this tree (M7-07); a clean clone has not been tried.**
+- [x] ESLint fails on a cross-feature import, a direct `@base-ui/react` import in an app, and a direct `zod` import in an app (one fixture test each in `packages/config`). (`packages/config/test/eslint.test.js`.)
+- [x] `grep -rE "apiEnabled|API_MODE|VITE_ADMIN_KEY" apps` returns nothing. (Run at M7-07: no match.)
+- [x] `grep -r "localStorage" apps/storefront/app` returns only the recently viewed ids (`features/product/deferred.jsx`); in `apps/admin/src` only `lib/prefs.js` matches (and tests). (Storefront: only `features/product/deferred.jsx` (the recently viewed product ids, not domain data); admin: `lib/prefs.js` and tests. Run at M7-07.)
 - [x] Starting the storefront without `API_INTERNAL_URL` exits with an error naming the variable (checked at M0-12: exit 1, names all three missing variables).
 - [x] `M0-I18N-SPIKE` result recorded in §9 (M0-12).
 

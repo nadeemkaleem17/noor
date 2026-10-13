@@ -107,7 +107,7 @@ All fixes were applied in the named files, each with a changelog row starting "P
 - [x] No route key used outside DOC-10 is missing from DOC-10 (re-scan after the fixes).
 - [x] No permission outside the DOC-11 matrix; no dangling `DOC-` id; no undefined table name.
 - [x] Every fix has a changelog row in the file it changed.
-- [ ] Field-by-field agreement between DOC-09, DOC-10 and the Zod contract: provable only once the contract exists (M0-04, M1).
+- [ ] Field-by-field agreement between DOC-09, DOC-10 and the Zod contract: provable only once the contract exists (M0-04, M1). **Open: the contract exists, and `pnpm route-keys --check` ties each route to its doc; a field-by-field comparison has not been done.**
 
 ## 9. Changelog
 

@@ -44,8 +44,8 @@ We own the code of every primitive wrapper (more maintenance, full control); upg
 **Always:** keep the public props of each component stable and documented in DOC-04; include keyboard and RTL tests. **Never:** import a primitive library directly in an app; style with hard-coded values. **Common mistake:** copying a Radix-flavoured snippet from an older tutorial into a Base UI project.
 
 ## Acceptance checklist
-- [ ] `grep -r "@radix-ui" apps/*/package.json packages/*/package.json` is empty after the admin migration milestone.
-- [ ] Each component has Storybook stories for all states and an axe test.
+- [x] `grep -r "@radix-ui" apps/*/package.json packages/*/package.json` is empty after the admin migration milestone. (Run at M7-07: no match.)
+- [ ] Each component has Storybook stories for all states and an axe test. **Open: every story is axe-checked; not every component has a story for every state.**
 - [x] RTL spike result is recorded in DOC-04b §8 (M0-11).
 
 ## Revisit trigger

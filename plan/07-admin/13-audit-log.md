@@ -65,7 +65,7 @@ A collapsed "History" card on entity screens lists the 10 newest audit entries f
 
 - [x] Changing a product price creates one entry whose detail shows `price` before and after and nothing unrelated. (Entries of real product saves show only the changed fields; `audit.test.jsx` shows money as rupees with the paisa on hover.)
 - [x] A failed sign-in appears under the Security preset with the email attempted and the IP, and no password. (Seen in the browser: category `security`, the email tried, the IP; no password.)
-- [ ] A role change entry shows old and new role, actor and target. (The server writes `staff.role_changed` with the diff; not yet looked at in the browser.)
+- [x] A role change entry shows old and new role, actor and target. (The server writes `staff.role_changed` with the diff; not yet looked at in the browser.) (`apps/api/test/auth.int.test.js` (the entry carries the old and the new role); the screen shows the diff (`audit.int.test.js`).)
 - [x] No request from the admin can modify or delete an audit entry (API has no such route; test asserts 404/405). (Append-only at the database and no route, M1-03; the screen has no control.)
 - [x] A user without `audit:read` sees no History cards and gets the 403 state on `/audit`. (`audit.test.jsx`.)
 - [x] Filters and the open entry restore from the URL. (`audit.test.jsx`.)

@@ -251,12 +251,12 @@ Schemas are written as TypeScript-like shapes; in the contract they are Zod sche
 
 ## 14. Acceptance checklist
 
-- [ ] Every route in the contract table declares `auth`, and `permission` when staff.
-- [ ] Every code thrown anywhere in `apps/api` exists in `errorCodes` (compile-time: `DomainError` takes the union type).
-- [ ] A request with an unknown query parameter or body key returns `400` on every route (property test over the route table).
-- [ ] Every error response has `application/problem+json`, `code` and `requestId`.
-- [ ] Every `staff` route returns `Cache-Control: no-store`.
-- [ ] OpenAPI snapshot is regenerated and committed with any route change.
+- [ ] Every route in the contract table declares `auth`, and `permission` when staff. **Open: the registrar refuses a route without `auth` at start-up (`app.test.js`); `permission` for staff routes is tested through the role matrix.**
+- [ ] Every code thrown anywhere in `apps/api` exists in `errorCodes` (compile-time: `DomainError` takes the union type). **Open: error codes are one union type; `tsc` does not check every `throw` against it.**
+- [ ] A request with an unknown query parameter or body key returns `400` on every route (property test over the route table). **Open: strict bodies are tested route by route, not by a property test over the table.**
+- [ ] Every error response has `application/problem+json`, `code` and `requestId`. **Open: tested on samples, not on every route.**
+- [x] Every `staff` route returns `Cache-Control: no-store`. (`apps/api/test/security.test.js` ("admin responses are never cached").)
+- [x] OpenAPI snapshot is regenerated and committed with any route change. (`apps/api/test/app.test.js` (snapshot) and `pnpm route-keys --check` in CI.)
 
 ## 15. Open questions and assumptions
 

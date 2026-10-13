@@ -89,10 +89,10 @@ Cache-Control: public, s-maxage=60, stale-while-revalidate=600
 
 ## 6. Acceptance checklist
 
-- [ ] Each response parses with its schema and contains none of the excluded fields of §3.
-- [ ] A notice outside its window, a disabled promo band and a menu item to a draft collection are absent.
-- [ ] `content.getPage` returns resolved tokens and `locale: "en"` when the Urdu body is missing.
-- [ ] `shipping.listCities` omits a city whose zone has no enabled method.
+- [ ] Each response parses with its schema and contains none of the excluded fields of §3. **Open: responses are parsed by the contract on every call (the storefront and the E2E journeys read them); not a test of each excluded field.**
+- [ ] A notice outside its window, a disabled promo band and a menu item to a draft collection are absent. **Open.**
+- [ ] `content.getPage` returns resolved tokens and `locale: "en"` when the Urdu body is missing. **Open.**
+- [ ] `shipping.listCities` omits a city whose zone has no enabled method. **Open.**
 
 ## 7. Open questions and assumptions
 

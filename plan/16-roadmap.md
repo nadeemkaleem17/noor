@@ -185,7 +185,7 @@ flowchart LR
 | M7-04 | Delete `legacy/` (old storefront and mock API) | DOC-16 §3 | M7-01 | 0.5 | Repo contains only `apps/`, `packages/`, `plan/`, `infra/`, `scripts/`. **Done** |
 | M7-05 | Content: drafted privacy, terms, shipping and returns pages (A-09); base seed reviewed; real store settings entered (contact, WhatsApp, policies) | DOC-06.8 §3, DOC-14 §5.2 | M5-09 | 1.5 | Owner has read the four pages. **Pages drafted, seed reviewed, `launch:check` built; the real settings and the owner's reading are the owner's** |
 | M7-06 | Real-device purchase on a mid-range Android phone on throttled data; fix findings | DOC-13 §9, DOC-06.10 | M7-01 | 1.5 | Recorded in DOC-13 §12 |
-| M7-07 | Documentation close-out: `CLAUDE.md` and `AGENTS.md` describe the finished repo; every doc's checklist reviewed; ADRs moved from Proposed to Accepted by the owner; spike results and open questions updated | README §6, DOC-02 | M7-04 | 1.5 | No doc refers to deleted code |
+| M7-07 | Documentation close-out: `CLAUDE.md` and `AGENTS.md` describe the finished repo; every doc's checklist reviewed; ADRs moved from Proposed to Accepted by the owner; spike results and open questions updated | README §6, DOC-02 | M7-04 | 1.5 | No doc refers to deleted code. **Done except the owner's acceptance of the ADRs (DOC-02 §2.1 is the table to do it from)** |
 | M7-08 | Owner walkthrough of the complete local product against DOC-06 and DOC-07; sign-off or a fix list | all | M7-05, M7-06, M7-07, M7-09 | 1.5 | Sign-off recorded in README changelog. **This closes the local build** |
 | M7-09 | Storefront to API trust and speed: send `X-Internal-Key` and the visitor's address (`X-Forwarded-For`) on every storefront call (**done at M7-01**: `app/lib/visitor.server.js`; what remains is a load test and the bundle work) so the API's per-address limits count visitors, not the one storefront server (today the `default` bucket of 300 a minute covers the whole shop); then bring the storefront down to the ceilings-to-targets of DOC-06.10 §2 (lazy drawers and dialogs, ICU plugin, Brotli) | DOC-11 §2, DOC-06.10 §2 | M7-01 | 2 | A load test shows limits applying per visitor; `pnpm --filter @noor/storefront budget` passes with the DOC-06.10 §2 targets, or the table says why not |
 
@@ -283,7 +283,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 | M4 | 12 | 12 (M4-01 to M4-12): **M4 is complete** |
 | M5 | 11 | 11 (M5-01 to M5-11): **M5 is complete** |
 | M6 | 7 | 7 (M6-01 to M6-07): **M6 is complete** |
-| M7 | 9 | 3 (M7-01, M7-03, M7-04; M7-02 and M7-05 half) |
+| M7 | 9 | 4 (M7-01, M7-03, M7-04, M7-07; M7-02 and M7-05 half) |
 
 Updated by the PR that finishes a task.
 
@@ -295,11 +295,11 @@ Updated by the PR that finishes a task.
 
 ## 10. Acceptance checklist
 
-- [ ] Every Critical and High finding of DOC-01 appears in §6 with a task.
-- [ ] Every task cites at least one doc section and has a "done when".
-- [ ] No task depends on a later task (the `After` column forms no cycle and points only upward or to an earlier milestone).
-- [ ] Milestone day totals in §4 equal the sum of their tasks.
-- [ ] The progress table is current.
+- [ ] Every Critical and High finding of DOC-01 appears in §6 with a task. **Checked when the roadmap was written (Phase 7); not re-run.**
+- [ ] Every task cites at least one doc section and has a "done when". **Checked when the roadmap was written; not re-run.**
+- [ ] No task depends on a later task (the `After` column forms no cycle and points only upward or to an earlier milestone). **Checked when the roadmap was written; not re-run.**
+- [ ] Milestone day totals in §4 equal the sum of their tasks. **Checked when the roadmap was written; the totals have not been recomputed since.**
+- [x] The progress table is current. (Updated with every task (M7-07).)
 
 ## 11. Open questions and assumptions
 
@@ -389,3 +389,4 @@ Updated by the PR that finishes a task.
 | 2026-10-13 | M7-03 done: the review of DOC-11 §11 to §13 is recorded in §13.1 and every box of §13 is ticked, each with the test that covers it (new: `secrets-at-rest.int.test.js` searches every column of the schema for the secrets the real flows make; `logger.test.js`; `apps/e2e/tests/19-security-headers.spec.js` on the real headers and the shop and admin under their policies; `scripts/check-secrets.mjs` in `pnpm check`). **Found and fixed:** the admin had no source for its security headers and an inline script its own policy would block; the storefront policy blocked every style attribute (77 violations in one purchase); a built admin bundle held `dev-key` from a stale local `.env.local` because `import.meta.env` was passed whole; a wrong internal key was ignored instead of refused; the log redaction list missed the internal key, the CSRF and cart tokens, password-change fields and the SQL of database errors; the order token was compared with `!==`. **Not done:** penetration test, gitleaks itself, TLS and database ssl (production phase). |
 | 2026-10-13 | M7-04 done: `legacy/` is deleted (53 tracked files: the old storefront and the mock API), `legacy/*` is out of `pnpm-workspace.yaml`, the lock file lost 159 lines and `pnpm audit --prod` finds nothing (the two moderate advisories of M7-03 were in the old storefront). The two source archives (`mock-api.zip`, `ecommerce-website-codebase.zip`; git-ignored, never committed) were moved to `.data/legacy-archives/`, not deleted: they are the owner's own files. Nothing in `apps/`, `packages/` or `scripts/` referenced `legacy/`. Everything is in git history (`git log -- legacy`). |
 | 2026-10-13 | M7-05 half done: the four pages are drafted in full (`apps/api/src/seed/pages.js`, DOC-06.8 §3); the base seed was read and holds no real contact detail (good: it must not), but its two delivery zones carry placeholder fees under the marker "(review fees before launch)"; `pnpm --filter @noor/api cli launch:check` (`apps/api/src/launch.js`, DOC-14 §5.2) now lists everything that stands between a shop and opening: empty contact settings, return days, placeholder zones, cash on delivery off, a required page unpublished, no product, the local owner account on a shop that is not local (run on the dev database it reports only the two placeholder zones and the missing logo). **Not done, and the owner's to do:** enter the real telephone, WhatsApp, email, address, return days and delivery fees in the admin (Settings, Store and Shipping), and read the four pages (the owner reads them in the admin under Content, Pages, or at /pages/terms and so on). |
+| 2026-10-14 | M7-07 done, except the owner's part: every acceptance box of every doc was looked at once (about a hundred were ticked because a test, a journey or a command run on this tree shows them, each with its evidence in the box, and the rest say "Open" with the reason; the per-pull-request boxes of DOC-15 are for each PR). The one-file snapshot `plan/NOOR_DOCS.md` (stale since Phase 0) is deleted; AGENTS and DOC-03 no longer tell anyone to look at deleted code (the audit and the changelogs keep their history). DOC-02 section 2.1 lists, ADR by ADR, whether it was built as decided: **0011 (S3, imgproxy) and 0019 (hosting) are for the production phase, 0015 differs (no TanStack Table or Virtual, no Zustand), 0016 has no `dependency-cruiser`**. All ADRs except 0021 are still Proposed: the owner accepts them. `pnpm test:integration` now exists (it is the API suite on MySQL). **CI:** a `mysql-tests` job (MySQL 8.4 with the flags of DOC-14 section 3.2, the API suite with no skipped test allowed, the end-to-end journeys on Chromium and the smoke set on WebKit) was added to `.github/workflows/ci.yml`; it parses but has never run (no push). Code: the cart drawer uses `use()` instead of `useContext`. |

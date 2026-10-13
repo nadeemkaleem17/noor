@@ -50,9 +50,9 @@ Product pages can show the real domain (components, colour siblings, lead time).
 **Always:** read `kind` to decide UI/validation; validate customization server-side. **Never:** flatten a product to "the cheapest variant" for purchase decisions; invent stock counts. **Common mistake:** treating colour as a size-like option on a product that has colorway siblings.
 
 ## Acceptance checklist
-- [ ] A made-to-order product cannot reach checkout without its required custom-size fields when `customSizeSchemaId` is set.
-- [ ] Two colorways of one style have distinct URLs and canonical tags.
-- [ ] Stock for a made-to-order variant is never rendered as a number.
+- [x] A made-to-order product cannot reach checkout without its required custom-size fields when `customSizeSchemaId` is set. (`apps/api/test/cart-customization.test.js` and E2E-05.)
+- [ ] Two colorways of one style have distinct URLs and canonical tags. **Open.**
+- [ ] Stock for a made-to-order variant is never rendered as a number. **Open.**
 
 ## Revisit trigger
 More than 10% of products need more than one variant axis beyond size, or buyers want mix-and-match across styles (then consider option C).

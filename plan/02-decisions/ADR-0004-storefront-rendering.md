@@ -64,9 +64,9 @@ SEO and link previews work; first paint no longer waits for JS. We operate a Nod
 **Always:** return `Cache-Control` explicitly from every loader/route; use `handle` URLs; validate loader data. **Never:** read `localStorage` during render; put customer data in a cacheable response. **Common mistake:** caching a page that embeds the cart count.
 
 ## Acceptance checklist
-- [ ] `curl -s <pdp-url> | grep '<title>'` shows the product title (no JS needed).
-- [ ] JSON-LD `Product` present in server HTML.
-- [ ] No route in the `no-store` class is cacheable by the CDN.
+- [x] `curl -s <pdp-url> | grep '<title>'` shows the product title (no JS needed). (`apps/storefront/test/shell.server.test.js` (server HTML) and E2E-02.)
+- [ ] JSON-LD `Product` present in server HTML. **Open: built (`features/seo/json-ld.jsx`); no test of the server HTML.**
+- [x] No route in the `no-store` class is cacheable by the CDN. (The route classes and their `Cache-Control` are tested (`server.test.js`, `shell.server.test.js`); there is no CDN yet.)
 
 ## Revisit trigger
 Reconsider Next.js if **any**: two or more production regressions traced to React Router upgrades in 90 days; a hard need for on-demand per-page revalidation that tag purging cannot meet; React Server Components become necessary for the JS budget.

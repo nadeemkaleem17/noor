@@ -116,12 +116,12 @@ Deposit behaviour note (read-only help text): "While only cash on delivery is en
 
 ## 6. Acceptance checklist
 
-- [ ] The checkout city list equals the union of zone cities after a save (integration test). (Server side only; not an admin UI item.)
+- [ ] The checkout city list equals the union of zone cities after a save (integration test). (Server side only; not an admin UI item.) **Open: no integration test.**
 - [x] Adding a city already in another zone offers "Move here" and never duplicates it. (`shipping.test.jsx`; the picker also says which zone a city is in.)
-- [ ] Changing a fee changes the storefront quote for a new cart and leaves an existing order's shipping fee unchanged. (Storefront and orders: M4/M5.)
+- [ ] Changing a fee changes the storefront quote for a new cart and leaves an existing order's shipping fee unchanged. (Storefront and orders: M4/M5.) **Open: no test changes a fee and then reads an old order.**
 - [x] Disabling the only payment method is refused with an explanation. (The switch of the last method that is on is locked with the reason; the API also answers `no_payment_method`.)
-- [ ] An order above the COD limit cannot select COD on the storefront (`cod_limit_exceeded`). (The limit is saved here; the check is in checkout, M4.)
-- [ ] The dispatch dialog lists exactly the enabled couriers; a tracking URL pattern without `{tracking}` is rejected. (The courier list and the `{tracking}` rule are here; the dispatch dialog is M4.)
+- [ ] An order above the COD limit cannot select COD on the storefront (`cod_limit_exceeded`). (The limit is saved here; the check is in checkout, M4.) **Open: the check is in the order transaction; no test names `cod_limit_exceeded`.**
+- [ ] The dispatch dialog lists exactly the enabled couriers; a tracking URL pattern without `{tracking}` is rejected. (The courier list and the `{tracking}` rule are here; the dispatch dialog is M4.) **Open.**
 - [x] No input on these screens accepts or displays a provider secret. (Not-connected methods show a note and no fields.)
 
 ## 7. Open questions and assumptions

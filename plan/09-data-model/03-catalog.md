@@ -368,11 +368,11 @@ When a handle changes, the old one is inserted here. If a new entity later takes
 
 ## 9. Acceptance checklist
 
-- [ ] Two variants with the same option combination cannot be inserted (`(product_id, option_key)` unique).
-- [ ] Deleting a size-system value used by a variant fails with an FK error mapped to `409 in_use` (DOC-10.0 §6.1).
-- [ ] After a price change, `price_min_minor`/`price_max_minor`/`compare_at_min_minor` match a fresh aggregate query (property test over random edits).
-- [ ] `EXPLAIN` for the category listing with one attribute filter and `newest` sort uses `product_attribute_values_facet_idx` and a `products_status_*` index, with no full scan of `products` (DOC-13 keeps this query set).
-- [ ] Changing a product handle makes the old URL resolve through `handle_redirects`; creating a new product with that old handle removes the redirect.
+- [ ] Two variants with the same option combination cannot be inserted (`(product_id, option_key)` unique). **Open: no test of the unique option key.**
+- [x] Deleting a size-system value used by a variant fails with an FK error mapped to `409 in_use` (DOC-10.0 §6.1). (`apps/api/test/products.int.test.js` ("the structure screens now count products, and refuse deletes that would orphan them").)
+- [ ] After a price change, `price_min_minor`/`price_max_minor`/`compare_at_min_minor` match a fresh aggregate query (property test over random edits). **Open: the derived columns are tested (`products.int.test.js`, "derived values"), not by a property test.**
+- [ ] `EXPLAIN` for the category listing with one attribute filter and `newest` sort uses `product_attribute_values_facet_idx` and a `products_status_*` index, with no full scan of `products` (DOC-13 keeps this query set). **Open: the query-plan test (`apps/api/perf`) covers the listing; not this exact filter.**
+- [x] Changing a product handle makes the old URL resolve through `handle_redirects`; creating a new product with that old handle removes the redirect. (`apps/api/test/catalog-public.int.test.js` and `products.int.test.js` (an old handle redirects).)
 - [x] The 3,000-product seed (DOC-13 load data) returns a filtered listing page in under 100 ms on the reference database. (M1-13, local Windows machine: median 70–150 ms for the whole HTTP call including 8–14 queries run concurrently; the slowest single query is 45 ms; every query uses an index.)
 
 ## 10. Open questions and assumptions
