@@ -17,14 +17,14 @@
   },
   "dependencies": {
     "@noor/contract": "workspace:*",
-    "i18next": "^26.4.2",
-    "i18next-icu": "^2.4.4",
-    "intl-messageformat": "^11"
+    "i18next": "^26.4.2"
   },
   "devDependencies": {
     "@noor/config": "workspace:*",
     "eslint": "^10.10.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "intl-messageformat": "^11",
+    "@types/node": "^24"
   }
 }

@@ -1,7 +1,7 @@
 // Customers: admin routes (plan/10-api/06-admin-orders-customers.md section 3, plan/09-data-model/07-orders-payments.md section 2).
 // The export answers with the file's text (at most 5,000 rows); the bigger, background kind waits for the jobs screen (DOC-10.8).
 import { z } from 'zod'
-import { Money } from './money.js'
+import { Money } from './money-schema.js'
 import { CsvFile, Page, PageQuery, flag, qint } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'

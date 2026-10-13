@@ -1,6 +1,6 @@
 // CMS pages, menus and link search, admin and public (plan/10-api/07 sections 3-4, plan/10-api/01).
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { Link, LocaleQuery } from './settings.js'
 import { Page, PageQuery } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'

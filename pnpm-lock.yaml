@@ -373,19 +373,19 @@ importers:
       i18next:
         specifier: ^26.4.2
         version: 26.4.2(typescript@6.0.3)
-      i18next-icu:
-        specifier: ^2.4.4
-        version: 2.4.4(intl-messageformat@11.2.15)
-      intl-messageformat:
-        specifier: ^11
-        version: 11.2.15
     devDependencies:
       '@noor/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: ^24
+        version: 24.13.6
       eslint:
         specifier: ^10.10.0
         version: 10.11.0(jiti@2.7.0)
+      intl-messageformat:
+        specifier: ^11
+        version: 11.2.15
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -3475,11 +3475,6 @@ packages:
   http-link-header@1.1.4:
     resolution: {integrity: sha512-xT3GPW6/ZbGuw4UvwHqErSCEjNUlwbQJuZn9/q5U4WEKfp2kENVCAlousG1zLxHeaQ/ffOHUNpWamvkbBW0eNw==}
     engines: {node: '>=6.0.0'}
-
-  i18next-icu@2.4.4:
-    resolution: {integrity: sha512-yfYdGTftClNUnZAQG1cu0yHHLaMVsrqfcgQHHchGDufkunBLKHuw2wXTCDuE+8mWMMcdePl8UBR0EUUA/3+FDw==}
-    peerDependencies:
-      intl-messageformat: '>=10.3.3 <12.0.0'
 
   i18next@26.4.2:
     resolution: {integrity: sha512-RX+R0VLg13IbvRuJSxnqykUFS9vQZTl8wYpWPCIUDWVrSGjsQywB5Y+pjzrkboxGAuYfJZVH1InFTdgBdxq6ug==}
@@ -7590,10 +7585,6 @@ snapshots:
       toidentifier: 1.0.1
 
   http-link-header@1.1.4: {}
-
-  i18next-icu@2.4.4(intl-messageformat@11.2.15):
-    dependencies:
-      intl-messageformat: 11.2.15
 
   i18next@26.4.2(typescript@6.0.3):
     optionalDependencies:

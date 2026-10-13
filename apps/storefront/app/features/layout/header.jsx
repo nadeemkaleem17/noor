@@ -1,68 +1,46 @@
 import { ChevronDown, Menu as MenuIcon, Search } from 'lucide-react'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
-import { Accordion } from '@noor/ui/accordion'
-import { Drawer } from '@noor/ui/drawer'
-import { Link } from '@noor/ui/link'
 import { Popover } from '@noor/ui/popover'
 import { CartLink } from '../cart/cart-link'
 import { WishlistLink } from '../wishlist/wishlist-link'
+import { NavLink } from './nav-link'
 import { useLocalePath } from './use-shell'
 
 /** @typedef {import('~/lib/nav').NavItem} NavItem */
 
+const MenuDrawer = lazy(() => import('./menu-drawer'))
+
 const iconButton = 'grid size-11 place-items-center rounded-control text-fg hover:bg-surface-2'
 const linkClass = 'rounded-control px-3 py-2 text-fg hover:bg-surface-2'
 
-/** A menu item's link: an address inside the shop goes through the router, any other is an ordinary link. @param {{ item: NavItem, onClick?: () => void, className?: string }} props */
-function NavLink({ item, onClick, className }) {
-  const inside = item.href.startsWith('/')
-  return inside ? (
-    <RouterLink to={item.href} prefetch="intent" onClick={onClick} className={className}>
-      {item.label}
-    </RouterLink>
-  ) : (
-    <Link href={item.href} onClick={onClick} className={className}>
-      {item.label}
-    </Link>
-  )
-}
-
-/** The menu on a phone: a drawer from the start edge, with a group for each item that has children. @param {{ items: NavItem[] }} props */
+/** The menu button on a phone. The drawer it opens is downloaded the first time the button is pressed. @param {{ items: NavItem[] }} props */
 function MobileMenu({ items }) {
   const { t } = useTranslation('storefront')
   const [open, setOpen] = useState(false)
-  const close = () => setOpen(false)
+  const [opened, setOpened] = useState(false)
   return (
-    <Drawer
-      side="start"
-      open={open}
-      onOpenChange={setOpen}
-      title={t('shell.menu')}
-      closeLabel={t('shell.menuClose')}
-      trigger={
-        <button type="button" aria-label={t('shell.menu')} className={`${iconButton} lg:hidden`}>
-          <MenuIcon aria-hidden="true" className="size-6" />
-        </button>
-      }
-    >
-      <nav aria-label={t('shell.navLabel')}>
-        <ul className="flex flex-col">
-          {items.map((item) =>
-            item.children ? (
-              <li key={item.id}>
-                <Accordion items={[{ id: item.id, title: item.label, content: <ul className="flex flex-col pb-2">{[{ ...item, label: item.label }, ...item.children].map((c, i) => <li key={`${c.id}-${i}`}><NavLink item={c} onClick={close} className="block px-3 py-2 text-fg-soft" /></li>)}</ul> }]} />
-              </li>
-            ) : (
-              <li key={item.id}>
-                <NavLink item={item} onClick={close} className="block px-3 py-3 font-medium" />
-              </li>
-            ),
-          )}
-        </ul>
-      </nav>
-    </Drawer>
+    <>
+      <button
+        type="button"
+        aria-label={t('shell.menu')}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className={`${iconButton} lg:hidden`}
+        onClick={() => {
+          setOpen(true)
+          setOpened(true)
+        }}
+      >
+        <MenuIcon aria-hidden="true" className="size-6" />
+      </button>
+      {opened ? (
+        <Suspense fallback={null}>
+          <MenuDrawer items={items} open={open} onOpenChange={setOpen} />
+        </Suspense>
+      ) : null}
+    </>
   )
 }
 

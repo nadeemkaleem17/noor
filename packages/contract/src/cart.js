@@ -1,8 +1,8 @@
 // The cart: what the storefront calls (plan/10-api/03-cart-orders-public.md section 2). No request here carries a price, discount, fee or total:
 // the server prices the cart every time it is read (plan/09-data-model/06-cart-promotions.md section 4).
 import { z } from 'zod'
-import { Enum } from './enums.js'
-import { Money } from './money.js'
+import { Enum } from './enum-schemas.js'
+import { Money } from './money-schema.js'
 import { PkMobile } from './phone.js'
 import { flag } from './pagination.js'
 import { Id, Image, LineCustomization } from './primitives.js'

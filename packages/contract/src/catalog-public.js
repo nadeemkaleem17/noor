@@ -3,8 +3,8 @@
 // Reviews (`reviews.listForProduct`) are in reviews.js; `rating` on a card comes from the product's rating columns.
 import { z } from 'zod'
 import { Component, Fit } from './products.js'
-import { Enum } from './enums.js'
-import { Money } from './money.js'
+import { Enum } from './enum-schemas.js'
+import { Money } from './money-schema.js'
 import { CursorPage, csv, flag, qint } from './pagination.js'
 import { PkMobile } from './phone.js'
 import { FormField, Id, Image, IsoDate, Swatch } from './primitives.js'

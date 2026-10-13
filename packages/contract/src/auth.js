@@ -1,7 +1,7 @@
 // Staff authentication, the current user and staff management (plan/10-api/04-admin-auth-staff.md sections 2-4).
 // No schema here returns a password hash, TOTP secret, token hash or session cookie value.
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { CursorPage, Page, PageQuery } from './pagination.js'
 import { Permission } from './permissions.js'
 import { Id, IsoDate } from './primitives.js'

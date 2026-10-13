@@ -1,6 +1,6 @@
 // Stock adjustments and the movement ledger: admin side (plan/10-api/05-admin-catalog.md section 4, plan/09-data-model/04-inventory.md).
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { Page, PageQuery } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'

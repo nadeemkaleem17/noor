@@ -1,6 +1,6 @@
 // Small shared schemas used by many routes (plan/10-api/00-conventions.md sections 4-5).
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 
 export const Id = z.uuid()
 /**

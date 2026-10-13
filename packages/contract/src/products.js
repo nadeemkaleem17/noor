@@ -3,8 +3,8 @@
 // Stock quantities are not part of the document (they belong to inventory, DOC-07.3 section 7.1).
 import { z } from 'zod'
 import { Slug } from './content.js'
-import { Enum } from './enums.js'
-import { Money } from './money.js'
+import { Enum } from './enum-schemas.js'
+import { Money } from './money-schema.js'
 import { BulkResult, Page, PageQuery } from './pagination.js'
 import { InitialStock } from './inventory.js'
 import { Id, Image, IsoDate, Swatch } from './primitives.js'

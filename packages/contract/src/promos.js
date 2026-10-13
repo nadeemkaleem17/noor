@@ -1,9 +1,9 @@
 // Promo codes: admin routes (plan/10-api/06-admin-orders-customers.md section 4, plan/09-data-model/06-cart-promotions.md section 3).
 // The storefront routes that apply a code (`cart.applyPromo`) come with the cart (M4-03).
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { BulkResult, Page, PageQuery } from './pagination.js'
-import { Money } from './money.js'
+import { Money } from './money-schema.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
 

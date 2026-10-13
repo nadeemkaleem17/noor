@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Money, add, allocate, money, moneyToDecimalString, mulInt, parseRupees, percentOf, sub } from '../src/money.js'
+import { Money } from '../src/money-schema.js'
+import { add, allocate, money, moneyToDecimalString, mulInt, parseRupees, percentOf, sub } from '../src/money.js'
 
 describe('percentOf (half away from zero, ADR-0013)', () => {
   it('matches the ADR example', () => {

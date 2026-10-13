@@ -1,9 +1,8 @@
-import { useEffect, useId, useState, useSyncExternalStore } from 'react'
+import { lazy, Suspense, useEffect, useId, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useFetcher, useLocation, useNavigate, useNavigation, useNavigationType, useSearchParams } from 'react-router'
 import { Breadcrumb } from '@noor/ui/breadcrumb'
 import { Button, LinkButton } from '@noor/ui/button'
-import { Drawer } from '@noor/ui/drawer'
 import { EmptyState } from '@noor/ui/empty-state'
 import { ErrorState } from '@noor/ui/error-state'
 import { NativeSelect } from '@noor/ui/native-select'
@@ -17,6 +16,8 @@ import { recall, remember } from './listing-memory'
 import { ProductGrid } from './product-card'
 
 /** @typedef {import('@noor/contract').ProductListing} ProductListing */
+
+const FiltersDrawer = lazy(() => import('./filters-drawer'))
 
 /** After this many products the load-more button gives way to "Refine your results" (plan/06-storefront/03-plp-search.md section 6). */
 const CAP = 240
@@ -149,6 +150,8 @@ function MobileFilters({ path, page, search, effective }) {
   const { t } = useTranslation('storefront')
   const hydrated = useHydrated()
   const [open, setOpen] = useState(false)
+  // the drawer is downloaded the first time the button is pressed
+  const [opened, setOpened] = useState(false)
   const formId = useId()
   const count = filterCount(search)
   const label = count ? t('listing.filtersCount', { count }) : t('listing.filters')
@@ -162,22 +165,12 @@ function MobileFilters({ path, page, search, effective }) {
   }
   return (
     <div className="lg:hidden">
-      <Button variant="secondary" onClick={() => setOpen(true)}>{label}</Button>
-      <Drawer
-        open={open}
-        onOpenChange={setOpen}
-        title={t('listing.filters')}
-        footer={
-          <div className="flex w-full items-center justify-between gap-3">
-            <RouterLink to={clearAllHref(path, search)} onClick={() => setOpen(false)} className="underline underline-offset-4">
-              {t('listing.clearAll')}
-            </RouterLink>
-            <Button type="submit" form={formId}>{t('listing.showResults')}</Button>
-          </div>
-        }
-      >
-        <FilterForm id={formId} path={path} page={page} search={search} effective={effective} onApply={() => setOpen(false)} />
-      </Drawer>
+      <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); setOpened(true) }}>{label}</Button>
+      {opened ? (
+        <Suspense fallback={null}>
+          <FiltersDrawer open={open} onOpenChange={setOpen} formId={formId} path={path} page={page} search={search} effective={effective} />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

@@ -1,16 +1,15 @@
 // Money is integer paisa everywhere (ADR-0013). Arithmetic goes through these helpers only.
 // Helpers work on bare integers (paisa); `Money` is the JSON boundary shape.
 // BigInt inside so intermediate products never lose precision (amount x bps can pass 2^53).
-import { z } from 'zod'
 
-export const Money = z.strictObject({ amount: z.number().int().safe(), currency: z.literal('PKR') })
 /**
- * @typedef {z.infer<typeof Money>} Money
+ * The JSON shape; its schema is `Money` in `money-schema.js` (kept apart so that code that only does arithmetic does not load zod).
+ * @typedef {import('./money-schema.js').Money} MoneyJson
  */
 
 /**
  * @param {number} amount
- * @returns {Money}
+ * @returns {MoneyJson}
  */
 export const money = (amount) => ({ amount: minor(amount), currency: 'PKR' })
 
@@ -118,7 +117,7 @@ export function parseRupees(text) {
 
 /**
  * Paisa to a decimal string for machine formats (JSON-LD, analytics): 699000 -> "6990.00". No float division.
- * @param {Money | number} m
+ * @param {MoneyJson | number} m
  * @returns {string}
  */
 export function moneyToDecimalString(m) {

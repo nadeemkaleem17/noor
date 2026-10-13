@@ -7,6 +7,10 @@ to the API (`app/lib/api.server.js`, the typed contract client with an 8 s timeo
 Every page works without JavaScript (forms are real forms, links are real links); JavaScript only enhances. Pages a cache may keep (`listing`/`content` classes) hold **nothing of a
 visitor**: cart count, wishlist hearts, recently viewed are filled in after hydration.
 
+## Keeping the JavaScript down (M7-09)
+
+The pages are 233–261 kB gzip (`pnpm --filter @noor/storefront budget`; its ceilings are the measured figures plus a few kB and only come down). Rules that came out of it: a page must not import a zod schema (the browser needs `@noor/contract`'s plain helpers only: `money.js`, `enums.js`, `link.js`; schemas live in `money-schema.js` and `enum-schemas.js`); a panel that opens on a press (cart, phone menu, picture zoom, size guide, filters) is a file of its own loaded with `lazy()` the first time (`cart-panel.jsx`, `menu-drawer.jsx`, `gallery-zoom.jsx`, `size-guide-drawer.jsx`, `filters-drawer.jsx`); the cart panel closes on every page change (`cart-drawer.jsx`), because a link pressed while the panel is still downloading would otherwise land on the next page and have the panel open over it (found by E2E-15 under load); messages are formatted by `@noor/i18n`'s `icu-lite.js` (variables, plural, select only: anything else shows the message as written, and `packages/i18n/test/icu-lite.test.js` compares it with the real formatter on every catalog message).
+
 ## Who is asking (M7-01)
 
 Every call to the API carries `X-Internal-Key` (`API_INTERNAL_KEY`) and, behind `TRUSTED_PROXY_HOPS` proxies, the visitor's address in `X-Forwarded-For`: `app/lib/visitor.server.js` (a route middleware in `root.jsx` keeps the address per request; the API client's `headers` option reads it). Without it the API counts the whole shop as one address. `visitorIp` takes the entry the nearest trusted proxy appended, never what the visitor wrote.

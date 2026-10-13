@@ -1,6 +1,5 @@
 // The stored enum values (plan/09-data-model/00-conventions.md section 5). Single source: the same literals are
 // the database CHECK lists and the API enums. All values are snake_case. Add a value here and in the table's CHECK together.
-import { z } from 'zod'
 
 export const enums = /** @satisfies {Record<string, readonly [string, ...string[]]>} */ (/** @type {const} */ ({
   productStatus: ['draft', 'scheduled', 'active', 'archived'],
@@ -51,12 +50,6 @@ export const enums = /** @satisfies {Record<string, readonly [string, ...string[
  * @template {keyof Enums} K
  * @typedef {Enums[K][number]} EnumValue
  */
-
-/**
- * @typedef {{ [K in keyof Enums]: z.ZodEnum<{ [V in Enums[K][number]]: V }> }} Schemas
- */
-/** Zod enum per registry key: `Enum.orderStatus.parse('confirmed')`. */
-export const Enum = /** @type {Schemas} */ (/** @type {unknown} */ (Object.fromEntries(Object.entries(enums).map(([k, v]) => [k, z.enum(v)]))))
 
 /**
  * @typedef {EnumValue<'productStatus'>} ProductStatus

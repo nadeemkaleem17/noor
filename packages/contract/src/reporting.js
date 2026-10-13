@@ -1,8 +1,8 @@
 // The staff's overview and the system's own measurements (plan/10-api/08-admin-dashboard-ops.md): counts for the menu, the dashboard, the search box, failed jobs,
 // and what the browsers tell us about speed and errors. The figures are worked out in SQL by the API, never by the client.
 import { z } from 'zod'
-import { Enum } from './enums.js'
-import { Money } from './money.js'
+import { Enum } from './enum-schemas.js'
+import { Money } from './money-schema.js'
 import { Page, PageQuery, qint } from './pagination.js'
 import { Id, Image, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'

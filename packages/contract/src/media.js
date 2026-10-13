@@ -1,7 +1,7 @@
 // Media uploads (plan/10-api/05-admin-catalog.md section 3, plan/08-backend-architecture.md section 11).
 // The browser asks for an upload slot, sends the file straight to storage, then confirms; the server checks the bytes afterwards.
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { Id, Image, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
 

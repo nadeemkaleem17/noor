@@ -15,11 +15,11 @@ const kb = (/** @type {number} */ n) => Math.round(n / 100) / 10
 
 /** the pages the budget table names, by the route that serves them (ceilings in kB: DOC-06.10 section 2 gives the first build's numbers and the targets they are to come down to) */
 const pages = [
-  { name: 'Home', route: 'home', js: 300 },
-  { name: 'PLP', route: 'category', js: 305 },
-  { name: 'PDP', route: 'product', js: 320 },
-  { name: 'Cart', route: 'cart', js: 295 },
-  { name: 'Checkout', route: 'checkout', js: 310 },
+  { name: 'Home', route: 'home', js: 240 },
+  { name: 'PLP', route: 'category', js: 248 },
+  { name: 'PDP', route: 'product', js: 268 },
+  { name: 'Cart', route: 'cart', js: 250 },
+  { name: 'Checkout', route: 'checkout', js: 252 },
 ]
 const cssBudget = 25
 

@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog } from '@noor/ui/dialog'
 import { Image, imageProps } from '@noor/ui/image'
 
 /** @typedef {import('@noor/contract').ProductDetail['media'][number]} Media */
+
+const GalleryZoom = lazy(() => import('./gallery-zoom'))
 
 /**
  * The pictures of a product (plan/06-storefront/04-pdp.md section 3): one scroll-snap strip, so a phone swipes and a keyboard scrolls it with the arrow keys without any script;
@@ -17,6 +18,9 @@ export function Gallery({ media, title, focusValue }) {
   const strip = useRef(/** @type {HTMLDivElement | null} */ (null))
   const [at, setAt] = useState(0)
   const [zoom, setZoom] = useState(/** @type {number | null} */ (null))
+  // once a picture has been opened the dialog stays mounted, closed, as before
+  const [zoomed, setZoomed] = useState(false)
+  if (zoom !== null && !zoomed) setZoomed(true)
   const alt = (/** @type {Media} */ m, /** @type {number} */ i) => m.alt || t('pdp.imageAlt', { title, role: m.role ?? t('pdp.image'), n: i + 1 })
 
   /** @param {number} i */
@@ -81,40 +85,10 @@ export function Gallery({ media, title, focusValue }) {
           ))}
         </ul>
       ) : null}
-      <Dialog
-        open={zoom !== null}
-        onOpenChange={(open) => { if (!open) setZoom(null) }}
-        title={title}
-        size="lg"
-      >
-        {zoom !== null && media[zoom] ? <Zoomed media={media} index={zoom} onIndex={setZoom} alt={alt} /> : null}
-      </Dialog>
-    </div>
-  )
-}
-
-/** The big picture in the dialog: arrow keys and two buttons move through the pictures, Esc and the close button are the dialog's. @param {{ media: Media[], index: number, onIndex: (i: number) => void, alt: (m: Media, i: number) => string }} props */
-function Zoomed({ media, index, onIndex, alt }) {
-  const { t } = useTranslation('storefront')
-  const m = /** @type {Media} */ (media[index])
-  const step = (/** @type {number} */ d) => onIndex((index + d + media.length) % media.length)
-  return (
-    <div
-      onKeyDown={(e) => {
-        // the keys follow the page direction
-        const rtl = getComputedStyle(e.currentTarget).direction === 'rtl'
-        if (e.key === 'ArrowRight') step(rtl ? -1 : 1)
-        if (e.key === 'ArrowLeft') step(rtl ? 1 : -1)
-      }}
-      className="flex flex-col gap-3"
-    >
-      <Image {...imageProps(m)} alt={alt(m, index)} sizes="90vw" className="mx-auto max-h-[70dvh] w-auto max-w-full object-contain" />
-      {media.length > 1 ? (
-        <div className="flex items-center justify-between">
-          <button type="button" onClick={() => step(-1)} className="h-11 rounded-control border border-line-strong px-4">{t('pdp.prev')}</button>
-          <span aria-live="polite" className="text-sm tabular-nums">{t('pdp.counter', { n: index + 1, total: media.length })}</span>
-          <button type="button" onClick={() => step(1)} className="h-11 rounded-control border border-line-strong px-4">{t('pdp.next')}</button>
-        </div>
+      {zoom !== null || zoomed ? (
+        <Suspense fallback={null}>
+          <GalleryZoom media={media} title={title} zoom={zoom} onZoom={setZoom} alt={alt} />
+        </Suspense>
       ) : null}
     </div>
   )

@@ -2,9 +2,9 @@
 // plus the public store configuration (plan/10-api/01 section 3). Each document is validated by its schema here and by the
 // service's own rules (media is ready, at least one payment method ...).
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { isValidLink } from './link.js'
-import { Money } from './money.js'
+import { Money } from './money-schema.js'
 import { Image, FormField, Id, IsoDate, ThemeTokens } from './primitives.js'
 import { defineRoutes } from './routes.js'
 

@@ -2,7 +2,7 @@
 // plan/10-api/05-admin-catalog.md sections 5 and 7, plan/09-data-model/03-catalog.md sections 3-4).
 import { z } from 'zod'
 import { Slug } from './content.js'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { FormField, Id, Image, IsoDate, Swatch } from './primitives.js'
 import { defineRoutes } from './routes.js'
 

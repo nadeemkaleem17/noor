@@ -1,7 +1,7 @@
 // Product reviews (plan/10-api/03-cart-orders-public.md section 4, 02-catalog-public.md section 5, 06-admin-orders-customers.md section 5, plan/09-data-model/08).
 // A customer writes one review per purchased order line, through the link of their order; staff approve it before it shows.
 import { z } from 'zod'
-import { Enum } from './enums.js'
+import { Enum } from './enum-schemas.js'
 import { BulkResult, cursorQuery, flag, qint, Page, PageQuery } from './pagination.js'
 import { Id, Image, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'

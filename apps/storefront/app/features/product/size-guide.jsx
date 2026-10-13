@@ -1,8 +1,6 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@noor/ui/button'
-import { Drawer } from '@noor/ui/drawer'
-import { SizeChartExtras, SizeChartTables } from './size-chart'
 
 /** @typedef {import('@noor/contract').SizeChart} SizeChart */
 
@@ -20,17 +18,33 @@ export function UnitSwitch({ unit, onChange }) {
   )
 }
 
-/** The size chart in a drawer next to the choices, so nothing is lost by opening it (plan/06-storefront/04-pdp.md section 4): tables, an inches and centimetres switch, how to measure. @param {{ chart: SizeChart }} props */
+const GuideDrawer = lazy(() => import('./size-guide-drawer'))
+
+/** The size chart in a drawer next to the choices, so nothing is lost by opening it (plan/06-storefront/04-pdp.md section 4). The drawer is downloaded the first time the button is pressed. @param {{ chart: SizeChart }} props */
 export function SizeGuide({ chart }) {
   const { t } = useTranslation('storefront')
-  const [unit, setUnit] = useState(chart.unit)
+  const [open, setOpen] = useState(false)
+  const [opened, setOpened] = useState(false)
   return (
-    <Drawer title={chart.title} trigger={<Button variant="ghost" size="sm" className="underline">{t('pdp.sizeGuide')}</Button>} footer={null}>
-      <div className="flex flex-col gap-5">
-        <UnitSwitch unit={unit} onChange={setUnit} />
-        <SizeChartTables chart={chart} unit={unit} />
-        <SizeChartExtras chart={chart} />
-      </div>
-    </Drawer>
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="underline"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen(true)
+          setOpened(true)
+        }}
+      >
+        {t('pdp.sizeGuide')}
+      </Button>
+      {opened ? (
+        <Suspense fallback={null}>
+          <GuideDrawer chart={chart} open={open} onOpenChange={setOpen} />
+        </Suspense>
+      ) : null}
+    </>
   )
 }

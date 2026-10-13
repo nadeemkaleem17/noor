@@ -1,8 +1,8 @@
 // Placing an order: what the storefront calls (plan/10-api/03-cart-orders-public.md section 3). The body is strict: a price, discount, fee or total
 // anywhere in it is a 400 (ADR-0020); the server prices the cart it finds behind the cart token.
 import { z } from 'zod'
-import { Enum } from './enums.js'
-import { Money } from './money.js'
+import { Enum } from './enum-schemas.js'
+import { Money } from './money-schema.js'
 import { PkMobile } from './phone.js'
 import { Id, Image, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'

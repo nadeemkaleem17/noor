@@ -2,6 +2,7 @@
 
 | Field | Value |
 |---|---|
+| 2026-10-14 | M7-09: JavaScript of the pages cut by 15 to 20% (zod out of the pages, a small ICU formatter, five panels loaded on first use); ceilings lowered (§2 "M7-09"). The visitor address now reaches the API (DOC-11 §9, `apps/e2e/tests/20-visitor-limits.spec.js`) |
 | ID | DOC-06.10 |
 | Title | Budgets and the techniques that meet them on mid-range Android over mobile data |
 | Status | Draft |
@@ -41,15 +42,17 @@ The JS budgets match ADR-0004 (≤ 170 kB on PLP/PDP). A PR that exceeds a budge
 
 | Page | JS gzip measured | Ceiling now | Target | LCP lab (median of 3) | LCP ceiling now | Target |
 |---|---|---|---|---|---|---|
-| Home | 283.2 kB | 300 | 150 | 4.13 s | 4.5 s | 2.5 s |
-| PLP | 287.8 kB | 305 | 170 | 4.17 s | 4.5 s | 2.5 s |
-| PDP | 302.7 kB | 320 | 170 | 4.10 s | 4.5 s | 2.5 s |
-| Cart | 279.2 kB | 295 | 190 | 3.63 s | 4.0 s | 3.0 s |
-| Checkout | 293.0 kB | 310 | 190 | not run | not run | 3.0 s |
+| Home | 283.2 kB (233.4 at M7-09) | 240 | 150 | 4.13 s | 4.5 s | 2.5 s |
+| PLP | 287.8 kB (239.7) | 248 | 170 | 4.17 s | 4.5 s | 2.5 s |
+| PDP | 302.7 kB (261.3) | 268 | 170 | 4.10 s | 4.5 s | 2.5 s |
+| Cart | 279.2 kB (243.5) | 250 | 190 | 3.63 s | 4.0 s | 3.0 s |
+| Checkout | 293.0 kB (244.8) | 252 | 190 | not run | not run | 3.0 s |
 
 Other numbers met: CSS 9.2 kB (≤ 25), HTML 8 to 19 kB (≤ 30 to 60), CLS 0.000 (≤ 0.05), server response 42 to 326 ms (≤ 600), third-party requests 0. Over: fonts 86 kB for English (≤ 80; Playfair Display 38 kB + Inter 48 kB, variable, Latin) and 259 kB for Urdu (≤ 150; the Nastaliq file alone is 239 kB, no smaller subset exists); the Urdu figure stands until a lighter Urdu face is chosen (ADR-0018).
 
 **Why the JavaScript is twice the estimate.** React 19 with React Router 8 is about 105 kB gzip before any page code; i18next with the ICU plugin and both catalogs is about 65 kB; the Base UI parts behind the header, drawers and dialogs are about 45 kB. The lab is Lighthouse's simulated Slow 4G over HTTP/1.1 against the Node server (35 script requests queue on 6 connections; a CDN with HTTP/2 and Brotli, DOC-14, will do better), so its LCP is a ceiling for trend, not a forecast. **Ways down, in order of size:** load the cart drawer, mobile menu, filter drawer, size-guide drawer and gallery zoom only when first opened (about 35 kB); drop the ICU plugin for i18next's own plurals (about 15 kB, an ADR-0018 change); Brotli (about 15 %).
+
+**M7-09: what was cut, and why the targets stay out of reach.** The same build was taken apart by the source map (bytes of each package in the code a home page loads, before gzip): React DOM 207 kB, React Router 128, Base UI 100, i18next 43 with its messages 38, tailwind-merge 28, the shop's own code about 100. Four changes took the pages from 279–303 kB to 233–261 kB gzip (the lab LCP was not measured again; it is dominated by the simulated slow network): (1) **zod left the pages** — `Money` and the `Enum` schemas moved out of `money.js` and `enums.js` into `money-schema.js` and `enum-schemas.js`, because a module with a top-level zod call is kept whole as soon as one of its exports is used, and the browser used only the plain helpers (about 20 kB gzip); (2) **the ICU plug-in of i18next** (`intl-messageformat`) was replaced by `packages/i18n/src/icu-lite.js`, 80 lines that do what the shop's texts use (variables, plural, select, the apostrophe rules), checked against the real formatter on every message of every catalog (about 10 kB); (3) **the cart panel, the phone menu, the picture zoom, the size guide and the filters sheet are separate files**, downloaded the first time the button is pressed (about 20 kB on the pages that carry them); the buttons are in the page, so nothing changes for a visitor with a fast connection and one without JavaScript is not affected (they never had the panels). What remains is mostly React DOM and React Router (about 105 kB gzip together, the floor of this stack), the i18n catalogs and i18next (about 25), Base UI's button, field and toast (about 30) and the shop's own code. **The targets (150 to 190 kB) are not reachable with this stack without dropping React Router's client runtime or Base UI**; they stay as the goal, the ceilings come down to the figures above plus a margin of a few kilobytes, and a change that raises a page over its ceiling must say why. Not done and worth doing if the numbers matter: Toast and the number field loaded on demand (about 10 kB), `tailwind-merge` replaced by a build-time merge (about 9 kB).
 
 ## 3. Images (the largest cost)
 
@@ -138,7 +141,7 @@ Other numbers met: CSS 9.2 kB (≤ 25), HTML 8 to 19 kB (≤ 30 to 60), CLS 0.00
 ## 11. Acceptance checklist
 
 - [ ] Lighthouse CI on the reference profile meets every lab number in §2 for the four routes. *Not met: CLS, server response, third-party requests and document size are; LCP and JavaScript are held at the ceilings of §2 (measured), not at the targets. The runs are local (`pnpm --filter @noor/storefront lighthouse`); there is no CI yet (needs a push).*
-- [ ] The built client bundle for PLP and PDP is ≤ 170 kB gzip; the report is attached to the PR. *Not met: 287.8 and 302.7 kB (ceilings 305 and 320, §2); `pnpm --filter @noor/storefront budget` prints the report and fails above a ceiling.*
+- [ ] The built client bundle for PLP and PDP is ≤ 170 kB gzip; the report is attached to the PR. *Not met: 239.7 and 261.3 kB after M7-09 (ceilings 248 and 268, §2; were 287.8 and 302.7); `pnpm --filter @noor/storefront budget` prints the report and fails above a ceiling.*
 - [ ] Network panel on a PDP: one eager image, the rest lazy; AVIF served to Chrome; no request to a third-party host before interaction. *One `fetchpriority=high` image and no third-party request (Lighthouse). AVIF is not served: the local image layer makes WebP and JPEG only (`IMAGE_TRANSFORM=none`, M0-08 skipped).*
 - [x] CLS is ≤ 0.05 while fonts swap and deferred sections arrive. *0.000 on Home, PLP, PDP and Cart (Lighthouse, median of 3).*
 - [ ] `curl -I` on an L page shows the CDN cache header as a hit on the second request and no `Set-Cookie`. *No `Set-Cookie` and the L class header are tested (`shell.server.test.js`); a CDN hit needs a CDN.*

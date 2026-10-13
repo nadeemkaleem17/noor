@@ -1,7 +1,7 @@
 // Delivery cities, zones, methods and couriers: admin routes (plan/10-api/07 section 5, plan/09-data-model/09 section 4).
 // The public city list (`shipping.listCities`) stays in table.js next to CityPublic.
 import { z } from 'zod'
-import { Money } from './money.js'
+import { Money } from './money-schema.js'
 import { Page, PageQuery, flag } from './pagination.js'
 import { Id } from './primitives.js'
 import { defineRoutes } from './routes.js'
