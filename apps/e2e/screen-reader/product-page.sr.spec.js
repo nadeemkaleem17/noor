@@ -33,6 +33,10 @@ test('NVDA reads the product page: the heading, the sizes and the add button', a
   const toSizes = await tabUntil(nvda, /radio button/i)
   expect(toSizes.at(-1)).toMatch(/\b(XS|S|M|L|XL)\b/)
 
+  // choose it (until a size is chosen the buy button says "Select Size", which a real run showed): then the button says what it does
+  await nvda.press('Space')
+  await expect(page.getByRole('radio', { name: /^XS/ })).toBeChecked()
+
   // the add button
   const toButton = await tabUntil(nvda, /Add to cart.*button|button.*Add to cart/i)
   expect(toButton.at(-1)).toMatch(/Add to cart/i)
