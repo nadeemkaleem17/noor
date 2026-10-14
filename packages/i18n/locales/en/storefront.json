@@ -347,6 +347,7 @@
       "price_changed": "{title}: the price changed"
     },
     "errors": {
+      "needAttention": "{count, plural, one {1 field needs your attention.} other {# fields need your attention.}}",
       "busy": "Too many attempts. Please wait a minute and try again.",
       "unavailable": "We could not confirm your order. Please try again: you will not be charged twice.",
       "failed": "Something went wrong. Please try again.",

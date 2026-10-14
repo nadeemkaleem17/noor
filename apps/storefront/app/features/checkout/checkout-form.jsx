@@ -95,10 +95,17 @@ export function CheckoutForm({ loader, action }) {
     }
   }, [loader.sig, action?.values?.idempotencyKey])
 
-  // a refusal that leaves the page where it is: the first thing to fix takes the focus
+  // a refusal that leaves the page where it is: the first thing to fix takes the focus. The form is inert while the order is on its way (also while the router reloads after the answer), and
+  // an inert field cannot take the focus, so this waits for the form to be live again and runs once per answer
+  const handled = useRef(/** @type {unknown} */ (undefined))
   useEffect(() => {
-    if (result && !result.ok) form.current?.querySelector('[aria-invalid="true"], [role="alert"]')?.scrollIntoView({ block: 'center' })
-  }, [result])
+    if (!result || result.ok || placing || handled.current === result) return
+    handled.current = result
+    const first = form.current?.querySelector('[aria-invalid="true"], [role="alert"]')
+    first?.scrollIntoView({ block: 'center' })
+    // a field takes the focus (its error is read with it, through aria-describedby); a message that is not a field is only scrolled to, its alert is read anyway
+    if (first instanceof HTMLElement && first.matches('input, select, textarea')) first.focus({ preventScroll: true })
+  }, [result, placing])
 
   /** @param {HTMLFormElement} f @param {string} intent */
   const quote = (f, intent = 'quote') => {
@@ -142,6 +149,7 @@ export function CheckoutForm({ loader, action }) {
             rememberDraft(draft)
           }}
         >
+          {Object.keys(fields).length > 0 ? <p role="status" className="sr-only">{t('checkout.errors.needAttention', { count: Object.keys(fields).length })}</p> : null}
           {/* Enter in a field must place the order, not ask for the delivery options */}
           <button type="submit" name="intent" value="place" tabIndex={-1} aria-hidden="true" className="sr-only" />
           <input key={key} type="hidden" name="idempotencyKey" defaultValue={key} />
