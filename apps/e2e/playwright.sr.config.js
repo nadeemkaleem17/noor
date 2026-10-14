@@ -15,6 +15,7 @@ export default {
   retries: 1,
   workers: 1,
   use: { baseURL: base.use?.baseURL, locale: 'en-GB', timezoneId: 'Asia/Karachi' },
-  projects: [{ name: 'firefox-nvda', use: { ...devices['Desktop Firefox'], headless: false } }],
+  // E2E_FIREFOX: the path of another Playwright Firefox; the 155 build of this Playwright fails to start on some Windows machines ("side-by-side configuration is incorrect")
+  projects: [{ name: 'firefox-nvda', use: { ...devices['Desktop Firefox'], headless: false, ...(process.env.E2E_FIREFOX ? { launchOptions: { executablePath: process.env.E2E_FIREFOX } } : {}) } }],
   webServer: base.webServer,
 }
