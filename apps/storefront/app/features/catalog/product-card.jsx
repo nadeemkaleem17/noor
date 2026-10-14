@@ -52,7 +52,7 @@ export function ProductCard({ product: p, priority = false }) {
         <span className="relative block overflow-hidden rounded-media bg-surface-2">
           <Image
             {...imageProps(p.primaryImage)}
-            alt={p.primaryImage.alt || p.title}
+            alt="" /* the link already says the product name: a picture description there would be read twice */
             sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw"
             priority={priority ? 'eager' : false}
             ratio="var(--media-ratio, 3 / 4)"
