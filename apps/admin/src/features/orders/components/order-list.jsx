@@ -16,7 +16,7 @@ import { useCan } from '@/lib/session'
 import { useShortcut } from '@/lib/shortcuts'
 import { orderListSchema, orderQueries } from '../api'
 import { ageText, ageTone, isWholePhone, waLink } from '../format'
-import { humanise } from '../labels'
+import { humanise, methodLabel } from '../labels'
 import { BulkOrderDialog } from './bulk-order-dialog'
 import { ExportDialog } from './export-dialog'
 import { RiskChips } from './risk-chips'
@@ -201,7 +201,7 @@ export function OrderList() {
   /** @type {import('@/components/list-filters').FilterDef[]} */
   const filters = [
     ...(lookups.data ? [/** @type {const} */ ({ key: 'cityId', label: 'City', type: 'select', options: lookups.data.cities.map((c) => ({ value: c.id, label: c.name })) })] : []),
-    { key: 'paymentMethod', label: 'Payment', type: 'select', options: enums.paymentMethod.map((v) => ({ value: v, label: v === 'cod' ? 'Cash on delivery' : humanise(v) })) },
+    { key: 'paymentMethod', label: 'Payment', type: 'select', options: enums.paymentMethod.map((v) => ({ value: v, label: methodLabel(v) })) },
     { key: 'paymentStatus', label: 'Payment status', type: 'select', options: enums.paymentStatus.map((v) => ({ value: v, label: humanise(v) })) },
     ...(lookups.data ? [/** @type {const} */ ({ key: 'courierId', label: 'Courier', type: 'select', options: lookups.data.couriers.map((c) => ({ value: c.id, label: c.name })) })] : []),
     { key: 'placed', label: 'Placed', type: 'dateRange', fromKey: 'from', toKey: 'to' },

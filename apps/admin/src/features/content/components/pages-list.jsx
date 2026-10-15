@@ -24,7 +24,7 @@ const columns = [
   },
   { id: 'slug', header: 'Address', cell: (p) => <span className="font-mono text-sm">/pages/{p.slug}</span> },
   { id: 'status', header: 'Status', cell: (p) => <StatusBadge status={p.status === 'active' ? 'active' : 'draft'} /> },
-  { id: 'updatedAt', header: 'Updated', align: 'end', cell: (p) => formatDate(p.updatedAt, 'en') },
+  { id: 'updatedAt', header: 'Updated', align: 'end', cell: (p) => <span className="whitespace-nowrap">{formatDate(p.updatedAt, 'en')}</span> },
   { id: 'updatedBy', header: 'Updated by', hideable: true, cell: (p) => p.updatedBy ?? '' },
 ]
 

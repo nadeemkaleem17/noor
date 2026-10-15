@@ -16,7 +16,7 @@ const columns = [
   { id: 'products', header: 'Products', align: 'end', cell: (c) => c.productCount },
   { id: 'status', header: 'Status', cell: (c) => <StatusBadge status={c.status} /> },
   { id: 'featured', header: 'Featured', hideable: true, cell: (c) => (c.featured ? 'Yes' : 'No') },
-  { id: 'updatedAt', header: 'Updated', align: 'end', cell: (c) => formatDate(c.updatedAt, 'en') },
+  { id: 'updatedAt', header: 'Updated', align: 'end', cell: (c) => <span className="whitespace-nowrap">{formatDate(c.updatedAt, 'en')}</span> },
 ]
 
 /** @type {import('@/components/list-filters').FilterDef[]} */

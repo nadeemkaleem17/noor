@@ -29,6 +29,8 @@ export const reasonLabel = (code) => (code ? (all[code] ?? code.replace(/_/g, ' 
 
 /** @param {string} v */
 export const humanise = (v) => v.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+/** A payment method as staff read it: `cod` is Cash on delivery, the rest is the word with its underscores out. @param {string} m */
+export const methodLabel = (m) => (m === 'cod' ? 'Cash on delivery' : humanise(m))
 
 /** The chips of section 5.3 (they inform; they never block). @type {Record<string, { label: string; tone: 'success' | 'warning' | 'danger' }>} */
 export const riskLabels = {

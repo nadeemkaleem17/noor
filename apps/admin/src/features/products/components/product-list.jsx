@@ -48,7 +48,7 @@ const columns = [
     align: 'end',
     cell: (p) => (p.priceTo && p.priceTo.amount > p.priceFrom.amount ? `${formatMoney(p.priceFrom, 'en')} – ${formatMoney(p.priceTo, 'en')}` : formatMoney(p.priceFrom, 'en')),
   },
-  { id: 'updatedAt', header: 'Updated', sortable: true, align: 'end', cell: (p) => formatDate(p.updatedAt, 'en') },
+  { id: 'updatedAt', header: 'Updated', sortable: true, align: 'end', cell: (p) => <span className="whitespace-nowrap">{formatDate(p.updatedAt, 'en')}</span> },
 ]
 
 /** @type {import('@/components/list-filters').FilterDef[]} */

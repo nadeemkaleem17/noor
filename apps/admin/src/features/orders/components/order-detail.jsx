@@ -20,7 +20,7 @@ import { useCan } from '@/lib/session'
 import { useShortcut, withKeys } from '@/lib/shortcuts'
 import { orderQueries, useOrderMutations } from '../api'
 import { ageText, ageTone, isWholePhone, telLink, waLink } from '../format'
-import { describeEvent, humanise, orderMessage } from '../labels'
+import { describeEvent, humanise, methodLabel, orderMessage } from '../labels'
 import { OrderActionDialog } from './order-actions'
 import { OrderEditDialog } from './order-edit-dialog'
 import { RiskChips } from './risk-chips'
@@ -203,7 +203,7 @@ function Payment({ order, onPay }) {
   return (
     <Block title="Payment" action={onPay ? <Button size="sm" variant="secondary" onClick={onPay}>Record payment</Button> : null}>
       <p className="flex flex-wrap items-center gap-2 text-sm">
-        {order.paymentMethod === 'cod' ? 'Cash on delivery' : humanise(order.paymentMethod)}
+        {methodLabel(order.paymentMethod)}
         <StatusBadge status={order.paymentStatus} />
       </p>
       {order.payments.length ? (
@@ -211,7 +211,7 @@ function Payment({ order, onPay }) {
           {order.payments.map((p) => (
             <li key={p.id} className="flex items-baseline justify-between gap-3 py-2">
               <span>
-                {p.kind === 'refund' ? 'Refund' : humanise(p.kind)} · {humanise(p.method)}
+                {p.kind === 'refund' ? 'Refund' : humanise(p.kind)} · {methodLabel(p.method)}
                 {p.reference ? <span className="text-muted" dir="ltr"> · {p.reference}</span> : null}
                 <span className="block text-xs text-muted">
                   {formatDateTime(p.createdAt)}{p.recordedBy ? ` · ${p.recordedBy}` : ''} · {humanise(p.state)}

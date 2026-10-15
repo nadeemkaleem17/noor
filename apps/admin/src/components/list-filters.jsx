@@ -42,7 +42,7 @@ export function SearchBox({ value, placeholder, onSearch }) {
   /** @type {import('react').MutableRefObject<ReturnType<typeof setTimeout> | undefined>} */
   const timer = useRef(undefined)
   return (
-    <form role="search" className="min-w-0 flex-1 sm:max-w-sm" onSubmit={(e) => e.preventDefault()}>
+    <form role="search" className="min-w-48 flex-1 sm:max-w-sm" onSubmit={(e) => e.preventDefault()}>
       <Input
         type="search"
         aria-label={placeholder}
