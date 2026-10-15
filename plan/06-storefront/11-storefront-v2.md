@@ -92,6 +92,8 @@ Pattern across all three: **navigation is category-first with depth; photography
 "Must" ships in M8; "Should" ships if time allows; "Later" is written down so it is not forgotten.
 
 ### 5.1 Header and navigation
+
+**The authoritative text for the navigation, the home composition and the category pages is [DOC-06.13](13-navigation-and-categories.md), built on the admin's real categories; where this section differs, DOC-06.13 wins.**
 - **Must** Top bar = announcement (exists) with a **Track order** link and the WhatsApp link on the right.
 - **Must** Main navigation built from the category tree: `New in`, each top category (Women, Men, Kids, Footwear, Accessories) with a **mega menu** (columns = sub-categories with their children; a picture tile from the category `image`; "View all <category>"; clickable parent), collections (Eid edit), `Sale`. Menu `main` stays editable by staff; when it is empty the tree builds it (today's fallback, now with children). The seed stops writing a two-item `main` menu.
 - **Must** Disclosure pattern; open on hover with a 150 ms intent delay and on click/Enter/Space; Escape closes and returns focus; the panel closes when focus leaves.
@@ -233,7 +235,7 @@ Five people who shop online in Pakistan, on their own phones, ten minutes each, 
 2. **Photography.** Real product photography is the largest lever and is not software. Send me the brief you want, or approve the one I write in M8-10: 3:4, neutral background, front, back, detail, one on a model, consistent light; at least 4 pictures per product. Until then the demo pictures stay and the scorecard row V3 is zero.
 3. **Phone bottom tab bar** and **transparent header over the hero**: build as options, off by default (recommended), or skip.
 4. **Delivery fees and the free-delivery threshold.** Peers: Khaadi "starting from Rs. 130", Alkaram a flat Rs 100, Outfitters free from Rs 2,500, Dhanak from Rs 2,000, Junaid Jamshed from Rs 1,500; the seed has Rs 250 and 350 and free over Rs 5,000. The progress bar in the cart makes the threshold very visible, so choose it deliberately.
-5. **Menu structure.** Proposed top level: New in, Women (Stitched, Unstitched, Bridal and Formals), Men, Kids, Footwear, Accessories, Collections, Sale. Tell me the categories you really sell.
+5. **Menu structure.** See [DOC-06.13](13-navigation-and-categories.md) §11: the real category names, whether Collections is a menu item, which collections are pinned, and whether Women comes first.
 
 ## 10. Changelog
 
