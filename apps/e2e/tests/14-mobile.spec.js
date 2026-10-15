@@ -1,4 +1,5 @@
 // E2E-14: at 360 x 740 the shop and the admin's orders do not scroll sideways, the product page has its sticky bar, and the main actions can be reached (plan/13-quality.md section 4).
+// REQ: MB-04, PD-14
 import { expect, test } from '../support/test.js'
 import path from 'node:path'
 import { dataDir, urls } from '../env.mjs'

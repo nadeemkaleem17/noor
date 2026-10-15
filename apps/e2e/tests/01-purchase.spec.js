@@ -1,4 +1,5 @@
 // E2E-01: home -> category -> filter by size and one attribute -> product -> cart -> checkout (cash on delivery) -> order page (plan/13-quality.md section 4).
+// REQ: CK-01, CK-02, CK-05, CK-06, CT-08, OR-01, LS-03, PD-05, SH-07
 import { expect, test } from '../support/test.js'
 import { expectNoViolations } from '../support/axe.js'
 import { pressChip } from '../support/ui.js'

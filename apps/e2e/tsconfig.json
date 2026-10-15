@@ -14,7 +14,11 @@
     "tests",
     "support",
     "scripts",
+    "visual",
+    "screen-reader",
     "playwright.config.js",
+    "playwright.visual.config.js",
+    "playwright.sr.config.js",
     "global-setup.js",
     "env.mjs"
   ]

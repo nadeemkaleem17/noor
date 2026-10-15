@@ -4,7 +4,7 @@
 import { nvdaTest as test } from '@guidepup/playwright'
 import { expect } from '@playwright/test'
 
-/** Presses Tab until a phrase matches, and returns every phrase heard on the way (at most 80 presses). @param {import('@guidepup/playwright').NVDAPlaywright['nvda']} nvda @param {RegExp} wanted */
+/** Presses Tab until a phrase matches, and returns every phrase heard on the way (at most 80 presses). @param {import('@guidepup/playwright').NVDAPlaywright} nvda @param {RegExp} wanted */
 async function tabUntil(nvda, wanted) {
   const heard = []
   for (let i = 0; i < 80; i++) {

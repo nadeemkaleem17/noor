@@ -226,6 +226,9 @@ Each row is scored 0 (fails), 1 (partly) or 2 (meets) by looking at the live sho
 | A3 | Targets are at least 44 px, focus is visible | WCAG |
 | F1 | Initial JavaScript within the ceilings of §7 | DOC-06.10 |
 | F2 | LCP, CLS and INP within DOC-06.10 §2 on the lab profile | DOC-06.10 |
+| N7 | A category with no products, or hidden, is shown nowhere | DOC-06.13 |
+| N8 | Every top-level category appears twice on the home page | DOC-06.13 |
+| N9 | A category landing page shows its sub-categories with pictures | Baymard |
 
 ### 8.4 Usability test (M8-10)
 Five people who shop online in Pakistan, on their own phones, ten minutes each, think aloud. Tasks: (1) find a kurta for a wedding from the home page, (2) find it again by searching "lawn", (3) choose a size and see when it arrives to Lahore, (4) buy it with cash on delivery, (5) track the order. Record task success, time, wrong turns and the words they use for categories. **Pass: at least 4 of 5 finish all tasks without help, and nobody fails to find a category.** The words people use feed the category and menu names.
@@ -246,3 +249,7 @@ Five people who shop online in Pakistan, on their own phones, ten minutes each, 
 | Date | Change |
 |---|---|
 | 2026-10-15 | Created from the owner's review of the shop, with the research of §3 |
+
+## 11. Decisions taken
+
+On 2026-10-16 the owner approved the plan by asking to continue. Where a question was not answered one by one, **the recommended answer is the decision until the owner changes it**: the menu as proposed in DOC-06.13 §4 (the owner's real names replace the demo ones when given); photography brief written in M8-10 and the demo pictures kept until then; the phone bottom bar and the see-through header built as options, off; delivery Rs 200 flat and free over Rs 3,000 in the demo shop (the owner's courier quote replaces it); typography A, ink button, 2 px corners, paper page colour, "bag", solid header (DOC-06.15 §8); Urdu stays off. Each can be reversed by a setting or a token change, which is why none of them blocks the start.

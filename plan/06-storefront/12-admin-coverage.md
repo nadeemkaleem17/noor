@@ -75,13 +75,13 @@ Legend: **Shown** = a customer sees it and it follows the admin value. **Partly*
 
 ## 3. What the map says
 
-- **Five things staff can set that no customer ever sees** (logo for dark backgrounds, uploaded favicon, dispatch promise, header layout, the "keep the header at the top" switch) and **eleven that are shown only half-way** (promo offers, reviews, categories in the navigation, collections, inventory cue, custom pages, menu `main`, menu `footer`, tagline, return days and policies, shipping estimate). All five are admin controls that look like they work and do nothing, which is worse than a missing feature.
+- **Eleven fields staff can set that no customer ever sees**, counted by a test over the real schemas (`apps/storefront/test/admin-coverage.test.js`): the logo for dark backgrounds, the uploaded favicon, the dispatch promise, the header layout, the "keep the header at the top" switch, the custom-sizing switch, a notice's severity, and the four policy summaries (returns, shipping, privacy, terms). The table in §2 had found the first five by reading; the test found the last six. All are admin controls that look like they work and do nothing, which is worse than a missing feature. A further set is shown only half-way (promo offers, reviews, categories in the navigation, collections, inventory cue, custom pages, menu `main`, menu `footer`, tagline, shipping estimate).
 - The product page is the one place that reads almost everything the admin writes. The **shell** (header, navigation, footer) and the **discovery** surfaces (search, collections, offers) are where the gaps are, and those are what a customer meets first.
 
 ## 4. Rules from now on
 
 1. **Every field staff can edit has a row in this map** and a verdict. A field with "Not shown" needs a task or a written reason ("Staff only"). A new admin field is not done until its row exists.
-2. **A test enforces it.** M8-01 adds `apps/storefront/test/admin-coverage.test.js`: it lists the keys of `StoreSettings`, `HomeContent`, `ThemeTokens`, `Category`, `Collection`, `ProductDetail` and the menu handles, and fails when a key has no row in a machine-readable copy of this map (`coverage.json`). Adding a setting without deciding where it shows then fails the build.
+2. **A test enforces it.** M8-01 adds `apps/storefront/test/admin-coverage.test.js`: it lists the keys of `StoreSettings`, `HomeContent`, `ThemeTokens`, `Category`, `Collection`, `ProductDetail` and the menu handles, and fails when a key has no row in a machine-readable copy of this map (`admin-coverage.map.js`). Adding a setting without deciding where it shows then fails the build.
 3. **First-run test.** A freshly seeded shop must satisfy: every top-level category is reachable from the header in one interaction and every sub-category in two. This is checked by the end-to-end suite on the seeded data, not on a stand-in.
 4. **Review a slice, not the finished site.** From M8, each page gets an owner review of its first working version (screenshots at 390 and 1280 px against the scorecard) before the rest of the work on that page continues.
 5. **Compare before designing.** Each page's task starts by looking at the reference shops of DOC-06.11 §3.3 for that page and writing down what to match and what to beat.
@@ -91,3 +91,4 @@ Legend: **Shown** = a customer sees it and it follows the admin value. **Partly*
 | Date | Change |
 |---|---|
 | 2026-10-16 | Created |
+| 2026-10-16 | M8-01: the coverage test over the real schemas found six more dead controls; the map is `apps/storefront/test/admin-coverage.map.js` (not a JSON file) |

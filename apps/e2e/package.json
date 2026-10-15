@@ -10,6 +10,8 @@
     "e2e": "node scripts/prepare.mjs && playwright test",
     "test:only": "playwright test",
     "test:sr": "playwright test -c playwright.sr.config.js",
+    "test:visual": "node scripts/prepare.mjs && playwright test -c playwright.visual.config.js",
+    "test:visual:only": "playwright test -c playwright.visual.config.js",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint ."
   },

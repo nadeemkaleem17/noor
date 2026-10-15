@@ -1,4 +1,5 @@
 // Not one of the 17 journeys: the pages of the screen-reader pass (plan/13-quality.md section 7: home, listing with filters, product with a choice, cart, checkout with errors,
+// REQ: AX-01
 // order page; admin: sign-in, orders, an order) and the rest of the storefront and admin screens, each scanned by axe (WCAG 2.2 AA), and the storefront at 320 px (reflow, 1.4.10).
 // This finds what a machine can find; the pass with NVDA and TalkBack is a person's (DOC-13 section 12).
 import path from 'node:path'

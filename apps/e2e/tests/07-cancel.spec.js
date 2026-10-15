@@ -1,4 +1,5 @@
 // E2E-07: a customer cancels an order nobody has confirmed yet, and the unit goes back on sale (plan/13-quality.md section 4).
+// REQ: OR-04
 import { expect, test } from '../support/test.js'
 import { adminApi, publicProduct, setAvailable } from '../support/api.js'
 import { addToCart, fillCheckout, orderNumber } from '../support/shop.js'

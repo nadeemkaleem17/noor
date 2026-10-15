@@ -1,4 +1,5 @@
 // E2E-17: the shop talks only to itself: no request from the home page, a listing, a product, the cart or the checkout goes to another site (DOC-06.10 section 7, DOC-12 section 6.1).
+// REQ: SC-01
 import { expect, test } from '../support/test.js'
 import { urls } from '../env.mjs'
 import { addToCart } from '../support/shop.js'

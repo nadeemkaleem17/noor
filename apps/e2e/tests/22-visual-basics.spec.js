@@ -1,5 +1,6 @@
 // Not one of the 17 journeys (M7-09, found by looking at screenshots; axe cannot see either): the hero's words are white on their dark gradient, and on a phone the chat button does not
 // sit under the product page's buy bar. Both were broken by a missing token (`--color-white`), and a button hidden behind a bar.
+// REQ: HM-01, SH-09
 import { expect, test } from '../support/test.js'
 
 test('home: the hero words are white, on a gradient', async ({ page }) => {

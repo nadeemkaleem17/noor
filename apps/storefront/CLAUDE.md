@@ -81,3 +81,7 @@ pnpm --filter @noor/storefront build && pnpm --filter @noor/storefront start   #
 pnpm --filter @noor/storefront budget        # after build: gzip JS/CSS per page against the ceilings in scripts/bundle-budget.mjs (DOC-06.10 section 2)
 pnpm --filter @noor/storefront lighthouse    # needs the production server + API running and Chrome/Edge installed; 3 runs per page, medians, ceilings in scripts/lighthouse.mjs
 ```
+
+## Coverage of the admin (M8-01)
+
+`test/admin-coverage.test.js` reads the real schemas (store, home, theme, category) and requires every field to have a line in `test/admin-coverage.map.js`: `shown` (the shop reads it), `partly`, `not-shown` (a dead control: the shop must not read it yet, and the test fails the day it does, so the line is flipped) or `staff-only`. Adding a setting to the admin without deciding where the shop shows it fails this test. Plan: `plan/06-storefront/12-admin-coverage.md`.

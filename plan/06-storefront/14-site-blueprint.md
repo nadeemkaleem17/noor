@@ -91,14 +91,14 @@ Research: size filter first and open (90% then filter by size) (BM); applied fil
 | LS-05 | Sort: featured, newest, best selling, price low-high and high-low, biggest discount | M | P | BM |
 | LS-06 | Density switch (phone 1 or 2; desktop 3 or 4), remembered | S | N | KH |
 | LS-07 | Load more (link, works without JavaScript) with count "Showing 24 of 411"; scroll position restored on return | M | Y | BM |
-| LS-08 | Round sub-category and "first filter" chips above the grid | M | N | KH |
+| LS-08 | Round sub-category and "first filter" chips above the grid | M | P | KH |
 | LS-09 | Empty and no-match states with a way out (clear filters, siblings, popular) | M | P | BM |
 | LS-10 | Sale page shows the discount on each card; New page sorted newest | M | Y | OW |
 | LS-11 | Category description text under the grid for SEO, collapsible | S | P | SEO |
 | LS-12 | Sticky filter and sort bar while scrolling | M | N | KH |
 | PC-01 | Card: picture (3:4), name, price, compare-at with "-x%", New and Sale and Sold out and Low stock badges | M | Y | DW |
 | PC-02 | Second picture on hover (fine pointers) and swipe dots on touch; none for single-picture products | M | P | research |
-| PC-03 | Colour swatches (up to 5 plus "+N"); a swatch links to that colourway | M | N | BM |
+| PC-03 | Colour swatches (up to 5 plus "+N"); a swatch links to that colourway | M | P | BM |
 | PC-04 | Fabric/technique line from the product subtitle ("Printed \| Light khaddar") | M | N | KH |
 | PC-05 | Rating stars with count (text label for screen readers), only with 3 or more reviews | S | N | DW |
 | PC-06 | Heart (wishlist) with filled state, toggled without leaving the page, announced | M | Y | KH |
@@ -318,7 +318,7 @@ The best interface fails on weak content. These rules are for staff and are chec
 
 ## 3. Counts
 
-Counted from the rows above (184 functions): **136 Must, 39 Should, 9 Later**. Today the shop has **59 of them complete (Y), 64 partly (P) and 61 not at all (N)**.
+Counted from the rows above (184 functions): **136 Must, 39 Should, 9 Later**. Today the shop has **59 of them complete (Y), 66 partly (P) and 59 not at all (N)**.
 
 | Area | Must | Should | Later |
 |---|---|---|---|

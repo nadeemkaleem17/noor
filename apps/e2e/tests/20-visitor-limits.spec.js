@@ -1,4 +1,5 @@
 // Not one of the 17 journeys (M7-09): the API's limits count visitors, not the shop's server. Ten lookups of an order in an hour is the limit for one address; the eleventh
+// REQ: SC-01
 // from one visitor is refused, while a second visitor, through the same shop server at the same moment, is answered as usual.
 import { expect, test } from '../support/test.js'
 

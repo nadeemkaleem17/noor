@@ -1,4 +1,5 @@
 // E2E-02: the same purchase with JavaScript switched off (plan/06-storefront/01 section 8 and 05 section 6): every step is a plain form and a plain link.
+// REQ: CK-01, CK-10
 import { expect, test } from '../support/test.js'
 import { buyer } from '../support/buyer.js'
 import { orderNumber } from '../support/shop.js'

@@ -1,4 +1,5 @@
 // E2E-15: a whole purchase with the keyboard alone: skip link, product, size, add, cart, checkout, place order. Every stop must show where the focus is (plan/13-quality.md section 4 and 7).
+// REQ: AX-01, CK-09
 import { expect, test } from '../support/test.js'
 import { buyer, uniquePhone } from '../support/buyer.js'
 import { orderNumber } from '../support/shop.js'
