@@ -150,6 +150,8 @@ Pattern across all three: **navigation is category-first with depth; photography
 | Category `description`, `image` filled in the seed | seed | category headers and menu tiles |
 | `store.getConfig.shipping` per-zone fee and free-above (exists) | none | delivery block |
 
+**The complete list of functions, with IDs, is [DOC-06.14](14-site-blueprint.md) (184 rows). Each task above delivers the Must rows named in that document's §4; this table keeps only the order and the size.**
+
 Every change follows the repo rule: contract entry first, handler, client call, `pnpm route-keys`, openapi snapshot, the docs row.
 
 ## 7. Implementation plan (milestone M8)
@@ -158,7 +160,7 @@ Order matters: measure first, fix the data and navigation (the owner's complaint
 
 | ID | Task | Delivers | Needs | Size |
 |---|---|---|---|---|
-| **M8-01** | Evaluation harness, baseline and the coverage guard | Visual baselines of 12 pages at 390, 768 and 1280 px; the UX scorecard (§8.3) scored on today's shop; Lighthouse and bundle numbers recorded; `pnpm --filter @noor/e2e test:visual`; **`apps/storefront/test/admin-coverage.test.js` and `coverage.json` made from DOC-06.12** (fails when an admin field has no row); the first-run test on seeded data (every top category in one interaction) | none | M |
+| **M8-01** | Evaluation harness, baseline and the coverage guard | Visual baselines of 12 pages at 390, 768 and 1280 px; the UX scorecard (§8.3) scored on today's shop; Lighthouse and bundle numbers recorded; `pnpm --filter @noor/e2e test:visual`; **`apps/storefront/test/admin-coverage.test.js` and `coverage.json` made from DOC-06.12** (fails when an admin field has no row); the first-run test on seeded data (every top category in one interaction); **`requirements.test.js`: every Must ID of DOC-06.14 cites a test, and its counts match** | none | M |
 | **M8-02** | Navigation data, brand assets and honoured settings | Seed without the two-item menu; `navItems` with children; seed categories with pictures and descriptions; footer split into Shop, Help and Company from the tree and the pages; a collections index page; **the uploaded favicon and the dark-background logo used; the dispatch promise and default delivery time read; the header layout and sticky settings honoured** (DOC-06.12 "Not shown" rows); staff can still edit menu `main` | M8-01 | M |
 | **M8-03** | Header v2 and mega menu | Section 5.1 *Must*; disclosure pattern; hide on scroll; phone drill-down drawer; keyboard and no-JS tests; lazy chunk for the panel behaviour | M8-02 | L |
 | **M8-04** | Search v2 | `catalog.suggest`, popular and recent, overlay, no-results page, tests (keyboard, screen reader tree, no-JS) | M8-03 | L |
@@ -168,6 +170,8 @@ Order matters: measure first, fix the data and navigation (the owner's complaint
 | **M8-08** | Home v2 | Section 5.6 *Must*; category circles; reviews highlight; section rhythm | M8-05 | M |
 | **M8-09** | Design system pass | Type scale, spacing, motion, view transitions, skeletons; optional phone bottom bar and transparent header (settings, off by default until M8-10 says otherwise) | M8-03 to M8-08 | L |
 | **M8-10** | Content, closure and judgement | Photography brief delivered and the owner's real pictures in the shop; scorecard re-run (target in §8.3); usability test (§8.4); performance and accessibility closure; the owner's sign-off | all | M |
+| **M8-11** | After-sale: tracking details, buy again, order messages, return and exchange request | OR-03, OR-07, OR-08, RT-01 to RT-04 of DOC-06.14; the admin returns queue; a decision on the message provider | M8-07 | L |
+| **M8-12** | Content, trust and offers pages | CM-01 to CM-07, TR-01, TR-02, MK-01 of DOC-06.14 (About, Contact, Shipping, FAQ, care guide, offers page and the "public" promo flag) | M8-02 | M |
 
 **Performance rule for M8.** Every task states the JavaScript it adds. Allowed rises over today's gzip ceilings (233.6, 239.9, 261.5, 243.7, 245.2 kB) are: mega menu + search suggestions + quick add loaded on first use add **no more than 12 kB to any page's initial JavaScript** (the rest loads when used); the home page may rise by at most 6 kB for the circles and reviews block. A task that exceeds this must justify the figure in this document before merge.
 
