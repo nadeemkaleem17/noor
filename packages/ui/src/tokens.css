@@ -34,6 +34,9 @@
   --color-sidebar-muted: var(--sem-sidebar-muted);
   --color-sidebar-active: var(--sem-sidebar-active);
   --color-transparent: transparent;
+  /* pure white and black are not brand colours: text on a picture, a QR code, a printed invoice. The palette above is cleared (`initial`), so without these `text-white`, `bg-white` and `from-black/75` produce nothing */
+  --color-white: #fff;
+  --color-black: #000;
   --color-current: currentColor;
 
   --font-heading: var(--sem-font-heading);

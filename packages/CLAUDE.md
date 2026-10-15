@@ -9,3 +9,5 @@
 
 Cross-cutting rules: money = `{ amount (integer paisa), currency: 'PKR' }`; ids are UUIDv7 strings; dates are ISO strings; the client never sends a price. A change to a contract schema usually
 needs: the handler, `apps/api/test/openapi.snapshot.json` (`-u`), `plan/10-api/*`, and `pnpm route-keys`.
+
+**A colour class that is not a token does nothing.** `tokens.css` clears Tailwind's palette (`--color-*: initial`), so `text-red-500` or `bg-yellow-100` compile to nothing and no test notices (axe does not see a missing gradient). Use the tokens, or add one. `--color-white` and `--color-black` exist for text on pictures, QR codes and print.

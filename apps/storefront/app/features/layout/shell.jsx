@@ -21,13 +21,15 @@ function WhatsAppButton({ number }) {
   const { t } = useTranslation('storefront')
   const { pathname } = useLocation()
   if (/^(\/ur)?\/checkout(\/|$)/.test(pathname)) return null
+  // a product page has the buy bar along the foot of a phone's screen: the button rides above it
+  const onProduct = /^(\/ur)?\/p\//.test(pathname)
   return (
     <a
       href={`https://wa.me/${number}?text=${encodeURIComponent(t('shell.waGeneric', { defaultValue: 'Hi, I have a question.' }))}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={t('shell.whatsapp')}
-      className="fixed bottom-4 end-4 z-20 grid size-14 place-items-center rounded-full bg-accent text-on-accent shadow-lg"
+      className={`fixed end-4 z-20 grid size-14 place-items-center rounded-full bg-accent text-on-accent shadow-lg ${onProduct ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}
     >
       <MessageCircle aria-hidden="true" className="size-7" />
     </a>
