@@ -189,6 +189,23 @@ flowchart LR
 | M7-08 | Owner walkthrough of the complete local product against DOC-06 and DOC-07; sign-off or a fix list | all | M7-05, M7-06, M7-07, M7-09 | 1.5 | Sign-off recorded in README changelog. **This closes the local build** |
 | M7-09 | **Done (the targets are not met and the table says why)** Storefront to API trust and speed: send `X-Internal-Key` and the visitor's address (`X-Forwarded-For`) on every storefront call (**done at M7-01**: `app/lib/visitor.server.js`; what remains is a load test and the bundle work) so the API's per-address limits count visitors, not the one storefront server (today the `default` bucket of 300 a minute covers the whole shop); then bring the storefront down to the ceilings-to-targets of DOC-06.10 §2 (lazy drawers and dialogs, ICU plugin, Brotli) | DOC-11 §2, DOC-06.10 §2 | M7-01 | 2 | A load test shows limits applying per visitor; `pnpm --filter @noor/storefront budget` passes with the DOC-06.10 §2 targets, or the table says why not |
 
+### M8 — Storefront v2 (proposed 2026-10-15, **not started: waits for the owner's approval of DOC-06.11 §9**)
+
+Why: the owner found the shop's navigation (no categories), search and look average. DOC-06.11 holds the audit, the research, the requirements, the evaluation method and the owner's decisions. Days are of work, not calendar.
+
+| ID | Task | Docs | After | Days | Done when |
+|---|---|---|---|---|---|
+| M8-01 | Evaluation harness and baseline: visual baselines (12 pages, 3 widths), UX scorecard scored on today's shop, Lighthouse and bundle numbers recorded | DOC-06.11 §8 | M7-09 | 1 | `pnpm --filter @noor/e2e test:visual` passes; the baseline scorecard is in DOC-06.11 |
+| M8-02 | Navigation data and IA: seed without the two-item menu; `navItems` with children; categories with pictures and descriptions | DOC-06.11 §5.1, §6 | M8-01 | 0.5 | Every top category shows in the header; menu `main` still editable by staff |
+| M8-03 | Header v2 and mega menu (disclosure pattern, hide on scroll, phone drill-down drawer, Track order link) | DOC-06.11 §5.1 | M8-02 | 3 | Scorecard N1 to N6 score 2; keyboard, no-JavaScript and axe tests pass; at most 12 kB added to initial JavaScript |
+| M8-04 | Search v2: `catalog.suggest`, popular and recent, overlay, no-results page | DOC-06.11 §5.2, §6 | M8-03 | 3 | Scorecard S1 to S5 score 2; works without JavaScript |
+| M8-05 | Card v2 and listing v2: subtitle, swatches, rating, stock cue, quick add, density switch, sub-category chips | DOC-06.11 §5.3 | M8-02 | 3 | Scorecard L1 to L7 score 2 |
+| M8-06 | Product page v2: delivery block, reviews summary, desktop sticky box and thumbnails, trust points | DOC-06.11 §5.4 | M8-05 | 3 | Scorecard P1 to P6 score 2 |
+| M8-07 | Cart and checkout v2: free-delivery progress, upsell, sticky summary | DOC-06.11 §5.5 | M8-06 | 1 | Scorecard C1, C2 score 2 |
+| M8-08 | Home v2: category circles, reviews highlight, section rhythm | DOC-06.11 §5.6 | M8-05 | 1 | Scorecard H1, H2 score 2 |
+| M8-09 | Design system pass: type scale, spacing, motion, view transitions, skeletons; optional phone bottom bar and transparent header (settings) | DOC-06.11 §5.7 | M8-03 to M8-08 | 3 | Scorecard V1, V2 score 2; visual baselines updated on purpose |
+| M8-10 | Content, closure and judgement: photography brief and the owner's pictures, scorecard re-run (at least 85%), usability test (4 of 5 finish), performance and accessibility closure, owner sign-off | DOC-06.11 §8.3, §8.4 | M8-09 | 2 | Targets of DOC-06.11 §8 met, or each miss written down with its reason |
+
 ### LAUNCH — production phase (not scheduled; started by the owner after M7-08)
 
 | ID | Task | Docs | After |
@@ -284,6 +301,7 @@ Every Critical and High finding of DOC-01, and the eleven verified claims, map t
 | M5 | 11 | 11 (M5-01 to M5-11): **M5 is complete** |
 | M6 | 7 | 7 (M6-01 to M6-07): **M6 is complete** |
 | M7 | 9 | 5 (M7-01, M7-03, M7-04, M7-07, M7-09; M7-02 and M7-05 half) |
+| M8 | 10 | 0 (proposed, waits for the owner's approval of DOC-06.11) |
 
 Updated by the PR that finishes a task.
 
@@ -399,3 +417,4 @@ Updated by the PR that finishes a task.
 | 2026-10-15 | Found by looking at screenshots (axe cannot see it): the home hero was dark text on a dark picture, because `tokens.css` clears Tailwind's palette (`--color-*: initial`) and `text-white`, `from-black/75` produced nothing; the same gap left the admin QR code and the printed invoice without their white. `--color-white` and `--color-black` are now tokens. Also on a phone the chat button sat under the product page's buy bar: it rides above it now. `apps/e2e/tests/22-visual-basics.spec.js` checks both. Lesson for `packages/ui/CLAUDE.md`: a colour utility that is not a token silently does nothing. |
 | 2026-10-15 | More found by looking: (1) the admin dashboard figures ran out of their cards for large sales (Rs 12,345,678 at laptop widths): a figure now shrinks to fit its tile (`kpi-tiles.jsx`, container query units; measured at 1280, 1024, 768 and 390 px). (2) In the product editor the "Also shown in" and Badges checkboxes ran together on one line (inline elements, `space-y` does nothing): a column now. (3) **The end-to-end admin was built in development mode** (prepare.mjs puts the API's `NODE_ENV=development` in its own environment and the build inherited it: React's debug runtime, about 70 kB more): `adminBuildEnv` sets `NODE_ENV=production`; the full suite passes on the production build except E2E-10, which read the shop before the price save had finished: it now waits for the save request. Admin initial JS by the script: 222.3 kB at sign-in and 227.7 at the dashboard (budget 230). |
 | 2026-10-15 | Third look (admin on a phone, more admin screens): on a phone the products list search box was squashed to a sliver behind the Category dropdown (it keeps a 12 rem minimum now, which also fixed the clipped "Searcl" on the orders list); the SKU box of the variants table was about 28 px wide (the column has a minimum width now); the 404 page's search placeholder was cut off ("Search dresses, fabrics…" now); the Appearance preview said "Add to bag" (the shop says "Add to cart"). Open, for the owner: the shop writes money as "Rs. 5,000" in typed text (announcement, pages) and "Rs 5,000" in prices: pick one. |
+| 2026-10-15 | **Storefront v2 proposed (M8).** The owner found the shop average (no categories in the navigation, search an icon, plain look). Audit, research (Baymard, W3C, Shopify Dawn code, Khaadi, Sapphire, Outfitters), requirements, API changes, ten tasks, the evaluation method (visual baselines, a 37-row UX scorecard, a usability test) and five owner decisions are in `plan/06-storefront/11-storefront-v2.md`. Root cause of the missing categories: the seed wrote a two-item `main` menu and the category fallback applies only to an empty menu. Nothing of M8 is built; it waits for the approval in DOC-06.11 §9. |
