@@ -71,6 +71,7 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
   const { setOpen: openCart } = useCartDrawer()
   const locale = shell?.locale ?? 'en'
   const display = shell?.config.priceDisplay
+  const dispatchPromise = shell?.config.shipping.dispatchPromise
 
   const [chosen, setChosen] = useState(() => initialChosen(p.options, p.variants, sizeParam))
   /** @type {[Record<string, Chosen>, import('react').Dispatch<import('react').SetStateAction<Record<string, Chosen>>>]} */
@@ -293,6 +294,7 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
         {mto ? <li>{mto.label}</li> : p.delivery.etaMinDays !== undefined && p.delivery.etaMaxDays !== undefined ? <li>{t('pdp.delivery.eta', { min: p.delivery.etaMinDays, max: p.delivery.etaMaxDays })}</li> : null}
         {mto?.depositPercent ? <li>{t('pdp.mto.deposit', { percent: mto.depositPercent })}</li> : null}
         {mto && !mto.returnable ? <li>{t('pdp.mto.notReturnable')}</li> : null}
+        {dispatchPromise ? <li>{dispatchPromise}</li> : null}
         {p.delivery.codAvailable ? <li>{t('pdp.delivery.cod')}</li> : null}
         {p.delivery.freeAbove ? <li>{t('pdp.delivery.freeAbove', { amount: formatMoney(p.delivery.freeAbove, locale, display) })}</li> : null}
         <li><WishlistButton product={p} text /></li>

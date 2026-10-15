@@ -7,6 +7,8 @@ const pages = (id) => [
   layout('routes/_shell.jsx', { id: `shell${id}` }, [
     index('routes/home.jsx', { id: `home${id}` }),
     route('c/:handle', 'routes/category.jsx', { id: `category${id}` }),
+    route('categories', 'routes/categories.jsx', { id: `categories${id}` }),
+    route('collections', 'routes/collections.jsx', { id: `collections${id}` }),
     route('collections/:handle', 'routes/collection.jsx', { id: `collection${id}` }),
     route('new', 'routes/new.jsx', { id: `new${id}` }),
     route('sale', 'routes/sale.jsx', { id: `sale${id}` }),

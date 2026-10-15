@@ -73,7 +73,7 @@ export default function Shell() {
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
-      {checkout ? null : <Footer brand={config.brand.name} about={about} items={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />}
+      {checkout ? null : <Footer brand={config.brand.name} about={about} columns={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />}
       {config.contact.whatsapp ? <WhatsAppButton number={config.contact.whatsapp} /> : null}
       </CartDrawerProvider>
     </ToastProvider>

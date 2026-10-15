@@ -8,7 +8,7 @@ import { api, handleOf } from '~/lib/api.server'
 import { localeOfPath } from '~/lib/locale'
 import { pagePath } from '~/lib/paths'
 import { redirectFor } from '~/lib/redirects'
-import { navItems, safeItems } from '~/lib/nav'
+import { footerColumns, navItems, safeItems } from '~/lib/nav'
 import { getEnv } from '~/lib/env.server'
 import { fontsFor } from '~/lib/fonts.server'
 import { cached, loadShell } from '~/lib/shell.server'
@@ -47,7 +47,8 @@ export async function loader({ request }) {
   const t = createI18n(locale).t
   const { theme, ...config } = shell.config
   const fonts = fontsFor(theme?.fonts ?? { heading: 'Playfair Display', body: 'Inter' }, locale)
-  const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale') }
+  const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale'), collections: t('storefront:shell.collections') }
+  const footerLabels = { new: labels.new, sale: labels.sale, allCategories: t('storefront:shell.allCategories'), allCollections: t('storefront:shell.allCollections'), trackOrder: t('storefront:shell.trackOrder'), sizeGuide: t('storefront:shell.sizeGuide') }
   return {
     locale,
     siteUrl: getEnv().PUBLIC_SITE_URL,
@@ -59,7 +60,7 @@ export async function loader({ request }) {
     config,
     notices: [...(shell.home.announcement ? [{ id: 'announcement', text: shell.home.announcement.text, href: shell.home.announcement.href }] : []), ...shell.home.notices.map((n) => ({ id: n.id, text: n.text, href: n.href }))],
     about: shell.home.footer.about,
-    nav: { header: navItems({ locale, menu: shell.menus.main, categories: shell.categories, labels }), footer: safeItems(locale, shell.menus.footer) },
+    nav: { header: navItems({ locale, mode: shell.config.navigation.mode, menu: shell.menus.main, categories: shell.categories, collections: shell.collections, labels }), footer: footerColumns({ locale, categories: shell.categories, collections: shell.collections, pages: safeItems(locale, shell.menus.footer), labels: footerLabels }) },
     categories: shell.categories.map((c) => ({ id: c.id, handle: c.handle, name: c.name })),
   }
 }
@@ -79,8 +80,9 @@ export function Layout({ children }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* the shop's own favicon (Settings, Store, Brand) when staff uploaded one; the built-in icon until then */}
+        {data?.config.brand.favicon ? <link rel="icon" href={data.config.brand.favicon.src} /> : <link rel="icon" type="image/svg+xml" href="/favicon.svg" />}
+        <link rel="apple-touch-icon" href={data?.config.brand.favicon?.src ?? '/apple-touch-icon.png'} />
         <Links />
         {data?.fontFiles.map((href) => <link key={href} rel="preload" as="font" type="font/woff2" crossOrigin="anonymous" href={href} />)}
         {data && data.imgOrigin !== new URL(data.siteUrl).origin ? <link rel="preconnect" href={data.imgOrigin} /> : null}

@@ -208,7 +208,7 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
     },
 
     // ================================ categories ================================
-    /** The whole visible tree, with the number of live products in each branch. @param {Locale} locale */
+    /** The visible tree with the number of live products in each branch; a branch with none is left out. @param {Locale} locale */
     async listCategories(locale = 'en') {
       const all = visibleOf(await loadCategories())
       const tagged = await db.execute(sql`select pc.category_id as category, pc.product_id as product from product_categories pc join products p on p.id = pc.product_id where p.status = 'active'`)
@@ -227,7 +227,8 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
             productCount: new Set(rows.filter((r) => below.has(r.category)).map((r) => r.product)).size,
             children,
           }
-        })
+          // a branch with no live product is not offered anywhere (navigation, home, footer, /categories); its own page still opens by address
+        }).filter((n) => n.productCount > 0)
       return { items: build(null) }
     },
 
@@ -335,7 +336,11 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
       const images = await media.imagesFor([...pics.values()])
       /** @type {{ loc: string, lastmod: string, image?: string, type: 'home' | 'category' | 'collection' | 'product' | 'page' | 'facet' }[]} */
       const entries = [{ loc: '/', lastmod: (activeProducts.map((p) => p.updatedAt).sort((a, b) => b.getTime() - a.getTime())[0] ?? at).toISOString(), type: 'home' }]
-      for (const c of cats) entries.push({ loc: `/c/${c.handle}`, lastmod: c.updatedAt.toISOString(), type: 'category' })
+      // a category with no live product is a thin page: crawlers are not sent to it (it is also left out of the public tree)
+      const live = /** @type {Set<string>} */ (new Set())
+      const mark = (/** @type {import('@noor/contract').CategoryNode[]} */ nodes) => nodes.forEach((n) => { live.add(n.handle); mark(n.children) })
+      mark((await this.listCategories()).items)
+      for (const c of cats) if (live.has(c.handle)) entries.push({ loc: `/c/${c.handle}`, lastmod: c.updatedAt.toISOString(), type: 'category' })
       for (const c of cols) entries.push({ loc: `/collections/${c.handle}`, lastmod: c.updatedAt.toISOString(), type: 'collection' })
       for (const p of activeProducts) {
         const img = pics.get(p.id) ? images[/** @type {string} */ (pics.get(p.id))]?.src : undefined

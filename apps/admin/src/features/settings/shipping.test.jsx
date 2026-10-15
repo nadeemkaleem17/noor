@@ -27,6 +27,7 @@ const storeValue = () => ({
   orderNumberPrefix: 'RB',
   locale: { default: 'en', supported: ['en'] },
   features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true },
+  navigation: { mode: 'automatic' },
   policies: { returnsDays: 7 },
   seo: {},
   notifications: { staffEmails: [] },

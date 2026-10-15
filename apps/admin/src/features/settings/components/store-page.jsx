@@ -291,6 +291,29 @@ function FeaturesCard({ doc }) {
   )
 }
 
+/** How the shop's navigation bar is made: from the categories and collections, or from the menu written under Content, Menus. @param {{ doc: any; }} props */
+function NavigationCard({ doc }) {
+  const save = useSaveStoreSlice()
+  return (
+    <SettingsCard id="navigation" title="Navigation bar" defaults={{ navigation: { ...doc.value.navigation } }} schema={StoreSettings.pick({ navigation: true })} toValue={(f) => ({ navigation: { ...f.navigation } })} save={(slice) => save.mutateAsync(slice)}>
+      {(form, writable) => (
+        <RHFField control={form.control} name="navigation.mode" label="The bar shows" hint="Automatic: New in, every category with products (and its sub-categories), featured collections and Sale. Custom: exactly the menu you wrote under Content, Menus.">
+          {(field) => (
+            <NativeSelect
+              {...field}
+              disabled={!writable}
+              options={[
+                { value: 'automatic', label: 'Categories and collections (automatic)' },
+                { value: 'custom', label: 'My own menu (Content, Menus)' },
+              ]}
+            />
+          )}
+        </RHFField>
+      )}
+    </SettingsCard>
+  )
+}
+
 /** The extra checkout fields and the marketing consent box: their own document. @param {{ doc: any; }} props */
 function CheckoutCard({ doc }) {
   const save = useSaveCheckout()
@@ -409,6 +432,7 @@ export function StorePage() {
         <PricesCard doc={store.data} />
         <LanguagesCard doc={store.data} />
         <FeaturesCard doc={store.data} />
+        <NavigationCard doc={store.data} />
         <CheckoutCard doc={checkout.data} />
         <PoliciesCard doc={store.data} />
         <SeoCard doc={store.data} />

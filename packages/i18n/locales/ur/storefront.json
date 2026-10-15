@@ -26,6 +26,7 @@
     "navLabel": "مرکزی",
     "footerNavLabel": "فوٹر",
     "new": "نیا",
+    "collections": "کلیکشنز",
     "sale": "سیل",
     "search": "تلاش",
     "searchLabel": "دکان میں تلاش کریں",
@@ -37,6 +38,12 @@
     "showLinks": "{name}: لنکس دکھائیں",
     "whatsapp": "واٹس ایپ پر ہم سے بات کریں",
     "footerShop": "خریداری",
+    "footerCollections": "کلیکشنز",
+    "footerHelp": "مدد",
+    "footerCompany": "کمپنی",
+    "allCategories": "تمام زمرے",
+    "allCollections": "تمام کلیکشنز",
+    "trackOrder": "آرڈر ٹریک کریں",
     "footerContact": "رابطہ",
     "footerPayments": "ادائیگی کے طریقے",
     "rights": "© {year} {brand}",
@@ -527,6 +534,10 @@
     "homeDescription": "سلے ہوئے، ان سلے اور آرڈر پر تیار جوڑے آن لائن خریدیں۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔",
     "newDescription": "سب سے نئے سلے ہوئے، ان سلے اور آرڈر پر تیار جوڑے۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔",
     "saleDescription": "سیل میں شامل جوڑے: لان، فارمل اور مزید کم قیمت پر۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔",
-    "sizeGuideDescription": "انچ اور سینٹی میٹر میں سائز چارٹ، اور اپنا ناپ لینے کا طریقہ۔"
+    "sizeGuideDescription": "انچ اور سینٹی میٹر میں سائز چارٹ، اور اپنا ناپ لینے کا طریقہ۔",
+    "categories": "تمام زمرے",
+    "collections": "تمام کلیکشنز",
+    "categoriesDescription": "دکان کے تمام زمرے۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔",
+    "collectionsDescription": "دکان کے تمام کلیکشنز۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔"
   }
 }

@@ -42,7 +42,7 @@ describe.skipIf(!dbAvailable)('seed (MySQL)', () => {
       expect(r.owner).toBeUndefined()
       expect(r.base).toMatchObject({ settings: 5, pages: 5, zones: 2, sizeSystems: 2, couriers: 6 })
       const n = await tableCounts()
-      expect(n).toMatchObject({ settings: 5, menus: 2, pages: 5, couriers: 6, zones: 2, sizeSystems: 2, products: 0, staff: 0 })
+      expect(n).toMatchObject({ settings: 5, menus: 1 /* footer only: the navigation bar is automatic */, pages: 5, couriers: 6, zones: 2, sizeSystems: 2, products: 0, staff: 0 })
       expect(n.cities).toBeGreaterThanOrEqual(200)
       expect(n.zoneCities, 'every city is in a zone').toBe(n.cities)
       expect(n.synonyms).toBeGreaterThan(40)

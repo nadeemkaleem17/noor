@@ -11,6 +11,7 @@ export const defaults = {
     orderNumberPrefix: 'RB',
     locale: { default: 'en', supported: ['en'] },
     features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false },
+    navigation: { mode: 'automatic' },
     policies: {},
     seo: {},
     notifications: { staffEmails: [] },

@@ -45,7 +45,7 @@ export async function seedBase(db, { search }) {
   // menus
   const haveMenus = new Set((await db.select({ h: menus.handle }).from(menus)).map((m) => m.h))
   const menuItems = {
-    main: [{ id: 'new', label: 'New', href: '/new' }, { id: 'sale', label: 'Sale', href: '/sale' }],
+    // no `main` menu: the navigation bar is built from the categories and collections (Store setting 'Navigation bar': automatic), and staff write one only if they choose 'custom'
     footer: requiredPages.map((p) => ({ id: p.slug, label: p.title, href: `/pages/${p.slug}` })),
   }
   for (const [handle, items] of Object.entries(menuItems)) if (!haveMenus.has(handle)) await db.insert(menus).values({ handle, items, version: 1, updatedAt: at })

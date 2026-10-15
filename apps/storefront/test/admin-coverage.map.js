@@ -16,8 +16,8 @@ export const storeSettings = {
   'brand.name': ['shown', 'brand.name'],
   'brand.tagline': ['partly', 'tagline', 'page title only; shown under the logo and in the footer in M8-03'],
   'brand.logoLightMediaId': ['shown', 'logoLight'],
-  'brand.logoDarkMediaId': ['not-shown', 'logoDark', 'M8-02: used by the dark header and footer'],
-  'brand.faviconMediaId': ['not-shown', 'brand.favicon', 'M8-02: the uploaded favicon wins over the built-in one'],
+  'brand.logoDarkMediaId': ['not-shown', 'logoDark', 'M8-03 and M8-09: used by the see-through header and a dark footer (there is no dark surface yet)'],
+  'brand.faviconMediaId': ['shown', 'brand.favicon'],
   'contact.whatsapp': ['shown', 'whatsapp'],
   'contact.phone': ['shown', 'contact.phone'],
   'contact.email': ['shown', 'contact.email'],
@@ -34,7 +34,8 @@ export const storeSettings = {
   'features.wishlist': ['shown', 'features.wishlist'],
   'features.reviews': ['shown', 'features.reviews'],
   'features.notifyMe': ['shown', 'features.notifyMe'],
-  'features.customSizing': ['not-shown', 'features.customSizing', 'M8-02: the custom-size form on a product follows this switch'],
+  'features.customSizing': ['shown', 'features.customSizing'],
+  'navigation.mode': ['shown', 'navigation'],
   'policies.returnsDays': ['shown', 'returnsDays'],
   'policies.returns': ['not-shown', 'policies.returns', 'M8-06: the "Delivery and returns" section of the product page'],
   'policies.shipping': ['not-shown', 'policies.shipping', 'M8-06: the same section and the shipping page'],
@@ -44,7 +45,7 @@ export const storeSettings = {
   'notifications.staffEmails[]': api('addresses of staff who get order mail'),
   'thresholds.lowStock': api('the API derives "low stock" from it; the shop shows the result'),
   'thresholds.highValueCodMinor': api('the API flags high-value cash on delivery orders; the shop shows the message'),
-  dispatchPromise: ['not-shown', 'dispatchPromise', 'M8-02 and M8-06: the product page, the bag and the checkout'],
+  dispatchPromise: ['partly', 'dispatchPromise', 'on the product page; the bag and the checkout in M8-07'],
 }
 
 export const homeContent = {

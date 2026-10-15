@@ -33,11 +33,12 @@ export async function loader({ params, request }) {
   const { config } = await loadShell(locale)
   const res = await api('catalog.getProduct', { params: { handleOrId: params.handle ?? '' }, query: { locale, ...(preview ? { preview } : {}) } }).catch(orNotFound)
   if ('redirectTo' in res) throw redirect(localePath(locale, `/p/${res.redirectTo}`) + url.search, 301)
-  const product = res
+  // the Store setting 'Custom sizing' decides whether a customer can ask for a made-to-measure size: when it is off the option is not offered at all
+  const product = config.features.customSizing ? res : { ...res, options: res.options.map((o) => ({ ...o, values: o.values.filter((v) => v.kind !== 'custom') })) }
   const [sizeChart, formSchema] = await Promise.all([
     product.sizeChartId ? api('catalog.getSizeChart', { params: { id: product.sizeChartId } }).catch(() => null) : null,
     // without its form a made-to-measure size cannot be ordered, so this one is not optional
-    product.customSizeSchemaId ? api('catalog.getFormSchema', { params: { id: product.customSizeSchemaId } }) : null,
+    product.customSizeSchemaId && config.features.customSizing ? api('catalog.getFormSchema', { params: { id: product.customSizeSchemaId } }) : null,
   ])
   const reviews = config.features.reviews ? api('reviews.listForProduct', { params: { id: product.id }, query: { limit: 5 } }).catch(() => undefined) : undefined
   const related = api('catalog.listRelated', { params: { id: product.id }, query: { locale, limit: 8 } }).then((r) => r.items, () => undefined)

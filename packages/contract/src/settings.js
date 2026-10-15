@@ -39,6 +39,8 @@ export const StoreSettings = z.strictObject({
   orderNumberPrefix: z.string().regex(/^[A-Z]{2,4}$/, 'code_invalid'),
   locale: z.strictObject({ default: Locale, supported: z.array(Locale).min(1).max(2) }).refine((l) => l.supported.includes(l.default), { message: 'invalid_format', path: ['supported'] }),
   features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean() }),
+  /** How the shop's navigation bar is made: from the categories and collections (default) or from the menu staff wrote (menu `main`). */
+  navigation: z.strictObject({ mode: z.enum(['automatic', 'custom']) }).default({ mode: 'automatic' }),
   policies: z.strictObject({
     returnsDays: z.int().min(0).max(90).optional(),
     returns: text(300).optional(),
@@ -170,6 +172,7 @@ export const StoreConfigPublic = z.strictObject({
   priceDisplay: StoreSettings.shape.priceDisplay,
   locale: z.strictObject({ default: Locale, supported: z.array(Locale) }),
   features: StoreSettings.shape.features,
+  navigation: StoreSettings.shape.navigation,
   policies: StoreSettings.shape.policies,
   payments: z.array(z.strictObject({ type: Enum.paymentMethod, label: z.string(), description: z.string().optional() })),
   shipping: z.strictObject({

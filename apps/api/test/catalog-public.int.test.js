@@ -94,6 +94,7 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
     d.women = await cat('women')
     d.unstitched = await cat('unstitched', d.women, { sortOrder: 0 })
     d.stitched = await cat('stitched', d.women, { sortOrder: 1 })
+    d.bare = await cat('bare', null, { sortOrder: 9 }) // visible and empty: the tree leaves it out, its own page still opens
     d.men = await cat('men', null, { sortOrder: 1 })
     d.secret = await cat('secret', null, { visible: false })
     d.secretKid = await cat('secret-kid', d.secret)
@@ -519,6 +520,8 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       expect(tree[0].children.map((/** @type {{ handle: string, productCount: number }} */ c) => [c.handle, c.productCount])).toEqual([['unstitched', 3], ['stitched', 2]])
       expect(tree[1].productCount).toBe(1)
       expect(JSON.stringify(tree)).not.toContain('secret')
+      expect(JSON.stringify(tree), 'a branch with no live product is not offered').not.toContain('bare')
+      expect((await get('/categories/bare')).statusCode, 'but its own page opens by address').toBe(200)
     }, 60_000)
 
     it('a category page knows its path, its children and its SEO text; hidden and unknown are 404; an old handle redirects', async () => {

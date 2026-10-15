@@ -55,7 +55,7 @@ export async function seedDemo(db, s, actor, { log = () => {} } = {}) {
   for (const c of demoCategories) {
     if (haveCats.has(c.handle)) continue
     const made = await s.catalog.categories.create(actor, {
-      name: c.name, handle: c.handle, ...(c.parent ? { parentId: haveCats.get(c.parent)?.id ?? null } : {}), visible: true,
+      name: c.name, handle: c.handle, ...(c.description ? { description: c.description } : {}), ...(c.parent ? { parentId: haveCats.get(c.parent)?.id ?? null } : {}), visible: true,
       attributes: c.filters.map((code, i) => ({ attributeId: attr(code).id, seoIndexable: i === 0, required: false })),
     }, req())
     haveCats.set(c.handle, made)
@@ -164,6 +164,8 @@ export async function seedDemo(db, s, actor, { log = () => {} } = {}) {
       value: {
         ...store.value,
         contact: { whatsapp: '923001234567', phone: '+92 300 1234567', email: 'hello@rubaya.pk', address: 'Shop 12, Main Boulevard, Gulberg III, Lahore', hours: 'Mon–Sat, 10am–8pm', socials: [{ platform: 'instagram', url: 'https://instagram.com/rubaya.pk' }] },
+        // the demo shop has made-to-order pieces (bridal), so measurements are on
+        features: { ...store.value.features, customSizing: true },
         policies: { returnsDays: 7 },
         dispatchPromise: 'Dispatched within 1–2 working days',
       },

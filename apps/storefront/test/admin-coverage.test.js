@@ -73,6 +73,6 @@ describe.each(surfaces)('%s', (name, schema, map) => {
 
 it('counts the dead controls, so the number only goes down', () => {
   const dead = surfaces.flatMap(([, , map]) => Object.entries(map).filter(([, v]) => v[0] === 'not-shown').map(([p]) => p))
-  // 11 on 2026-10-16. Each M8 task that fixes one lowers this number in the same change.
-  expect(dead.length).toBeLessThanOrEqual(11)
+  // 8 after M8-02 (was 11 on 2026-10-16). Each M8 task that fixes one lowers this number in the same change.
+  expect(dead.length).toBeLessThanOrEqual(8)
 })

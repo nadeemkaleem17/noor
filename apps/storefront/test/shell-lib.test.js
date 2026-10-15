@@ -2,7 +2,7 @@
 // the menu a visitor sees, the language switch, and the security header for the theme block.
 import { describe, expect, it } from 'vitest'
 import { switchLocalePath } from '../app/features/layout/shell'
-import { navItems, safeItems } from '../app/lib/nav'
+import { footerColumns, navItems, safeItems } from '../app/lib/nav'
 import { normalizeOrderNumber } from '../app/lib/order-number'
 import { localePath } from '../app/lib/paths'
 import { canonicalQuery, redirectFor } from '../app/lib/redirects'
@@ -75,16 +75,40 @@ describe('the canonical query (DOC-06.1 section 5)', () => {
   })
 })
 
-describe('the navigation (DOC-06.1 section 3)', () => {
-  const labels = { new: 'New', sale: 'Sale' }
-  const cats = [{ id: 'c1', handle: 'women', name: 'Women' }, { id: 'c2', handle: 'men', name: 'Men' }]
+describe('the navigation (DOC-06.13 section 4)', () => {
+  const labels = { new: 'New in', sale: 'Sale', collections: 'Collections' }
+  const cats = [
+    { id: 'c1', handle: 'women', name: 'Women', children: [{ id: 'c3', handle: 'stitched', name: 'Stitched', children: [] }, { id: 'c4', handle: 'unstitched', name: 'Unstitched', children: [] }] },
+    { id: 'c2', handle: 'men', name: 'Men', children: [] },
+  ]
+  const cols = [{ id: 'k1', handle: 'new-in', title: 'New in' }, { id: 'k2', handle: 'eid-edit', title: 'Eid edit' }, { id: 'k3', handle: 'sale', title: 'Sale' }]
+  const base = { locale: /** @type {const} */ ('en'), mode: /** @type {const} */ ('automatic'), menu: [], categories: cats, collections: cols, labels }
 
-  it('uses the menu the shop set up, in the visitor\'s language', () => {
+  it('is made from the categories and collections: New in, each top category with its sub-categories, Collections, Sale', () => {
+    const items = navItems(base)
+    expect(items.map((i) => [i.label, i.href])).toEqual([['New in', '/new'], ['Women', '/c/women'], ['Men', '/c/men'], ['Collections', '/collections'], ['Sale', '/sale']])
+    expect(items[1]?.children?.map((c) => c.href)).toEqual(['/c/stitched', '/c/unstitched'])
+    // New in and Sale are pages of their own; only the other featured collections go under Collections
+    expect(items[3]?.children?.map((c) => [c.label, c.href])).toEqual([['Eid edit', '/collections/eid-edit']])
+  })
+
+  it('has no Collections item when there is no featured collection, and follows the language', () => {
+    expect(navItems({ ...base, collections: [{ id: 'k1', handle: 'new-in', title: 'New in' }] }).map((i) => i.id)).toEqual(['new', 'c1', 'c2', 'sale'])
+    expect(navItems({ ...base, locale: 'ur' })[1]?.href).toBe('/ur/c/women')
+  })
+
+  it('keeps every category the API gave it, so a category the API left out (no products) is not in the bar', () => {
+    expect(navItems({ ...base, categories: cats.slice(1) }).map((i) => i.label)).toEqual(['New in', 'Men', 'Collections', 'Sale'])
+  })
+
+  it('uses the menu staff wrote only in custom mode, in the language of the page', () => {
     const menu = [{ id: 'a', label: 'Women', href: '/c/women', children: [{ id: 'b', label: 'Lawn', href: '/c/lawn' }] }, { id: 'e', label: 'Journal', href: 'https://blog.example.com' }]
-    expect(navItems({ locale: 'ur', menu, categories: cats, labels })).toEqual([
+    expect(navItems({ ...base, locale: 'ur', mode: 'custom', menu })).toEqual([
       { id: 'a', label: 'Women', href: '/ur/c/women', children: [{ id: 'b', label: 'Lawn', href: '/ur/c/lawn' }] },
       { id: 'e', label: 'Journal', href: 'https://blog.example.com' },
     ])
+    // automatic mode ignores the written menu (the seed used to write a two-item one)
+    expect(navItems({ ...base, menu }).map((i) => i.id)).toEqual(['new', 'c1', 'c2', 'collections', 'sale'])
   })
 
   it('leaves out an item whose address is not safe, and its children', () => {
@@ -92,10 +116,40 @@ describe('the navigation (DOC-06.1 section 3)', () => {
     expect(safeItems('en', menu).map((i) => i.id)).toEqual(['ok'])
   })
 
-  it('falls back to New, the top categories and Sale when there is no menu', () => {
-    expect(navItems({ locale: 'en', menu: [], categories: cats, labels }).map((i) => [i.label, i.href])).toEqual([['New', '/new'], ['Women', '/c/women'], ['Men', '/c/men'], ['Sale', '/sale']])
+  it('falls back to the automatic bar when the custom menu is empty or all unsafe', () => {
     const allBad = [{ id: 'x', label: 'Bad', href: 'javascript:alert(1)' }]
-    expect(navItems({ locale: 'en', menu: allBad, categories: [], labels }).map((i) => i.href)).toEqual(['/new', '/sale'])
+    expect(navItems({ ...base, mode: 'custom', menu: allBad, categories: [], collections: [] }).map((i) => i.href)).toEqual(['/new', '/sale'])
+    expect(navItems({ ...base, mode: 'custom' }).map((i) => i.id)).toContain('c1')
+  })
+})
+
+describe('the footer columns (DOC-06.13 section 7)', () => {
+  const labels = { new: 'New in', sale: 'Sale', allCategories: 'All categories', allCollections: 'All collections', trackOrder: 'Track order', sizeGuide: 'Size guide' }
+  const pages = [
+    { id: 'p1', label: 'Shipping and returns', href: '/pages/shipping-returns' },
+    { id: 'p2', label: 'Privacy policy', href: '/pages/privacy' },
+    { id: 'p3', label: 'Contact us', href: '/pages/contact' },
+    { id: 'p4', label: 'About us', href: '/pages/about' },
+  ]
+  const categories = [{ id: 'c1', handle: 'women', name: 'Women', children: [] }]
+  const cols = footerColumns({ locale: 'en', categories, collections: [{ id: 'k1', handle: 'eid-edit', title: 'Eid edit' }], pages, labels })
+
+  it('puts the categories, New in, Sale and All categories under Shop', () => {
+    expect(cols.shop.map((i) => i.href)).toEqual(['/new', '/c/women', '/sale', '/categories'])
+  })
+
+  it('splits the pages into Help (with Track order and the size guide) and Company', () => {
+    expect(cols.help.map((i) => i.href)).toEqual(['/track', '/pages/shipping-returns', '/pages/contact', '/size-guide'])
+    expect(cols.company.map((i) => i.href)).toEqual(['/pages/privacy', '/pages/about'])
+  })
+
+  it('lists the featured collections and All collections, and no column when there are none', () => {
+    expect(cols.collections.map((i) => i.href)).toEqual(['/collections/eid-edit', '/collections'])
+    expect(footerColumns({ locale: 'en', categories, collections: [], pages, labels }).collections).toEqual([])
+  })
+
+  it('follows the language', () => {
+    expect(footerColumns({ locale: 'ur', categories, collections: [], pages: [], labels }).help[0]?.href).toBe('/ur/track')
   })
 })
 

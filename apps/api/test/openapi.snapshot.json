@@ -3189,6 +3189,25 @@
                           ],
                           "additionalProperties": false
                         },
+                        "navigation": {
+                          "default": {
+                            "mode": "automatic"
+                          },
+                          "type": "object",
+                          "properties": {
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "automatic",
+                                "custom"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "mode"
+                          ],
+                          "additionalProperties": false
+                        },
                         "policies": {
                           "type": "object",
                           "properties": {
@@ -3277,6 +3296,7 @@
                         "orderNumberPrefix",
                         "locale",
                         "features",
+                        "navigation",
                         "policies",
                         "seo",
                         "notifications",
@@ -3540,6 +3560,25 @@
                           "reviews",
                           "notifyMe",
                           "customSizing"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "navigation": {
+                        "default": {
+                          "mode": "automatic"
+                        },
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "automatic",
+                              "custom"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "mode"
                         ],
                         "additionalProperties": false
                       },
@@ -3838,6 +3877,25 @@
                           ],
                           "additionalProperties": false
                         },
+                        "navigation": {
+                          "default": {
+                            "mode": "automatic"
+                          },
+                          "type": "object",
+                          "properties": {
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "automatic",
+                                "custom"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "mode"
+                          ],
+                          "additionalProperties": false
+                        },
                         "policies": {
                           "type": "object",
                           "properties": {
@@ -3926,6 +3984,7 @@
                         "orderNumberPrefix",
                         "locale",
                         "features",
+                        "navigation",
                         "policies",
                         "seo",
                         "notifications",
@@ -7744,6 +7803,25 @@
                       ],
                       "additionalProperties": false
                     },
+                    "navigation": {
+                      "default": {
+                        "mode": "automatic"
+                      },
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "automatic",
+                            "custom"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "additionalProperties": false
+                    },
                     "policies": {
                       "type": "object",
                       "properties": {
@@ -7983,6 +8061,7 @@
                     "priceDisplay",
                     "locale",
                     "features",
+                    "navigation",
                     "policies",
                     "payments",
                     "shipping",

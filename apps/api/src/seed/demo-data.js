@@ -2,14 +2,14 @@
 // The structure follows the old admin's fixtures (categories, attributes, sizes) in the new schema; products are new.
 
 export const demoCategories = [
-  { handle: 'women', name: 'Women', filters: ['fabric', 'piece', 'occasion'] },
-  { handle: 'unstitched', name: 'Unstitched', parent: 'women', filters: ['fabric', 'piece'] },
-  { handle: 'stitched', name: 'Stitched', parent: 'women', filters: ['fabric', 'piece', 'occasion'] },
-  { handle: 'bridal', name: 'Bridal & Formals', parent: 'women', filters: ['fabric', 'occasion'] },
-  { handle: 'footwear', name: 'Footwear', filters: ['material'] },
-  { handle: 'accessories', name: 'Accessories', filters: ['material'] },
-  { handle: 'men', name: 'Men', filters: ['fabric'] },
-  { handle: 'kids', name: 'Kids', filters: ['fabric'] },
+  { handle: 'women', name: 'Women', description: 'Stitched, unstitched and bridal pieces for every day and every occasion.', filters: ['fabric', 'piece', 'occasion'] },
+  { handle: 'unstitched', name: 'Unstitched', parent: 'women', description: 'Lawn, khaddar and chiffon fabric sets to have stitched your way.', filters: ['fabric', 'piece'] },
+  { handle: 'stitched', name: 'Stitched', parent: 'women', description: 'Ready to wear kurtas, co-ord sets and formals, in standard sizes.', filters: ['fabric', 'piece', 'occasion'] },
+  { handle: 'bridal', name: 'Bridal & Formals', parent: 'women', description: 'Bridal lehngas and formal gowns, made to your measurements.', filters: ['fabric', 'occasion'] },
+  { handle: 'footwear', name: 'Footwear', description: 'Khussas, sandals and heels.', filters: ['material'] },
+  { handle: 'accessories', name: 'Accessories', description: 'Clutches, bags and jewellery to finish the look.', filters: ['material'] },
+  { handle: 'men', name: 'Men', description: 'Kurtas and waistcoats for men.', filters: ['fabric'] },
+  { handle: 'kids', name: 'Kids', description: 'Easy, breathable pieces for children.', filters: ['fabric'] },
 ]
 
 export const demoAttributes = [

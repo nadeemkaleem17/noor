@@ -20,7 +20,7 @@ const config = () =>
     contact: { whatsapp: '923001234567', phone: '0300 1234567', email: 'hello@rubaya.pk', socials: [{ platform: 'Instagram', url: 'https://instagram.com/rubaya' }] },
     priceDisplay: { showDecimals: false, rounding: 'none' },
     locale: { default: 'en', supported: state.ur ? ['en', 'ur'] : ['en'] },
-    features: { wishlist: state.wishlist, reviews: true, notifyMe: true, customSizing: false },
+    features: { wishlist: state.wishlist, reviews: true, notifyMe: true, customSizing: true },
     policies: { returnsDays: 7 },
     payments: [{ type: 'cod', label: 'Cash on delivery' }],
     shipping: { dispatchPromise: 'Dispatched within 2 days' },
@@ -367,7 +367,8 @@ describe('the storefront through its whole stack', () => {
       expect(html).not.toMatch(/<img(?=[^>]*loading="eager")(?![^>]*fetchPriority="high")[^>]*>/) // nothing else is eager: the cards are below the fold
       // the bestsellers are below the fold and stream in after the rest: React puts them at the end of the document and moves them into place, so they are checked apart
       expect(html).toContain('Bestsellers')
-      const order = ['The Eid edit', 'New arrivals', 'Up to 25% off', 'Made by hand', 'Collections'].map((t) => html.indexOf(t))
+      const titles = ['The Eid edit', 'New arrivals', 'Up to 25% off', 'Made by hand'].map((t) => html.indexOf(t))
+      const order = [...titles, html.indexOf('Collections', titles[3])] // the header's menu has a "Collections" item too: look after the last section title
       expect(order.every((at) => at > 0)).toBe(true)
       expect([...order].sort((a, b) => a - b)).toEqual(order)
       expect(html).toContain('href="/p/dress-1"')

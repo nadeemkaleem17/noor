@@ -2,8 +2,8 @@
 // every visible top-level category is in the header, and is on the home page. Not one of the 17 journeys.
 // REQ: SH-04, HM-13
 //
-// EXPECTED TO FAIL until M8-02 and M8-03 (the seed wrote a two-item menu and the header ignored the category tree). `test.fail` makes the run green while it
-// is true and red the day the shop is fixed: remove `fail` from the two tests below in that change.
+// The header test passes since M8-02 (the menu is built from the category tree). The home-page test is still EXPECTED TO FAIL until M8-08: `test.fail` makes
+// the run green while it is true and red the day the home page shows the categories: remove `fail` in that change.
 import { urls } from '../env.mjs'
 import { expect, test } from '../support/test.js'
 
@@ -14,7 +14,7 @@ async function topCategories(/** @type {import('@playwright/test').APIRequestCon
   return /** @type {{ handle: string, name: string, productCount: number }[]} */ (items).filter((c) => c.productCount > 0)
 }
 
-test.fail('first run: every top category is in the header, one interaction away', async ({ page, request }) => {
+test('first run: every top category is in the header, one interaction away', async ({ page, request }) => {
   const tops = await topCategories(request)
   expect(tops.length, 'the seeded shop has categories').toBeGreaterThan(0)
   await page.goto('/')
