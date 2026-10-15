@@ -26,9 +26,10 @@ function Delta({ current, previous }) {
 /** @param {{ label: string; value: string; note: string; children?: import('react').ReactNode }} props */
 function Tile({ label, value, note, children }) {
   return (
-    <Card padding="md" render={<li />} className="space-y-1">
+    <Card padding="md" render={<li />} className="@container space-y-1">
       <p className="text-sm text-muted">{label}</p>
-      <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      {/* a figure is as large as the tile lets it be: a digit is about half an em wide, so Rs 12,345,678 shrinks instead of running out of its card (five tiles share a row on a laptop) */}
+      <p className="text-2xl font-semibold tabular-nums" style={{ fontSize: `min(var(--text-2xl, 1.5rem), ${(190 / Math.max(value.length, 1)).toFixed(1)}cqw)` }}>{value}</p>
       {children}
       <p className="text-xs text-muted">{note}</p>
     </Card>

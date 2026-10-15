@@ -32,7 +32,10 @@ test('E2E-10 a stock change and a price change reach the storefront', async ({ p
 
   // price: edited in the variant table and saved with the product
   await page.getByLabel('Price Default', { exact: true }).fill('1590')
+  // wait for the save itself: a "Saved" message from the stock change can still be on the screen, and the shop must not be read before the product is written
+  const saved = page.waitForResponse((r) => r.request().method() === 'PUT' && /\/admin\/products\//.test(r.url()))
   await page.getByRole('button', { name: 'Save' }).first().click()
+  expect((await saved).ok()).toBe(true)
   await expect(page.getByText('Saved').first()).toBeVisible()
 
   await shop.reload()

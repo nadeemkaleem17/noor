@@ -83,7 +83,8 @@ export function storefrontEnv() {
 }
 
 /** Environment of the admin build (the API address is baked into the files). */
-export const adminBuildEnv = () => ({ VITE_API_URL: urls.api, VITE_STOREFRONT_URL: urls.storefront })
+// NODE_ENV: prepare.mjs puts the API's environment (development) into its own process.env, which a build inherits: without this the admin was built with React's development runtime (about 70 kB more, not what staff get)
+export const adminBuildEnv = () => ({ NODE_ENV: 'production', VITE_API_URL: urls.api, VITE_STOREFRONT_URL: urls.storefront })
 
 export const password = 'Lantern-Quarry-48-Plover'
 

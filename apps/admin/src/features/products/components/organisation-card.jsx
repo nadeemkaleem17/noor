@@ -16,7 +16,7 @@ const kindOptions = enums.productKind.map((v) => ({ value: v, label: humanise(v)
  */
 function CheckList({ legend, options, value = [], onChange }) {
   return (
-    <fieldset className="space-y-2">
+    <fieldset className="flex flex-col items-start gap-2">
       <legend className="text-sm font-medium">{legend}</legend>
       {options.map((o) => (
         <Checkbox key={o.value} label={o.label} checked={value.includes(o.value)} onCheckedChange={(on) => onChange(on ? [...value, o.value] : value.filter((v) => v !== o.value))} />
