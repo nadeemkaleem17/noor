@@ -105,7 +105,7 @@ function Preview({ css, width }) {
             </div>
           </Card>
           <div className="flex flex-wrap gap-2">
-            <Button>Add to bag</Button>
+            <Button>Add to cart</Button>
             <Button variant="secondary">Wishlist</Button>
           </div>
           <Field label="Your city" hint="Where should we deliver?">

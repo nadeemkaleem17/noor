@@ -84,7 +84,7 @@ export function VariantTable({ isNew }) {
             return (
               <tr key={v.key}>
                 <Td className="whitespace-nowrap font-medium">{label}</Td>
-                <Td>
+                <Td className="min-w-36">
                   <RHFField control={control} name={`variants.${i}.sku`} label={`SKU ${label}`} className="[&>label]:sr-only">
                     {(field) => (
                       <Input
