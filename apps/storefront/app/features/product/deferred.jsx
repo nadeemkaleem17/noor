@@ -88,6 +88,10 @@ export function ReviewsSection({ listing, productId }) {
   const [more, setMore] = useState(false)
   const { summary } = listing
   if (!summary.count) return null
+  // what most reviewers said about the fit, when enough of them said anything (the API sends the counts only then)
+  const votes = summary.fit ? /** @type {const} */ (['runs_small', 'true_to_size', 'runs_large']).map((key) => ({ key, count: summary.fit?.[key] ?? 0 })) : []
+  const top = votes.toSorted((x, y) => y.count - x.count)[0]
+  const fit = top ? { ...top, total: votes.reduce((sum, v) => sum + v.count, 0) } : undefined
   return (
     <section id="reviews" aria-labelledby="reviews-h" className="defer-render scroll-mt-24">
       <h2 id="reviews-h" className="font-heading text-2xl">{t('pdp.reviews')}</h2>
@@ -109,6 +113,7 @@ export function ReviewsSection({ listing, productId }) {
           })}
         </ul>
       </div>
+      {fit ? <p className="mt-4 text-small text-fg-soft">{t('pdp.fitSummary', { count: fit.count, total: fit.total, fit: fit.key })}</p> : null}
       <ul className="mt-4">{listing.items.map((r) => <Review key={r.id} review={r} />)}</ul>
       {listing.nextCursor ? (more ? <MoreReviews productId={productId} cursor={listing.nextCursor} /> : hydrated ? <Button variant="secondary" onClick={() => setMore(true)}>{t('pdp.moreReviews')}</Button> : null) : null}
     </section>

@@ -63,7 +63,8 @@ MenuItemPublic = { id: string, label: string, href: string, children?: MenuItemP
 PagePublic = { slug: string, title: string, bodyMd: string,       // tokens ({{store.phone}} …) already resolved
                seo: { title?: string, description?: string }, updatedAt: IsoDate, locale: 'en' | 'ur' /* actual language of the body */ }
 
-CityPublic = { id: Id, name: string, province: string, aliases: string[], isMajor: boolean }
+CityPublic = { id: Id, name: string, province: string, aliases: string[], isMajor: boolean,
+              delivery?: { fee: Money, freeAbove?: Money, etaMinDays: int, etaMaxDays: int } }   // its zone's cheapest enabled method (the product page's delivery block)
 ```
 
 Never included in these responses: bank account details (they are sent with an order that chose bank transfer), `codLimitMinor` and risk thresholds (enforced by the quote), staff emails, internal ids of settings documents, provider configuration.

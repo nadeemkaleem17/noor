@@ -13122,6 +13122,11 @@
                                   "currency"
                                 ],
                                 "additionalProperties": false
+                              },
+                              "percent": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 100
                               }
                             },
                             "required": [
@@ -13910,6 +13915,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -14636,6 +14646,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -15339,6 +15354,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -16053,6 +16073,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -16744,6 +16769,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -17476,6 +17506,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -28299,6 +28334,11 @@
                               "currency"
                             ],
                             "additionalProperties": false
+                          },
+                          "percent": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
                           }
                         },
                         "required": [
@@ -31079,6 +31119,32 @@
                           "items": false,
                           "minItems": 5,
                           "maxItems": 5
+                        },
+                        "fit": {
+                          "type": "object",
+                          "properties": {
+                            "runs_small": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "true_to_size": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "runs_large": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "runs_small",
+                            "true_to_size",
+                            "runs_large"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -50694,6 +50760,69 @@
                           },
                           "isMajor": {
                             "type": "boolean"
+                          },
+                          "delivery": {
+                            "type": "object",
+                            "properties": {
+                              "fee": {
+                                "type": "object",
+                                "properties": {
+                                  "amount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PKR"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "amount",
+                                  "currency"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "freeAbove": {
+                                "type": "object",
+                                "properties": {
+                                  "amount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PKR"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "amount",
+                                  "currency"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "etaMinDays": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "etaMaxDays": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "fee",
+                              "etaMinDays",
+                              "etaMaxDays"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [

@@ -231,10 +231,18 @@
     },
     "whatsapp": "Ask about this on WhatsApp",
     "whatsappText": "Hi, I have a question about {title} ({url})",
+    "share": "Share on WhatsApp",
+    "trustLabel": "Why shop here",
+    "fitSummary": "{count} of {total} reviewers said it {fit, select, runs_small {runs small} true_to_size {fits true to size} runs_large {runs large} other {fits}}",
     "delivery": {
       "eta": "Delivery in {min} to {max} days",
       "cod": "Cash on delivery available",
-      "freeAbove": "Free delivery over {amount}"
+      "freeAbove": "Free delivery over {amount}",
+      "free": "Free",
+      "check": "Check delivery to your city",
+      "city": "Your city",
+      "toCity": "To {city}: {fee}, {min} to {max} days.",
+      "failed": "The cities could not be loaded. Please try again."
     },
     "mto": {
       "deposit": "A deposit of {percent}% starts your order.",
@@ -327,6 +335,9 @@
     "free": "Free",
     "total": "Total",
     "freeRemaining": "Add {amount} more for free delivery",
+    "freeProgress": "Progress to free delivery",
+    "freeApplied": "Delivery is free on this order.",
+    "alsoLike": "You may also like",
     "deposit": "Made-to-order items need a deposit of {amount}.",
     "blocked": "Remove the sold-out items to continue.",
     "checkout": "Checkout",
@@ -376,6 +387,7 @@
     "depositNow": "Deposit now",
     "dueOnDelivery": "Due on delivery",
     "place": "Place order",
+    "trustLine": "Pay when it arrives. We confirm every order on WhatsApp or by phone before dispatch.",
     "terms": "By placing the order you agree to our",
     "termsLink": "terms",
     "returnsLink": "delivery and returns",

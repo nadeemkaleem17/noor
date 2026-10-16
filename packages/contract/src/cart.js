@@ -66,7 +66,12 @@ export const Cart = z.strictObject({
       }),
     )
     .optional(),
-  messages: z.array(z.strictObject({ code: z.enum(['free_shipping_remaining', 'free_shipping_applied']), amount: Money.optional() })),
+  messages: z.array(z.strictObject({
+    code: z.enum(['free_shipping_remaining', 'free_shipping_applied']),
+    amount: Money.optional(),
+    /** With `free_shipping_remaining`: how far the bag is on the way to the threshold, in whole percent (the progress bar; the storefront does no money arithmetic). */
+    percent: z.int().min(0).max(100).optional(),
+  })),
   /** A line is sold out or unavailable: the order cannot be placed until it is removed. */
   hasBlockingIssues: z.boolean(),
 })

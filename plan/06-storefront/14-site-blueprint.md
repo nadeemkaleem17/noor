@@ -115,19 +115,19 @@ Research: apparel needs fit and measurement detail (82% of shops lack enough siz
 |---|---|---|---|---|
 | PD-01 | Gallery: thumbnails (side column on wide screens, dots on phones), swipe, zoom on hover and tap, keyboard arrows, at least one picture of a model and one detail picture shown first | M | P | BM, KH |
 | PD-02 | Breadcrumb with the full category path; eyebrow (brand or fabric line), h1, subtitle, SKU, price with compare-at and "-x%" | M | Y | KH |
-| PD-03 | Size chips with availability: sold-out sizes struck through and named, low-stock per size, size guide link beside them | M | P | BM |
+| PD-03 | Size chips with availability: sold-out sizes struck through and named, low-stock per size, size guide link beside them | M | Y | BM |
 | PD-04 | Colourway chips linking to sibling products | M | Y | OW |
 | PD-05 | Quantity, add to bag, **Add to wishlist**, WhatsApp "ask about this"; button states: Select size, Add to bag, Sold out, Notify me, Made to order | M | Y | OW |
-| PD-06 | **Delivery block**: city chooser (remembered), delivery days, fee for that city, free-delivery threshold and how much is missing, dispatch promise; also the made-to-order lead time | M | N | BM |
+| PD-06 | **Delivery block**: city chooser (remembered), delivery days, fee for that city, free-delivery threshold and how much is missing, dispatch promise; also the made-to-order lead time | M | Y | BM |
 | PD-07 | Sets and multi-piece suits: each piece with its own fit, fabric, size and price; buy the set or one piece | S | P | KH |
 | PD-08 | Bundles ("complete the look") with a total and one add | S | P | OW |
 | PD-09 | Made-to-order and custom size form with measurements, deposit and lead time explained | M | Y | OW |
-| PD-10 | Trust points with real content next to the button: Cash on delivery, N-day returns, WhatsApp support, each linking to its policy | M | P | PK |
+| PD-10 | Trust points with real content next to the button: Cash on delivery, N-day returns, WhatsApp support, each linking to its policy | M | Y | PK |
 | PD-11 | Sections: Details, What's included, Fabric and care, Size and fit (garment measurements and "model is 5'8" wearing S"), Delivery and returns; open "Details" by default; native `<details>` | M | P | BM |
 | PD-12 | Reviews block per RV-* | M | P | BM |
 | PD-13 | "You may also like", "Complete the look", "Recently viewed", "More from <category>" rails | M | P | KH |
-| PD-14 | Sticky buy bar on phones once the real button leaves the screen; sticky buy box on wide screens | M | P | research |
-| PD-15 | Share: copy link, share sheet on phones, WhatsApp share with the product picture preview | S | N | PK |
+| PD-14 | Sticky buy bar on phones once the real button leaves the screen; sticky buy box on wide screens | M | Y | research |
+| PD-15 | Share: copy link, share sheet on phones, WhatsApp share with the product picture preview | S | P | PK |
 | PD-16 | Notify me when back in stock (exists) with the size chosen | M | Y | OW |
 | PD-17 | Stock cue and "Only N left" honest (from the real count), never invented urgency | M | Y | OW |
 | PD-18 | Product video or short clip on the gallery | L | N | PK (video is hard to fake) |
@@ -169,10 +169,10 @@ Research: top abandonment reasons are extra costs, forced accounts, long checkou
 |---|---|---|---|---|
 | CT-01 | Lines: picture, name, size/colour, custom-size note, unit price, quantity stepper, remove, line total; edit size without removing | M | P | BM |
 | CT-02 | Stock and price changes explained on the line ("price changed", "only 2 left") and never blocking silently | M | Y | BM |
-| CT-03 | Free-delivery progress ("Add Rs 1,200 more for free delivery") from the real zone threshold | M | N | research |
+| CT-03 | Free-delivery progress ("Add Rs 1,200 more for free delivery") from the real zone threshold | M | Y | research |
 | CT-04 | Delivery estimate by city in the bag (fee and days), so no surprise at checkout | M | N | BM |
 | CT-05 | Promo code box with clear errors (minimum spend, expired); applied code removable; saving shown | M | Y | OW |
-| CT-06 | "You may also like" and "Complete the look" in the mini-bag | S | N | DW |
+| CT-06 | "You may also like" and "Complete the look" in the mini-bag | S | P | DW |
 | CT-07 | Move to wishlist from a line | S | N | BM |
 | CT-08 | Order summary: subtotal, discount, delivery, total, cash to pay on delivery | M | Y | BM |
 | CT-09 | Cart survives days (cookie token) and merges nothing (guest only); expired lines are marked | M | Y | OW |
@@ -191,11 +191,11 @@ Research: guest checkout must be the most prominent option (47% of shops fail) (
 | CK-04 | City as a searchable list with the major cities first; the zone's fee and delivery days appear at once | M | P | BM |
 | CK-05 | Delivery methods by city with price and days; one preselected | M | Y | BM |
 | CK-06 | Payment: cash on delivery with its description; high-value or flagged orders get a clear message and a WhatsApp alternative | M | Y | PK |
-| CK-07 | Order summary sticky on wide screens, collapsible on phones; total always visible near the button | M | P | BM |
+| CK-07 | Order summary sticky on wide screens, collapsible on phones; total always visible near the button | M | Y | BM |
 | CK-08 | Errors: first invalid field focused, count announced, every field's message linked (done 2026-10-15), typed values kept | M | Y | BM, WC |
 | CK-09 | Browser autofill and correct keyboards (`autocomplete`, `inputmode`, `enterkeyhint`), no autocorrect on names and addresses | M | P | BM |
 | CK-10 | Idempotent placing: double tap or a lost connection never makes two orders; the same message on retry | M | Y | OW |
-| CK-11 | Trust line at the button: "Pay when it arrives. We confirm every order on WhatsApp or by phone before dispatch." with the return policy link | M | P | PK |
+| CK-11 | Trust line at the button: "Pay when it arrives. We confirm every order on WhatsApp or by phone before dispatch." with the return policy link | M | Y | PK |
 | CK-12 | Optional marketing consent unticked, worded plainly (exists) | M | Y | OW |
 | CK-13 | "Save my details on this device" (remember name, number, address in this browser) | S | P | BM |
 | CK-14 | Order review step on phones is not added: one scroll, one button | M | Y | BM |

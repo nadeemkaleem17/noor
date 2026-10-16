@@ -1,7 +1,7 @@
 // Product reviews (plan/09-data-model/08-reviews-notifications.md section 2, plan/10-api/03-cart-orders-public.md section 4, plan/07-admin/08-reviews.md).
 // A customer writes one review per purchased line through the link of their order; it waits as `pending` until staff approve it, and only approved reviews
 // count towards a product's rating and show on its page. The rating columns of the product are recomputed in the same transaction as the decision.
-import { and, asc, count, desc, eq, exists, inArray, like, lt, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, exists, inArray, isNotNull, like, lt, or, sql } from 'drizzle-orm'
 import { staffUsers } from '../../db/schema/auth.js'
 import { media as mediaTable } from '../../db/schema/media.js'
 import { orderLines, orders } from '../../db/schema/orders.js'
@@ -149,6 +149,9 @@ export function createReviewsService({ db, settings, media, orders: orderSide, r
       const approved = and(eq(reviews.productId, productId), eq(reviews.status, 'approved'))
       const stars = await db.select({ rating: reviews.rating, n: count() }).from(reviews).where(approved).groupBy(reviews.rating)
       const byStar = /** @type {[number, number, number, number, number]} */ ([1, 2, 3, 4, 5].map((s) => stars.find((x) => x.rating === s)?.n ?? 0))
+      const fits = await db.select({ fit: reviews.fit, n: count() }).from(reviews).where(and(approved, isNotNull(reviews.fit))).groupBy(reviews.fit)
+      const fitOf = (/** @type {string} */ k) => fits.find((x) => x.fit === k)?.n ?? 0
+      const fitTotal = fits.reduce((a, x) => a + x.n, 0)
       const total = byStar.reduce((a, b) => a + b, 0)
       const sum = byStar.reduce((a, n, i) => a + n * (i + 1), 0)
 
@@ -165,7 +168,10 @@ export function createReviewsService({ db, settings, media, orders: orderSide, r
       return {
         items: await publicViews(page),
         ...(rows.length > limit && last ? { nextCursor: Buffer.from(`${last.createdAt.getTime()}.${last.id}`).toString('base64url') } : {}),
-        summary: { average: total ? Math.round((sum / total) * 100) / 100 : 0, count: total, byStar },
+        summary: {
+          average: total ? Math.round((sum / total) * 100) / 100 : 0, count: total, byStar,
+          ...(fitTotal >= 3 ? { fit: { runs_small: fitOf('runs_small'), true_to_size: fitOf('true_to_size'), runs_large: fitOf('runs_large') } } : {}),
+        },
       }
     },
 

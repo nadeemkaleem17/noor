@@ -299,12 +299,14 @@ describe.skipIf(!dbAvailable)('cart (MySQL, through HTTP)', () => {
       await delivery()
       const p = await product({ price: 300000 })
       const token = (await add(undefined, p.variantId)).body.cartToken
+      // before any city is known the bag is measured against the lowest threshold of any zone (the progress bar of the bag)
+      expect((await shop('GET', '/cart', { token })).body.messages).toEqual([{ code: 'free_shipping_remaining', amount: pkr(200000), percent: 60 }])
       const q = await shop('POST', '/cart/quote', { token, body: { cityId } })
       expect(q.status).toBe(200)
       expect(q.body.shipping).toMatchObject({ label: 'Standard', fee: pkr(25000), etaMinDays: 3, etaMaxDays: 5 })
       expect(q.body.shippingOptions.map((/** @type {{ label: string }} */ o) => o.label)).toEqual(['Standard', 'Express'])
       expect(q.body.total).toEqual(pkr(325000))
-      expect(q.body.messages).toEqual([{ code: 'free_shipping_remaining', amount: pkr(200000) }])
+      expect(q.body.messages).toEqual([{ code: 'free_shipping_remaining', amount: pkr(200000), percent: 60 }])
       expect(q.body.paymentOptions).toEqual([{ method: 'cod', label: 'Cash on delivery', allowed: true }])
       const express = q.body.shippingOptions.find((/** @type {{ label: string }} */ o) => o.label === 'Express').methodId
       expect((await shop('POST', '/cart/quote', { token, body: { cityId, shippingMethodId: express } })).body).toMatchObject({ shipping: { label: 'Express', fee: pkr(45000) }, total: pkr(345000) })

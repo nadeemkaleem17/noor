@@ -48,7 +48,7 @@ Cart = {
   shippingOptions?: { methodId: Id, label: string, fee: Money, etaMinDays: int, etaMaxDays: int, codAllowed: boolean }[],
   paymentOptions?: { method: PaymentMethod, label: string, description?: string, allowed: boolean,
                      reason?: 'cod_limit_exceeded' | 'cod_not_available' | 'deposit_requires_prepayment' }[],
-  messages: { code: 'free_shipping_remaining' | 'free_shipping_applied', amount?: Money }[],
+  messages: { code: 'free_shipping_remaining' | 'free_shipping_applied', amount?: Money, percent?: int /* 0..99, with free_shipping_remaining: how far the bag is to the threshold; with no city yet the lowest threshold of any zone is used */ }[],
   hasBlockingIssues: boolean,                     // any line sold_out or unavailable
 }
 

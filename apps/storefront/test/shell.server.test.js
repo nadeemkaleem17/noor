@@ -115,12 +115,12 @@ const cartOf = () => ({
     available: 5, maxPerOrder: 10, issues: state.blocked ? ['sold_out'] : ['price_changed'], customization: { measurements: { bust: 36 }, summary: 'Custom: bust 36 in' },
   }],
   count: 2, subtotal: money(1498000), discount: money(100000), total: money(1398000), promo: { code: 'SAVE10', label: '10% off', discount: money(100000) },
-  messages: [{ code: 'free_shipping_remaining', amount: money(250000) }], depositDue: money(420000), hasBlockingIssues: state.blocked,
+  messages: [{ code: 'free_shipping_remaining', amount: money(250000), percent: 45 }], depositDue: money(420000), hasBlockingIssues: state.blocked,
 })
 
 const cities = [
   { id: uuid(901), name: 'Sukkur', province: 'Sindh', aliases: [], isMajor: false },
-  { id: uuid(902), name: 'Lahore', province: 'Punjab', aliases: [], isMajor: true },
+  { id: uuid(902), name: 'Lahore', province: 'Punjab', aliases: [], isMajor: true, delivery: { fee: money(25000), freeAbove: money(500000), etaMinDays: 3, etaMaxDays: 5 } },
   { id: uuid(903), name: 'Karachi', province: 'Sindh', aliases: [], isMajor: true },
 ]
 const method = { methodId: uuid(910), label: 'Standard delivery', fee: money(25000), etaMinDays: 3, etaMaxDays: 5, codAllowed: true }
@@ -166,7 +166,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/products/dress-1' || p === '/api/v1/products/embroidered-lawn') return detail()
   if (p === '/api/v1/products/old-dress') return { redirectTo: 'dress-1' }
   if (p === '/api/v1/size-charts/' + uuid(40)) return { id: uuid(40), title: 'Women', unit: 'in', tables: [{ id: 't', title: 'Body', columns: ['Bust', 'Waist'], rows: [{ label: 'S', values: [34, 28] }] }] }
-  if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25] } }
+  if (p === '/api/v1/products/' + uuid(100) + '/reviews') return { items: [{ id: uuid(500), displayName: 'Sana', rating: 5, body: 'Lovely fit', photos: [], createdAt: '2026-09-01T00:00:00.000Z' }], summary: { average: 4.6, count: 38, byStar: [1, 1, 2, 9, 25], fit: { runs_small: 2, true_to_size: 9, runs_large: 1 } } }
   if (p === '/api/v1/products/' + uuid(100) + '/related') return { items: [product(7), product(8), product(9), product(10)] }
   if (p === '/api/v1/orders/track') {
     state.calls.push(`TRACK ${JSON.stringify(req.body)}`)
@@ -519,6 +519,23 @@ describe('the storefront through its whole stack', () => {
   })
 
   describe('the product page (DOC-06.4)', () => {
+    it('v2: a delivery block, trust points that link to the policy, a share link, and what reviewers said about the fit', async () => {
+      const html = await (await get('/p/dress-1')).text()
+      expect(html).toMatch(/<section[^>]*aria-labelledby="delivery-h"/)
+      expect(html).toContain('Cash on delivery available')
+      expect(html).toContain('aria-label="Why shop here"')
+      expect(html).toContain('href="/pages/shipping-returns"')
+      expect(html).toContain('7-day returns')
+      expect(html).toContain('href="https://wa.me/?text=')
+      expect(html).toContain('9 of 12 reviewers said it fits true to size')
+    })
+
+    it('the cities for the delivery check come with what delivery there costs, only the ones that have a quote, kept by a cache', async () => {
+      const r = await get('/delivery/cities')
+      expect(r.headers.get('cache-control')).toContain('public')
+      expect((await r.json()).items).toEqual([{ id: uuid(902), name: 'Lahore', delivery: { fee: money(25000), freeAbove: money(500000), etaMinDays: 3, etaMaxDays: 5 } }])
+    })
+
     it('server HTML: heading, the price, the options, a form that posts to the cart, the way up, the sections, one cache class', async () => {
       const r = await get('/p/dress-1')
       expect(r.status).toBe(200)
@@ -632,6 +649,17 @@ describe('the storefront through its whole stack', () => {
       expect(html).toContain('Your cart is empty')
       expect(html).toContain('href="/new"')
       expect(html).toContain('content="noindex,nofollow"')
+    })
+
+    it('the bag shows how far free delivery is as a progress bar, and the page (not the panel) suggests pieces that go with it', async () => {
+      const html = await (await get('/cart', { headers: withCart })).text().then(plain)
+      expect(html).toMatch(/role="progressbar"[^>]*aria-valuenow="45"/)
+      expect(html).toContain('aria-label="Progress to free delivery"')
+      expect(html).toContain('width:45%')
+      expect(html).toContain('You may also like')
+      expect(html.match(/<article/g)).toHaveLength(4)
+      const panel = await (await get('/cart?drawer=1', { headers: withCart })).text().then(plain)
+      expect(panel, 'the panel asks for the cart only').not.toContain('You may also like')
     })
 
     it('a cart shows what the API worked out, as it came: lines, issues, promo, shipping progress, deposit, total, the way to checkout', async () => {

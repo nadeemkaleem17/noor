@@ -26,7 +26,7 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
  * @param {import('../../platform/db.js').Database['db']} deps.db
  * @param {{ imagesFor: (ids: string[]) => Promise<Record<string, import('@noor/contract').Image>> }} deps.media
  * @param {{ available: (x: Db, ids: string[]) => Promise<Map<string, number>> }} deps.stock
- * @param {{ deliveryOptions: (x: Db, cityId: string) => Promise<import('./pricing.js').DeliveryOption[]> }} deps.shipping
+ * @param {{ deliveryOptions: (x: Db, cityId: string) => Promise<import('./pricing.js').DeliveryOption[]>, freeAboveFrom?: (x: Db) => Promise<number | undefined> }} deps.shipping
  * @param {{ value: (key: 'payments', x: Db) => Promise<{ value: { methods: { type: import('@noor/contract').PaymentMethod, enabled: boolean, label: string, description?: string, sortOrder: number }[], codLimitMinor?: number } }> }} deps.settings
  * @param {{ findRule: (x: Db, code: string) => Promise<PromoFound | undefined>, findRuleById: (x: Db, id: string) => Promise<PromoFound | undefined>, customerProblem: (x: Db, promo: { id: string, firstOrderOnly: boolean, perCustomerLimit: number | null }, customer: { id: string, ordersCount: number }) => Promise<string | undefined> }} deps.promotions
  * @param {{ findByPhone: (x: Db, phone: string) => Promise<{ id: string, ordersCount: number, noCod: boolean } | undefined> }} deps.customers
@@ -106,6 +106,7 @@ export function createCartService({ db, media, stock, shipping, settings, promot
       if (methodId && !options.some((o) => o.methodId === methodId)) throw new DomainError('shipping_method_invalid')
     }
     const pay = (await settings.value('payments', x)).value
+    const freeAboveFromMinor = options ? undefined : await shipping.freeAboveFrom?.(x)
     const priced = priceCart({
       lines,
       promo: found ? { id: found.id, code: found.code, label: found.label, rule: found.rule, ...(blockedBy ? { blockedBy } : {}) } : undefined,
@@ -113,6 +114,7 @@ export function createCartService({ db, media, stock, shipping, settings, promot
       shipping: options ? { options, ...(methodId ? { methodId } : {}) } : undefined,
       payments: { methods: pay.methods.filter((m) => m.enabled).sort((a, b) => a.sortOrder - b.sortOrder).map((m) => ({ type: m.type, label: m.label, ...(m.description ? { description: m.description } : {}) })), codLimitMinor: pay.codLimitMinor ?? null },
       customer: customer ? { noCod: customer.noCod } : undefined,
+      ...(freeAboveFromMinor === undefined ? {} : { freeAboveFromMinor }),
     })
     for (const u of priced.seenUpdates) await repo.updateLine(x, u.lineId, { seenUnitPriceMinor: u.unitMinor })
     return { ...priced, cart: { id: cart.id, ...priced.cart }, facts: lines, customer }

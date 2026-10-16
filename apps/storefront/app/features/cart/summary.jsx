@@ -32,11 +32,20 @@ export function CartSummary({ cart, footer, onNavigate }) {
           </div>
         </dl>
       )}
+      {remaining?.amount ? (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-small text-fg">{t('cart.freeRemaining', { amount: money(remaining.amount) })}</p>
+          <div role="progressbar" aria-label={t('cart.freeProgress')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining.percent ?? 0} className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-accent transition-[width] duration-(--dur-slow) ease-standard" style={{ width: `${remaining.percent ?? 0}%` }} />
+          </div>
+        </div>
+      ) : applied && cart.lines.length ? (
+        <p className="text-small text-success">{t('cart.freeApplied')}</p>
+      ) : null}
       <p className="flex items-baseline justify-between border-t border-line pt-3 font-medium">
         <span>{t('cart.total')}</span>
         <Price money={cart.total} size="lg" />
       </p>
-      {remaining?.amount ? <p className="text-sm text-fg-soft">{t('cart.freeRemaining', { amount: money(remaining.amount) })}</p> : null}
       {cart.depositDue ? <p className="text-sm text-fg-soft">{t('cart.deposit', { amount: money(cart.depositDue) })}</p> : null}
       {cart.hasBlockingIssues ? (
         <>

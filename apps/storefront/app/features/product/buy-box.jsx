@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useFetcher, useLocation, useRevalidator } from 'react-router'
-import { formatDate, formatMoney } from '@noor/i18n'
+import { formatDate } from '@noor/i18n'
 import { Button } from '@noor/ui/button'
 import { Field } from '@noor/ui/field'
 import { Input } from '@noor/ui/input'
@@ -14,6 +14,7 @@ import { useLocalePath, useShell } from '../layout/use-shell'
 import { useCartDrawer } from '../cart/cart-drawer'
 import { WishlistButton } from '../wishlist/wishlist-button'
 import { CustomSize } from './custom-size'
+import { DeliveryBlock, TrustPoints } from './delivery-block'
 import { OptionGroup } from './option-group'
 import { SizeGuide } from './size-guide'
 import { buttonState, initialChosen, isCustomSize, lowestPrice, maxQuantity, stockLine } from '~/lib/selection'
@@ -71,7 +72,6 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
   const { setOpen: openCart } = useCartDrawer()
   const locale = shell?.locale ?? 'en'
   const display = shell?.config.priceDisplay
-  const dispatchPromise = shell?.config.shipping.dispatchPromise
 
   const [chosen, setChosen] = useState(() => initialChosen(p.options, p.variants, sizeParam))
   /** @type {[Record<string, Chosen>, import('react').Dispatch<import('react').SetStateAction<Record<string, Chosen>>>]} */
@@ -290,19 +290,18 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
         <NotifyMe variantId={variant.id} action={path(`/p/${p.handle}`)} label={p.options.map((o) => o.values.find((v) => v.id === chosen[o.id])?.label).filter(Boolean).join(' / ')} />
       ) : null}
 
+      <DeliveryBlock delivery={p.delivery} mto={mto} />
+      <TrustPoints whatsappHref={whatsapp ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(t('pdp.whatsappText', { title: p.title, url }))}` : undefined} />
       <ul className="flex flex-col gap-2 text-sm text-fg-soft">
-        {mto ? <li>{mto.label}</li> : p.delivery.etaMinDays !== undefined && p.delivery.etaMaxDays !== undefined ? <li>{t('pdp.delivery.eta', { min: p.delivery.etaMinDays, max: p.delivery.etaMaxDays })}</li> : null}
-        {mto?.depositPercent ? <li>{t('pdp.mto.deposit', { percent: mto.depositPercent })}</li> : null}
-        {mto && !mto.returnable ? <li>{t('pdp.mto.notReturnable')}</li> : null}
-        {dispatchPromise ? <li>{dispatchPromise}</li> : null}
-        {p.delivery.codAvailable ? <li>{t('pdp.delivery.cod')}</li> : null}
-        {p.delivery.freeAbove ? <li>{t('pdp.delivery.freeAbove', { amount: formatMoney(p.delivery.freeAbove, locale, display) })}</li> : null}
         <li><WishlistButton product={p} text /></li>
         {whatsapp ? (
           <li>
             <Link href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('pdp.whatsappText', { title: p.title, url }))}`} className="underline underline-offset-4">{t('pdp.whatsapp')}</Link>
           </li>
         ) : null}
+        <li>
+          <Link href={`https://wa.me/?text=${encodeURIComponent(`${p.title} ${url}`)}`} className="underline underline-offset-4">{t('pdp.share')}</Link>
+        </li>
       </ul>
     </div>
   )

@@ -153,7 +153,7 @@ CollectionDetail = CollectionSummary & { description?: string, seo: { title?: st
 SizeChart = { id: Id, title: string, unit: 'in' | 'cm', notes?: string, guideImage?: Image,
               tables: { id: string, title: string, columns: string[], rows: { label: string, values: number[] }[] }[] }
 FormSchema = { id: Id, title?: string, fields: FormField[], allowNotes: boolean }        // contract FormField
-ReviewListing = CursorPage<ReviewPublic> & { summary: { average: number, count: int, byStar: [int, int, int, int, int] } }
+ReviewListing = CursorPage<ReviewPublic> & { summary: { average: number, count: int, byStar: [int, int, int, int, int], fit?: { runs_small: int, true_to_size: int, runs_large: int } /* only when 3 or more said anything */ } }
 ReviewPublic = { id: Id, displayName: string, rating: int, title?: string, body: string, fit?: FitNote,
                  photos: Image[], createdAt: IsoDate, reply?: { body: string, createdAt: IsoDate } }
 SitemapEntry = { loc: string /* path */, lastmod: IsoDate, image?: string, type: 'home' | 'category' | 'collection' | 'product' | 'page' | 'facet' }

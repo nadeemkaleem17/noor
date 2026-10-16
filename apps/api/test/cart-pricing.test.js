@@ -128,7 +128,16 @@ describe('delivery', () => {
     expect(r.cart.shipping).toEqual({ methodId: 'm1', label: 'Standard', fee: pkr(25000), etaMinDays: 3, etaMaxDays: 5 })
     expect(r.cart.shippingOptions?.map((o) => [o.methodId, o.fee.amount])).toEqual([['m1', 25000], ['m2', 45000]])
     expect(r.cart.total).toEqual(pkr(125000))
-    expect(r.cart.messages).toEqual([{ code: 'free_shipping_remaining', amount: pkr(400000) }])
+    expect(r.cart.messages).toEqual([{ code: 'free_shipping_remaining', amount: pkr(400000), percent: 20 }])
+  })
+
+  it('a bag with no city yet is measured against the lowest threshold of any zone, with the percent for the progress bar', () => {
+    const bag = (/** @type {number} */ unitMinor, /** @type {object} */ extra = {}) => price({ lines: [line({ unitMinor, seenUnitMinor: unitMinor })], freeAboveFromMinor: 500000, ...extra }).cart.messages
+    expect(bag(300000)).toEqual([{ code: 'free_shipping_remaining', amount: pkr(200000), percent: 60 }])
+    expect(bag(499999)[0]).toMatchObject({ percent: 99 }) // never 100 before it is reached
+    expect(bag(500000)).toEqual([{ code: 'free_shipping_applied' }])
+    expect(price({ lines: [], freeAboveFromMinor: 500000 }).cart.messages, 'an empty bag says nothing').toEqual([])
+    expect(bag(300000, { shipping: { options: [standard] } })[0], 'once a city is known its own method decides').toMatchObject({ amount: pkr(200000) })
   })
 
   it('takes the method the customer chose, even if it costs more; an unknown id falls back to the cheapest', () => {

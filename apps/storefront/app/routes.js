@@ -17,6 +17,7 @@ const pages = (id) => [
     route('p/:handle', 'routes/product.jsx', { id: `product${id}` }),
     route('reviews/:id', 'routes/reviews.js', { id: `reviews${id}` }),
     route('recent', 'routes/recent.js', { id: `recent${id}` }),
+    route('delivery/cities', 'routes/delivery-cities.js', { id: `delivery-cities${id}` }),
     route('cart', 'routes/cart.jsx', { id: `cart${id}` }),
     route('checkout', 'routes/checkout.jsx', { id: `checkout${id}` }),
     route('orders/:token', 'routes/order.jsx', { id: `order${id}` }),

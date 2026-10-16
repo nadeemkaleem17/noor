@@ -38,7 +38,11 @@ export const ReviewListing = z.strictObject({
   items: z.array(ReviewPublic),
   nextCursor: z.string().optional(),
   /** `byStar[0]` is the number of one-star reviews, `byStar[4]` of five-star ones. */
-  summary: z.strictObject({ average: z.number(), count: z.int(), byStar: z.tuple([z.int(), z.int(), z.int(), z.int(), z.int()]) }),
+  summary: z.strictObject({
+    average: z.number(), count: z.int(), byStar: z.tuple([z.int(), z.int(), z.int(), z.int(), z.int()]),
+    /** How many reviewers said each about the fit; only when 3 or more said anything. */
+    fit: z.strictObject({ runs_small: z.int(), true_to_size: z.int(), runs_large: z.int() }).optional(),
+  }),
 })
 /** @typedef {z.infer<typeof ReviewListing>} ReviewListing */
 

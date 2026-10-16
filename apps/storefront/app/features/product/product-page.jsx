@@ -34,10 +34,15 @@ export function ProductPage({ product, sizeChart, formSchema, whatsapp, url, des
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <Breadcrumb items={crumbs} renderLink={asRouterLink} />
-      <div className="mt-4 grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <Gallery media={product.media} title={product.title} focusValue={focusValue} />
-        <div className="flex flex-col gap-6">
+      {/* on a wide screen the pictures and the sections run down the first column and the buy box stays in view beside them; on a phone it is gallery, buy box, sections */}
+      <div className="mt-4 grid gap-8 lg:grid-cols-2 lg:gap-x-12">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <Gallery media={product.media} title={product.title} focusValue={focusValue} />
+        </div>
+        <div className="lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
           <BuyBox product={product} sizeChart={sizeChart} formSchema={formSchema} whatsapp={whatsapp} url={url} cartError={cartError} cartErrorN={cartErrorN} sizeParam={sizeParam} onFocusValue={setFocusValue} />
+        </div>
+        <div className="lg:col-start-1 lg:row-start-2">
           <InfoSections product={product} descriptionHtml={descriptionHtml} />
         </div>
       </div>

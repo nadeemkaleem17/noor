@@ -323,7 +323,18 @@ export function createShippingService({ db }) {
     async publicCities() {
       const rows = await repo.deliverableCities(db)
       rows.sort((a, b) => Number(b.isMajor) - Number(a.isMajor) || a.name.localeCompare(b.name))
-      return { items: rows.map((c) => ({ id: c.id, name: c.name, province: c.province, aliases: /** @type {string[] | null} */ (c.aliases) ?? [], isMajor: c.isMajor })) }
+      const { cheapest } = await cheapestPerZone()
+      const method = new Map(cheapest.map((m) => [m.zoneId, m]))
+      const zoneOf = new Map((await repo.assignments(db)).map((a) => [a.cityId, a.zoneId]))
+      return {
+        items: rows.map((c) => {
+          const m = method.get(zoneOf.get(c.id) ?? '')
+          return {
+            id: c.id, name: c.name, province: c.province, aliases: /** @type {string[] | null} */ (c.aliases) ?? [], isMajor: c.isMajor,
+            ...(m ? { delivery: { fee: money(m.feeMinor), ...(m.freeAboveMinor === null ? {} : { freeAbove: money(m.freeAboveMinor) }), etaMinDays: m.etaMinDays, etaMaxDays: m.etaMaxDays } } : {}),
+          }
+        }),
+      }
     },
 
     /** Numbers for the storefront configuration and the page tokens. */
@@ -347,6 +358,18 @@ export function createShippingService({ db }) {
     /** The name of a city, for an order's snapshot. @param {import('../../platform/db.js').Executor} x @param {string} id */
     async cityName(x, id) {
       return (await repo.findCity(x, id))?.name
+    },
+
+    /**
+     * The lowest free-delivery threshold any served zone offers: what a bag with no city yet is measured against ("add Rs 1,200 more for free delivery"). Reads through `x`.
+     * @param {import('../../platform/db.js').Executor} x
+     * @returns {Promise<number | undefined>} paisa
+     */
+    async freeAboveFrom(x) {
+      const [methods, assigned] = await Promise.all([repo.methodsOf(x), repo.assignments(x)])
+      const served = new Set(assigned.map((a) => a.zoneId))
+      const thresholds = methods.flatMap((m) => (m.enabled && served.has(m.zoneId) && m.freeAboveMinor !== null ? [m.freeAboveMinor] : []))
+      return thresholds.length ? Math.min(...thresholds) : undefined
     },
 
     /**

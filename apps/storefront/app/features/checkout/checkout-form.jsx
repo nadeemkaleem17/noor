@@ -258,6 +258,12 @@ export function CheckoutForm({ loader, action }) {
           ) : null}
 
           <div className="flex flex-col gap-3">
+            {/* the total beside the button, so it is in view when the order is placed (the summary is folded away on a phone) */}
+            <p className="flex items-baseline justify-between font-medium lg:hidden">
+              <span>{t('cart.total')}</span>
+              <Price money={cart.total} size="lg" />
+            </p>
+            <p className="text-center text-small text-fg-soft">{t('checkout.trustLine')}</p>
             <Button type="submit" name="intent" value="place" size="lg" fullWidth loading={placing} disabled={!options.some((o) => o.allowed)}>{t('checkout.place')}</Button>
             <p className="text-center text-sm text-fg-soft">
               {t('checkout.terms')}{' '}

@@ -18,7 +18,8 @@ export default function CartPanel() {
   const { open, setOpen } = useCartDrawer()
   const fetcher = useFetcher({ key: 'cart-drawer' })
   const { load } = fetcher
-  const href = path('/cart')
+  // `drawer` tells the cart page's loader that only the cart is wanted, not the pieces the page suggests
+  const href = path('/cart?drawer=1')
   useEffect(() => {
     if (open) void load(href)
   }, [open, load, href])

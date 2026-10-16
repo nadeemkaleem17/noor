@@ -46,9 +46,13 @@ import { evaluatePromo } from '../promotions/evaluate.js'
  * @property {{ options: readonly DeliveryOption[], methodId?: string } | undefined} shipping present once the city is known
  * @property {{ methods: readonly { type: import('@noor/contract').PaymentMethod, label: string, description?: string }[], codLimitMinor?: number | null } | undefined} payments the methods that are on, in checkout order
  * @property {{ noCod: boolean } | undefined} customer
+ * @property {number} [freeAboveFromMinor] the lowest free-delivery threshold of any zone: with no city yet, the bag is measured against it
  */
 
 const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {const} */ ('PKR') })
+
+/** How far `part` is on the way to `whole`, in whole percent, never 100 before it is reached. @param {number} part @param {number} whole */
+const percentOf = (part, whole) => Math.min(99, Math.max(0, Math.floor((part * 100) / whole)))
 
 /** Integer division rounded up, in BigInt so a large price times a rate never loses precision. @param {number} amount @param {number} bps */
 export function ceilBps(amount, bps) {
@@ -59,7 +63,7 @@ export function ceilBps(amount, bps) {
 /**
  * @param {PricingInput} input
  */
-export function priceCart({ lines, promo, at, shipping, payments, customer }) {
+export function priceCart({ lines, promo, at, shipping, payments, customer, freeAboveFromMinor }) {
   // ---- steps 1 and 2: the lines
   const priced = lines.map((l) => {
     const counted = l.stockMode === 'counted'
@@ -102,7 +106,7 @@ export function priceCart({ lines, promo, at, shipping, payments, customer }) {
   let options
   /** @type {PricedOption | undefined} */
   let chosen
-  /** @type {{ code: 'free_shipping_remaining' | 'free_shipping_applied', amount?: { amount: number, currency: 'PKR' } }[]} */
+  /** @type {{ code: 'free_shipping_remaining' | 'free_shipping_applied', amount?: { amount: number, currency: 'PKR' }, percent?: number }[]} */
   const messages = []
   if (shipping) {
     options = shipping.options.map((o) => ({
@@ -121,9 +125,15 @@ export function priceCart({ lines, promo, at, shipping, payments, customer }) {
       if (freeShippingPromo) messages.push({ code: 'free_shipping_applied' })
       else if (chosen.freeAboveMinor !== null) {
         if (net >= chosen.freeAboveMinor) messages.push({ code: 'free_shipping_applied' })
-        else messages.push({ code: 'free_shipping_remaining', amount: money(chosen.freeAboveMinor - net) })
+        else messages.push({ code: 'free_shipping_remaining', amount: money(chosen.freeAboveMinor - net), percent: percentOf(net, chosen.freeAboveMinor) })
       }
     }
+  }
+
+  // no city yet: how far the bag is from the lowest threshold any zone has, so the bag can say "add Rs 1,200 more for free delivery"
+  if (!shipping && freeAboveFromMinor !== undefined && lines.length) {
+    if (freeShippingPromo || net >= freeAboveFromMinor) messages.push({ code: 'free_shipping_applied' })
+    else messages.push({ code: 'free_shipping_remaining', amount: money(freeAboveFromMinor - net), percent: percentOf(net, freeAboveFromMinor) })
   }
 
   // ---- step 7: total

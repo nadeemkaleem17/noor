@@ -19,6 +19,7 @@ import { productRoutes } from './products.js'
 import { taxonomyRoutes } from './taxonomy.js'
 import { defineRoutes } from './routes.js'
 import { Id, IsoDate } from './primitives.js'
+import { Money } from './money-schema.js'
 
 /** A delivery city as the storefront sees it (DOC-10.1). */
 export const CityPublic = z.strictObject({
@@ -27,6 +28,8 @@ export const CityPublic = z.strictObject({
   province: z.string(),
   aliases: z.array(z.string()),
   isMajor: z.boolean(),
+  /** What delivery to this city costs and how long it takes: its zone's cheapest enabled method (the product page's delivery block). Absent when no method serves it. */
+  delivery: z.strictObject({ fee: Money, freeAbove: Money.optional(), etaMinDays: z.int(), etaMaxDays: z.int() }).optional(),
 })
 /**
  * @typedef {z.infer<typeof CityPublic>} CityPublic

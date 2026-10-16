@@ -8,6 +8,9 @@ import { Promo } from '~/features/cart/promo'
 import { forgetCheckout } from '~/features/checkout/memory'
 import { CartSummary } from '~/features/cart/summary'
 import { useLocalePath } from '~/features/layout/use-shell'
+import { ProductGrid } from '~/features/catalog/product-card'
+import { api } from '~/lib/api.server'
+import { localeOfPath } from '~/lib/locale'
 import { addToCart, cartAction, cartCookie, cartCount, cartErrors, getCart } from '~/lib/cart.server'
 import { cacheControl } from '~/lib/cache'
 import { pagePath } from '~/lib/paths'
@@ -51,7 +54,13 @@ export async function loader({ request }) {
   const url = new URL(request.url)
   if (url.searchParams.get('summary')) return data({ count: await cartCount(request) })
   const error = url.searchParams.get('error')
-  return data({ cart: await getCart(request), error: cartErrors.find((e) => e === error), n: Number(url.searchParams.get('n')) || undefined, amount: Number(url.searchParams.get('amount')) || undefined })
+  const cart = await getCart(request)
+  // the page (not the panel) suggests a few pieces that go with the first one in the bag, leaving out what is already there
+  const first = cart?.lines[0]
+  const related = !url.searchParams.has('drawer') && first
+    ? await api('catalog.listRelated', { params: { id: first.productId }, query: { limit: 4, locale: localeOfPath(url.pathname) } }).then((r) => r.items.filter((p) => !cart.lines.some((l) => l.productId === p.id)), () => [])
+    : []
+  return data({ cart, related, error: cartErrors.find((e) => e === error), n: Number(url.searchParams.get('n')) || undefined, amount: Number(url.searchParams.get('amount')) || undefined })
 }
 
 export const meta = /** @type {import('./+types/cart').Route.MetaFunction} */ (({ matches }) => privateMeta(matches, 'cart'))
@@ -86,6 +95,12 @@ export default function Cart() {
           </div>
         </div>
       )}
+      {d.related.length ? (
+        <section aria-labelledby="bag-also" className="mt-12">
+          <h2 id="bag-also" className="mb-4 font-heading text-2xl">{t('cart.alsoLike')}</h2>
+          <ProductGrid items={d.related} eager={0} />
+        </section>
+      ) : null}
     </div>
   )
 }

@@ -184,6 +184,9 @@ describe.skipIf(!dbAvailable)('shipping (MySQL, through HTTP)', () => {
       expect(r.headers['cache-control']).toBe('public, s-maxage=60, stale-while-revalidate=600')
       expect(r.json().items.map((/** @type {{ name: string }} */ c) => c.name)).toEqual(['Hyderabad', 'Lahore', 'Kasur', 'Mardan'])
       expect(r.json().items[0]).toMatchObject({ province: 'Sindh', isMajor: true, aliases: expect.any(Array) })
+      // each city says what delivery to it costs: its zone's cheapest enabled method (the product page's delivery block)
+      expect(r.json().items[0].delivery).toMatchObject({ fee: { amount: expect.any(Number), currency: 'PKR' }, etaMinDays: expect.any(Number), etaMaxDays: expect.any(Number) })
+      expect(r.json().items.every((/** @type {{ delivery?: { fee: { amount: number } } }} */ c) => c.delivery !== undefined)).toBe(true)
       expect(made.id).toBeTruthy()
     }, 60_000)
 

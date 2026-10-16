@@ -231,10 +231,18 @@
     },
     "whatsapp": "واٹس ایپ پر پوچھیں",
     "whatsappText": "السلام علیکم، مجھے {title} کے بارے میں پوچھنا ہے ({url})",
+    "share": "Share on WhatsApp",
+    "trustLabel": "Why shop here",
+    "fitSummary": "{count} of {total} reviewers said it {fit, select, runs_small {runs small} true_to_size {fits true to size} runs_large {runs large} other {fits}}",
     "delivery": {
       "eta": "{min} سے {max} دن میں ڈیلیوری",
       "cod": "کیش آن ڈیلیوری دستیاب ہے",
-      "freeAbove": "{amount} سے اوپر ڈیلیوری مفت"
+      "freeAbove": "{amount} سے اوپر ڈیلیوری مفت",
+      "free": "Free",
+      "check": "Check delivery to your city",
+      "city": "Your city",
+      "toCity": "To {city}: {fee}, {min} to {max} days.",
+      "failed": "The cities could not be loaded. Please try again."
     },
     "mto": {
       "deposit": "{percent}% ایڈوانس سے آپ کا آرڈر شروع ہوتا ہے۔",
@@ -327,6 +335,9 @@
     "free": "مفت",
     "total": "کل",
     "freeRemaining": "مفت ڈیلیوری کے لیے {amount} اور شامل کریں",
+    "freeProgress": "Progress to free delivery",
+    "freeApplied": "Delivery is free on this order.",
+    "alsoLike": "You may also like",
     "deposit": "آرڈر پر تیار چیزوں کے لیے {amount} ایڈوانس درکار ہے۔",
     "blocked": "جاری رکھنے کے لیے ختم شدہ چیزیں ہٹائیں۔",
     "checkout": "چیک آؤٹ",
@@ -376,6 +387,7 @@
     "depositNow": "ابھی ایڈوانس",
     "dueOnDelivery": "ڈیلیوری پر",
     "place": "آرڈر کریں",
+    "trustLine": "Pay when it arrives. We confirm every order on WhatsApp or by phone before dispatch.",
     "terms": "آرڈر کر کے آپ ہماری",
     "termsLink": "شرائط",
     "returnsLink": "ڈیلیوری اور واپسی",
