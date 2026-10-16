@@ -107,8 +107,8 @@ export const themeTokens = {
   'radius.media': ['shown', 'radius'],
   density: ['shown', 'density'],
   mediaRatio: ['shown', 'mediaRatio'],
-  'header.layout': ['not-shown', 'header.layout', 'M8-03: the header honours left or centre'],
-  'header.sticky': ['not-shown', 'header.sticky', 'M8-03: the header honours the switch and hides on scroll down'],
+  'header.layout': ['shown', 'header.layout'],
+  'header.sticky': ['shown', 'header.sticky'],
 }
 
 export const categoryInput = {

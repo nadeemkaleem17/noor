@@ -60,7 +60,7 @@ export default function Shell() {
   if (!shell) return <Outlet />
   // the checkout has a header of its own and no footer: nothing to wander off to
   const checkout = /^(\/ur)?\/checkout\/?$/.test(pathname)
-  const { config, nav, notices, about, locale } = shell
+  const { config, nav, notices, about, locale, headerBar } = shell
   return (
     <ToastProvider>
       <CartDrawerProvider>
@@ -69,7 +69,7 @@ export default function Shell() {
       </a>
       <NavProgress />
       {checkout ? null : <Announcement items={notices} />}
-      {checkout ? <CheckoutHeader brand={config.brand.name} logo={config.brand.logoLight} /> : <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} />}
+      {checkout ? <CheckoutHeader brand={config.brand.name} logo={config.brand.logoLight} /> : <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} bar={headerBar} />}
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>

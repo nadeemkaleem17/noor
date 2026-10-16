@@ -76,7 +76,7 @@ describe('the canonical query (DOC-06.1 section 5)', () => {
 })
 
 describe('the navigation (DOC-06.13 section 4)', () => {
-  const labels = { new: 'New in', sale: 'Sale', collections: 'Collections' }
+  const labels = { new: 'New in', sale: 'Sale', collections: 'Collections', more: 'More' }
   const cats = [
     { id: 'c1', handle: 'women', name: 'Women', children: [{ id: 'c3', handle: 'stitched', name: 'Stitched', children: [] }, { id: 'c4', handle: 'unstitched', name: 'Unstitched', children: [] }] },
     { id: 'c2', handle: 'men', name: 'Men', children: [] },
@@ -109,6 +109,23 @@ describe('the navigation (DOC-06.13 section 4)', () => {
     ])
     // automatic mode ignores the written menu (the seed used to write a two-item one)
     expect(navItems({ ...base, menu }).map((i) => i.id)).toEqual(['new', 'c1', 'c2', 'collections', 'sale'])
+  })
+
+  it('goes three levels deep, so a panel can show a category, its children and their children', () => {
+    const deep = [{ id: 'w', handle: 'women', name: 'Women', children: [{ id: 's', handle: 'stitched', name: 'Stitched', children: [{ id: 'l', handle: 'lawn', name: 'Lawn', children: [{ id: 'x', handle: 'too-deep', name: 'Too deep', children: [] }] }] }] }]
+    const women = navItems({ ...base, categories: deep }).find((i) => i.id === 'w')
+    expect(women?.children?.[0]?.children?.[0]?.href).toBe('/c/lawn')
+    expect(women?.children?.[0]?.children?.[0]?.children).toBeUndefined() // a fourth level is reached from its parent's page
+  })
+
+  it('holds at most eight items: the categories that do not fit go under More', () => {
+    const many = Array.from({ length: 9 }, (_, i) => ({ id: `t${i}`, handle: `top-${i}`, name: `Top ${i}`, children: [] }))
+    const items = navItems({ ...base, categories: many })
+    expect(items).toHaveLength(8)
+    expect(items.map((i) => i.id)).toEqual(['new', 't0', 't1', 't2', 't3', 'more', 'collections', 'sale'].map((id) => id))
+    expect(items.find((i) => i.id === 'more')?.children?.map((c) => c.label)).toEqual(['Top 4', 'Top 5', 'Top 6', 'Top 7', 'Top 8'])
+    expect(navItems({ ...base, categories: many.slice(0, 5) })).toHaveLength(8) // exactly eight still fit
+    expect(navItems({ ...base, categories: many.slice(0, 5) }).some((i) => i.id === 'more')).toBe(false)
   })
 
   it('leaves out an item whose address is not safe, and its children', () => {

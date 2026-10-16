@@ -47,7 +47,7 @@ export async function loader({ request }) {
   const t = createI18n(locale).t
   const { theme, ...config } = shell.config
   const fonts = fontsFor(theme?.fonts ?? { heading: 'Playfair Display', body: 'Inter' }, locale)
-  const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale'), collections: t('storefront:shell.collections') }
+  const labels = { new: t('storefront:shell.new'), sale: t('storefront:shell.sale'), collections: t('storefront:shell.collections'), more: t('storefront:shell.more') }
   const footerLabels = { new: labels.new, sale: labels.sale, allCategories: t('storefront:shell.allCategories'), allCollections: t('storefront:shell.allCollections'), trackOrder: t('storefront:shell.trackOrder'), sizeGuide: t('storefront:shell.sizeGuide') }
   return {
     locale,
@@ -58,6 +58,8 @@ export async function loader({ request }) {
     fontFiles: fonts.preload,
     imgOrigin: new URL(getEnv().PUBLIC_IMG_URL).origin,
     config,
+    // the Appearance settings of the header (DOC-06.12): left or centre, and whether it stays at the top
+    headerBar: { layout: theme?.header.layout ?? 'left', sticky: theme?.header.sticky ?? true },
     notices: [...(shell.home.announcement ? [{ id: 'announcement', text: shell.home.announcement.text, href: shell.home.announcement.href }] : []), ...shell.home.notices.map((n) => ({ id: n.id, text: n.text, href: n.href }))],
     about: shell.home.footer.about,
     nav: { header: navItems({ locale, mode: shell.config.navigation.mode, menu: shell.menus.main, categories: shell.categories, collections: shell.collections, labels }), footer: footerColumns({ locale, categories: shell.categories, collections: shell.collections, pages: safeItems(locale, shell.menus.footer), labels: footerLabels }) },

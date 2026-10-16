@@ -29,9 +29,9 @@ Research: header chrome should be quiet and reachable (DW header options: logo l
 |---|---|---|---|---|
 | SH-01 | Announcement bar: staff text and link, dismissible, remembers the dismissal for the session | M | Y | OW |
 | SH-02 | Rotating notices with start and end dates (up to 5), paused on hover and focus, with a pause control | M | Y | WC 2.2.2 |
-| SH-03 | Utility strip: **Track order** and **WhatsApp** links beside the announcement | M | N | KH |
-| SH-04 | Header per DOC-06.13 §4 (category navbar, mega and simple panels, search, wishlist, bag) | M | N | BM, AP, KH |
-| SH-05 | Header honours the Appearance settings: layout (left or centre) and "keep at the top"; hides when scrolling down and returns when scrolling up | M | N | DW |
+| SH-03 | Utility strip: **Track order** and **WhatsApp** links beside the announcement | M | P | KH |
+| SH-04 | Header per DOC-06.13 §4 (category navbar, mega and simple panels, search, wishlist, bag) | M | P | BM, AP, KH |
+| SH-05 | Header honours the Appearance settings: layout (left or centre) and "keep at the top"; hides when scrolling down and returns when scrolling up | M | Y | DW |
 | SH-06 | Logo: light and dark variants from Store settings; tagline shown in the footer; uploaded favicon wins over the built-in one | M | P | DOC-06.12 |
 | SH-07 | Bag icon with live count (hydrated), count read by screen readers, no cart data in cached HTML | M | Y | DW |
 | SH-08 | Mini-bag drawer (slides in after an add, from the bag icon) per CT-01 to CT-10 | M | Y | BM |

@@ -24,13 +24,16 @@ export function safeItems(locale, items) {
   return out
 }
 
-/** The categories as links, two levels deep (a third level is reached from its parent's page). @param {import('@noor/i18n').Locale} locale @param {CategoryTree[]} nodes @param {number} depth @returns {NavItem[]} */
+/** How many items the header holds before the rest go under "More" (DOC-06.13 section 4.1). */
+const MAX_ITEMS = 8
+
+/** The categories as links, three levels deep (the panel of the header shows a category, its children and their children; a deeper level is reached from its parent's page). @param {import('@noor/i18n').Locale} locale @param {CategoryTree[]} nodes @param {number} depth @returns {NavItem[]} */
 const categoryItems = (locale, nodes, depth) =>
   nodes.map((c) => ({
     id: c.id,
     label: c.name,
     href: localePath(locale, `/c/${c.handle}`),
-    ...(depth < 2 && c.children.length ? { children: categoryItems(locale, c.children, depth + 1) } : {}),
+    ...(depth < 3 && c.children.length ? { children: categoryItems(locale, c.children, depth + 1) } : {}),
   }))
 
 /**
@@ -40,7 +43,7 @@ const categoryItems = (locale, nodes, depth) =>
  * @param {{ id: string, label: string, href: string, children?: NavItem[] | undefined }[]} o.menu the menu `main` staff wrote
  * @param {CategoryTree[]} o.categories the visible category tree (branches with no product are already left out by the API)
  * @param {{ id: string, handle: string, title: string }[]} o.collections the featured collections
- * @param {{ new: string, sale: string, collections: string }} o.labels
+ * @param {{ new: string, sale: string, collections: string, more: string }} o.labels
  * @returns {NavItem[]}
  */
 export function navItems({ locale, mode, menu, categories, collections, labels }) {
@@ -50,9 +53,13 @@ export function navItems({ locale, mode, menu, categories, collections, labels }
   }
   // New in and Sale are pages of their own (`/new`, `/sale`); the other featured collections go under one item
   const featured = collections.filter((c) => c.handle !== 'new-in' && c.handle !== 'sale')
+  // at most MAX_ITEMS fit across the header: New in, Sale and Collections always stay, the categories that do not fit go under "More"
+  const shown = categoryItems(locale, categories, 1)
+  const room = MAX_ITEMS - 2 - (featured.length ? 1 : 0)
+  const cats = shown.length > room ? [...shown.slice(0, room - 1), { id: 'more', label: labels.more, href: localePath(locale, '/categories'), children: shown.slice(room - 1).map((c) => ({ id: c.id, label: c.label, href: c.href })) }] : shown
   return [
     { id: 'new', label: labels.new, href: localePath(locale, '/new') },
-    ...categoryItems(locale, categories, 1),
+    ...cats,
     ...(featured.length
       ? [{ id: 'collections', label: labels.collections, href: localePath(locale, '/collections'), children: featured.map((c) => ({ id: c.id, label: c.title, href: localePath(locale, `/collections/${c.handle}`) })) }]
       : []),
