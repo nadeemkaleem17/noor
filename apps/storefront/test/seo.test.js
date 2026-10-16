@@ -1,6 +1,6 @@
 // M5-10: the head of a page, structured data, which listing addresses are indexed, robots.txt and the sitemaps (plan/06-storefront/09-seo.md). Pure.
 import { describe, expect, it } from 'vitest'
-import { breadcrumbLd, homeLd, itemListLd, productLd, serializeLd } from '../app/features/seo/jsonld'
+import { breadcrumbLd, faqLd, homeLd, itemListLd, productLd, serializeLd } from '../app/features/seo/jsonld'
 import { listingIndex } from '../app/features/seo/listing'
 import { buildMeta, clip, plainText, titleOf } from '../app/features/seo/meta'
 import { isProductionHost, robotsTxt, sitemapIndexXml, sitemapXml } from '../app/lib/seo'
@@ -160,5 +160,23 @@ describe('robots.txt and sitemaps', () => {
     expect(xml).toContain('<loc>https://rubaya.pk/p/a&amp;b</loc><lastmod>2026-10-01T00:00:00Z</lastmod>')
     expect(xml).toContain('<image:loc>https://x/i.jpg?a=1&amp;b=2</image:loc>')
     expect(xml).toContain('<url><loc>https://rubaya.pk/new</loc></url>')
+  })
+})
+
+describe('faqLd (DOC-06.14 CM-05)', () => {
+  const md = '## Ordering\n\n### How do I order?\nChoose a piece, then **check out**.\n\n### Can I cancel?\nYes, until it is [dispatched](/track).\n\n## Paying\n\nNot a question.\n'
+  it('makes a question of each third-level heading with the lines under it as the answer, in plain words', () => {
+    expect(faqLd(md)).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        { '@type': 'Question', name: 'How do I order?', acceptedAnswer: { '@type': 'Answer', text: 'Choose a piece, then check out.' } },
+        { '@type': 'Question', name: 'Can I cancel?', acceptedAnswer: { '@type': 'Answer', text: 'Yes, until it is dispatched.' } },
+      ],
+    })
+  })
+  it('says nothing for a page with fewer than two questions', () => {
+    expect(faqLd('### Only one?\nYes.')).toBeUndefined()
+    expect(faqLd('Just text')).toBeUndefined()
   })
 })

@@ -101,3 +101,26 @@ export function productLd(site, p) {
     }),
   }
 }
+
+/** Markdown as plain words: links keep their text, emphasis marks go. @param {string} md */
+const plain = (md) => md.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim()
+
+/**
+ * The questions and answers of a FAQ page written as `### Question` followed by its answer (plan/06-storefront/14-site-blueprint.md CM-05), as FAQPage data. Fewer than two
+ * pairs is not a FAQ: nothing is returned.
+ * @param {string} markdown
+ */
+export function faqLd(markdown) {
+  /** @type {{ name: string, answer: string[] }[]} */
+  const pairs = []
+  for (const line of markdown.split('\n')) {
+    const q = /^###\s+(.+)$/.exec(line)
+    if (q) pairs.push({ name: plain(q[1] ?? ''), answer: [] })
+    else if (/^#{1,2}\s/.test(line)) pairs.push({ name: '', answer: [] }) // a heading of its own ends the answer above it
+    else if (pairs.length && line.trim()) pairs.at(-1)?.answer.push(line)
+  }
+  const mainEntity = pairs
+    .filter((p) => p.name && p.answer.length)
+    .map((p) => ({ '@type': 'Question', name: p.name, acceptedAnswer: { '@type': 'Answer', text: plain(p.answer.join(' ')) } }))
+  return mainEntity.length >= 2 ? { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity } : undefined
+}

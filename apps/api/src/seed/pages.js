@@ -14,6 +14,10 @@ We deliver across Pakistan. Orders are dispatched within 1–2 working days and 
 
 Delivery from {{shipping.fee}}. Orders over {{shipping.freeAbove}} are delivered free.
 
+## Fees and times by area
+
+{{shipping.table}}
+
 ## Paying
 
 Payment is **cash on delivery**: you pay the rider when the parcel arrives. We call you to confirm every order before it is dispatched, so please check that the number you gave us is the one you answer.
@@ -148,6 +152,94 @@ If your question is about an order, have your order number ready, or [look it up
     locked: false,
     bodyMd: `Rubaya is a Pakistani fashion label. We make clothes for the way women dress here: lawn for the summer, khaddar for winter, and something beautiful for every wedding.
 
-Everything we sell is described honestly, priced in rupees, and delivered to your door.`,
+Everything we sell is described honestly, priced in rupees, and delivered to your door.
+
+## How an order is made and sent
+
+Most pieces are in stock and leave us within 1–2 working days. Bridal and made-to-order pieces are cut for you: the product page says how long they take and what deposit starts the order. Before anything is dispatched we call or message you on the number you gave us, so you always know what is coming.
+
+## Where we are
+
+{{store.address}}
+
+Call {{store.phone}}, message us on WhatsApp {{store.whatsapp}} or write to {{store.email}}.
+
+## What we promise
+
+Payment is cash on delivery. You can return an unworn item within {{returns.days}} days ([how](/pages/shipping-returns)). If something is wrong, tell us the same day and we make it right.`,
+  },
+  {
+    slug: 'faq',
+    title: 'Questions and answers',
+    locked: false,
+    bodyMd: `## Ordering
+
+### How do I order?
+Choose a piece, choose your size, add it to your bag and check out. You do not need an account. We ask for your name, mobile number, city and address.
+
+### Why do you call me after I order?
+We confirm every order by phone or WhatsApp before dispatch, so a wrong number or address is found before the parcel leaves. Please keep your phone on.
+
+### Can I change or cancel my order?
+Yes, until it is dispatched. Open your order page from the link we gave you, or [look it up](/track) with your order number and mobile number.
+
+## Paying and delivery
+
+### How do I pay?
+Cash on delivery: you pay the rider when the parcel arrives. Very large orders may need a deposit; we tell you before we dispatch.
+
+### How much is delivery and how long does it take?
+It depends on your city; checkout shows the fee and the days before you order. Orders over {{shipping.freeAbove}} are delivered free. The full list is on the [shipping page](/pages/shipping-returns).
+
+### How do I follow my parcel?
+Once it is dispatched your order page shows the courier and the tracking number with a link to the courier's page.
+
+## Sizes
+
+### How do I choose a size?
+Each stitched piece has a size guide next to the sizes, with garment measurements and how to measure. If you are between two sizes, we suggest the larger one for lawn and the smaller for stretch fabric; message us on WhatsApp and we will help.
+
+### Can you make a piece to my measurements?
+Made-to-order pieces ask for your measurements on the product page. They take longer and cannot be returned.
+
+## Returns
+
+### Can I return something?
+Unworn, unwashed items with their tags can be returned within {{returns.days}} days of delivery. Cut fabric, made-to-order pieces and sale items cannot. See [shipping and returns](/pages/shipping-returns).
+
+## Care
+
+### How do I wash my clothes?
+See the [fabric and care guide](/pages/care).`,
+  },
+  {
+    slug: 'care',
+    title: 'Fabric and care',
+    locked: false,
+    bodyMd: `Care labels on the garment come first. These are the rules we follow for the fabrics we sell.
+
+## Lawn and cotton
+
+Wash in cool water with a mild soap, turn printed pieces inside out and dry them in the shade. Iron on the reverse at a medium heat. Wash dark colours alone the first time.
+
+## Khaddar
+
+Wash gently in cool water; hot water can shrink it. Do not wring. Dry flat or in the shade and iron while it is still slightly damp.
+
+## Chiffon and organza
+
+Dry clean, or hand wash very gently in cold water with a mild liquid soap. Never twist. Steam rather than iron, and keep away from rough surfaces that can snag it.
+
+## Silk and embroidered pieces
+
+Dry clean only. Store hung, in a cotton cover, with the embroidery not pressed against anything. Perfume and deodorant go on before you dress, not after.
+
+## Bridal and heavy embroidery
+
+Dry clean only, and only by someone who has handled embroidery. Fold in tissue, never in plastic.
+
+## Fabric that is not stitched
+
+Unstitched fabric is cut for you by your tailor. Wash and dry a small corner first; if it shrinks, pre-wash the whole piece before it is cut.`,
   },
 ]

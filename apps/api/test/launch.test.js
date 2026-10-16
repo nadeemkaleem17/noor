@@ -42,14 +42,14 @@ describe('launchProblems', () => {
 
 describe('the drafted pages', () => {
   const store = { contact: { phone: 'P', whatsapp: 'W', email: 'E', address: 'A', socials: [] }, policies: { returnsDays: 7 } }
-  const facts = { fee: 'Rs. 250', freeAbove: 'Rs. 5,000' }
+  const facts = { fee: 'Rs. 250', freeAbove: 'Rs. 5,000', table: '- **Everywhere:** Rs. 250, 3 to 5 days' }
 
   it('use only tokens the shop knows, so that none is left empty once the settings are filled in', () => {
     for (const page of requiredPages) {
       const text = resolveTokens(page.bodyMd, /** @type {never} */ (store), facts)
       expect(text, page.slug).not.toContain('{{')
       for (const [, name] of page.bodyMd.matchAll(/\{\{\s*([A-Za-z]+\.[A-Za-z]+)\s*\}\}/g)) {
-        expect(['store.phone', 'store.email', 'store.whatsapp', 'store.address', 'shipping.freeAbove', 'shipping.fee', 'returns.days'], `${page.slug}: ${name}`).toContain(name)
+        expect(['store.phone', 'store.email', 'store.whatsapp', 'store.address', 'shipping.freeAbove', 'shipping.fee', 'shipping.table', 'returns.days'], `${page.slug}: ${name}`).toContain(name)
       }
     }
   })

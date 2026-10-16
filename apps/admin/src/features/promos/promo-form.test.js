@@ -7,7 +7,7 @@ const money = (/** @type {number} */ amount) => ({ amount, currency: /** @type {
 describe('what the API takes', () => {
   it('sends only what belongs to the kind and the scope, in capitals, with no empty field', () => {
     const body = toBody({ ...emptyForm(), code: ' eid10 ', percent: 10, amount: money(50000), maxDiscount: money(200000), scope: 'categories', targetIds: ['a'], note: '  ' })
-    expect(body).toEqual({ code: 'EID10', type: 'percent', percent: 10, maxDiscount: money(200000), scope: 'categories', targetIds: ['a'], excludeSaleItems: true, firstOrderOnly: false, perCustomerLimit: 1, enabled: true })
+    expect(body).toEqual({ code: 'EID10', type: 'percent', percent: 10, maxDiscount: money(200000), scope: 'categories', targetIds: ['a'], excludeSaleItems: true, firstOrderOnly: false, perCustomerLimit: 1, enabled: true, public: false })
     const fixed = toBody({ ...emptyForm(), code: 'SORRY', type: 'fixed', amount: money(50000), maxDiscount: money(1), percent: 10 })
     expect(fixed).toMatchObject({ type: 'fixed', amount: money(50000) })
     expect(fixed).not.toHaveProperty('percent')

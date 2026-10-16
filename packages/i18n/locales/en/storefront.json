@@ -50,6 +50,7 @@
     "footerCompany": "Company",
     "allCategories": "All categories",
     "allCollections": "All collections",
+    "offers": "Offers",
     "trackOrder": "Track order",
     "more": "More",
     "viewAll": "View all {name}",
@@ -76,6 +77,15 @@
     "language": "Language",
     "cartCount": "Cart, {count, plural, one {# item} other {# items}}",
     "sizeGuide": "Size guide"
+  },
+  "offers": {
+    "intro": "Enter one of these codes in your bag before you check out.",
+    "how": "Only one code works on an order. Codes with a limit end when it is used up.",
+    "copy": "Copy code",
+    "copied": "Copied {code}",
+    "ends": "Ends {date}",
+    "none": "There are no offers right now",
+    "noneBody": "Offers come and go; have a look at what is new in the meantime."
   },
   "notFound": {
     "title": "We can't find that page",
@@ -239,6 +249,7 @@
     "whatsapp": "Ask about this on WhatsApp",
     "whatsappText": "Hi, I have a question about {title} ({url})",
     "share": "Share on WhatsApp",
+    "careGuide": "Fabric and care guide",
     "trustLabel": "Why shop here",
     "fitSummary": "{count} of {total} reviewers said it {fit, select, runs_small {runs small} true_to_size {fits true to size} runs_large {runs large} other {fits}}",
     "delivery": {
@@ -589,6 +600,8 @@
     "categories": "All categories",
     "collections": "All collections",
     "categoriesDescription": "Every category of the shop: women, men, kids, footwear and accessories. Delivery across Pakistan, cash on delivery.",
+    "offers": "Offers",
+    "offersDescription": "Codes you can use at checkout: what each one gives and how to use it.",
     "collectionsDescription": "The shop's collections and campaigns. Delivery across Pakistan, cash on delivery.",
     "homeDescription": "Shop stitched, unstitched and made-to-order online. Delivery across Pakistan, cash on delivery.",
     "newDescription": "The newest stitched, unstitched and made-to-order pieces, fresh in the shop. Delivery across Pakistan, cash on delivery.",

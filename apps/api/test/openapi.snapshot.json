@@ -29126,6 +29126,77 @@
         }
       }
     },
+    "/api/v1/offers": {
+      "get": {
+        "operationId": "promos.listPublic",
+        "tags": [
+          "public"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          },
+                          "minSpend": {
+                            "type": "object",
+                            "properties": {
+                              "amount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PKR"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "amount",
+                              "currency"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "summary"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/promos": {
       "get": {
         "operationId": "admin.promos.list",
@@ -29356,6 +29427,10 @@
                           "enabled": {
                             "type": "boolean"
                           },
+                          "public": {
+                            "default": false,
+                            "type": "boolean"
+                          },
                           "note": {
                             "type": "string",
                             "minLength": 1,
@@ -29433,6 +29508,7 @@
                           "excludeSaleItems",
                           "firstOrderOnly",
                           "enabled",
+                          "public",
                           "id",
                           "status",
                           "usageCount",
@@ -29612,6 +29688,10 @@
                   "enabled": {
                     "type": "boolean"
                   },
+                  "public": {
+                    "default": false,
+                    "type": "boolean"
+                  },
                   "note": {
                     "type": "string",
                     "minLength": 1,
@@ -29765,6 +29845,10 @@
                     "enabled": {
                       "type": "boolean"
                     },
+                    "public": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "note": {
                       "type": "string",
                       "minLength": 1,
@@ -29842,6 +29926,7 @@
                     "excludeSaleItems",
                     "firstOrderOnly",
                     "enabled",
+                    "public",
                     "id",
                     "status",
                     "usageCount",
@@ -30011,6 +30096,10 @@
                     "enabled": {
                       "type": "boolean"
                     },
+                    "public": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "note": {
                       "type": "string",
                       "minLength": 1,
@@ -30088,6 +30177,7 @@
                     "excludeSaleItems",
                     "firstOrderOnly",
                     "enabled",
+                    "public",
                     "id",
                     "status",
                     "usageCount",
@@ -30240,6 +30330,10 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                   },
                   "enabled": {
+                    "type": "boolean"
+                  },
+                  "public": {
+                    "default": false,
                     "type": "boolean"
                   },
                   "note": {
@@ -30413,6 +30507,10 @@
                     "enabled": {
                       "type": "boolean"
                     },
+                    "public": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "note": {
                       "type": "string",
                       "minLength": 1,
@@ -30490,6 +30588,7 @@
                     "excludeSaleItems",
                     "firstOrderOnly",
                     "enabled",
+                    "public",
                     "id",
                     "status",
                     "usageCount",
@@ -30670,6 +30769,10 @@
                         "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                       },
                       "enabled": {
+                        "type": "boolean"
+                      },
+                      "public": {
+                        "default": false,
                         "type": "boolean"
                       },
                       "note": {

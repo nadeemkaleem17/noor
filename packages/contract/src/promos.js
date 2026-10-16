@@ -32,6 +32,8 @@ const PromoFields = z.strictObject({
   startsAt: IsoDate.optional(),
   endsAt: IsoDate.optional(),
   enabled: z.boolean(),
+  /** Listed on the shop's Offers page: the code and what it does are shown to everyone. */
+  public: z.boolean().default(false),
   note: z.string().trim().min(1).max(300).optional(),
 })
 
@@ -88,7 +90,12 @@ export const PromoPreview = z.strictObject({
   lineDiscounts: z.array(z.strictObject({ variantId: Id, discount: Money })),
 })
 
+/** A promo as the Offers page shows it: the code, what it does in words, the least spend and when it ends. */
+export const PublicOffer = z.strictObject({ code: z.string(), summary: z.string(), minSpend: Money.optional(), endsAt: IsoDate.optional() })
+/** @typedef {z.infer<typeof PublicOffer>} PublicOffer */
+
 export const promoRoutes = defineRoutes({
+  'promos.listPublic': { method: 'GET', path: '/offers', auth: 'public', cache: 'shared', response: z.strictObject({ items: z.array(PublicOffer) }) },
   'admin.promos.list': { method: 'GET', path: '/admin/promos', auth: 'staff', permission: 'promos:read', query: PromoListQuery, response: Page(AdminPromo) },
   'admin.promos.get': { method: 'GET', path: '/admin/promos/:id', auth: 'staff', permission: 'promos:read', params: IdParams, response: AdminPromo },
   'admin.promos.create': { method: 'POST', path: '/admin/promos', auth: 'staff', permission: 'promos:write', status: 201, body: PromoInput, response: AdminPromo },

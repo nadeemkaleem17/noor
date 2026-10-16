@@ -69,6 +69,7 @@
       "none": "Nothing matches “{q}”. Check the spelling, or try a more general word.",
       "close": "Close search"
     },
+    "offers": "Offers",
     "trackOrder": "آرڈر ٹریک کریں",
     "footerContact": "رابطہ",
     "footerPayments": "ادائیگی کے طریقے",
@@ -76,6 +77,15 @@
     "language": "زبان",
     "cartCount": "کارٹ، {count, plural, one {# چیز} other {# چیزیں}}",
     "sizeGuide": "سائز گائیڈ"
+  },
+  "offers": {
+    "intro": "Enter one of these codes in your bag before you check out.",
+    "how": "Only one code works on an order. Codes with a limit end when it is used up.",
+    "copy": "Copy code",
+    "copied": "Copied {code}",
+    "ends": "Ends {date}",
+    "none": "There are no offers right now",
+    "noneBody": "Offers come and go; have a look at what is new in the meantime."
   },
   "notFound": {
     "title": "یہ صفحہ نہیں ملا",
@@ -239,6 +249,7 @@
     "whatsapp": "واٹس ایپ پر پوچھیں",
     "whatsappText": "السلام علیکم، مجھے {title} کے بارے میں پوچھنا ہے ({url})",
     "share": "Share on WhatsApp",
+    "careGuide": "Fabric and care guide",
     "trustLabel": "Why shop here",
     "fitSummary": "{count} of {total} reviewers said it {fit, select, runs_small {runs small} true_to_size {fits true to size} runs_large {runs large} other {fits}}",
     "delivery": {
@@ -593,6 +604,8 @@
     "categories": "تمام زمرے",
     "collections": "تمام کلیکشنز",
     "categoriesDescription": "دکان کے تمام زمرے۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔",
+    "offers": "Offers",
+    "offersDescription": "Codes you can use at checkout: what each one gives and how to use it.",
     "collectionsDescription": "دکان کے تمام کلیکشنز۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔"
   }
 }

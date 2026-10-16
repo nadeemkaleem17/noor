@@ -225,6 +225,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     const items = Array.from({ length: n }, (_, i) => product(i + 1, i === 0 ? { badges: ['sale'], priceFrom: money(600000), compareAtFrom: money(800000) } : i === 1 ? { badges: ['new', 'bestseller'] } : i === 2 ? { stockStatus: 'sold_out', badges: ['sold_out', 'sale'] } : {}))
     return { items, total: n }
   }
+  if (p === '/api/v1/offers') return { items: [{ code: 'EID10', summary: '10% off, on orders over Rs. 5,000. Once per customer.', minSpend: money(500000), endsAt: '2099-12-31T00:00:00.000Z' }] }
   if (p === '/api/v1/search/suggest') return { products: [product(1)], total: 1, categories: [{ handle: 'women', name: 'Women' }], collections: [] }
   if (p === '/api/v1/collections') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', image }] }
   if (p === '/api/v1/content/menus/main') return { handle: 'main', items: [{ id: 'a', label: 'Women', href: '/c/women', children: [{ id: 'b', label: 'Lawn', href: '/c/lawn' }] }, { id: 'c', label: 'Evil', href: 'javascript:alert(1)' }] }
@@ -515,6 +516,25 @@ describe('the storefront through its whole stack', () => {
       expect(body.products).toHaveLength(1)
       expect(body.categories).toEqual([{ handle: 'women', name: 'Women' }])
       expect(await (await get('/search/suggest?q=a')).json()).toEqual({ products: [], total: 0, categories: [], collections: [] })
+    })
+  })
+
+  describe('offers, the FAQ and the trust row (M8-12)', () => {
+    it('the Offers page lists each public code with what it does; the footer links to it while there is one', async () => {
+      const html = await (await get('/offers')).text()
+      expect(html).toMatch(/<h1[^>]*>Offers</)
+      expect(html).toContain('EID10')
+      expect(html).toContain('10% off, on orders over Rs. 5,000. Once per customer.')
+      expect(html).toContain('Ends ')
+      const home = await (await get('/')).text()
+      expect(home).toMatch(/<a[^>]*href="\/offers"[^>]*>Offers</)
+    })
+
+    it('every page has the trust row in its footer: cash on delivery, returns, WhatsApp', async () => {
+      const html = await (await get('/pages/contact')).text()
+      expect(html).toContain('aria-label="Why shop here"')
+      expect(html.match(/aria-label="Why shop here"/g)).toHaveLength(1)
+      expect(html).toContain('7-day returns')
     })
   })
 

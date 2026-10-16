@@ -24,15 +24,17 @@ const unavailable = () => new Response('Service unavailable', { status: 503, hea
 /** @param {import('@noor/i18n').Locale} locale */
 export async function loadShell(locale) {
   try {
-    const [config, home, main, footer, categories, collections] = await Promise.all([
+    const [config, home, main, footer, categories, collections, offers] = await Promise.all([
       cached(`config:${locale}`, () => api('store.getConfig', { query: { locale } })),
       cached(`home:${locale}`, () => api('content.getHome', { query: { locale } })),
       cached(`menu:main:${locale}`, () => api('content.getMenu', { params: { handle: 'main' }, query: { locale } })),
       cached(`menu:footer:${locale}`, () => api('content.getMenu', { params: { handle: 'footer' }, query: { locale } })),
       cached(`categories:${locale}`, () => api('catalog.listCategories', { query: { locale } })),
       cached(`collections:${locale}`, () => api('catalog.listCollections', { query: { locale, featured: true, limit: 12 } })),
+      // the Offers page is linked from the footer only while there is an offer to show; a failure here is not a reason to lose the shop
+      cached('offers', () => api('promos.listPublic')).catch(() => ({ items: [] })),
     ])
-    return { config, home, menus: { main: main.items, footer: footer.items }, categories: categories.items, collections: collections.items }
+    return { config, home, menus: { main: main.items, footer: footer.items }, categories: categories.items, collections: collections.items, hasOffers: offers.items.length > 0 }
   } catch (e) {
     console.error('shell data could not be loaded', e)
     throw unavailable()

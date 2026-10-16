@@ -212,6 +212,7 @@ export function PromoDrawer({ promo, seed, onClose }) {
 
       <Checkbox label="Leave sale items out (lines with a compare-at price)" checked={form.excludeSaleItems} onCheckedChange={(v) => set({ excludeSaleItems: v })} />
       <Checkbox label="First order only" checked={form.firstOrderOnly} onCheckedChange={(v) => set({ firstOrderOnly: v })} />
+      <Checkbox label="Show on the shop's Offers page (everyone can see the code)" checked={form.public} onCheckedChange={(v) => set({ public: v })} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Uses in all" error={text(errors.usageLimit)} hint="Leave empty for no limit.">

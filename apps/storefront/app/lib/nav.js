@@ -68,7 +68,7 @@ export function navItems({ locale, mode, menu, categories, collections, labels }
 }
 
 /** The pages of the footer menu that answer a customer's question ("Help"); every other page goes under "Company". */
-const helpPages = new Set(['shipping-returns', 'contact'])
+const helpPages = new Set(['shipping-returns', 'contact', 'faq', 'care'])
 /** @param {NavItem} item */
 const pageSlug = (item) => /\/pages\/([^/?#]+)/.exec(item.href)?.[1]
 
@@ -80,10 +80,11 @@ const pageSlug = (item) => /\/pages\/([^/?#]+)/.exec(item.href)?.[1]
  * @param {CategoryTree[]} o.categories
  * @param {{ id: string, handle: string, title: string }[]} o.collections
  * @param {NavItem[]} o.pages the footer menu, already made safe
- * @param {{ new: string, sale: string, allCategories: string, allCollections: string, trackOrder: string, sizeGuide: string }} o.labels
+ * @param {boolean} [o.hasOffers] there is an offer to show: "Offers" is listed under Help
+ * @param {{ new: string, sale: string, allCategories: string, allCollections: string, trackOrder: string, sizeGuide: string, offers?: string }} o.labels
  * @returns {{ shop: NavItem[], collections: NavItem[], help: NavItem[], company: NavItem[] }}
  */
-export function footerColumns({ locale, categories, collections, pages, labels }) {
+export function footerColumns({ locale, categories, collections, pages, labels, hasOffers = false }) {
   const featured = collections.filter((c) => c.handle !== 'new-in' && c.handle !== 'sale')
   return {
     shop: [
@@ -98,6 +99,7 @@ export function footerColumns({ locale, categories, collections, pages, labels }
     help: [
       { id: 'track', label: labels.trackOrder, href: localePath(locale, '/track') },
       ...pages.filter((p) => helpPages.has(pageSlug(p) ?? '')),
+      ...(hasOffers && labels.offers ? [{ id: 'offers', label: labels.offers, href: localePath(locale, '/offers') }] : []),
       { id: 'size-guide', label: labels.sizeGuide, href: localePath(locale, '/size-guide') },
     ],
     company: pages.filter((p) => !helpPages.has(pageSlug(p) ?? '')),

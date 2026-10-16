@@ -120,6 +120,20 @@ describe.skipIf(!dbAvailable)('promos (MySQL, through HTTP)', () => {
       expect((await b.call('GET', '/admin/promos?sort=code')).body.items.map((/** @type {{ code: string }} */ p) => p.code)).toEqual(['FULL', 'LIVE', 'OFF', 'OLD', 'SOON'])
     }, 60_000)
 
+    it('the Offers page lists only promos staff made public that are on and open now, with the rule in words', async () => {
+      const { b } = await signedIn('owner')
+      const make = (/** @type {string} */ code, /** @type {object} */ over) => b.call('POST', '/admin/promos', { body: promo(code, over) })
+      expect((await make('HIDDEN', {})).body.public, 'a promo is private unless staff say so').toBe(false)
+      await make('SHOWN', { public: true, minSpend: pkr(500000), endsAt: '2099-12-31T00:00:00.000Z' })
+      await make('SOONPUB', { public: true, startsAt: '2099-01-01T00:00:00.000Z' })
+      await make('OFFPUB', { public: true, enabled: false })
+      await make('OLDPUB', { public: true, startsAt: '2020-01-01T00:00:00.000Z', endsAt: '2020-02-01T00:00:00.000Z' })
+      const r = await b.call('GET', '/offers')
+      expect(r.status).toBe(200)
+      expect(r.body.items).toEqual([{ code: 'SHOWN', summary: expect.stringContaining('10% off, on orders over Rs. 5,000.'), minSpend: pkr(500000), endsAt: '2099-12-31T00:00:00.000Z' }])
+      expect(r.headers['cache-control']).toContain('s-maxage')
+    }, 60_000)
+
     it('the code and type of a used promo are fixed; the rest can change; only an unused promo can be deleted', async () => {
       const { b } = await signedIn('owner')
       const used = (await b.call('POST', '/admin/promos', { body: promo('USED') })).body

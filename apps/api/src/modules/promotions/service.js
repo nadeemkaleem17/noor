@@ -122,6 +122,7 @@ export function createPromotionsService({ db }) {
         ...(p.startsAt ? { startsAt: iso(p.startsAt) } : {}),
         ...(p.endsAt ? { endsAt: iso(p.endsAt) } : {}),
         enabled: p.enabled,
+        public: p.isPublic,
         ...(p.note ? { note: p.note } : {}),
         status: promoStatus(p, at),
         usageCount: p.usageCount,
@@ -157,6 +158,7 @@ export function createPromotionsService({ db }) {
     startsAt: input.startsAt ? new Date(input.startsAt) : null,
     endsAt: input.endsAt ? new Date(input.endsAt) : null,
     enabled: input.enabled,
+    isPublic: input.public,
     note: input.note ?? null,
   })
 
@@ -187,6 +189,15 @@ export function createPromotionsService({ db }) {
     async list(query) {
       const { rows, total } = await repo.listPromos(db, query, now())
       return { items: await views(db, rows), total, page: query.page, size: query.size }
+    },
+
+    /** What the Offers page shows: promos staff made public that are switched on and whose window is open now. */
+    async listPublic() {
+      const at = now()
+      const rows = (await repo.publicRows(db)).filter((p) => promoStatus(p, at) === 'active')
+      return {
+        items: (await views(db, rows)).map((p) => ({ code: p.code, summary: p.summary, ...(p.minSpend ? { minSpend: p.minSpend } : {}), ...(p.endsAt ? { endsAt: p.endsAt } : {}) })),
+      }
     },
 
     /** @param {string} id */

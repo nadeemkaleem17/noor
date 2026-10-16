@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useSite } from '~/features/seo/use-site'
-import { breadcrumbLd } from '~/features/seo/jsonld'
+import { breadcrumbLd, faqLd } from '~/features/seo/jsonld'
 import { JsonLd } from '~/features/seo/json-ld'
 import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { data, redirect, useLoaderData } from 'react-router'
@@ -47,9 +47,10 @@ export default function Page() {
   const site = useSite()
   // the Urdu text is missing: the English one is shown, and said to be English
   const lang = page.locale !== locale ? page.locale : undefined
+  const faq = page.slug === 'faq' ? faqLd(page.bodyMd) : undefined // the questions of a FAQ page, as structured data
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      {site ? <JsonLd data={breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, { name: page.title }])} /> : null}
+      {site ? <JsonLd data={[breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, { name: page.title }]), ...(faq ? [faq] : [])]} /> : null}
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: page.title }]} renderLink={asRouterLink} />
       <h1 className="mt-3 font-heading text-h1" {...(lang ? { lang } : {})}>{page.title}</h1>
       <div className="max-w-[65ch]" {...(lang ? { lang, dir: lang === 'ur' ? 'rtl' : 'ltr' } : {})}>

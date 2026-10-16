@@ -9,6 +9,7 @@ const pages = (id) => [
     route('c/:handle', 'routes/category.jsx', { id: `category${id}` }),
     route('categories', 'routes/categories.jsx', { id: `categories${id}` }),
     route('collections', 'routes/collections.jsx', { id: `collections${id}` }),
+    route('offers', 'routes/offers.jsx', { id: `offers${id}` }),
     route('collections/:handle', 'routes/collection.jsx', { id: `collection${id}` }),
     route('new', 'routes/new.jsx', { id: `new${id}` }),
     route('sale', 'routes/sale.jsx', { id: `sale${id}` }),

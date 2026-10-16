@@ -10,6 +10,7 @@ export function promotionsHandlers(s) {
   const info = (http, requestId) => ({ ip: http.ip, userAgent: http.userAgent, requestId })
 
   return {
+    'promos.listPublic': async () => s.listPublic(),
     'admin.promos.list': async ({ query }) => s.list(query),
     'admin.promos.get': async ({ params }) => s.get(params.id),
     'admin.promos.create': async ({ actor, body, http, requestId }) => s.create(staff(actor), body, info(http, requestId)),

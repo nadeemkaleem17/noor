@@ -344,7 +344,13 @@ export function createShippingService({ db }) {
       const thresholds = enabled.flatMap((m) => (m.freeAboveMinor === null ? [] : [m.freeAboveMinor]))
       const freeAbove = thresholds.length ? Math.min(...thresholds) : undefined
       const fee = Math.min(...cheapest.map((m) => m.feeMinor))
+      // the Shipping page lists each zone with what it costs, so the page never types a fee twice ({{shipping.table}})
+      const zoneNames = new Map((await repo.allZones(db)).map((z) => [z.id, z.name]))
+      const table = cheapest
+        .map((m) => `- **${zoneNames.get(m.zoneId) ?? 'Delivery'}:** ${m.feeMinor === 0 ? 'free' : rs(m.feeMinor)}, ${m.etaMinDays} to ${m.etaMaxDays} days${m.freeAboveMinor === null ? '' : `, free over ${rs(m.freeAboveMinor)}`}`)
+        .join('\n')
       return {
+        table,
         ...(freeAbove === undefined ? {} : { freeAboveFrom: money(freeAbove), freeAbove: rs(freeAbove) }),
         defaultEta: { minDays: Math.min(...cheapest.map((m) => m.etaMinDays)), maxDays: Math.max(...cheapest.map((m) => m.etaMaxDays)) },
         codAvailable: cheapest.some((m) => m.codAllowed),

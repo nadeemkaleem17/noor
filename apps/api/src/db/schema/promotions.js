@@ -27,6 +27,8 @@ export const promos = mysqlTable(
     startsAt: utc('starts_at'),
     endsAt: utc('ends_at'),
     enabled: boolean('enabled').notNull().default(true),
+    /** Listed on the shop's Offers page (the code is shown to everyone). */
+    isPublic: boolean('is_public').notNull().default(false),
     note: varchar('note', { length: 300 }),
     version: int('version').notNull().default(1),
     createdAt: utc('created_at').notNull(),

@@ -38,6 +38,9 @@ export async function listPromos(db, { q, status, type, sort, page, size }, at) 
   return { rows, total: total[0]?.n ?? 0 }
 }
 
+/** Promos staff chose to show on the Offers page and that are switched on; the caller keeps the ones whose window is open. @param {Db} db */
+export const publicRows = (db) => db.select().from(promos).where(and(eq(promos.isPublic, true), eq(promos.enabled, true))).orderBy(asc(promos.createdAt))
+
 /** @param {Db} db @param {string} id */
 export const findById = async (db, id) => (await db.select().from(promos).where(eq(promos.id, id)))[0]
 /** @param {Db} db @param {string} id */

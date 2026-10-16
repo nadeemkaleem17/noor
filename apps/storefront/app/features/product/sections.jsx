@@ -73,6 +73,7 @@ export function InfoSections({ product: p, descriptionHtml }) {
             </dl>
           ) : null}
           {p.care.length ? <ul className="mt-2 list-disc ps-5">{p.care.map((c) => <li key={c}>{c}</li>)}</ul> : null}
+          <p className="mt-2"><RouterLink to={path('/pages/care')} className="underline underline-offset-4">{t('pdp.careGuide')}</RouterLink></p>
         </Section>
       ) : null}
       <Section title={t('pdp.sections.delivery')}>

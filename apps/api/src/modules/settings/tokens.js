@@ -1,7 +1,7 @@
 // Placeholders in page text (plan/06-storefront/08-cms-pages.md section 2): policy copy says {{shipping.fee}} and the number comes from
 // settings, so a price is never typed twice. Unknown tokens become nothing, never raw braces.
 
-/** @typedef {{ freeAbove?: string, fee?: string }} ShippingFacts ready-to-print amounts, e.g. "Rs. 3,000" */
+/** @typedef {{ freeAbove?: string, fee?: string, table?: string }} ShippingFacts ready-to-print amounts, e.g. "Rs. 3,000"; `table` is a Markdown list, one line for each delivery zone */
 
 /** A WhatsApp number is kept as digits (923001234567); a page prints it the way a person reads a number: +92 300 1234567. Anything else is printed as it is. @param {string | undefined} digits */
 const readable = (digits) => {
@@ -23,6 +23,7 @@ export function resolveTokens(text, store, shipping) {
     'store.address': store.contact.address,
     'shipping.freeAbove': shipping.freeAbove,
     'shipping.fee': shipping.fee,
+    'shipping.table': shipping.table,
     'returns.days': store.policies.returnsDays === undefined ? undefined : String(store.policies.returnsDays),
   }
   return text.replace(/\{\{\s*([A-Za-z]+\.[A-Za-z]+)\s*\}\}/g, (_, name) => values[name] ?? '')

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
 import { Link } from '@noor/ui/link'
 import { safeHref } from '@noor/ui/safe-href'
+import { TrustPoints } from './trust-points'
 import { Ltr } from '@noor/ui/ltr'
 
 /** A line of text is about 20 px tall: WCAG 2.2 (2.5.8) wants a target of 24 px, so these links are padded to it. */
@@ -57,6 +58,11 @@ export function Footer({ brand, about, columns, contact, payments, languageSwitc
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+      <div className="border-t border-line">
+        <div className="mx-auto max-w-7xl px-4 py-5">
+          <TrustPoints row whatsappHref={whatsapp} />
         </div>
       </div>
       <div className="border-t border-line">

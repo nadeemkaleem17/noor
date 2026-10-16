@@ -22,20 +22,21 @@ import { fromLocalInput, toLocalInput } from '@/lib/dates'
  * @property {string} startsAt - a `datetime-local` value, Pakistan time
  * @property {string} endsAt
  * @property {boolean} enabled
+ * @property {boolean} public - listed on the shop's Offers page
  * @property {string} note
  */
 
 /** A new promo: ten percent off everything, once per customer, sale items left out. @returns {PromoForm} */
 export const emptyForm = () => ({
   code: '', type: 'percent', percent: 10, amount: null, maxDiscount: null, minSpend: null, scope: 'all', targetIds: [], excludeSaleItems: true, firstOrderOnly: false,
-  usageLimit: null, perCustomerLimit: 1, startsAt: '', endsAt: '', enabled: true, note: '',
+  usageLimit: null, perCustomerLimit: 1, startsAt: '', endsAt: '', enabled: true, public: false, note: '',
 })
 
 /** @param {import('@noor/contract').AdminPromo} p @returns {PromoForm} */
 export const toForm = (p) => ({
   code: p.code, type: p.type, percent: p.percent ?? null, amount: p.amount ?? null, maxDiscount: p.maxDiscount ?? null, minSpend: p.minSpend ?? null, scope: p.scope, targetIds: p.targetIds ?? [],
   excludeSaleItems: p.excludeSaleItems, firstOrderOnly: p.firstOrderOnly, usageLimit: p.usageLimit ?? null, perCustomerLimit: p.perCustomerLimit ?? null,
-  startsAt: toLocalInput(p.startsAt), endsAt: toLocalInput(p.endsAt), enabled: p.enabled, note: p.note ?? '',
+  startsAt: toLocalInput(p.startsAt), endsAt: toLocalInput(p.endsAt), enabled: p.enabled, public: p.public, note: p.note ?? '',
 })
 
 /** What the API takes: only the fields that belong to the type and the scope, nothing empty. @param {PromoForm} f */
@@ -56,6 +57,7 @@ export function toBody(f) {
     ...(fromLocalInput(f.startsAt) ? { startsAt: fromLocalInput(f.startsAt) } : {}),
     ...(fromLocalInput(f.endsAt) ? { endsAt: fromLocalInput(f.endsAt) } : {}),
     enabled: f.enabled,
+    public: f.public,
     ...(f.note.trim() ? { note: f.note.trim() } : {}),
   })
 }

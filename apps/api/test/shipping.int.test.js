@@ -198,6 +198,11 @@ describe.skipIf(!dbAvailable)('shipping (MySQL, through HTTP)', () => {
       expect((await publicGet('/store/config')).json().shipping).toEqual({ freeAboveFrom: pkr(5000), defaultEta: { minDays: 3, maxDays: 7 } })
       await b.call('POST', '/admin/pages', { body: { title: 'Shipping', slug: 'shipping', bodyMd: 'From {{shipping.fee}}, free over {{shipping.freeAbove}}.', status: 'active' } })
       expect((await publicGet('/content/pages/shipping')).json().bodyMd).toBe('From Rs. 250, free over Rs. 5,000.')
+      // a list of the zones with their own fee, days and threshold, for the Shipping page
+      await b.call('POST', '/admin/pages', { body: { title: 'Rates', slug: 'rates', bodyMd: '{{shipping.table}}', status: 'active' } })
+      const rates = (await publicGet('/content/pages/rates')).json().bodyMd
+      expect(rates).toContain('- **A:** Rs. 250, 3 to 5 days, free over Rs. 5,000')
+      expect(rates).toContain('- **B:** Rs. 350, 4 to 7 days, free over Rs. 8,000')
     }, 60_000)
   })
 
