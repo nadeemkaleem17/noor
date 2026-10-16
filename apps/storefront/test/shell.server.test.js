@@ -21,6 +21,7 @@ const config = () =>
     priceDisplay: { showDecimals: false, rounding: 'none' },
     locale: { default: 'en', supported: state.ur ? ['en', 'ur'] : ['en'] },
     features: { wishlist: state.wishlist, reviews: true, notifyMe: true, customSizing: true },
+    popularSearches: ['lawn', 'kurta'],
     policies: { returnsDays: 7 },
     payments: [{ type: 'cod', label: 'Cash on delivery' }],
     shipping: { dispatchPromise: 'Dispatched within 2 days' },
@@ -222,6 +223,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     const items = Array.from({ length: n }, (_, i) => product(i + 1, i === 0 ? { badges: ['sale'], priceFrom: money(600000), compareAtFrom: money(800000) } : i === 1 ? { badges: ['new', 'bestseller'] } : i === 2 ? { stockStatus: 'sold_out', badges: ['sold_out', 'sale'] } : {}))
     return { items, total: n }
   }
+  if (p === '/api/v1/search/suggest') return { products: [product(1)], total: 1, categories: [{ handle: 'women', name: 'Women' }], collections: [] }
   if (p === '/api/v1/collections') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', image }] }
   if (p === '/api/v1/content/menus/main') return { handle: 'main', items: [{ id: 'a', label: 'Women', href: '/c/women', children: [{ id: 'b', label: 'Lawn', href: '/c/lawn' }] }, { id: 'c', label: 'Evil', href: 'javascript:alert(1)' }] }
   if (p === '/api/v1/content/menus/footer') return { handle: 'footer', items: [{ id: 'f', label: 'Shipping', href: '/pages/shipping' }] }
@@ -474,6 +476,19 @@ describe('the storefront through its whole stack', () => {
       expect(html).toContain('No results for “nothing”')
       expect(html).toContain('https://wa.me/923001234567?text=nothing')
       expect(html.match(/<article/g)).toHaveLength(4)
+      expect(html).toMatch(/<input[^>]*name="q"[^>]*value="nothing"/) // the words stay in the box
+      expect(html).toContain('href="/search?q=lawn"') // the popular searches staff keep
+      expect(html).toContain('Popular searches')
+    })
+
+    it('the suggestions come through the shop itself, private and not kept, and a short text asks nothing', async () => {
+      const r = await get('/search/suggest?q=lawn')
+      expect(r.status).toBe(200)
+      expect(r.headers.get('cache-control')).toContain('no-store')
+      const body = await r.json()
+      expect(body.products).toHaveLength(1)
+      expect(body.categories).toEqual([{ handle: 'women', name: 'Women' }])
+      expect(await (await get('/search/suggest?q=a')).json()).toEqual({ products: [], total: 0, categories: [], collections: [] })
     })
   })
 

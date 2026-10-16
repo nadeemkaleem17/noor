@@ -41,6 +41,8 @@ export const StoreSettings = z.strictObject({
   features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean() }),
   /** How the shop's navigation bar is made: from the categories and collections (default) or from the menu staff wrote (menu `main`). */
   navigation: z.strictObject({ mode: z.enum(['automatic', 'custom']) }).default({ mode: 'automatic' }),
+  /** Words shown under the search box before anyone has typed (DOC-06.11 section 5.2): up to 8, in the order staff wrote them. */
+  popularSearches: z.array(z.string().trim().min(2).max(40)).max(8).default([]),
   policies: z.strictObject({
     returnsDays: z.int().min(0).max(90).optional(),
     returns: text(300).optional(),
@@ -173,6 +175,7 @@ export const StoreConfigPublic = z.strictObject({
   locale: z.strictObject({ default: Locale, supported: z.array(Locale) }),
   features: StoreSettings.shape.features,
   navigation: StoreSettings.shape.navigation,
+  popularSearches: StoreSettings.shape.popularSearches,
   policies: StoreSettings.shape.policies,
   payments: z.array(z.strictObject({ type: Enum.paymentMethod, label: z.string(), description: z.string().optional() })),
   shipping: z.strictObject({

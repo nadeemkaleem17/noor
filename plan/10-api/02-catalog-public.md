@@ -21,6 +21,7 @@ All endpoints: auth `public`; `Cache-Control: public, s-maxage=60, stale-while-r
 
 | Key | Method & path | Request | Response | Errors | Notes |
 |---|---|---|---|---|---|
+| `catalog.suggest` | `GET /search/suggest` | Q: `q` (2 to 80 characters), `locale` | 200 `Suggestions` (at most 5 products as `ProductSummary`, the total, up to 3 categories and 3 collections whose name contains `q`) | `validation_failed` | Bucket `search`, `Cache-Control: private, no-store`. What the search box offers while typing (DOC-06.11 section 5.2) |
 | `catalog.listProducts` | `GET /products` | Q: `ListingQuery` | 200 `ProductListing` | `not_found` (unknown category/collection handle) | Bucket `default` (`search` when `q` is set, and then `Cache-Control: private, no-store`). Tags `listing`, `category:<id>` or `collection:<id>` |
 | `catalog.getProduct` | `GET /products/:handleOrId` | P; Q: `preview?` (signed token, DOC-11 §9) | 200 `ProductDetail` or 200 `{ redirectTo: string }` (old handle) | `not_found` (draft, archived, unknown) | Tag `product:<handle>`. With a valid `preview` token: any status, `no-store` |
 | `catalog.listRelated` | `GET /products/:id/related` | Q: `limit?` (4–8, default 8) | 200 `{ items: ProductSummary[] }` | `not_found` | `relatedIds` first, then same primary category by `sales_count` |

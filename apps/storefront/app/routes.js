@@ -13,6 +13,7 @@ const pages = (id) => [
     route('new', 'routes/new.jsx', { id: `new${id}` }),
     route('sale', 'routes/sale.jsx', { id: `sale${id}` }),
     route('search', 'routes/search.jsx', { id: `search${id}` }),
+    route('search/suggest', 'routes/search-suggest.js', { id: `search-suggest${id}` }),
     route('p/:handle', 'routes/product.jsx', { id: `product${id}` }),
     route('reviews/:id', 'routes/reviews.js', { id: `reviews${id}` }),
     route('recent', 'routes/recent.js', { id: `recent${id}` }),

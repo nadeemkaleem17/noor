@@ -291,6 +291,30 @@ function FeaturesCard({ doc }) {
   )
 }
 
+/** Words shown under the search box before anyone has typed: one a line, up to 8. @param {{ doc: any; }} props */
+function PopularSearchesCard({ doc }) {
+  const save = useSaveStoreSlice()
+  /** @param {string} text */
+  const lines = (text) => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+  return (
+    <SettingsCard
+      id="popular-searches"
+      title="Popular searches"
+      defaults={{ popularSearchesText: (doc.value.popularSearches ?? []).join('\n') }}
+      schema={StoreSettings.pick({ popularSearches: true })}
+      toValue={(f) => ({ popularSearches: lines(f.popularSearchesText) })}
+      errorPath={() => 'popularSearchesText'}
+      save={(slice) => save.mutateAsync(slice)}
+    >
+      {(form, writable) => (
+        <RHFField control={form.control} name="popularSearchesText" label="Words to suggest" hint="One a line, up to 8. Shown under the search box before a customer types, for example: lawn, kurta, bridal.">
+          {(field) => <Textarea {...field} rows={4} readOnly={!writable} />}
+        </RHFField>
+      )}
+    </SettingsCard>
+  )
+}
+
 /** How the shop's navigation bar is made: from the categories and collections, or from the menu written under Content, Menus. @param {{ doc: any; }} props */
 function NavigationCard({ doc }) {
   const save = useSaveStoreSlice()
@@ -433,6 +457,7 @@ export function StorePage() {
         <LanguagesCard doc={store.data} />
         <FeaturesCard doc={store.data} />
         <NavigationCard doc={store.data} />
+        <PopularSearchesCard doc={store.data} />
         <CheckoutCard doc={checkout.data} />
         <PoliciesCard doc={store.data} />
         <SeoCard doc={store.data} />

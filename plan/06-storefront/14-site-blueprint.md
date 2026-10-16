@@ -52,9 +52,9 @@ Research: only 19% of shops get autocomplete right; its value is guiding shopper
 | ID | Requirement | Pri | Today | Basis |
 |---|---|---|---|---|
 | SR-01 | Search field in the header (inline on wide screens, full-width overlay on phones); plain GET form to `/search` without JavaScript | M | P | DW |
-| SR-02 | Suggestions: up to 5 products (picture, name, price), matching categories and collections, "See all N results for ..." | M | N | BM, DW |
-| SR-03 | Keyboard and screen reader: arrows, Enter, Escape, `aria-activedescendant`, live result count, 150 ms debounce, cancel in-flight requests, cache by normalised query | M | N | DW, AP |
-| SR-04 | Empty field shows recent searches (this browser only, deletable) and popular searches (staff-curated list) | M | N | BM |
+| SR-02 | Suggestions: up to 5 products (picture, name, price), matching categories and collections, "See all N results for ..." | M | Y | BM, DW |
+| SR-03 | Keyboard and screen reader: arrows, Enter, Escape, `aria-activedescendant`, live result count, 150 ms debounce, cancel in-flight requests, cache by normalised query | M | Y | DW, AP |
+| SR-04 | Empty field shows recent searches (this browser only, deletable) and popular searches (staff-curated list) | M | Y | BM |
 | SR-05 | Matches SKUs and handles first; handles typos and synonyms (exists server side) | M | Y | OW |
 | SR-06 | Results page: count, sort, the same filters as a listing, category chips to narrow, "did you mean" | M | P | BM |
 | SR-07 | No-results page: the query kept in the box, suggestions, top categories, popular searches, WhatsApp us; zero-result queries logged (exists) | M | P | BM |

@@ -172,6 +172,7 @@ catalog.listProducts
 catalog.listRelated
 catalog.listSizeCharts
 catalog.subscribeBackInStock
+catalog.suggest
 content.getHome
 content.getMenu
 content.getPage

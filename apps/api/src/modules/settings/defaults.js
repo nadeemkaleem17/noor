@@ -12,6 +12,7 @@ export const defaults = {
     locale: { default: 'en', supported: ['en'] },
     features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false },
     navigation: { mode: 'automatic' },
+    popularSearches: [],
     policies: {},
     seo: {},
     notifications: { staffEmails: [] },

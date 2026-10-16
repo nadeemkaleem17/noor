@@ -392,6 +392,7 @@ export function createSettingsService({ db, config, media, shippingFacts = async
         locale: store.locale,
         features: store.features,
         navigation: store.navigation ?? { mode: 'automatic' },
+        popularSearches: store.popularSearches ?? [],
         policies: store.policies,
         payments: payments.methods
           .filter((/** @type {{ enabled: boolean }} */ m) => m.enabled)

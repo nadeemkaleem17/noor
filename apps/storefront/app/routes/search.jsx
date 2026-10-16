@@ -35,6 +35,25 @@ export const meta = /** @type {import('./+types/search').Route.MetaFunction} */ 
   return buildMeta({ site, title: titleOf(data?.q ? `${name}: ${data.q}` : name, data?.brand ?? ''), robots: 'noindex,follow' })
 })
 
+/** The words staff keep in the Store settings, as links that search for them. @param {{ words: readonly string[] }} props */
+function PopularWords({ words }) {
+  const { t } = useTranslation('storefront')
+  const path = useLocalePath()
+  if (!words.length) return null
+  return (
+    <>
+      <h2 className="mt-8 font-heading text-xl">{t('shell.suggest.popular')}</h2>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {words.map((w) => (
+          <li key={w}>
+            <RouterLink to={path(`/search?q=${encodeURIComponent(w)}`)} className="inline-flex min-h-9 items-center rounded-full border border-line-strong px-4 text-sm hover:bg-surface-2">{w}</RouterLink>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
 export default function Search() {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
@@ -51,6 +70,7 @@ export default function Search() {
           <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">{t('shell.searchSubmit')}</button>
         </form>
         {q ? <p className="mt-2 text-sm text-fg-soft">{t('listing.search.short')}</p> : null}
+        <PopularWords words={shell?.config.popularSearches ?? []} />
         {shell?.categories.length ? (
           <>
             <h2 className="mt-8 font-heading text-xl">{t('listing.search.popular')}</h2>
@@ -70,11 +90,29 @@ export default function Search() {
   const whatsapp = shell?.config.contact.whatsapp
   const zero = (
     <>
+      <form role="search" method="get" action={path('/search')} className="mb-6 flex gap-2">
+        <label className="sr-only" htmlFor="q">{t('shell.searchLabel')}</label>
+        <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
+        <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">{t('shell.searchSubmit')}</button>
+      </form>
       <EmptyState
         title={t('listing.search.zeroTitle', { q })}
         body={t('listing.search.tips')}
         action={whatsapp ? <LinkButton href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(q)}`} variant="secondary">{t('listing.search.whatsapp')}</LinkButton> : undefined}
       />
+      <PopularWords words={shell?.config.popularSearches ?? []} />
+      {shell?.categories.length ? (
+        <>
+          <h2 className="mt-8 font-heading text-xl">{t('listing.search.popular')}</h2>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {shell.categories.map((c) => (
+              <li key={c.id}>
+                <RouterLink to={path(`/c/${c.handle}`)} className="inline-flex min-h-9 items-center rounded-full border border-line-strong px-4 text-sm hover:bg-surface-2">{c.name}</RouterLink>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
       {newest.length ? (
         <section aria-labelledby="search-new" className="mt-6">
           <h2 id="search-new" className="mb-4 font-heading text-xl">{t('listing.new')}</h2>

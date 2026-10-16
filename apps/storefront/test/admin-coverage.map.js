@@ -35,6 +35,7 @@ export const storeSettings = {
   'features.reviews': ['shown', 'features.reviews'],
   'features.notifyMe': ['shown', 'features.notifyMe'],
   'features.customSizing': ['shown', 'features.customSizing'],
+  'popularSearches[]': ['shown', 'popularSearches'],
   'navigation.mode': ['shown', 'navigation'],
   'policies.returnsDays': ['shown', 'returnsDays'],
   'policies.returns': ['not-shown', 'policies.returns', 'M8-06: the "Delivery and returns" section of the product page'],

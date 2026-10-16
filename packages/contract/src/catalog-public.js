@@ -172,12 +172,22 @@ export const SitemapEntry = z.strictObject({
   type: z.enum(['home', 'category', 'collection', 'product', 'page', 'facet']),
 })
 
+/** What the search box offers while someone types (DOC-06.11 section 5.2): a few products, the categories and collections whose name matches, and how many results the full page has. */
+export const Suggestions = z.strictObject({
+  products: z.array(ProductSummary),
+  total: z.int(),
+  categories: z.array(z.strictObject({ handle: z.string(), name: z.string() })),
+  collections: z.array(z.strictObject({ handle: z.string(), title: z.string() })),
+})
+/** @typedef {z.infer<typeof Suggestions>} Suggestions */
+
 const Redirect = z.strictObject({ redirectTo: z.string() })
 const HandleParams = z.strictObject({ handle: z.string().min(1).max(80) })
 const IdParams = z.strictObject({ id: Id })
 
 export const catalogPublicRoutes = defineRoutes({
   'catalog.listProducts': { method: 'GET', path: '/products', auth: 'public', cache: 'shared', query: ListingQuery, response: ProductListing },
+  'catalog.suggest': { method: 'GET', path: '/search/suggest', auth: 'public', cache: 'shared', query: LocaleQuery.safeExtend({ q: z.string().trim().min(2).max(80) }), response: Suggestions },
   'catalog.getProduct': {
     method: 'GET', path: '/products/:handleOrId', auth: 'public', cache: 'shared',
     params: z.strictObject({ handleOrId: z.string().min(1).max(80) }),

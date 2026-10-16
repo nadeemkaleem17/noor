@@ -276,6 +276,23 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       expect((await app.inject({ url: '/api/v1/products?facets=0', remoteAddress: ip })).statusCode, 'plain listings are another bucket').toBe(200)
     }, 120_000)
 
+    it('suggestions: a few products, the categories whose name matches, how many results there are; never cached; the same bucket as search', async () => {
+      const { createSearch } = await import('../src/modules/search/index.js')
+      const search = createSearch({ db: t.db })
+      await search.seedSynonyms()
+      for (const p of [d.kurtaRed, d.kurtaBlue, d.silk]) await search.reindexProduct(p.id)
+      const r = await get('/search/suggest?q=kurta')
+      expect(r.statusCode).toBe(200)
+      expect(r.headers['cache-control']).toBe('private, no-store')
+      const body = r.json()
+      expect(body.products.map((/** @type {{ handle: string }} */ p) => p.handle).sort()).toEqual(['cotton-kurta', 'cotton-kurta-blue'])
+      expect(body.total).toBe(2)
+      expect(body.products[0].primaryImage).toBeTruthy()
+      expect((await json('/search/suggest?q=wom')).categories.map((/** @type {{ handle: string }} */ c) => c.handle)).toContain('women')
+      expect((await get('/search/suggest?q=k')).statusCode, 'one letter is refused').toBe(400)
+      expect((await json('/search/suggest?q=zzzzzz'))).toMatchObject({ products: [], total: 0, categories: [], collections: [] })
+    }, 120_000)
+
     it('relevance orders by the better match and pages by offset', async () => {
       const { createSearch } = await import('../src/modules/search/index.js')
       await createSearch({ db: t.db }).reindexAll()

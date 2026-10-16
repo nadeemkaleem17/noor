@@ -1,5 +1,5 @@
 import { ChevronDown, Menu as MenuIcon, Search } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
 import { CartLink } from '../cart/cart-link'
@@ -10,6 +10,7 @@ import { useLocalePath } from './use-shell'
 /** @typedef {import('~/lib/nav').NavItem} NavItem */
 
 const MenuDrawer = lazy(() => import('./menu-drawer'))
+const SearchPanel = lazy(() => import('./search-panel'))
 
 const iconButton = 'grid size-11 place-items-center rounded-control text-fg hover:bg-surface-2'
 const linkClass = 'rounded-control px-3 py-2 text-fg hover:bg-surface-2'
@@ -190,6 +191,7 @@ export function Header({ brand, logo, items, wishlist, bar = { layout: 'left', s
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const [searching, setSearching] = useState(false)
+  const searchButton = useRef(/** @type {HTMLAnchorElement | null} */ (null))
   const away = useScrolledAway(bar.sticky)
   const centre = bar.layout === 'center'
 
@@ -211,6 +213,7 @@ export function Header({ brand, logo, items, wishlist, bar = { layout: 'left', s
             {t('shell.trackOrder')}
           </RouterLink>
           <RouterLink
+            ref={searchButton}
             to={path('/search')}
             aria-label={t('shell.search')}
             aria-expanded={searching}
@@ -227,17 +230,14 @@ export function Header({ brand, logo, items, wishlist, bar = { layout: 'left', s
         </div>
       </div>
       {searching ? (
-        <form role="search" method="get" action={path('/search')} className="border-t border-line bg-surface">
-          <div className="mx-auto flex max-w-7xl gap-2 px-4 py-3">
-            <label className="sr-only" htmlFor="shop-search">
-              {t('shell.searchLabel')}
-            </label>
-            <input id="shop-search" name="q" type="search" required minLength={2} maxLength={80} autoFocus placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
-            <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">
-              {t('shell.searchSubmit')}
-            </button>
-          </div>
-        </form>
+        <Suspense fallback={null}>
+          <SearchPanel
+            onClose={() => {
+              setSearching(false)
+              searchButton.current?.focus()
+            }}
+          />
+        </Suspense>
       ) : null}
     </header>
   )
