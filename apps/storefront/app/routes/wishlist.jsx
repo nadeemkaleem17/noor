@@ -59,7 +59,7 @@ export default function Wishlist() {
   const shown = hydrated ? items.filter((/** @type {{ id: string }} */ p) => saved.includes(p.id.toLowerCase())) : items
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="font-heading text-3xl">{t('wishlist.title', { count: shown.length })}</h1>
+      <h1 className="font-heading text-h1">{t('wishlist.title', { count: shown.length })}</h1>
       {shown.length === 0 ? (
         <EmptyState
           title={t('wishlist.empty')}

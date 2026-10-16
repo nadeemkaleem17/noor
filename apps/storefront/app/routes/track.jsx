@@ -34,7 +34,7 @@ export default function Track() {
   const navigation = useNavigation()
   return (
     <div className="mx-auto max-w-md px-4 py-8">
-      <h1 className="font-heading text-3xl">{t('track.title')}</h1>
+      <h1 className="font-heading text-h1">{t('track.title')}</h1>
       <Form method="post" action={path('/track')} className="mt-6 flex flex-col gap-4">
         <Field label={t('track.orderNumber')} required hint={t('track.orderNumberHint')}>
           <Input name="orderNumber" required maxLength={40} autoCapitalize="characters" autoComplete="off" placeholder="RB-10458" defaultValue={result?.orderNumber ?? ''} dir="ltr" />

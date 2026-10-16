@@ -12,7 +12,7 @@ export function WishlistLink({ className }) {
   return (
     <RouterLink to={path('/wishlist')} aria-label={count ? t('wishlist.linkCount', { count }) : t('shell.wishlist')} className={`relative ${className}`}>
       <Heart aria-hidden="true" className="size-6" />
-      {count ? <span aria-hidden="true" className="absolute end-0.5 top-0.5 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-xs font-medium text-on-accent">{count}</span> : null}
+      {count ? <span aria-hidden="true" className="absolute end-0.5 top-0.5 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-caption font-medium text-on-accent">{count}</span> : null}
     </RouterLink>
   )
 }

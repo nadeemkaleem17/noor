@@ -36,6 +36,7 @@ async function shot(page, name, mask = []) {
 
 const plain = /** @type {const} */ ([
   ['home', '/'],
+  ['design-specimen', '/design'],
   ['category-landing', '/c/women'],
   ['category-leaf', '/c/stitched'],
   ['search-results', '/search?q=kurta'],

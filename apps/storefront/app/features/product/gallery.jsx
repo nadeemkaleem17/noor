@@ -51,7 +51,7 @@ export function Gallery({ media, title, focusValue }) {
           className="flex snap-x snap-mandatory overflow-x-auto rounded-media [scrollbar-width:none] focus-visible:outline-2 [&::-webkit-scrollbar]:hidden"
         >
           {media.map((m, i) => (
-            <div key={m.id} id={`${id}-${i}`} className="w-full shrink-0 snap-center" aria-roledescription="slide" aria-label={`${i + 1} / ${media.length}`}>
+            <div key={m.id} id={`${id}-${i}`} className="w-full shrink-0 snap-center" aria-roledescription="slide" aria-label={`${i + 1} / ${media.length}`} style={i === 0 ? { viewTransitionName: 'product-image' } : undefined}>
               {m.kind === 'video' && m.videoSrc ? (
                 <video controls muted playsInline preload="none" poster={m.src} src={m.videoSrc} className="aspect-3/4 w-full bg-surface-2 object-cover" aria-label={alt(m, i)} />
               ) : (

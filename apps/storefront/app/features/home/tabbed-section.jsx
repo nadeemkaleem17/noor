@@ -42,7 +42,7 @@ export function TabbedSection({ id, title, href, sort, items, categories }) {
   return (
     <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby={id}>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        <h2 id={id} className="font-heading text-2xl">
+        <h2 id={id} className="font-heading text-h2">
           {title}
         </h2>
         <RouterLink to={path(tabHref(active))} className="text-sm underline underline-offset-4">

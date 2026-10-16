@@ -35,14 +35,14 @@ export default function CollectionsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: t('seo.collections') }]} renderLink={asRouterLink} />
-      <h1 className="mt-3 font-heading text-3xl">{t('seo.collections')}</h1>
+      <h1 className="mt-3 font-heading text-h1">{t('seo.collections')}</h1>
       {collections.length ? (
         <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {collections.map((/** @type {{ id: string, handle: string, title: string, image?: import('@noor/contract').Image }} */ c) => (
             <li key={c.id}>
               <RouterLink to={path(`/collections/${c.handle}`)} className="group block">
                 {c.image ? <Image {...imageProps(c.image)} alt="" sizes="(min-width:1024px) 30vw, (min-width:640px) 45vw, 100vw" ratio="3 / 2" className="w-full rounded-media" /> : null}
-                <span className="mt-3 block font-heading text-xl group-hover:underline">{c.title}</span>
+                <span className="mt-3 block font-heading text-h3 group-hover:underline">{c.title}</span>
               </RouterLink>
             </li>
           ))}

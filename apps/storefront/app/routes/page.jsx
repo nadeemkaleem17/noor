@@ -51,7 +51,7 @@ export default function Page() {
     <div className="mx-auto max-w-3xl px-4 py-6">
       {site ? <JsonLd data={breadcrumbLd(site, [{ name: t('listing.home'), path: '/' }, { name: page.title }])} /> : null}
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: page.title }]} renderLink={asRouterLink} />
-      <h1 className="mt-3 font-heading text-3xl" {...(lang ? { lang } : {})}>{page.title}</h1>
+      <h1 className="mt-3 font-heading text-h1" {...(lang ? { lang } : {})}>{page.title}</h1>
       <div className="max-w-[65ch]" {...(lang ? { lang, dir: lang === 'ur' ? 'rtl' : 'ltr' } : {})}>
         <RichText html={bodyHtml} />
         {page.slug === 'contact' ? <ContactDetails /> : null}

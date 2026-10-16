@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router'
+import { Link as RouterLink, useViewTransitionState } from 'react-router'
 import { Image, imageProps } from '@noor/ui/image'
 import { Price } from '@noor/ui/price'
 import { useLocalePath, useShell } from '../layout/use-shell'
@@ -61,11 +61,14 @@ export function ProductCard({ product: p, priority = false }) {
   const soldOut = badge?.name === 'sold_out'
   const range = p.priceTo !== undefined && p.priceTo.amount !== p.priceFrom.amount
   const swatches = p.colorways.slice(0, 4)
+  const to = path(`/p/${p.handle}`)
+  // while this card's product is opening, its picture carries the name the product page's first picture also has, so the picture grows into place (DOC-06.15 section 5.3)
+  const opening = useViewTransitionState(to)
 
   return (
     <article className="group relative flex flex-col">
-      <RouterLink to={path(`/p/${p.handle}`)} prefetch="intent" className="flex flex-col gap-2 rounded-card focus-visible:outline-2">
-        <span className="relative block overflow-hidden rounded-media bg-surface-2">
+      <RouterLink to={to} prefetch="intent" viewTransition className="flex flex-col gap-2 rounded-card focus-visible:outline-2">
+        <span className="relative block overflow-hidden rounded-media bg-surface-2" style={opening ? { viewTransitionName: 'product-image' } : undefined}>
           <Image
             {...imageProps(p.primaryImage)}
             alt="" /* the link already says the product name: a picture description there would be read twice */
@@ -84,7 +87,7 @@ export function ProductCard({ product: p, priority = false }) {
             />
           ) : null}
           {badge ? (
-            <span className="absolute start-2 top-2 rounded-control bg-bg px-2 py-0.5 text-xs font-medium text-fg shadow-sm">
+            <span className="absolute start-2 top-2 rounded-control bg-bg px-2 py-0.5 text-caption font-medium text-fg shadow-sm">
               {t(`product.badge.${badge.name}`, { percent: 'percent' in badge ? badge.percent : undefined })}
             </span>
           ) : null}
@@ -109,7 +112,7 @@ export function ProductCard({ product: p, priority = false }) {
               </RouterLink>
             </li>
           ))}
-          {p.colorways.length > swatches.length ? <li className="text-xs text-fg-soft">{t('product.moreColours', { count: p.colorways.length - swatches.length })}</li> : null}
+          {p.colorways.length > swatches.length ? <li className="text-caption text-fg-soft">{t('product.moreColours', { count: p.colorways.length - swatches.length })}</li> : null}
         </ul>
       ) : null}
       <QuickAdd product={p} />

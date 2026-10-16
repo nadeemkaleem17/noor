@@ -18,7 +18,7 @@ export default function NotFound() {
   const categories = useShell()?.categories ?? []
   return (
     <div className="mx-auto max-w-2xl p-8">
-      <h1 className="font-heading text-3xl">{t('notFound.title')}</h1>
+      <h1 className="font-heading text-h1">{t('notFound.title')}</h1>
       <p className="mt-2 text-fg-soft">{t('notFound.body')}</p>
       <form role="search" method="get" action={path('/search')} className="mt-6 flex gap-2">
         <label className="sr-only" htmlFor="nf-q">

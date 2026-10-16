@@ -41,7 +41,7 @@ function Value({ facet, value: v, checked, onChange }) {
         <span className="inline-flex min-h-9 min-w-10 items-center justify-center gap-1.5 rounded-control border border-line-strong px-3 text-sm peer-checked:border-accent peer-checked:bg-accent peer-checked:text-on-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:opacity-40">
           {facet.display === 'swatch' && v.swatch ? <Dot swatch={v.swatch} /> : null}
           {v.label}
-          <span aria-hidden="true" className="text-xs opacity-70">{v.count}</span>
+          <span aria-hidden="true" className="text-caption opacity-70">{v.count}</span>
           <span className="sr-only">({v.count})</span>
         </span>
       </label>

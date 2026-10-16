@@ -153,7 +153,7 @@ export function BuyBox({ product: p, sizeChart, formSchema, whatsapp, url, cartE
     <div className="flex flex-col gap-5">
       <div>
         {p.brand ? <p className="text-sm font-medium uppercase tracking-wide text-fg-soft">{p.brand}</p> : null}
-        <h1 className="font-heading text-3xl">{p.title}</h1>
+        <h1 className="font-heading text-h1">{p.title}</h1>
         {p.subtitle ? <p className="mt-1 text-fg-soft">{p.subtitle}</p> : null}
         {p.rating ? (
           <p className="mt-2 text-sm">

@@ -12,7 +12,7 @@ function Rail({ id, title, items, href, more }) {
   return (
     <section aria-labelledby={id} className="mt-10">
       <div className="mb-4 flex items-baseline justify-between gap-4">
-        <h2 id={id} className="font-heading text-2xl">{title}</h2>
+        <h2 id={id} className="font-heading text-h2">{title}</h2>
         <RouterLink to={href} className="text-small underline underline-offset-4">{more}</RouterLink>
       </div>
       <ProductGrid items={items} eager={0} />
@@ -49,7 +49,7 @@ export function CategoryLanding({ category, rails }) {
           <Rail id="rail-best" title={t('listing.railBest', { name: category.name })} items={rails.best} href={`${href}?sort=bestselling`} more={t('listing.railMore', { name: category.name })} />
         </>
       ) : null}
-      <h2 className="mt-12 font-heading text-2xl">{t('listing.allIn', { name: category.name })}</h2>
+      <h2 className="mt-12 font-heading text-h2">{t('listing.allIn', { name: category.name })}</h2>
     </>
   )
 }

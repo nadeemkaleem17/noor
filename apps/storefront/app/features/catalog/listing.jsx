@@ -237,7 +237,7 @@ export function ListingPage({ crumbs, title, intro, subcategories = [], siblings
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <Breadcrumb items={crumbs.map((c) => ({ label: c.label, ...(c.href ? { href: path(c.href) } : {}) }))} renderLink={asRouterLink} />
-      <h1 className="mt-3 font-heading text-3xl">{title}</h1>
+      <h1 className="mt-3 font-heading text-h1">{title}</h1>
       {intro ? <Intro text={intro} /> : null}
       {subcategories.length || siblings.length ? (
         <ul aria-label={subcategories.length ? t('listing.subcategories') : t('listing.siblings')} className="mt-4 flex flex-wrap gap-2">

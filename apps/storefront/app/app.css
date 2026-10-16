@@ -33,6 +33,16 @@
   h1, h2, h3 { text-wrap: balance; }
 }
 
+/* Page transitions (DOC-06.15 section 5.3): a quick crossfade between pages, and a picture that grows from the card to the product page (`product-image`). A browser without view transitions just navigates. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-page);
+  animation-timing-function: var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 /* Below-the-fold sections are laid out when they come near the screen (plan/06-storefront/10-performance.md section 8); the size hint keeps the scroll bar from jumping. */
 @utility defer-render {
   content-visibility: auto;

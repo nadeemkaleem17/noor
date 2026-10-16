@@ -94,7 +94,7 @@ export function ReviewsSection({ listing, productId }) {
   const fit = top ? { ...top, total: votes.reduce((sum, v) => sum + v.count, 0) } : undefined
   return (
     <section id="reviews" aria-labelledby="reviews-h" className="defer-render scroll-mt-24">
-      <h2 id="reviews-h" className="font-heading text-2xl">{t('pdp.reviews')}</h2>
+      <h2 id="reviews-h" className="font-heading text-h2">{t('pdp.reviews')}</h2>
       <div className="mt-4 flex flex-wrap items-center gap-8">
         <p className="text-4xl tabular-nums">
           {summary.average.toFixed(1)}
@@ -126,7 +126,7 @@ export function RelatedSection({ items, title }) {
   const id = useId()
   return (
     <section aria-labelledby={id} className="defer-render">
-      <h2 id={id} className="font-heading text-2xl">{title ?? t('pdp.related')}</h2>
+      <h2 id={id} className="font-heading text-h2">{title ?? t('pdp.related')}</h2>
       <ul className="mt-4 flex snap-x gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
         {items.map((p) => (
           <li key={p.id} className="w-[60%] shrink-0 snap-start sm:w-[40%] lg:w-auto">

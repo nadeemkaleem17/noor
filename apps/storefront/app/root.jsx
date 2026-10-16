@@ -128,7 +128,7 @@ export function ErrorBoundary({ error }) {
   return (
     <I18nextProvider i18n={i18n}>
       {status === 404 ? <title>{`${i18n.t('storefront:seo.notFound')}${data ? ` | ${data.config.brand.name}` : ''}`}</title> : null}
-      <main className="mx-auto max-w-xl p-8">{status === 404 ? <h1 className="font-heading text-3xl">404</h1> : <Failure status={status} />}</main>
+      <main className="mx-auto max-w-xl p-8">{status === 404 ? <h1 className="font-heading text-h1">404</h1> : <Failure status={status} />}</main>
     </I18nextProvider>
   )
 }

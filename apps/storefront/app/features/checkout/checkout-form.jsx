@@ -125,7 +125,7 @@ export function CheckoutForm({ loader, action }) {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div>
-        <h1 className="font-heading text-3xl">{t('checkout.title')}</h1>
+        <h1 className="font-heading text-h1">{t('checkout.title')}</h1>
         <details className="mt-4 rounded-card border border-line p-4 lg:hidden">
           <summary className="flex cursor-pointer items-center justify-between font-medium">
             {t('checkout.summary')}
@@ -159,7 +159,7 @@ export function CheckoutForm({ loader, action }) {
           {result && ['busy', 'unavailable', 'failed', 'empty', 'payment'].includes(result.error) ? <Failure error={result.error} reason={result.reason} whatsapp={loader.whatsapp} /> : null}
 
           <fieldset className="flex flex-col gap-4">
-            <legend className="mb-1 font-heading text-xl">{t('checkout.contact')}</legend>
+            <legend className="mb-1 font-heading text-h3">{t('checkout.contact')}</legend>
             <Field label={t('checkout.name')} required {...(fail('customer.name') ? { error: fail('customer.name') } : {})}>
               <Input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={values.name ?? ''} invalid={Boolean(fail('customer.name'))} />
             </Field>
@@ -172,7 +172,7 @@ export function CheckoutForm({ loader, action }) {
           </fieldset>
 
           <fieldset className="flex flex-col gap-4">
-            <legend className="mb-1 font-heading text-xl">{t('checkout.delivery')}</legend>
+            <legend className="mb-1 font-heading text-h3">{t('checkout.delivery')}</legend>
             <Field label={t('checkout.city')} required {...(fail('shippingAddress.cityId') || result?.error === 'city' ? { error: fail('shippingAddress.cityId') ?? t('checkout.errors.city') } : {})}>
               <NativeSelect
                 name="cityId"
@@ -226,7 +226,7 @@ export function CheckoutForm({ loader, action }) {
           </fieldset>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 font-heading text-xl">{t('checkout.payment')}</legend>
+            <legend className="mb-1 font-heading text-h3">{t('checkout.payment')}</legend>
             {fail('paymentMethod') ? <p role="alert" aria-invalid="true" className="text-sm text-danger">{fail('paymentMethod')}</p> : null}
             {options.some((o) => o.allowed) ? (
               options.map((o) => (
@@ -275,7 +275,7 @@ export function CheckoutForm({ loader, action }) {
       </div>
       <aside aria-label={t('checkout.summary')} className="hidden lg:block">
         <div className="sticky top-6 rounded-card border border-line p-4">
-          <h2 className="mb-3 font-heading text-xl">{t('checkout.summary')}</h2>
+          <h2 className="mb-3 font-heading text-h3">{t('checkout.summary')}</h2>
           <OrderSummary cart={cart} pending={quoting} />
         </div>
       </aside>

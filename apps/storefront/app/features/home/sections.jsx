@@ -19,7 +19,7 @@ function Slide({ slide, first, heading: Heading }) {
         <Image {...imageProps(slide.image)} priority={first} sizes="100vw" style={{ aspectRatio: 'auto' }} className="h-full w-full" />
       </div>
       <div className={slideText}>
-        <Heading className="max-w-xl font-heading text-3xl md:text-5xl">{slide.heading}</Heading>
+        <Heading className="max-w-xl font-heading text-display">{slide.heading}</Heading>
         {slide.subheading ? <p className="max-w-lg text-lg">{slide.subheading}</p> : null}
         <SafeLinkButton href={slide.buttonText ? slide.buttonHref : undefined} variant="secondary">{slide.buttonText ?? t('home.shopNow')}</SafeLinkButton>
       </div>
@@ -94,7 +94,7 @@ export function PromoBand({ promo }) {
     <section className="my-8 bg-accent text-on-accent">
       <div className="mx-auto flex max-w-7xl flex-col items-start gap-3 px-4 py-10">
         {promo.eyebrow ? <p className="text-sm uppercase tracking-wide">{promo.eyebrow}</p> : null}
-        <h2 className="font-heading text-3xl">{promo.heading}</h2>
+        <h2 className="font-heading text-h2">{promo.heading}</h2>
         {promo.text ? <p className="max-w-xl">{promo.text}</p> : null}
         <SafeLinkButton href={promo.buttonText ? promo.buttonHref : undefined} variant="secondary">
           {promo.buttonText}
@@ -111,7 +111,7 @@ export function EditorialBand({ editorial }) {
       {editorial.image ? <Image {...imageProps(editorial.image)} sizes="(min-width:768px) 50vw, 100vw" className="w-full rounded-media" /> : null}
       <div className="flex flex-col items-start gap-3">
         {editorial.eyebrow ? <p className="text-sm uppercase tracking-wide text-fg-soft">{editorial.eyebrow}</p> : null}
-        <h2 className="font-heading text-3xl">{editorial.heading}</h2>
+        <h2 className="font-heading text-h2">{editorial.heading}</h2>
         {editorial.text ? <p className="text-fg-soft">{editorial.text}</p> : null}
         <SafeLinkButton href={editorial.buttonText ? editorial.buttonHref : undefined}>{editorial.buttonText}</SafeLinkButton>
       </div>
@@ -126,7 +126,7 @@ export function CollectionsRow({ collections }) {
   if (!collections.length) return null
   return (
     <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-collections">
-      <h2 id="home-collections" className="mb-4 font-heading text-2xl">
+      <h2 id="home-collections" className="mb-4 font-heading text-h2">
         {t('home.collections')}
       </h2>
       <ul className="grid gap-4 md:grid-cols-3">

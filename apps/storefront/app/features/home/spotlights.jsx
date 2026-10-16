@@ -25,7 +25,7 @@ export function CategorySpotlights({ blocks }) {
             {c.image ? <Image {...imageProps(c.image)} alt="" sizes="(min-width:768px) 50vw, 100vw" ratio="4 / 3" className="w-full rounded-media" /> : null}
           </RouterLink>
           <div className="flex flex-col gap-4">
-            <h2 className="font-heading text-3xl">{c.name}</h2>
+            <h2 className="font-heading text-h2">{c.name}</h2>
             <ul className="grid grid-cols-4 gap-3">
               {items.slice(0, 4).map((p) => (
                 <li key={p.id}>

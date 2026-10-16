@@ -38,7 +38,7 @@ function Chart({ chart }) {
   const units = hydrated ? [unit] : /** @type {('in' | 'cm')[]} */ ([chart.unit, chart.unit === 'in' ? 'cm' : 'in'])
   return (
     <details open className="group border-b border-line py-3">
-      <summary className="cursor-pointer font-heading text-xl">{chart.title}</summary>
+      <summary className="cursor-pointer font-heading text-h3">{chart.title}</summary>
       <div className="mt-4 flex flex-col gap-5">
         {hydrated ? <UnitSwitch unit={unit} onChange={setUnit} /> : <p className="text-sm text-fg-soft">{t('sizeGuide.bothUnits')}</p>}
         {units.map((u) => <SizeChartTables key={u} chart={chart} unit={u} />)}
@@ -56,7 +56,7 @@ export default function SizeGuidePage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: t('sizeGuide.title') }]} renderLink={asRouterLink} />
-      <h1 className="mt-3 font-heading text-3xl">{t('sizeGuide.title')}</h1>
+      <h1 className="mt-3 font-heading text-h1">{t('sizeGuide.title')}</h1>
       {charts.length ? (
         <div className="mt-6">
           {charts.map((/** @type {import('@noor/contract').SizeChart} */ c) => <Chart key={c.id} chart={c} />)}

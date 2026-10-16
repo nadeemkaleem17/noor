@@ -28,6 +28,7 @@ const pages = (id) => [
     route('wishlist', 'routes/wishlist.jsx', { id: `wishlist${id}` }),
     route('pages/:slug', 'routes/page.jsx', { id: `page${id}` }),
     route('size-guide', 'routes/size-guide.jsx', { id: `size-guide${id}` }),
+    route('design', 'routes/design.jsx', { id: `design${id}` }),
     route('*', 'routes/not-found.jsx', { id: `not-found${id}` }),
   ]),
 ]

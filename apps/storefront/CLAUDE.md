@@ -85,3 +85,12 @@ pnpm --filter @noor/storefront lighthouse    # needs the production server + API
 ## Coverage of the admin (M8-01)
 
 `test/admin-coverage.test.js` reads the real schemas (store, home, theme, category) and requires every field to have a line in `test/admin-coverage.map.js`: `shown` (the shop reads it), `partly`, `not-shown` (a dead control: the shop must not read it yet, and the test fails the day it does, so the line is flipped) or `staff-only`. Adding a setting to the admin without deciding where the shop shows it fails this test. Plan: `plan/06-storefront/12-admin-coverage.md`.
+
+## Storefront v2 (M8): what to know before touching a page
+
+- **Tokens**: `packages/ui/src/tokens.css` (colour, radius 2 px, motion `--dur-*`, `z-header`) and `app/app.css` (the type scale `text-display`, `text-h1` to `text-h4`, `text-body`, `text-ui`, `text-small`, `text-caption`, `text-label`). A heading uses the scale, never `text-3xl`; nothing under 12 px; no colour or millisecond written in a component (`test/design-rules.test.js` greps for all three). The default theme is the `atelier` preset; `/design` (not on rubaya.pk) shows every token.
+- **Header and search**: `features/layout/header.jsx` (panels by pointer or button, hides on scroll, Appearance's layout and sticky), `menu-drawer.jsx` (phone drill-down), `search-panel.jsx` (lazy combobox; the browser reaches `catalog.suggest` through `routes/search-suggest.js`; recent searches in `localStorage`, popular ones from the Store settings).
+- **Cards and listings**: `features/catalog/product-card.jsx` (subtitle, stars, "Only N left", `quick-add.jsx`), `density.jsx` (remembered in `localStorage`), `category-landing.jsx` (tiles and rails). A category's page data (`children`, `siblings`) comes from the API's category tree.
+- **Product, bag, checkout, home**: `features/product/delivery-block.jsx` (the cities load on request through `routes/delivery-cities.js`), the bag's progress bar reads `Cart.messages[].percent` (no money arithmetic here), `features/home/tabbed-section.jsx` + `routes/home-rail.js`, `spotlights.jsx`.
+- **Things a browser keeps for itself** (all with a try/catch and a default, all read with `useSyncExternalStore` so the server HTML is the same for everyone): `nc_recent_searches`, `nc_density`, `nc_city`.
+- **Not built on purpose** (the plan lists each): swipe dots on a card, "shop by occasion", the reviews highlight on the home page, the see-through header and the phone bottom bar, "how much more for free delivery" arithmetic in the page, a copy-link button.

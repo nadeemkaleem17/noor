@@ -36,7 +36,7 @@ export default function OrderReview() {
   const result = useActionData()
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
-      <h1 className="font-heading text-3xl">{t('review.title')}</h1>
+      <h1 className="font-heading text-h1">{t('review.title')}</h1>
       <Reviewed image={invite.product.image} title={invite.product.title} />
       {invite.submitted || result?.error === 'already' ? (
         <p role="status" className="mt-6">{t('review.already')}</p>

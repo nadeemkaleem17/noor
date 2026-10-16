@@ -161,7 +161,7 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 print:max-w-none">
       <header>
-        <h1 className="font-heading text-3xl">{placed ? t('order.thanks', { name: order.customer.firstName }) : t('order.title', { number: order.orderNumber })}</h1>
+        <h1 className="font-heading text-h1">{placed ? t('order.thanks', { name: order.customer.firstName }) : t('order.title', { number: order.orderNumber })}</h1>
         <p className="mt-1 flex flex-wrap items-center gap-2 text-fg-soft">
           <span>{placed ? `${t('order.number', { number: order.orderNumber })} · ` : ''}{formatDate(order.placedAt, locale)}</span>
           <StatusBadge status={order.status} />
@@ -186,7 +186,7 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
         )}
 
         <section aria-labelledby="order-items">
-          <h2 id="order-items" className="mb-2 font-heading text-xl">{t('order.items')}</h2>
+          <h2 id="order-items" className="mb-2 font-heading text-h3">{t('order.items')}</h2>
           <ul className="divide-y divide-line">
             {order.lines.map((l) => (
               <li key={l.id} className="flex gap-3 py-3">
@@ -220,7 +220,7 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
         </section>
 
         <section aria-labelledby="order-delivery">
-          <h2 id="order-delivery" className="mb-2 font-heading text-xl">{t('order.delivering')}</h2>
+          <h2 id="order-delivery" className="mb-2 font-heading text-h3">{t('order.delivering')}</h2>
           <p className="text-sm">{order.customer.firstName} · {order.delivery.city} · <bdi>{order.delivery.addressMasked}</bdi></p>
           <p className="text-sm text-fg-soft">{order.delivery.methodLabel}{order.delivery.eta ? ` · ${t('order.eta', { from: formatDate(order.delivery.eta.from, locale), to: formatDate(order.delivery.eta.to, locale) })}` : ''}</p>
         </section>

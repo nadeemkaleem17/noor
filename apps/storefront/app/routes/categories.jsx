@@ -33,13 +33,13 @@ export default function CategoriesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <Breadcrumb items={[{ label: t('listing.home'), href: path('/') }, { label: t('seo.categories') }]} renderLink={asRouterLink} />
-      <h1 className="mt-3 font-heading text-3xl">{t('seo.categories')}</h1>
+      <h1 className="mt-3 font-heading text-h1">{t('seo.categories')}</h1>
       <ul className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((/** @type {import('@noor/contract').CategoryNode} */ c) => (
           <li key={c.id}>
             <RouterLink to={path(`/c/${c.handle}`)} className="group block">
               {c.image ? <Image {...imageProps(c.image)} alt="" sizes="(min-width:1024px) 30vw, (min-width:640px) 45vw, 100vw" ratio="3 / 2" className="w-full rounded-media" /> : null}
-              <span className="mt-3 block font-heading text-xl group-hover:underline">{c.name}</span>
+              <span className="mt-3 block font-heading text-h3 group-hover:underline">{c.name}</span>
               <span className="text-sm text-fg-soft">{t('listing.count', { count: c.productCount })}</span>
             </RouterLink>
             {c.children.length ? (

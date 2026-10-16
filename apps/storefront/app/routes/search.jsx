@@ -42,7 +42,7 @@ function PopularWords({ words }) {
   if (!words.length) return null
   return (
     <>
-      <h2 className="mt-8 font-heading text-xl">{t('shell.suggest.popular')}</h2>
+      <h2 className="mt-8 font-heading text-h3">{t('shell.suggest.popular')}</h2>
       <ul className="mt-3 flex flex-wrap gap-2">
         {words.map((w) => (
           <li key={w}>
@@ -63,7 +63,7 @@ export default function Search() {
   if (!page) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="font-heading text-3xl">{t('listing.search.crumb')}</h1>
+        <h1 className="font-heading text-h1">{t('listing.search.crumb')}</h1>
         <form role="search" method="get" action={path('/search')} className="mt-4 flex gap-2">
           <label className="sr-only" htmlFor="q">{t('shell.searchLabel')}</label>
           <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
@@ -73,7 +73,7 @@ export default function Search() {
         <PopularWords words={shell?.config.popularSearches ?? []} />
         {shell?.categories.length ? (
           <>
-            <h2 className="mt-8 font-heading text-xl">{t('listing.search.popular')}</h2>
+            <h2 className="mt-8 font-heading text-h3">{t('listing.search.popular')}</h2>
             <ul className="mt-3 flex flex-wrap gap-2">
               {shell.categories.map((c) => (
                 <li key={c.id}>
@@ -103,7 +103,7 @@ export default function Search() {
       <PopularWords words={shell?.config.popularSearches ?? []} />
       {shell?.categories.length ? (
         <>
-          <h2 className="mt-8 font-heading text-xl">{t('listing.search.popular')}</h2>
+          <h2 className="mt-8 font-heading text-h3">{t('listing.search.popular')}</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {shell.categories.map((c) => (
               <li key={c.id}>
@@ -115,7 +115,7 @@ export default function Search() {
       ) : null}
       {newest.length ? (
         <section aria-labelledby="search-new" className="mt-6">
-          <h2 id="search-new" className="mb-4 font-heading text-xl">{t('listing.new')}</h2>
+          <h2 id="search-new" className="mb-4 font-heading text-h3">{t('listing.new')}</h2>
           <ProductGrid items={newest} eager={0} />
         </section>
       ) : null}

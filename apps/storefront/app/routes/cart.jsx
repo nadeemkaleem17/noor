@@ -78,7 +78,7 @@ export default function Cart() {
   if (!cart) return null
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <h1 className="font-heading text-3xl">{t('cart.title')}</h1>
+      <h1 className="font-heading text-h1">{t('cart.title')}</h1>
       {d.error && d.error !== 'insufficient_stock' && d.error !== 'max_per_order' && !d.error.startsWith('promo_') ? <p role="alert" className="mt-3 text-danger">{t(`cart.errors.${d.error}`)}</p> : null}
       {cart.lines.length === 0 ? (
         <EmptyState
@@ -97,7 +97,7 @@ export default function Cart() {
       )}
       {d.related.length ? (
         <section aria-labelledby="bag-also" className="mt-12">
-          <h2 id="bag-also" className="mb-4 font-heading text-2xl">{t('cart.alsoLike')}</h2>
+          <h2 id="bag-also" className="mb-4 font-heading text-h2">{t('cart.alsoLike')}</h2>
           <ProductGrid items={d.related} eager={0} />
         </section>
       ) : null}
