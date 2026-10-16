@@ -5,7 +5,8 @@ import { DomainError } from '../../platform/errors.js'
 import { now } from '../../platform/clock.js'
 import { media as mediaTable } from '../../db/schema/media.js'
 import { attributeValues, attributes, categories, sizeSystemValues } from '../../db/schema/taxonomy.js'
-import { collections, productMedia, products } from '../../db/schema/products.js'
+import { inventoryLevels } from '../../db/schema/inventory.js'
+import { collections, productMedia, productOptionValues, productOptions, products, variantOptionValues, variants } from '../../db/schema/products.js'
 
 /** @typedef {import('../../platform/db.js').Executor} Db */
 /** @typedef {import('@noor/contract').ProductSummary} ProductSummary */
@@ -41,12 +42,45 @@ function fromCursor(cursor) {
  * @param {{ imagesFor: (ids: string[]) => Promise<Record<string, import('@noor/contract').Image>> }} deps.media
  * @param {ReturnType<typeof import('../search/service.js').createSearch>} deps.search
  * @param {(categoryId: string) => Promise<{ attributeId: string, seoIndexable: boolean }[]>} deps.filtersOf
+ * @param {() => Promise<number>} [deps.lowStock] at or under this many units a card says "Only N left" (the store's low-stock threshold)
  */
-export function createListing({ db, media, search, filtersOf }) {
+export function createListing({ db, media, search, filtersOf, lowStock = async () => 3 }) {
   /** Rows of a raw SELECT. @param {import('drizzle-orm').SQL} query @returns {Promise<any[]>} */
   const select = async (query) => /** @type {any[]} */ (/** @type {unknown} */ ((await db.execute(query))[0]))
 
   // ================================ cards ================================
+  /**
+   * What a card says about stock, for these products in one query: the units left in all (counted products only) and, for a product sold in one option that is a size,
+   * its sizes (quick add). Anything else (colour and size, made to order, a custom size) is left out: the product page is where that is chosen.
+   * @param {Db} x @param {string[]} ids
+   * @returns {Promise<Map<string, { left?: number, sizes?: { variantId: string, label: string, inStock: boolean }[] }>>}
+   */
+  async function stockOf(x, ids) {
+    /** @type {Map<string, { left?: number, sizes?: { variantId: string, label: string, inStock: boolean }[] }>} */
+    const out = new Map()
+    if (!ids.length) return out
+    const rows = await x
+      .select({ productId: variants.productId, variantId: variants.id, label: productOptionValues.label, role: productOptions.role, mode: variants.stockMode, onHand: inventoryLevels.onHand, reserved: inventoryLevels.reserved })
+      .from(variants)
+      .innerJoin(variantOptionValues, eq(variantOptionValues.variantId, variants.id))
+      .innerJoin(productOptionValues, eq(productOptionValues.id, variantOptionValues.optionValueId))
+      .innerJoin(productOptions, eq(productOptions.id, productOptionValues.optionId))
+      .leftJoin(inventoryLevels, eq(inventoryLevels.variantId, variants.id))
+      .where(and(inArray(variants.productId, ids), eq(variants.enabled, true)))
+      .orderBy(asc(variants.sortOrder))
+    for (const id of ids) {
+      const mine = rows.filter((r) => r.productId === id)
+      if (!mine.length || mine.some((r) => r.mode !== 'counted')) continue
+      const avail = (/** @type {typeof mine[number]} */ r) => Math.max(0, (r.onHand ?? 0) - (r.reserved ?? 0))
+      const oneSize = mine.every((r) => r.role === 'size') && new Set(mine.map((r) => r.variantId)).size === mine.length
+      out.set(id, {
+        left: mine.reduce((sum, r) => sum + avail(r), 0),
+        ...(oneSize ? { sizes: mine.map((r) => ({ variantId: r.variantId, label: r.label, inStock: avail(r) > 0 })) } : {}),
+      })
+    }
+    return out
+  }
+
   /**
    * `ProductSummary` cards for these products, in the order given. Products that are not active are left out.
    * @param {Db} x @param {string[]} ids @param {'en' | 'ur'} [locale]
@@ -62,6 +96,8 @@ export function createListing({ db, media, search, filtersOf }) {
     const styleIds = [...new Set(rows.flatMap((r) => (r.styleId ? [r.styleId] : [])))]
     const siblings = styleIds.length ? await x.select().from(products).where(and(inArray(products.styleId, styleIds), eq(products.status, 'active'))).orderBy(asc(products.colorwayLabel)) : []
     const byId = new Map(rows.map((r) => [r.id, r]))
+    const stock = await stockOf(x, rows.map((r) => r.id))
+    const low = await lowStock()
     const cutoff = now().getTime() - 30 * DAY
     const picture = (/** @type {typeof links[number] | undefined} */ l) => {
       const img = l ? images[l.mediaId] : undefined
@@ -97,8 +133,11 @@ export function createListing({ db, media, search, filtersOf }) {
         priceFrom: { amount: p.priceMinMinor, currency: 'PKR' },
         ...(p.priceMaxMinor > p.priceMinMinor ? { priceTo: { amount: p.priceMaxMinor, currency: 'PKR' } } : {}),
         ...(p.compareAtMinMinor === null ? {} : { compareAtFrom: { amount: p.compareAtMinMinor, currency: 'PKR' } }),
+        ...(p.subtitle ? { subtitle: p.subtitle } : {}),
         badges,
         stockStatus: /** @type {ProductSummary['stockStatus']} */ (p.stockStatus),
+        ...(stock.get(id)?.left !== undefined && /** @type {number} */ (stock.get(id)?.left) > 0 && /** @type {number} */ (stock.get(id)?.left) <= low ? { lowStock: stock.get(id)?.left } : {}),
+        ...(stock.get(id)?.sizes ? { quickAdd: stock.get(id)?.sizes } : {}),
         ...(p.ratingCount > 0 && p.ratingAvgX100 !== null ? { rating: { average: p.ratingAvgX100 / 100, count: p.ratingCount } } : {}),
         colorways: p.styleId
           ? siblings.filter((s) => s.styleId === p.styleId && s.colorwayLabel).map((s) => ({ handle: s.handle, label: s.colorwayLabel ?? '', swatch: /** @type {import('@noor/contract').Swatch} */ (s.colorwaySwatch), current: s.id === p.id }))

@@ -244,12 +244,26 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
         throw new DomainError('not_found')
       }
       const image = c.imageMediaId ? (await media.imagesFor([c.imageMediaId]))[c.imageMediaId] : undefined
+      // the sub-categories and the siblings come from the same tree the navigation uses: only branches with products, with their picture and count
+      const tree = (await this.listCategories(locale)).items
+      /** @param {typeof tree} nodes @param {typeof tree[number] | undefined} parent @returns {{ node: typeof tree[number], parent: typeof tree[number] | undefined } | undefined} */
+      const locate = (nodes, parent) => {
+        for (const n of nodes) {
+          if (n.id === c.id) return { node: n, parent }
+          const deeper = locate(n.children, n)
+          if (deeper) return deeper
+        }
+        return undefined
+      }
+      const where = locate(tree, undefined)
+      const link = (/** @type {typeof tree[number]} */ n) => ({ handle: n.handle, name: n.name, productCount: n.productCount, ...(n.image ? { image: n.image } : {}) })
       return {
         id: c.id, handle: c.handle, name: ur(c, locale, 'name') ?? c.name,
         ...(ur(c, locale, 'description') ?? c.description ? { description: ur(c, locale, 'description') ?? c.description } : {}),
         ...(image ? { image } : {}),
         breadcrumb: pathTo(every, c.id, locale),
-        children: all.filter((x) => x.parentId === c.id).map((x) => ({ handle: x.handle, name: ur(x, locale, 'name') ?? x.name })),
+        children: (where?.node.children ?? []).map(link),
+        siblings: (where ? (where.parent?.children ?? tree).filter((n) => n.id !== c.id) : []).map(link),
         seo: { ...(c.seoTitle ? { title: c.seoTitle } : {}), ...(c.seoDescription ? { description: c.seoDescription } : {}) },
       }
     },

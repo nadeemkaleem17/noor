@@ -28,6 +28,9 @@ async function picture(db, s, actor, look) {
   return slot.mediaId
 }
 
+/** The colour of each demo category's picture. */
+const categoryHex = /** @type {Record<string, string>} */ ({ women: '#7A1F2B', unstitched: '#1F6F6B', stitched: '#2C3E8C', bridal: '#855B1A', footwear: '#5E574D', accessories: '#6B2F6B', men: '#2F4F4F', kids: '#B5535A' })
+
 /**
  * @param {import('../platform/db.js').Database['db']} db
  * @param {Services} s
@@ -54,8 +57,10 @@ export async function seedDemo(db, s, actor, { log = () => {} } = {}) {
   const haveCats = new Map((await s.catalog.categories.list()).items.map((c) => [c.handle, c]))
   for (const c of demoCategories) {
     if (haveCats.has(c.handle)) continue
+    // a picture for each category, so the tiles of a landing page and the circles of the home page have something to show (the owner replaces them with photographs)
+    const imageMediaId = await picture(db, s, actor, { text: c.name, hex: categoryHex[c.handle] ?? '#7A1F2B', caption: 'shop', width: 900, height: 1200 })
     const made = await s.catalog.categories.create(actor, {
-      name: c.name, handle: c.handle, ...(c.description ? { description: c.description } : {}), ...(c.parent ? { parentId: haveCats.get(c.parent)?.id ?? null } : {}), visible: true,
+      name: c.name, handle: c.handle, imageMediaId, ...(c.description ? { description: c.description } : {}), ...(c.parent ? { parentId: haveCats.get(c.parent)?.id ?? null } : {}), visible: true,
       attributes: c.filters.map((code, i) => ({ attributeId: attr(code).id, seoIndexable: i === 0, required: false })),
     }, req())
     haveCats.set(c.handle, made)
@@ -105,7 +110,7 @@ export async function seedDemo(db, s, actor, { log = () => {} } = {}) {
     })
     const pieces = p.piece ? Number(p.piece) : 0
     const body = {
-      handle, status: /** @type {const} */ ('active'), kind: /** @type {never} */ (p.kind), title: p.title, brand: 'Rubaya', descriptionMd: p.blurb,
+      handle, status: /** @type {const} */ ('active'), kind: /** @type {never} */ (p.kind), title: p.title, ...(p.fabric ? { subtitle: `${p.fabric[0]?.toUpperCase()}${p.fabric.slice(1)} | ${p.occasion ? `${p.occasion[0]?.toUpperCase()}${p.occasion.slice(1)} wear` : 'Everyday'}` } : {}), brand: 'Rubaya', descriptionMd: p.blurb,
       highlights: [p.blurb.split('.')[0] ?? p.blurb], care: p.kind === 'unstitched' ? ['Dry clean recommended'] : ['Gentle machine wash, cold'],
       primaryCategoryId: /** @type {string} */ (haveCats.get(p.cat)?.id), categoryIds: [],
       attributes: [

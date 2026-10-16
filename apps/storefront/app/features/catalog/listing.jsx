@@ -12,6 +12,7 @@ import { canonicalQuery } from '~/lib/redirects'
 import { asRouterLink } from '../layout/as-router-link'
 import { useLocalePath } from '../layout/use-shell'
 import { Applied, FilterForm, useHydrated } from './filters'
+import { DensityToggle, useDensity } from './density'
 import { recall, remember } from './listing-memory'
 import { ProductGrid } from './product-card'
 
@@ -43,6 +44,7 @@ function Chunk({ cursor, depth, shown, total, base, memo, last }) {
   const fetcher = useFetcher()
   const [attempt, setAttempt] = useState(0)
   const { load, data } = fetcher
+  const density = useDensity()
   const href = `${base}${base.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(cursor)}&chunk=1`
 
   useEffect(() => {
@@ -58,7 +60,7 @@ function Chunk({ cursor, depth, shown, total, base, memo, last }) {
 
   if (!data) {
     return (
-      <div aria-busy="true" className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+      <div aria-busy="true" className={`mt-8 grid gap-x-4 gap-y-8 ${density === 'roomy' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <Skeleton className="aspect-3/4 w-full" />
@@ -76,7 +78,7 @@ function Chunk({ cursor, depth, shown, total, base, memo, last }) {
   return (
     <>
       <div className="mt-8">
-        <ProductGrid items={items} eager={0} />
+        <ProductGrid items={items} eager={0} density={density} />
       </div>
       <Pager shown={shown + items.length} total={total} next={data.page.nextCursor} depth={depth + 1} base={base} memo={memo} />
     </>
@@ -131,7 +133,7 @@ function Sort({ path, search, effective, sorts }) {
       navigate(path + canonicalQuery(new URLSearchParams(/** @type {Record<string, string>} */ (/** @type {unknown} */ (new FormData(e.currentTarget))))), { preventScrollReset: true })
     }} className="flex items-center gap-2">
       {carried.map(([k, v], i) => <input key={`${k}-${i}`} type="hidden" name={k} value={v} />)}
-      <label htmlFor={id} className="text-sm text-fg-soft">{t('listing.sort')}</label>
+      <label htmlFor={id} className="whitespace-nowrap text-sm text-fg-soft">{t('listing.sort')}</label>
       <NativeSelect
         id={id}
         name="sort"
@@ -183,12 +185,15 @@ function MobileFilters({ path, page, search, effective }) {
  * @param {string} props.title
  * @param {string} [props.intro]
  * @param {{ handle: string, name: string }[]} [props.subcategories]
+ * @param {{ handle: string, name: string }[]} [props.siblings] the other categories at this level, as chips on a page with no sub-categories
+ * @param {import('react').ReactNode} [props.lead] what comes between the heading and the products (a landing page's tiles and rails)
  * @param {ProductListing} props.page
  * @param {string[]} props.sorts the sorts that make sense here; the first is the default
  * @param {import('react').ReactNode} [props.zero] shown instead of the plain "nothing here" when the listing has no products and no filters (a search with no results)
  */
-export function ListingPage({ crumbs, title, intro, subcategories = [], page, sorts, zero }) {
+export function ListingPage({ crumbs, title, intro, subcategories = [], siblings = [], lead, page, sorts, zero }) {
   const { t } = useTranslation('storefront')
+  const density = useDensity()
   const path = useLocalePath()
   const location = useLocation()
   const navigation = useNavigation()
@@ -234,9 +239,9 @@ export function ListingPage({ crumbs, title, intro, subcategories = [], page, so
       <Breadcrumb items={crumbs.map((c) => ({ label: c.label, ...(c.href ? { href: path(c.href) } : {}) }))} renderLink={asRouterLink} />
       <h1 className="mt-3 font-heading text-3xl">{title}</h1>
       {intro ? <Intro text={intro} /> : null}
-      {subcategories.length ? (
-        <ul aria-label={t('listing.subcategories')} className="mt-4 flex flex-wrap gap-2">
-          {subcategories.map((c) => (
+      {subcategories.length || siblings.length ? (
+        <ul aria-label={subcategories.length ? t('listing.subcategories') : t('listing.siblings')} className="mt-4 flex flex-wrap gap-2">
+          {(subcategories.length ? subcategories : siblings).map((c) => (
             <li key={c.handle}>
               <RouterLink to={path(`/c/${c.handle}`)} className="inline-flex min-h-9 items-center rounded-full border border-line-strong px-4 text-sm hover:bg-surface-2">{c.name}</RouterLink>
             </li>
@@ -244,14 +249,16 @@ export function ListingPage({ crumbs, title, intro, subcategories = [], page, so
         </ul>
       ) : null}
 
+      {lead}
       <div className="mt-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
         <aside id="filters" aria-label={t('listing.filters')} className="hidden lg:block">
           <FilterForm id={`${sideId}-side`} path={location.pathname} page={page} search={search} effective={effective} controlled />
         </aside>
         <div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="sticky top-0 z-sticky -mx-4 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-bg px-4 py-2">
             <p role="status" className="text-sm text-fg-soft">{t('listing.count', { count: page.total })}</p>
             <div className="flex items-center gap-3">
+              <DensityToggle />
               <MobileFilters path={location.pathname} page={page} search={search} effective={effective} />
               <Sort path={location.pathname} search={search} effective={effective} sorts={sorts} />
             </div>
@@ -273,7 +280,7 @@ export function ListingPage({ crumbs, title, intro, subcategories = [], page, so
               )
             ) : (
               <>
-                <ProductGrid items={page.items} />
+                <ProductGrid items={page.items} density={density} />
                 <Pager key={base} shown={page.items.length} total={page.total} next={page.nextCursor} depth={0} base={base} memo={base} />
               </>
             )}

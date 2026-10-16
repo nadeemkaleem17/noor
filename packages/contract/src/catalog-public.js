@@ -52,8 +52,14 @@ export const ProductSummary = z.strictObject({
   priceFrom: Money,
   priceTo: Money.optional(),
   compareAtFrom: Money.optional(),
+  /** The fabric or technique line under the name ("Printed | Light khaddar"), from the product's subtitle. */
+  subtitle: z.string().optional(),
   badges: z.array(z.enum(productBadgeNames)),
   stockStatus: Enum.stockStatus,
+  /** Units left in all, only when the product is counted and the total is at or under the store's low-stock threshold ("Only 2 left"). */
+  lowStock: z.int().optional(),
+  /** The sizes of a product sold in one option, size (every variant has one size and is counted): what quick add on the card offers. */
+  quickAdd: z.array(z.strictObject({ variantId: Id, label: z.string(), inStock: z.boolean() })).optional(),
   colorways: z.array(z.strictObject({ handle: z.string(), label: z.string(), swatch: Swatch, current: z.boolean() })),
   rating: z.strictObject({ average: z.number(), count: z.int() }).optional(),
 })
@@ -141,6 +147,9 @@ export const CategoryNode = z.lazy(() =>
   z.strictObject({ id: Id, handle: z.string(), name: z.string(), image: Image.optional(), productCount: z.int(), children: z.array(CategoryNode) }),
 )
 
+/** A category as a link with its picture and how many products it holds: the sub-category tiles and the sibling chips of a category page. */
+export const CategoryLink = z.strictObject({ handle: z.string(), name: z.string(), productCount: z.int(), image: Image.optional() })
+
 export const CategoryDetail = z.strictObject({
   id: Id,
   handle: z.string(),
@@ -148,7 +157,10 @@ export const CategoryDetail = z.strictObject({
   description: z.string().optional(),
   image: Image.optional(),
   breadcrumb: z.array(z.strictObject({ handle: z.string(), name: z.string() })),
-  children: z.array(z.strictObject({ handle: z.string(), name: z.string() })),
+  /** Its visible sub-categories that hold products. */
+  children: z.array(CategoryLink),
+  /** The other categories at its level (the parent's other children, or the other top-level ones). */
+  siblings: z.array(CategoryLink),
   seo: Seo,
 })
 export const CollectionSummary = z.strictObject({ id: Id, handle: z.string(), title: z.string(), image: Image.optional() })

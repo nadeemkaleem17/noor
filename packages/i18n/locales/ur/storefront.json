@@ -95,7 +95,16 @@
       "sold_out": "ختم"
     },
     "colour": "رنگ: {name}",
-    "moreColours": "+{count}"
+    "moreColours": "+{count}",
+    "onlyLeft": "Only {count} left",
+    "rating": "{average} out of 5, {count, plural, one {# review} other {# reviews}}",
+    "quickAdd": {
+      "open": "Quick add",
+      "sizes": "Sizes",
+      "add": "Add size {size} to the bag",
+      "soldOut": "Size {size}, sold out",
+      "failed": "That size could not be added. It may have just sold out."
+    }
   },
   "listing": {
     "home": "ہوم",
@@ -119,6 +128,14 @@
     "priceRange": "{min} سے {max} تک",
     "readMore": "مزید پڑھیں",
     "subcategories": "ذیلی زمرے",
+    "siblings": "More categories",
+    "density": { "label": "Products per row", "compact": "More products per row", "roomy": "Larger products" },
+    "shopBy": "Shop by category",
+    "tileCount": "{count, plural, one {# piece} other {# pieces}}",
+    "railNew": "New in {name}",
+    "railBest": "Bestsellers in {name}",
+    "railMore": "See all of {name}",
+    "allIn": "All {name}",
     "refine": "نتائج کو محدود کریں",
     "loadFailed": "مزید پروڈکٹس نہیں کھل سکیں",
     "sorts": {

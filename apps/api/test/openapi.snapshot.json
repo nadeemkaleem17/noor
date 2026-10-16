@@ -46736,6 +46736,9 @@
                             ],
                             "additionalProperties": false
                           },
+                          "subtitle": {
+                            "type": "string"
+                          },
                           "badges": {
                             "type": "array",
                             "items": {
@@ -46759,6 +46762,36 @@
                               "made_to_order",
                               "preorder"
                             ]
+                          },
+                          "lowStock": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "quickAdd": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "variantId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "inStock": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "variantId",
+                                "label",
+                                "inStock"
+                              ],
+                              "additionalProperties": false
+                            }
                           },
                           "colorways": {
                             "type": "array",
@@ -47196,6 +47229,9 @@
                             ],
                             "additionalProperties": false
                           },
+                          "subtitle": {
+                            "type": "string"
+                          },
                           "badges": {
                             "type": "array",
                             "items": {
@@ -47219,6 +47255,36 @@
                               "made_to_order",
                               "preorder"
                             ]
+                          },
+                          "lowStock": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "quickAdd": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "variantId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "inStock": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "variantId",
+                                "label",
+                                "inStock"
+                              ],
+                              "additionalProperties": false
+                            }
                           },
                           "colorways": {
                             "type": "array",
@@ -48253,6 +48319,9 @@
                                         ],
                                         "additionalProperties": false
                                       },
+                                      "subtitle": {
+                                        "type": "string"
+                                      },
                                       "badges": {
                                         "type": "array",
                                         "items": {
@@ -48276,6 +48345,36 @@
                                           "made_to_order",
                                           "preorder"
                                         ]
+                                      },
+                                      "lowStock": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "quickAdd": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "variantId": {
+                                              "type": "string",
+                                              "format": "uuid",
+                                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                            },
+                                            "label": {
+                                              "type": "string"
+                                            },
+                                            "inStock": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "variantId",
+                                            "label",
+                                            "inStock"
+                                          ],
+                                          "additionalProperties": false
+                                        }
                                       },
                                       "colorways": {
                                         "type": "array",
@@ -48938,6 +49037,9 @@
                             ],
                             "additionalProperties": false
                           },
+                          "subtitle": {
+                            "type": "string"
+                          },
                           "badges": {
                             "type": "array",
                             "items": {
@@ -48961,6 +49063,36 @@
                               "made_to_order",
                               "preorder"
                             ]
+                          },
+                          "lowStock": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "quickAdd": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "variantId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "inStock": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "variantId",
+                                "label",
+                                "inStock"
+                              ],
+                              "additionalProperties": false
+                            }
                           },
                           "colorways": {
                             "type": "array",
@@ -49232,11 +49364,114 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "productCount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "image": {
+                                "type": "object",
+                                "properties": {
+                                  "src": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "srcset": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "height": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "alt": {
+                                    "type": "string"
+                                  },
+                                  "lqip": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "src",
+                                  "srcset",
+                                  "width",
+                                  "height",
+                                  "alt"
+                                ],
+                                "additionalProperties": false
                               }
                             },
                             "required": [
                               "handle",
-                              "name"
+                              "name",
+                              "productCount"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "siblings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "handle": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "productCount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "image": {
+                                "type": "object",
+                                "properties": {
+                                  "src": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "srcset": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "height": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "alt": {
+                                    "type": "string"
+                                  },
+                                  "lqip": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "src",
+                                  "srcset",
+                                  "width",
+                                  "height",
+                                  "alt"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "handle",
+                              "name",
+                              "productCount"
                             ],
                             "additionalProperties": false
                           }
@@ -49260,6 +49495,7 @@
                         "name",
                         "breadcrumb",
                         "children",
+                        "siblings",
                         "seo"
                       ],
                       "additionalProperties": false

@@ -64,7 +64,9 @@ function listing(q) {
   if (q.get('q') === 'nothing') return { items: [], total: 0 }
   const size = Number(q.get('limit'))
   const second = q.get('cursor') === 'c1'
-  const items = Array.from({ length: Math.min(size, 24) }, (_, i) => product(i + (second ? 25 : 1)))
+  // the second card has what a card v2 shows (subtitle, rating, low stock, quick add); the third has too few reviews for stars
+  const extras = (/** @type {number} */ i) => (second ? {} : i === 1 ? { subtitle: 'Printed | Light khaddar', rating: { average: 4.5, count: 12 }, lowStock: 2, quickAdd: [{ variantId: uuid(901), label: 'S', inStock: true }, { variantId: uuid(902), label: 'M', inStock: false }] } : i === 2 ? { rating: { average: 5, count: 2 } } : {})
+  const items = Array.from({ length: Math.min(size, 24) }, (_, i) => product(i + (second ? 25 : 1), extras(i)))
   if (size < 24) return { items, total: items.length }
   const selected = new Set((q.get('size') ?? '').split(','))
   return { items, total: 40, ...(second ? {} : { nextCursor: 'c1' }), facets: facets.map((f) => (f.key === 'size' ? { ...f, values: f.values.map((v) => ({ ...v, selected: selected.has(v.value) })) } : f)), pricePresets: [{ max: 500000 }, { min: 500000, max: 1000000 }, { min: 1000000 }] }
@@ -213,7 +215,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
   if (p === '/api/v1/store/config') return config()
   if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
-  if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed' }], seo: { title: 'Lawn suits' } }
+  if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed', productCount: 2 }], siblings: [{ handle: 'embroidered', name: 'Embroidered', productCount: 1 }], seo: { title: 'Lawn suits' } }
   if (p === '/api/v1/categories/old-lawn') return { redirectTo: 'lawn' }
   if (p === '/api/v1/collections/summer') return { id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', seo: {} }
   if (p === '/api/v1/products' && q.get('size') === 'XXL') return { code: 'validation_failed', status: 400 }
@@ -398,7 +400,7 @@ describe('the storefront through its whole stack', () => {
       expect(html.match(/<h1/g)).toHaveLength(1)
       expect(html).toMatch(/<h1[^>]*>Lawn</)
       expect(html).toContain('<title>Lawn suits | Rubaya</title>')
-      expect(html.match(/<article/g)).toHaveLength(24)
+      expect(html.match(/<article/g)).toHaveLength(32) // the 24 of the first page and the two rails of 4 that a category with sub-categories opens with
       expect(html).toContain('Dress 24')
       expect(html).toContain('6,990')
       expect(html).toContain('href="/c/women"') // the way up; the current page is not a link
@@ -444,6 +446,30 @@ describe('the storefront through its whole stack', () => {
       expect(next).toContain('Dress 25')
       expect(next).not.toContain('Dress 1<')
       expect(next).not.toContain('cursor=c1"') // no further page
+    })
+
+    it('a card carries the subtitle, the rating (3 or more reviews), "only N left" and quick add with the sizes sold out struck through', async () => {
+      const html = await (await get('/new')).text()
+      expect(html).toContain('Printed | Light khaddar')
+      expect(html).toContain('aria-label="4.5 out of 5, 12 reviews"')
+      expect(html).toContain('Only 2 left')
+      expect(html).toContain('Quick add')
+      expect(html).toContain('aria-label="Add size S to the bag"')
+      expect(html).toContain('aria-label="Size M, sold out"')
+      expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Size M, sold out"|<button[^>]*aria-label="Size M, sold out"[^>]*disabled=""/)
+      expect(html.match(/out of 5, /g)).toHaveLength(1) // the card with 2 reviews shows no stars
+    })
+
+    it('a category with sub-categories opens with its tiles and two rails, then the whole listing; one without shows its siblings', async () => {
+      const html = await (await get('/c/lawn')).text()
+      expect(html).toContain('aria-label="Shop by category"')
+      expect(html).toContain('href="/c/printed"')
+      expect(html).toContain('2 pieces')
+      expect(html).toContain('New in Lawn')
+      expect(html).toContain('Bestsellers in Lawn')
+      expect(html).toContain('>All Lawn<')
+      const filtered = await (await get('/c/lawn?size=M')).text()
+      expect(filtered, 'a filtered address is the listing only').not.toContain('New in Lawn')
     })
 
     it('new, sale, a collection and a search have their own heading and breadcrumb; a search is never cached and is not for the index', async () => {

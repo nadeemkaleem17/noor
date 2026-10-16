@@ -25,7 +25,7 @@ import { createUsage } from './usage.js'
 export function createCatalogService({ db, config, media, usage = createUsage(db), stock = noStock, search = createSearch({ db }), deliveryFacts = async () => ({}), notifyEnabled = async () => false, subscribe = async () => {} }) {
   const categories = createCategories({ db, usage, media })
   const products = createProducts({ db, config, media, stock, filtersOf: (id) => categories.effectiveFilters(id) })
-  const listing = createListing({ db, media, search, filtersOf: (id) => categories.effectiveFilters(id) })
+  const listing = createListing({ db, media, search, filtersOf: (id) => categories.effectiveFilters(id), lowStock: () => stock.lowStockThreshold() })
   return {
     listing,
     public: createPublicCatalog({ db, media, stock, listing, verifyPreview: (token) => products.verifyPreview(token), deliveryFacts, notifyEnabled, subscribe }),

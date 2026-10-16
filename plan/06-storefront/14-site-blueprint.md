@@ -84,26 +84,26 @@ Research: size filter first and open (90% then filter by size) (BM); applied fil
 
 | ID | Requirement | Pri | Today | Basis |
 |---|---|---|---|---|
-| LS-01 | Landing pages and leaf pages per DOC-06.13 §6; breadcrumb; title, description, count | M | P | BM |
+| LS-01 | Landing pages and leaf pages per DOC-06.13 §6; breadcrumb; title, description, count | M | Y | BM |
 | LS-02 | Filters: size first and open, then price, colour (swatch), fabric, occasion, pieces and the category's own; counts; greyed zero values; multi-select; search inside long lists | M | P | BM |
 | LS-03 | Filter UI: left column on wide screens, bottom sheet on phones with "Show N items" and Clear; real GET form so it works without JavaScript | M | Y | BM |
 | LS-04 | Applied-filter chips with remove and "Clear all"; the address holds the state | M | Y | BM |
 | LS-05 | Sort: featured, newest, best selling, price low-high and high-low, biggest discount | M | P | BM |
-| LS-06 | Density switch (phone 1 or 2; desktop 3 or 4), remembered | S | N | KH |
+| LS-06 | Density switch (phone 1 or 2; desktop 3 or 4), remembered | S | Y | KH |
 | LS-07 | Load more (link, works without JavaScript) with count "Showing 24 of 411"; scroll position restored on return | M | Y | BM |
-| LS-08 | Round sub-category and "first filter" chips above the grid | M | P | KH |
+| LS-08 | Round sub-category and "first filter" chips above the grid | M | Y | KH |
 | LS-09 | Empty and no-match states with a way out (clear filters, siblings, popular) | M | P | BM |
 | LS-10 | Sale page shows the discount on each card; New page sorted newest | M | Y | OW |
 | LS-11 | Category description text under the grid for SEO, collapsible | S | P | SEO |
-| LS-12 | Sticky filter and sort bar while scrolling | M | N | KH |
+| LS-12 | Sticky filter and sort bar while scrolling | M | Y | KH |
 | PC-01 | Card: picture (3:4), name, price, compare-at with "-x%", New and Sale and Sold out and Low stock badges | M | Y | DW |
 | PC-02 | Second picture on hover (fine pointers) and swipe dots on touch; none for single-picture products | M | P | research |
 | PC-03 | Colour swatches (up to 5 plus "+N"); a swatch links to that colourway | M | P | BM |
-| PC-04 | Fabric/technique line from the product subtitle ("Printed \| Light khaddar") | M | N | KH |
-| PC-05 | Rating stars with count (text label for screen readers), only with 3 or more reviews | S | N | DW |
+| PC-04 | Fabric/technique line from the product subtitle ("Printed \| Light khaddar") | M | Y | KH |
+| PC-05 | Rating stars with count (text label for screen readers), only with 3 or more reviews | S | Y | DW |
 | PC-06 | Heart (wishlist) with filled state, toggled without leaving the page, announced | M | Y | KH |
-| PC-07 | Quick add: opens a size chooser on the card (out-of-stock sizes struck through), adds without leaving the page and opens the mini-bag | M | N | KH, BM |
-| PC-08 | "Only N left" when stock is at or under the low-stock threshold | M | N | DW |
+| PC-07 | Quick add: opens a size chooser on the card (out-of-stock sizes struck through), adds without leaving the page and opens the mini-bag | M | Y | KH, BM |
+| PC-08 | "Only N left" when stock is at or under the low-stock threshold | M | Y | DW |
 | PC-09 | The link's name is the product name plus its badge, once (no repeated picture text) | M | Y | DW |
 | PC-10 | Skeleton card while a deferred block loads | S | P | OW |
 

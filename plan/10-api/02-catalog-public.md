@@ -86,8 +86,11 @@ ProductSummary = {
   primaryImage: Image, secondaryImage?: Image,
   priceFrom: Money, priceTo?: Money,              // priceTo only when it differs
   compareAtFrom?: Money,
+  subtitle?: string,                              // the fabric or technique line ("Printed | Light khaddar")
   badges: ('new' | 'sale' | 'bestseller' | 'limited' | 'made_to_order' | 'sold_out')[],
   stockStatus: StockStatus,
+  lowStock?: int,                                 // units left in all, only when counted and at or under the store's low-stock threshold
+  quickAdd?: { variantId: Id, label: string, inStock: boolean }[],   // a product sold in one option, size: the sizes quick add offers
   colorways: { handle: string, label: string, swatch: Swatch, current: boolean }[],   // siblings incl. itself; empty when no style
   rating?: { average: number /* one decimal */, count: int },
 }
@@ -140,8 +143,11 @@ ProductDetail = {
 ```ts
 CategoryNode = { id: Id, handle: string, name: string, image?: Image, productCount: int, children: CategoryNode[] }
 CategoryDetail = { id: Id, handle: string, name: string, description?: string, image?: Image,
-                   breadcrumb: { handle: string, name: string }[], children: { handle: string, name: string }[],
+                   breadcrumb: { handle: string, name: string }[],
+                   children: CategoryLink[],   // visible sub-categories that hold products
+                   siblings: CategoryLink[],   // the other categories at its level (the parent's other children, or the other top-level ones)
                    seo: { title?: string, description?: string } }
+CategoryLink = { handle: string, name: string, productCount: int, image?: Image }
 CollectionSummary = { id: Id, handle: string, title: string, image?: Image }
 CollectionDetail = CollectionSummary & { description?: string, seo: { title?: string, description?: string } }
 SizeChart = { id: Id, title: string, unit: 'in' | 'cm', notes?: string, guideImage?: Image,

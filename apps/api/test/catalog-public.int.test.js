@@ -200,6 +200,21 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       expect(handles(await json('/products?onlyNew=1&sort=newest')), '30 days before the fourth of October').toEqual(['men-shirt', 'bridal-gown', 'lawn-suit-3pc'])
     }, 90_000)
 
+    it('a card carries the subtitle, "only N left" and the sizes to quick add, and only where they mean something', async () => {
+      const low = await mk('Low piece', { sizes: { S: 1, M: 1 }, subtitle: 'Printed | Light khaddar', price: 1500, extra: true })
+      const body = await json('/products?facets=0&limit=48')
+      const card = (/** @type {string} */ h) => body.items.find((/** @type {{ handle: string }} */ i) => i.handle === h)
+      expect(card('cotton-kurta').quickAdd.map((/** @type {{ label: string, inStock: boolean }} */ s) => [s.label, s.inStock]), 'one size option: the sizes, sold out ones marked').toEqual([['S', true], ['M', false], ['L', true]])
+      expect(card('cotton-kurta').quickAdd[0].variantId).toMatch(/^[0-9a-f-]{36}$/)
+      expect(card('cotton-kurta').lowStock, '7 units in all is not low').toBeUndefined()
+      expect(card('low-piece').subtitle).toBe('Printed | Light khaddar')
+      expect(card('low-piece').lowStock, '2 units in all').toBe(2)
+      expect(card('bridal-gown').quickAdd, 'made to order: chosen on the product page').toBeUndefined()
+      expect(card('bridal-gown').lowStock).toBeUndefined()
+      expect(card('silk-lawn-suit').quickAdd, 'one variant, no size to choose').toBeUndefined()
+      expect(low.handle).toBe('low-piece')
+    }, 60_000)
+
     it('a size filter matches only products with that size available', async () => {
       expect(handles(await json('/products?size=M&sort=newest')), 'kurta M is sold out; blue has M').toEqual(['cotton-kurta-blue'])
       expect(handles(await json('/products?size=S,L&sort=newest')).sort()).toEqual(['cotton-kurta', 'cotton-kurta-blue'])
@@ -545,6 +560,9 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       await t.db.update(categories).set({ seoTitle: 'Women’s clothing', description: 'All of it' }).where(eq(categories.id, d.women))
       const w = await json('/categories/women')
       expect(w).toMatchObject({ handle: 'women', description: 'All of it', breadcrumb: [{ handle: 'women', name: 'Women' }], children: [{ handle: 'unstitched', name: 'Unstitched' }, { handle: 'stitched', name: 'Stitched' }], seo: { title: 'Women’s clothing' } })
+      expect(w.children.map((/** @type {{ handle: string, productCount: number }} */ c) => [c.handle, c.productCount]), 'each child says how many products it holds').toEqual([['unstitched', 3], ['stitched', 2]])
+      expect(w.siblings.map((/** @type {{ handle: string }} */ c) => c.handle), 'the other top-level categories that hold products').toEqual(['men'])
+      expect((await json('/categories/stitched')).siblings.map((/** @type {{ handle: string }} */ c) => c.handle), 'the parent’s other children').toEqual(['unstitched'])
       expect((await json('/categories/stitched')).breadcrumb).toEqual([{ handle: 'women', name: 'Women' }, { handle: 'stitched', name: 'Stitched' }])
       expect((await get('/categories/secret')).statusCode).toBe(404)
       expect((await get('/categories/secret-kid')).statusCode).toBe(404)
