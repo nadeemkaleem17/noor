@@ -106,7 +106,7 @@ describe.skipIf(!dbAvailable)('settings, pages and menus (MySQL, through HTTP)',
       expect(ok.status).toBe(200)
       expect((await publicGet('/store/config')).json().theme).toEqual(themePresets.monochrome)
       const presets = (await b.call('GET', '/admin/settings/theme/presets')).body.items.map((/** @type {{ id: string }} */ p) => p.id)
-      expect(presets.sort()).toEqual(['botanical', 'monochrome', 'storefront-gold'])
+      expect(presets.sort()).toEqual(['atelier', 'botanical', 'monochrome', 'storefront-gold'])
     }, 60_000)
 
     it('needs one enabled payment method, bank details when bank transfer is on, and keeps account numbers out of the trail and the storefront', async () => {

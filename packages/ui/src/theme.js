@@ -13,8 +13,8 @@ const fontStack = /** @type {const} */ ({
 })
 
 const radius = /** @type {const} */ ({
-  control: { sharp: '0', soft: '6px', round: '9999px' },
-  card: { sharp: '0', soft: '10px', round: '16px' },
+  control: { sharp: '0', soft: '2px', round: '8px' },
+  card: { sharp: '0', soft: '2px', round: '8px' },
   media: { none: '0', soft: '8px' },
 })
 
@@ -26,7 +26,7 @@ const controlHeight = /** @type {const} */ ({ comfortable: '2.75rem', compact: '
  * @param {ThemeTokens} [fallback]
  * @returns {string}
  */
-export function themeCss(theme, fallback = themePresets['storefront-gold']) {
+export function themeCss(theme, fallback = themePresets.atelier) {
   const parsed = ThemeTokens.safeParse(theme)
   const t = parsed.success ? parsed.data : fallback
   const vars = Object.entries(resolveColors(t.colors)).map(([k, v]) => `--sem-${k}:${v}`)

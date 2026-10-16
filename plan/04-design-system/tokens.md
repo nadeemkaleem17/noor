@@ -120,7 +120,7 @@ Numbers in brackets are the lowest ratio across `bg`/`surface`/`surface-2`. Chan
 | Font weight | 400, 500, 600. 700 only for storefront headings |
 | Fonts | `--font-heading`, `--font-body`, `--font-mono` (§7) |
 | Motion | `--dur-micro` 120 ms, `--dur-small` 200 ms, `--dur-modal` 320 ms, `--dur-modal-close` 200 ms; `--ease-out` `cubic-bezier(0.16,1,0.3,1)`, `--ease-in` `cubic-bezier(0.7,0,0.84,0)`. All durations become 0 ms under `prefers-reduced-motion: reduce` |
-| Z-index | `z-base` 0, `z-sticky` 10, `z-drawer` 40, `z-modal` 50, `z-popover` 60, `z-toast` 70. No other z-index values |
+| Z-index | `z-base` 0, `z-sticky` 20, `z-header` 30, `z-drawer` 40, `z-modal` 50, `z-popover` 60, `z-toast` 70. No other z-index values |
 | Breakpoints (mobile-first, min-width) | `sm` 480 px, `md` 768 px, `lg` 1024 px, `xl` 1280 px. Storefront is designed at 360 px first |
 | Density (storefront, `ThemeTokens.density`) | `comfortable`: control height 44 px, grid gap `4`; `compact`: control height 40 px, grid gap `3`. Admin: control height 36 px, table row 44 px |
 | Media ratio | `--media-ratio` from `ThemeTokens.mediaRatio` (`3/4` default); product images use `aspect-(--media-ratio)` |

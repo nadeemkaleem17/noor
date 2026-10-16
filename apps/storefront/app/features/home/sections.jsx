@@ -22,7 +22,7 @@ function Slide({ slide, first, heading: Heading }) {
       <div className={slideText}>
         <Heading className="max-w-xl font-heading text-3xl md:text-5xl">{slide.heading}</Heading>
         {slide.subheading ? <p className="max-w-lg text-lg">{slide.subheading}</p> : null}
-        <SafeLinkButton href={slide.buttonText ? slide.buttonHref : undefined}>{slide.buttonText ?? t('home.shopNow')}</SafeLinkButton>
+        <SafeLinkButton href={slide.buttonText ? slide.buttonHref : undefined} variant="secondary">{slide.buttonText ?? t('home.shopNow')}</SafeLinkButton>
       </div>
     </div>
   )

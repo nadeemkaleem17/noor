@@ -6,7 +6,7 @@ import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
 
 afterEach(resetApp)
 
-const labels = { 'storefront-gold': 'Storefront gold', monochrome: 'Monochrome', botanical: 'Botanical' }
+const labels = { atelier: 'Atelier', 'storefront-gold': 'Storefront gold', monochrome: 'Monochrome', botanical: 'Botanical' }
 const presetList = () => ({ items: Object.entries(themePresets).map(([id, theme]) => ({ id, label: labels[/** @type {keyof typeof labels} */ (id)], theme })) })
 const gold = () => structuredClone(themePresets['storefront-gold'])
 const perms = /** @type {import('@noor/contract').Permission[]} */ (['dashboard:read', 'settings:read', 'settings:write'])

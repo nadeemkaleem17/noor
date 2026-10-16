@@ -17,7 +17,7 @@ export const defaults = {
     notifications: { staffEmails: [] },
     thresholds: { lowStock: 3, highValueCodMinor: 2_500_000 },
   },
-  theme: themePresets['storefront-gold'],
+  theme: themePresets.atelier,
   home: {
     announcement: { text: '' },
     notices: [],

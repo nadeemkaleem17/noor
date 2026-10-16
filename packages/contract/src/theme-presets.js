@@ -2,6 +2,7 @@
 // through the same path as a custom theme: there is one code path. Values are contrast-checked by @noor/ui's gate.
 
 const status = /** @type {const} */ ({ sale: '#B23A2E', success: '#2F6B40', warning: '#855B1A', danger: '#B23A2E', focus: '#2C3E8C' })
+const atelierStatus = /** @type {const} */ ({ ...status, sale: '#A8302A', danger: '#A8302A' })
 const base = /** @type {const} */ ({
   fonts: { heading: 'Playfair Display', body: 'Inter' },
   radius: { control: 'soft', card: 'soft', media: 'none' },
@@ -11,6 +12,15 @@ const base = /** @type {const} */ ({
 })
 
 export const themePresets = /** @satisfies {Record<string, import('./primitives.js').ThemeTokens>} */ (/** @type {const} */ ({
+  // Atelier (DOC-06.15 section 4.2): paper page, ink primary button, gold only as accent text and soft highlights. The default of a new shop.
+  atelier: {
+    ...base,
+    preset: 'atelier',
+    colors: {
+      bg: '#FBF8F3', surface: '#FFFFFF', surface2: '#F4EFE6', fg: '#141210', fgSoft: '#3D3832', muted: '#5E574D',
+      line: '#E7E0D4', lineStrong: '#7C7368', accent: '#141210', onAccent: '#FFFFFF', accentText: '#7A5C0B', accentSoft: '#FBF6E8', ...atelierStatus,
+    },
+  },
   'storefront-gold': {
     ...base,
     preset: 'storefront-gold',

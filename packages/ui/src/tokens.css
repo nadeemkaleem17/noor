@@ -80,11 +80,14 @@
   --ease-*: initial;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* entering and moving (DOC-06.15 section 5.1) */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15); /* leaving */
 }
 
 /* z-index scale: no other values (tokens.md section 5) */
 @utility z-base { z-index: 0; }
-@utility z-sticky { z-index: 10; }
+@utility z-sticky { z-index: 20; }
+@utility z-header { z-index: 30; }
 @utility z-drawer { z-index: 40; }
 @utility z-modal { z-index: 50; }
 @utility z-popover { z-index: 60; }
@@ -96,6 +99,11 @@
   --dur-small: 200ms;
   --dur-modal: 320ms;
   --dur-modal-close: 200ms;
+  /* the storefront's scale (DOC-06.15 section 5.1): closing is 50 ms faster than opening */
+  --dur-fast: 100ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --dur-page: 250ms;
 }
 
 /* ---- brand: admin (light) ---- */
@@ -135,21 +143,21 @@
   color-scheme: dark;
 }
 
-/* ---- brand: storefront default (storefront-gold). A store theme from the API overrides these (theme.ts) ---- */
+/* ---- brand: storefront default (the Atelier preset, DOC-06.15 section 4.2). A store theme from the API overrides these (theme.ts) ---- */
 [data-brand="storefront"] {
   --sem-bg: #FBF8F3; --sem-surface: #FFFFFF; --sem-surface-2: #F4EFE6;
-  --sem-fg: #141210; --sem-fg-soft: #3D3832; --sem-muted: #6A6359;
-  --sem-line: #E7E0D4; --sem-line-strong: #8C8279;
-  --sem-accent: #C9A227; --sem-on-accent: #1A1408; --sem-accent-text: #806010; --sem-accent-soft: #FBF6E8;
-  --sem-sale: #B23A2E; --sem-success: #2F6B40; --sem-warning: #855B1A; --sem-danger: #B23A2E;
+  --sem-fg: #141210; --sem-fg-soft: #3D3832; --sem-muted: #5E574D;
+  --sem-line: #E7E0D4; --sem-line-strong: #7C7368;
+  --sem-accent: #141210; --sem-on-accent: #FFFFFF; --sem-accent-text: #7A5C0B; --sem-accent-soft: #FBF6E8;
+  --sem-sale: #A8302A; --sem-success: #2F6B40; --sem-warning: #855B1A; --sem-danger: #A8302A;
   --sem-success-soft: #E8F1EA; --sem-warning-soft: #FBF1E1; --sem-danger-soft: #FBEAEA;
   --sem-focus: #2C3E8C;
   --sem-shadow-card: 0 1px 2px rgb(20 18 16 / 0.06);
-  --sem-shadow-pop: 0 12px 32px rgb(20 18 16 / 0.16);
+  --sem-shadow-pop: 0 12px 32px rgb(20 18 16 / 0.12);
   --sem-shadow-modal: 0 24px 64px rgb(20 16 14 / 0.28);
   --sem-font-heading: "Playfair Display", Georgia, serif;
   --sem-font-body: "Inter", system-ui, sans-serif;
-  --sem-radius-control: 6px; --sem-radius-card: 10px; --sem-radius-media: 0;
+  --sem-radius-control: 2px; --sem-radius-card: 2px; --sem-radius-media: 0;
   --media-ratio: 3/4;
   --control-h: 2.75rem;
   --control-text: var(--text-md); /* 16px: iOS zooms into smaller inputs */
@@ -167,6 +175,7 @@
   html { background: var(--sem-bg); color: var(--sem-fg); font-family: var(--sem-font-body); }
   :focus-visible { outline: 2px solid var(--sem-focus); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) {
+    :root { --dur-micro: 0ms; --dur-small: 0ms; --dur-modal: 0ms; --dur-modal-close: 0ms; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --dur-page: 0ms; }
     *, ::before, ::after { animation-duration: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
   }
 }

@@ -76,8 +76,8 @@ gate('storefront default (tokens.css)', parsed.get('[data-brand="storefront"]') 
 for (const [id, theme] of Object.entries(themePresets)) gate(`preset ${id}`, resolveColors(theme.colors))
 
 describe('single source for the storefront default', () => {
-  it('the storefront block in tokens.css equals the storefront-gold preset', () => {
-    const fromPreset = resolveColors(themePresets['storefront-gold'].colors)
+  it('the storefront block in tokens.css equals the atelier preset (the default)', () => {
+    const fromPreset = resolveColors(themePresets.atelier.colors)
     const fromCss = parsed.get('[data-brand="storefront"]') ?? {}
     for (const k of ['bg', 'surface', 'surface-2', 'fg', 'fg-soft', 'muted', 'line', 'line-strong', 'accent', 'on-accent', 'accent-text', 'accent-soft', 'sale', 'success', 'warning', 'danger', 'focus']) {
       expect(fromCss[k], k).toBe(fromPreset[k])
@@ -106,7 +106,7 @@ describe('themeCss', () => {
     const hostile = { ...themePresets.botanical, colors: { ...themePresets.botanical.colors, accent: 'red;}body{display:none' } }
     const out = themeCss(hostile)
     expect(out).not.toContain('display:none')
-    expect(out).toContain('--sem-accent:#C9A227')
+    expect(out).toContain('--sem-accent:#141210')
   })
   it('sets control height from density', () => {
     expect(themeCss({ ...themePresets.monochrome, density: 'compact' })).toContain('--control-h:2.5rem')
