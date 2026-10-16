@@ -22,6 +22,14 @@ async function shot(page, name, mask = []) {
     await Promise.all(shown.map((i) => Promise.race([i.decode().catch(() => {}), new Promise((r) => setTimeout(r, 4000))])))
     window.scrollTo(0, 0)
   })
+  // a section far from the screen is not painted into a full-page picture while it is `content-visibility: auto` (a tall page lost its middle): draw them all, then wait two frames
+  // (a constructed style sheet: the shop's content security policy refuses an inline style element)
+  await page.evaluate(() => {
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync('*{content-visibility:visible!important}')
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
+    return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  })
   await page.waitForLoadState('networkidle')
   await expect(page).toHaveScreenshot(`${name}.png`, { fullPage: true, mask })
 }

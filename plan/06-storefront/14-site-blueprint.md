@@ -65,18 +65,18 @@ Research: only 19% of shops get autocomplete right; its value is guiding shopper
 | ID | Requirement | Pri | Today | Basis |
 |---|---|---|---|---|
 | HM-01 | Hero campaign carousel: readable text on every slide (white on a measured scrim), one h1, pause control, swipe on phones, preloaded first image | M | Y | WC 1.4.3 |
-| HM-02 | Shop by category: round pictures for every visible top category, then collections; sideways scroll on phones | M | P | KH, 06.13 |
-| HM-03 | New in with tabs per top category (All, Women, Men, Kids, Footwear, Accessories), "View all" per tab | M | P | OF, 06.13 |
-| HM-04 | Featured collections as large tiles | M | P | KH |
+| HM-02 | Shop by category: round pictures for every visible top category, then collections; sideways scroll on phones | M | Y | KH, 06.13 |
+| HM-03 | New in with tabs per top category (All, Women, Men, Kids, Footwear, Accessories), "View all" per tab | M | Y | OF, 06.13 |
+| HM-04 | Featured collections as large tiles | M | Y | KH |
 | HM-05 | Shop by occasion tiles (from the Occasion filter) | S | N | 06.13 |
-| HM-06 | Category spotlight blocks for the top categories not yet led, with four product thumbnails | M | N | 06.13 |
-| HM-07 | Bestsellers with the same tabs | M | P | KH |
+| HM-06 | Category spotlight blocks for the top categories not yet led, with four product thumbnails | M | Y | 06.13 |
+| HM-07 | Bestsellers with the same tabs | M | Y | KH |
 | HM-08 | Promo band and editorial band (staff content) | M | Y | OW |
 | HM-09 | Customer reviews highlight (best recent approved reviews with photos) | S | N | PK |
 | HM-10 | Trust strip: free-delivery threshold, cash on delivery, return days, WhatsApp support, each linking to its policy | M | Y | PK |
 | HM-11 | "Shipping charges / Track your order" blocks in the lower page | S | N | KH |
 | HM-12 | Every section omitted when empty; the page never shows an empty frame | M | Y | OW |
-| HM-13 | The coverage invariant of DOC-06.13 §3 holds on the seeded data | M | N | OW |
+| HM-13 | The coverage invariant of DOC-06.13 §3 holds on the seeded data | M | Y | OW |
 
 ### 2.4 Listings: categories, collections, new, sale (LS) and the product card (PC)
 

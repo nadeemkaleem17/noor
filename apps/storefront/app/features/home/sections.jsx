@@ -3,7 +3,6 @@ import { Link as RouterLink } from 'react-router'
 import { formatMoney } from '@noor/i18n'
 import { Carousel } from '@noor/ui/carousel'
 import { Image, imageProps } from '@noor/ui/image'
-import { ProductGrid } from '../catalog/product-card'
 import { SafeLinkButton } from '../layout/safe-link'
 import { useLocalePath, useShell } from '../layout/use-shell'
 
@@ -85,26 +84,6 @@ export function CategoryTiles({ categories }) {
           </li>
         ))}
       </ul>
-    </section>
-  )
-}
-
-/** A titled grid of products with a link to the full list. Fewer than four products is not a section. @param {{ id: string, title: string, href: string, items: import('@noor/contract').ProductSummary[] }} props */
-export function ProductSection({ id, title, href, items }) {
-  const { t } = useTranslation('storefront')
-  const path = useLocalePath()
-  if (items.length < 4) return null
-  return (
-    <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby={id}>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
-        <h2 id={id} className="font-heading text-2xl">
-          {title}
-        </h2>
-        <RouterLink to={path(href)} className="text-sm underline underline-offset-4">
-          {t('home.viewAll')}
-        </RouterLink>
-      </div>
-      <ProductGrid items={items} eager={0} />
     </section>
   )
 }

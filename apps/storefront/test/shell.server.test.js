@@ -229,7 +229,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/collections') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', image }] }
   if (p === '/api/v1/content/menus/main') return { handle: 'main', items: [{ id: 'a', label: 'Women', href: '/c/women', children: [{ id: 'b', label: 'Lawn', href: '/c/lawn' }] }, { id: 'c', label: 'Evil', href: 'javascript:alert(1)' }] }
   if (p === '/api/v1/content/menus/footer') return { handle: 'footer', items: [{ id: 'f', label: 'Shipping', href: '/pages/shipping' }] }
-  if (p === '/api/v1/categories') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000001', handle: 'women', name: 'Women', productCount: 3, children: [{ id: '0192f5aa-0000-7000-8000-000000000002', handle: 'lawn', name: 'Lawn', productCount: 2, children: [] }] }] }
+  if (p === '/api/v1/categories') return { items: [{ id: '0192f5aa-0000-7000-8000-000000000001', handle: 'women', name: 'Women', productCount: 3, image: { ...image, src: 'http://localhost/img/women.webp' }, children: [{ id: '0192f5aa-0000-7000-8000-000000000002', handle: 'lawn', name: 'Lawn', productCount: 2, children: [] }] }] }
   if (p === '/api/v1/products/42') return { id: '42', handle: 'embroidered-lawn' }
   return undefined
 }
@@ -371,8 +371,8 @@ describe('the storefront through its whole stack', () => {
       expect(html).not.toMatch(/<img(?=[^>]*loading="eager")(?![^>]*fetchPriority="high")[^>]*>/) // nothing else is eager: the cards are below the fold
       // the bestsellers are below the fold and stream in after the rest: React puts them at the end of the document and moves them into place, so they are checked apart
       expect(html).toContain('Bestsellers')
-      const titles = ['The Eid edit', 'New arrivals', 'Up to 25% off', 'Made by hand'].map((t) => html.indexOf(t))
-      const order = [...titles, html.indexOf('Collections', titles[3])] // the header's menu has a "Collections" item too: look after the last section title
+      // the sections in the order of DOC-06.13 section 5 (the header's menu has "Collections" too, so the sections are found by their own markers)
+      const order = ['The Eid edit', 'New arrivals', 'id="home-collections"', 'aria-label="The shop by category"', 'Up to 25% off', 'Made by hand'].map((t) => html.indexOf(t))
       expect(order.every((at) => at > 0)).toBe(true)
       expect([...order].sort((a, b) => a - b)).toEqual(order)
       expect(html).toContain('href="/p/dress-1"')

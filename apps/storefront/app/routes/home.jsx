@@ -6,7 +6,9 @@ import { JsonLd } from '~/features/seo/json-ld'
 import { buildMeta, clip, pageName, siteOf } from '~/features/seo/meta'
 import { useTranslation } from 'react-i18next'
 import { Await, useLoaderData } from 'react-router'
-import { CategoryTiles, CollectionsRow, EditorialBand, Hero, ProductSection, PromoBand, TrustStrip } from '~/features/home/sections'
+import { CategoryTiles, CollectionsRow, EditorialBand, Hero, PromoBand, TrustStrip } from '~/features/home/sections'
+import { CategorySpotlights } from '~/features/home/spotlights'
+import { TabbedSection } from '~/features/home/tabbed-section'
 import { safeHref } from '@noor/ui/safe-href'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
@@ -39,9 +41,12 @@ export async function loader({ request }) {
   const locale = localeOfPath(new URL(request.url).pathname)
   const { config, home, categories } = await loadShell(locale)
   const bestsellers = optional(api('catalog.listProducts', { query: { sort: 'bestselling', limit: 8, facets: false, locale } }))
-  const [newArrivals, collections] = await Promise.all([
+  // four best sellers of each top category for its block (up to six categories); a block that cannot be loaded is left out
+  const spotlights = Promise.all(categories.slice(0, 6).map(async (category) => ({ category, items: (await optional(api('catalog.listProducts', { query: { category: category.handle, sort: 'bestselling', limit: 4, facets: false, locale } })))?.items ?? [] })))
+  const [newArrivals, collections, blocks] = await Promise.all([
     optional(api('catalog.listProducts', { query: { sort: 'newest', limit: 8, facets: false, locale } })),
     optional(api('catalog.listCollections', { query: { featured: true, limit: 3, locale } })),
+    spotlights,
   ])
   return {
     brand: config.brand.name,
@@ -54,6 +59,7 @@ export async function loader({ request }) {
     categories,
     newArrivals: newArrivals?.items ?? [],
     collections: collections?.items ?? [],
+    blocks,
     bestsellers,
   }
 }
@@ -63,7 +69,7 @@ export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ ((
 
 export default function Home() {
   const { t } = useTranslation('storefront')
-  const { brand, slides, promo, editorial, categories, newArrivals, collections, bestsellers } = useLoaderData()
+  const { brand, slides, promo, editorial, categories, newArrivals, collections, blocks, bestsellers } = useLoaderData()
   const site = useSite()
   const config = useShell()?.config
   return (
@@ -72,15 +78,16 @@ export default function Home() {
       {slides.length ? <Hero slides={slides} /> : <h1 className="sr-only">{brand}</h1>}
       <TrustStrip />
       <CategoryTiles categories={categories} />
-      <ProductSection id="home-new" title={t('home.newArrivals')} href="/new" items={newArrivals} />
+      <TabbedSection id="home-new" title={t('home.newArrivals')} href="/new" sort="newest" items={newArrivals} categories={categories} />
+      <CollectionsRow collections={collections} />
+      <CategorySpotlights blocks={blocks} />
       {promo?.heading ? <PromoBand promo={promo} /> : null}
       <Suspense fallback={null}>
         <Await resolve={bestsellers} errorElement={null}>
-          {(list) => <ProductSection id="home-best" title={t('home.bestsellers')} href="/new?sort=bestselling" items={list?.items ?? []} />}
+          {(list) => <TabbedSection id="home-best" title={t('home.bestsellers')} href="/new?sort=bestselling" sort="bestselling" items={list?.items ?? []} categories={categories} />}
         </Await>
       </Suspense>
       {editorial?.heading ? <EditorialBand editorial={editorial} /> : null}
-      <CollectionsRow collections={collections} />
     </>
   )
 }

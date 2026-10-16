@@ -157,7 +157,7 @@ export async function seedDemo(db, s, actor, { log = () => {} } = {}) {
   ]
   for (const c of specs) {
     if (haveCollections.has(c.handle)) continue
-    await s.catalog.collections.create(actor, { title: c.title, handle: c.handle, description: c.description, status: 'active', featured: c.featured, productIds: c.ids }, req())
+    await s.catalog.collections.create(actor, { title: c.title, handle: c.handle, imageMediaId: await picture(db, s, actor, { text: c.title, hex: '#7A1F2B', caption: 'collection', width: 1200, height: 800 }), description: c.description, status: 'active', featured: c.featured, productIds: c.ids }, req())
     done.collections += 1
   }
 
