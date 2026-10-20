@@ -67,7 +67,7 @@ test.describe('in the admin', () => {
     // a run that stopped half way leaves its rule behind, and an older rule of the same range would win: start without any
     const api = await adminApi()
     const { items } = await api.get('/admin/customers/highlight-rules')
-    await api.put('/admin/customers/highlight-rules', { rules: items.filter((r) => !r.label.startsWith('First ')) })
+    await api.put('/admin/customers/highlight-rules', { rules: items.filter((/** @type {{ label: string }} */ r) => !r.label.startsWith('First ')) })
     await api.dispose()
     await page.goto(`${urls.admin}/customers/highlights`)
     await expect(page.getByRole('heading', { name: 'Highlight rules' })).toBeVisible()
