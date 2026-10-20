@@ -296,6 +296,58 @@ describe.skipIf(!dbAvailable)('settings, pages and menus (MySQL, through HTTP)',
       expect((await b.call('PUT', '/admin/content/home', { body: { value: base(), version: 0 } })).status).toBe(403)
       expect((await b.call('GET', '/admin/content/home')).status).toBe(403)
     }, 60_000)
+
+    it('a draft changes nothing until it is published; a preview link shows it for half an hour; a publish needs the draft and the live page it saw', async () => {
+      setClock(new Date('2026-10-10T10:00:00.000Z'))
+      const { b } = await signedIn('manager')
+      const draft = (/** @type {string} */ text) => ({ ...base(), announcement: { text } })
+
+      // nothing saved: the draft starts as the live page
+      expect((await b.call('GET', '/admin/content/home/draft')).body).toMatchObject({ hasDraft: false, version: 0, liveVersion: 0 })
+
+      // saving a draft does not touch the shop
+      const saved = await b.call('PUT', '/admin/content/home/draft', { body: { value: draft('Draft sale'), version: 0 } })
+      expect(saved.body).toMatchObject({ hasDraft: true, version: 1, value: { announcement: { text: 'Draft sale' } } })
+      expect((await publicGet('/content/home')).json().announcement).toBeUndefined()
+      expect((await b.call('PUT', '/admin/content/home/draft', { body: { value: draft('x'), version: 0 } })).status).toBe(409) // stale
+
+      // the preview shows the draft, privately; a wrong or expired token shows nothing
+      const link = (await b.call('POST', '/admin/content/home/preview-link')).body
+      const previewed = await publicGet(`/content/home?preview=${encodeURIComponent(link.token)}`)
+      expect(previewed.json().announcement).toEqual({ text: 'Draft sale' })
+      expect(previewed.headers['cache-control']).toBe('private, no-store')
+      expect((await publicGet(`/content/home?preview=${link.token}x`)).statusCode).toBe(403)
+      expect((await publicGet('/content/home?preview=1760000000000.abc')).statusCode).toBe(403)
+      expect((await publicGet('/content/home')).json().announcement).toBeUndefined()
+      setClock(new Date('2026-10-10T10:31:00.000Z'))
+      expect((await publicGet(`/content/home?preview=${encodeURIComponent(link.token)}`)).statusCode).toBe(403)
+      setClock(new Date('2026-10-10T10:00:00.000Z'))
+
+      // publish: wrong draft version, then the right one
+      expect((await b.call('POST', '/admin/content/home/publish', { body: { version: 5, liveVersion: 0 } })).status).toBe(409)
+      const live = await b.call('POST', '/admin/content/home/publish', { body: { version: 1, liveVersion: 0 } })
+      expect(live.status, JSON.stringify(live.body)).toBe(200)
+      expect(live.body).toMatchObject({ version: 1, value: { announcement: { text: 'Draft sale' } } })
+      expect((await publicGet('/content/home')).json().announcement).toEqual({ text: 'Draft sale' })
+      expect((await b.call('GET', '/admin/content/home/draft')).body).toMatchObject({ hasDraft: false, liveVersion: 1 })
+      expect((await b.call('POST', '/admin/content/home/publish', { body: { version: 1, liveVersion: 1 } })).status).toBe(404) // no draft any more
+
+      // the live page moved on after the draft was made: the publish is refused, and the draft can be thrown away
+      await b.call('PUT', '/admin/content/home/draft', { body: { value: draft('Second'), version: 0 } })
+      await b.call('PUT', '/admin/content/home', { body: { value: draft('Edited live'), version: 1 } })
+      expect((await b.call('POST', '/admin/content/home/publish', { body: { version: 1, liveVersion: 1 } })).status).toBe(409)
+      expect((await b.call('DELETE', '/admin/content/home/draft')).body).toMatchObject({ hasDraft: false, liveVersion: 2 })
+      expect((await publicGet('/content/home')).json().announcement).toEqual({ text: 'Edited live' })
+      const log = (await t.db.select().from(auditLog)).map((l) => l.action)
+      expect(log).toEqual(expect.arrayContaining(['content.draft_saved', 'content.draft_published', 'content.draft_discarded']))
+    }, 60_000)
+
+    it('the draft is for people who may change content: a viewer cannot save, publish or get a preview link', async () => {
+      const { b } = await signedIn('viewer')
+      expect((await b.call('GET', '/admin/content/home/draft')).status).toBe(403)
+      expect((await b.call('PUT', '/admin/content/home/draft', { body: { value: base(), version: 0 } })).status).toBe(403)
+      expect((await b.call('POST', '/admin/content/home/preview-link')).status).toBe(403)
+    }, 60_000)
   })
 
   describe('pages', () => {

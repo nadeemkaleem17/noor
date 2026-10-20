@@ -28,6 +28,11 @@ One pair of endpoints per document of DOC-09.9 §2.1. `GET` returns `{ value, ve
 | `admin.settings.getCheckout` / `.updateCheckout` | `GET\|PUT /settings/checkout` | same | `CheckoutSettings` | `stale_write`, `validation_failed` (more than 3 extra fields, or a field key that collides with a fixed field) | Tag `store-config` |
 | `admin.settings.getPayments` / `.updatePayments` | `GET\|PUT /settings/payments` | same | `PaymentSettings` | `stale_write`, `no_payment_method`, `validation_failed` (bank transfer enabled without account details) | Tag `store-config`. Response adds `adapters: { type, configured: boolean }[]` so the UI can show "Not connected" (DOC-07.10 §3) |
 | `admin.content.getHome` / `.updateHome` | `GET\|PUT /content/home` | `content:read` / `content:write` | `HomeContent` | `stale_write`, `validation_failed` (invalid link, slide without alt), `media_not_ready` | Tag `home` |
+| `admin.content.getHomeDraft` | `GET /content/home/draft` | `content:read` | — | 200 `HomeDraft` (a `Doc` of `HomeContent` + `hasDraft`, `liveVersion`); with no draft `value` is the live page and `version` 0 | — |
+| `admin.content.saveHomeDraft` | `PUT /content/home/draft` | `content:write` | B: `{ value, version }` | 200 `HomeDraft` | `stale_write`, `media_not_ready`, `validation_failed` |
+| `admin.content.discardHomeDraft` | `DELETE /content/home/draft` | `content:write` | — | 200 `HomeDraft` | — |
+| `admin.content.publishHome` | `POST /content/home/publish` | `content:write` | B: `{ version, liveVersion }` (the draft's version and the live page's version it was made from) | 200 `Doc<HomeContent>` (the live page) | `not_found` (no draft), `stale_write` (the draft or the live page moved) |
+| `admin.content.homePreviewLink` | `POST /content/home/preview-link` | `content:read` | — | 200 `{ token, expiresAt }` (valid 30 minutes; an HMAC of the expiry, nothing stored) | — |
 | `admin.settings.themePresets` | `GET /settings/theme/presets` | `settings:read` | — → `{ items: { id: string, label: string, theme: ThemeTokens }[] }` | — | `storefront-gold`, `monochrome`, `botanical` |
 | `admin.settings.translationStatus` | `GET /settings/translation-status` | `settings:read` | — → `{ ui: { total: int, translated: int }, products: { total: int, translated: int } }` | — | For enabling Urdu (DOC-07.11 §2) |
 

@@ -210,6 +210,9 @@ export const HomeContent = z.strictObject({
 const Doc = (/** @type {z.ZodType} */ value, extra = {}) =>
   z.strictObject({ value, version: z.int().min(0), updatedAt: IsoDate.optional(), updatedBy: z.string().optional(), images: z.record(Id, Image), ...extra })
 const Write = (/** @type {z.ZodType} */ value) => z.strictObject({ value, version: z.int().min(0) })
+/** The home page as it is being prepared: `hasDraft` false means nothing was saved yet and `value` is the live page (to start from); `liveVersion` is the live page's version, which a publish must still match. */
+export const HomeDraft = Doc(HomeContent).extend({ hasDraft: z.boolean(), liveVersion: z.int().min(0) })
+/** @typedef {z.infer<typeof HomeDraft>} HomeDraft */
 
 export const PaymentAdapters = z.array(z.strictObject({ type: Enum.paymentMethod, configured: z.boolean() }))
 
@@ -226,6 +229,11 @@ export const settingsRoutes = defineRoutes({
   'admin.settings.updatePayments': { method: 'PUT', path: '/admin/settings/payments', auth: 'staff', permission: 'settings:write', body: Write(PaymentSettings), response: Doc(PaymentSettings, { adapters: PaymentAdapters }) },
   'admin.content.getHome': { method: 'GET', path: '/admin/content/home', auth: 'staff', permission: 'content:read', response: Doc(HomeContent) },
   'admin.content.updateHome': { method: 'PUT', path: '/admin/content/home', auth: 'staff', permission: 'content:write', body: Write(HomeContent), response: Doc(HomeContent) },
+  'admin.content.getHomeDraft': { method: 'GET', path: '/admin/content/home/draft', auth: 'staff', permission: 'content:read', response: HomeDraft },
+  'admin.content.saveHomeDraft': { method: 'PUT', path: '/admin/content/home/draft', auth: 'staff', permission: 'content:write', body: Write(HomeContent), response: HomeDraft },
+  'admin.content.discardHomeDraft': { method: 'DELETE', path: '/admin/content/home/draft', auth: 'staff', permission: 'content:write', response: HomeDraft },
+  'admin.content.publishHome': { method: 'POST', path: '/admin/content/home/publish', auth: 'staff', permission: 'content:write', body: z.strictObject({ version: z.int().min(1), liveVersion: z.int().min(0) }), response: Doc(HomeContent) },
+  'admin.content.homePreviewLink': { method: 'POST', path: '/admin/content/home/preview-link', auth: 'staff', permission: 'content:read', response: z.strictObject({ token: z.string(), expiresAt: IsoDate }) },
   'admin.settings.themePresets': { method: 'GET', path: '/admin/settings/theme/presets', auth: 'staff', permission: 'settings:read', response: z.strictObject({ items: z.array(ThemePreset) }) },
   'admin.settings.translationStatus': {
     method: 'GET', path: '/admin/settings/translation-status', auth: 'staff', permission: 'settings:read',
@@ -236,6 +244,8 @@ export const settingsRoutes = defineRoutes({
 // ---- public ------------------------------------------------------------------------------------------------------------------
 
 const LocaleQuery = z.strictObject({ locale: Locale.optional() })
+/** `preview` is a token from `admin.content.homePreviewLink`: with it the answer is the unpublished home page, and never kept by a cache. */
+const HomeQuery = LocaleQuery.extend({ preview: z.string().max(200).optional() })
 
 export const StoreConfigPublic = z.strictObject({
   brand: z.strictObject({ name: z.string(), tagline: z.string().optional(), logoLight: Image.optional(), logoDark: Image.optional(), favicon: Image.optional() }),
@@ -281,7 +291,7 @@ export const HomePublic = z.strictObject({
 /** Public reads are shared-cacheable: `cache: 'shared'` is `public, s-maxage=60, stale-while-revalidate=600` (DOC-10.1 section 1). */
 export const settingsPublicRoutes = defineRoutes({
   'store.getConfig': { method: 'GET', path: '/store/config', auth: 'public', cache: 'shared', query: LocaleQuery, response: StoreConfigPublic },
-  'content.getHome': { method: 'GET', path: '/content/home', auth: 'public', cache: 'shared', query: LocaleQuery, response: HomePublic },
+  'content.getHome': { method: 'GET', path: '/content/home', auth: 'public', cache: 'shared', query: HomeQuery, response: HomePublic },
 })
 
 export { LocaleQuery }

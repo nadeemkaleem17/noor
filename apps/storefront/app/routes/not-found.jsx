@@ -24,7 +24,7 @@ export default function NotFound() {
         <label className="sr-only" htmlFor="nf-q">
           {t('shell.searchLabel')}
         </label>
-        <input id="nf-q" name="q" type="search" required minLength={2} maxLength={80} placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
+        <input id="nf-q" name="q" type="search" required minLength={2} maxLength={80} placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) min-w-0 flex-1 rounded-control border border-line-strong bg-bg px-3" />
         <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">
           {t('shell.searchSubmit')}
         </button>

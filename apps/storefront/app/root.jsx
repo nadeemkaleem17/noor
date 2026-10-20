@@ -11,6 +11,7 @@ import { redirectFor } from '~/lib/redirects'
 import { footerColumns, navItems, safeItems } from '~/lib/nav'
 import { getEnv } from '~/lib/env.server'
 import { fontsFor } from '~/lib/fonts.server'
+import { previewOf } from '~/lib/preview'
 import { cached, loadShell } from '~/lib/shell.server'
 import { visitorMiddleware } from '~/lib/visitor.server'
 import './app.css'
@@ -40,7 +41,7 @@ export async function loader({ request }) {
   }
 
   const locale = localeOfPath(url.pathname)
-  const shell = await loadShell(locale)
+  const shell = await loadShell(locale, previewOf(url))
   // Urdu is off until the shop switches it on: until then `/ur/...` is not a page
   if (locale !== 'en' && !shell.config.locale.supported.includes(locale)) throw new Response('Not Found', { status: 404 })
   // Only what the frame needs goes to the browser, already worked out: the page data carries every byte of it, and an unsafe menu address never gets there.
@@ -51,6 +52,7 @@ export async function loader({ request }) {
   const footerLabels = { new: labels.new, sale: labels.sale, allCategories: t('storefront:shell.allCategories'), allCollections: t('storefront:shell.allCollections'), trackOrder: t('storefront:shell.trackOrder'), sizeGuide: t('storefront:shell.sizeGuide'), offers: t('storefront:shell.offers') }
   return {
     locale,
+    preview: shell.preview,
     siteUrl: getEnv().PUBLIC_SITE_URL,
     dir: dirOf(locale),
     // the fonts are declared in the same inline block as the theme: one block, one hash for the CSP

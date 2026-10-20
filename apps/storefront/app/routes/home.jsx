@@ -5,7 +5,7 @@ import { homeLd } from '~/features/seo/jsonld'
 import { JsonLd } from '~/features/seo/json-ld'
 import { buildMeta, clip, pageName, siteOf } from '~/features/seo/meta'
 import { useTranslation } from 'react-i18next'
-import { Await, useLoaderData } from 'react-router'
+import { Await, data, useLoaderData } from 'react-router'
 import { CategoryTiles, CollectionsRow, EditorialBand, Hero, PromoBand, TrustStrip } from '~/features/home/sections'
 import { CategorySpotlights } from '~/features/home/spotlights'
 import { TabbedSection } from '~/features/home/tabbed-section'
@@ -13,9 +13,11 @@ import { safeHref } from '@noor/ui/safe-href'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
 import { localeOfPath } from '~/lib/locale'
+import { previewOf } from '~/lib/preview'
 import { loadShell } from '~/lib/shell.server'
 
-export const headers = /** @type {import('./+types/home').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.listing }))
+// a preview of the draft is for one person: the loader says so and the page is never kept or indexed
+export const headers = /** @type {import('./+types/home').Route.HeadersFunction} */ (({ loaderHeaders }) => (loaderHeaders.get('Cache-Control') ? loaderHeaders : { 'Cache-Control': cacheControl.listing }))
 
 /** A section that cannot be loaded is left out; it does not take the page down (plan/05-react-patterns.md section 7). @template T @param {Promise<T>} p @returns {Promise<T | undefined>} */
 const optional = (p) => p.catch((e) => {
@@ -38,8 +40,9 @@ function withSafeButton(block) {
  * @param {import('./+types/home').Route.LoaderArgs} props
  */
 export async function loader({ request }) {
-  const locale = localeOfPath(new URL(request.url).pathname)
-  const { config, home, categories } = await loadShell(locale)
+  const url = new URL(request.url)
+  const locale = localeOfPath(url.pathname)
+  const { config, home, categories, preview } = await loadShell(locale, previewOf(url))
   const layout = home.layout
   const bestsellers = layout.bestsellers.enabled ? optional(api('catalog.listProducts', { query: { sort: 'bestselling', limit: layout.bestsellers.count, facets: false, locale } })) : undefined
   // four best sellers of each top category for its block (up to six categories); a block that cannot be loaded is left out
@@ -49,7 +52,7 @@ export async function loader({ request }) {
     layout.collections.enabled ? optional(api('catalog.listCollections', { query: { featured: true, limit: layout.collections.count, locale } })) : undefined,
     spotlights,
   ])
-  return {
+  return data({
     brand: config.brand.name,
     title: config.brand.tagline ? `${config.brand.name}: ${config.brand.tagline}` : config.brand.name,
     description: config.seo.homeDescription ?? clip(`${config.brand.tagline ?? ''} ${pageName(locale, 'homeDescription')}`.trim()),
@@ -63,7 +66,7 @@ export async function loader({ request }) {
     blocks,
     bestsellers,
     layout,
-  }
+  }, preview ? { headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } } : undefined)
 }
 
 export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ (({ loaderData, matches }) =>

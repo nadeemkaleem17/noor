@@ -26,6 +26,8 @@ export async function adminApi(who = 'owner') {
     post: async (url, data) => read(await ctx.post(`/api/v1${url}`, { headers, data })),
     /** @param {string} url @param {unknown} data */
     put: async (url, data) => read(await ctx.put(`/api/v1${url}`, { headers, data })),
+    /** @param {string} url */
+    delete: async (url) => read(await ctx.delete(`/api/v1${url}`, { headers })),
     dispose: () => ctx.dispose(),
   }
 }

@@ -58,3 +58,28 @@ export function useSaveMenu() {
     onSuccess: (menu) => queryClient.setQueryData(contentKeys.menu(menu.handle), menu),
   })
 }
+
+// ---- the home page being prepared (plan/17 item 3) ------------------------------------------------------------------------------
+
+export const homeDraftKey = ['content', 'home-draft']
+/** The draft, or the live page to start from when none was saved: what the home form edits. */
+export const homeDraftQuery = queryOptions({ queryKey: homeDraftKey, queryFn: ({ signal }) => api('admin.content.getHomeDraft', { signal }) })
+
+/** Save the draft, publish it, throw it away, ask for a preview link. Each answers with what the form needs next. */
+export function useHomeDraft() {
+  const queryClient = useQueryClient()
+  /** @param {import('@noor/contract').HomeDraft} draft */
+  const remember = (draft) => queryClient.setQueryData(homeDraftKey, draft)
+  return {
+    save: useMutation({ mutationFn: (/** @type {never} */ body) => api('admin.content.saveHomeDraft', { body }), onSuccess: remember }),
+    discard: useMutation({ mutationFn: () => api('admin.content.discardHomeDraft'), onSuccess: remember }),
+    publish: useMutation({
+      mutationFn: (/** @type {{ version: number; liveVersion: number }} */ body) => api('admin.content.publishHome', { body }),
+      onSuccess: (live) => {
+        queryClient.setQueryData(contentKeys.home, live)
+        void queryClient.invalidateQueries({ queryKey: homeDraftKey })
+      },
+    }),
+    previewLink: useMutation({ mutationFn: () => api('admin.content.homePreviewLink') }),
+  }
+}

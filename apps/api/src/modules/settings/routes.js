@@ -1,5 +1,6 @@
 // Handlers for the settings, content and public store routes of the contract.
 import { eachOf } from '../../platform/bulk.js'
+import { DomainError } from '../../platform/errors.js'
 const staff = (/** @type {unknown} */ actor) => /** @type {import('./service.js').Staff} */ (actor)
 
 /**
@@ -21,6 +22,11 @@ export function settingsHandlers(s) {
     'admin.settings.updatePayments': async ({ actor, body, http, requestId }) => s.savePayments(staff(actor), body, info(http, requestId)),
     'admin.content.getHome': async () => s.get('home'),
     'admin.content.updateHome': async ({ actor, body, http, requestId }) => s.save(staff(actor), 'home', body, info(http, requestId)),
+    'admin.content.getHomeDraft': async () => s.homeDraft(),
+    'admin.content.saveHomeDraft': async ({ actor, body, http, requestId }) => s.saveHomeDraft(staff(actor), body, info(http, requestId)),
+    'admin.content.discardHomeDraft': async ({ actor, http, requestId }) => s.discardHomeDraft(staff(actor), info(http, requestId)),
+    'admin.content.publishHome': async ({ actor, body, http, requestId }) => s.publishHome(staff(actor), body, info(http, requestId)),
+    'admin.content.homePreviewLink': async () => s.previewLink(),
     'admin.settings.themePresets': async () => s.themePresets(),
     'admin.settings.translationStatus': async () => s.translationStatus(),
 
@@ -38,7 +44,13 @@ export function settingsHandlers(s) {
     'admin.links.search': async ({ query }) => s.searchLinks(query.q),
 
     'store.getConfig': async () => s.storeConfig(),
-    'content.getHome': async ({ query }) => s.home(query.locale),
+    'content.getHome': async ({ query, http }) => {
+      if (!query.preview) return s.home(query.locale)
+      // a preview is for one person for half an hour: never shared, never kept
+      if (!s.previewValid(query.preview)) throw new DomainError('forbidden')
+      http.setHeader('cache-control', 'private, no-store')
+      return s.home(query.locale, query.preview)
+    },
     'content.getMenu': async ({ params, query }) => s.menu(params.handle, query.locale),
     'content.getPage': async ({ params, query }) => s.page(params.slug, query.locale),
     'content.listPages': async () => s.listPublicPages(),

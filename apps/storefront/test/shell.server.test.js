@@ -217,7 +217,11 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
   if (p === '/api/v1/vitals') { state.calls.push('VITALS ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
   if (p === '/api/v1/store/config') return config()
-  if (p === '/api/v1/content/home') return locale === 'ur' ? emptyHome : fullHome
+  if (p === '/api/v1/content/home') {
+    const preview = q.get('preview')
+    if (preview) return preview === 'good-token' ? { ...fullHome, announcement: { text: 'Draft announcement' } } : { title: 'Forbidden', status: 403, code: 'forbidden' }
+    return locale === 'ur' ? emptyHome : fullHome
+  }
   if (p === '/api/v1/categories/lawn' || p === '/api/v1/categories/women') return { id: '0192f5aa-0000-7000-8000-000000000002', handle: p.slice(-5) === 'women' ? 'women' : 'lawn', name: 'Lawn', description: 'Light cotton for summer.', breadcrumb: [{ handle: 'women', name: 'Women' }, { handle: 'lawn', name: 'Lawn' }], children: [{ handle: 'printed', name: 'Printed', productCount: 2 }], siblings: [{ handle: 'embroidered', name: 'Embroidered', productCount: 1 }], seo: { title: 'Lawn suits' } }
   if (p === '/api/v1/categories/old-lawn') return { redirectTo: 'lawn' }
   if (p === '/api/v1/collections/summer') return { id: '0192f5aa-0000-7000-8000-000000000201', handle: 'summer', title: 'Summer', seo: {} }
@@ -360,6 +364,26 @@ describe('the storefront through its whole stack', () => {
 
   it('order pages are never sent with a referrer', async () => {
     expect((await get('/orders/sometoken')).headers.get('referrer-policy')).toBe('no-referrer')
+  })
+
+  describe('the unpublished home page (plan/17 item 3)', () => {
+    it('a good preview token shows the draft with a notice, private and not indexed; a wrong one shows the live page, kept as usual', async () => {
+      const good = await get('/?preview=good-token')
+      const html = await good.text()
+      expect(html).toContain('Draft announcement')
+      expect(html).toContain('Preview of the unpublished home page')
+      expect(good.headers.get('cache-control')).toBe('private, no-store')
+      expect(good.headers.get('x-robots-tag')).toContain('noindex')
+      const bad = await get('/?preview=nope')
+      const live = await bad.text()
+      expect(live).toContain('Free delivery over Rs. 5,000')
+      expect(live).not.toContain('Preview of the unpublished home page')
+      expect(bad.headers.get('cache-control')).not.toContain('no-store')
+      // the shop's remembered copy was not replaced by the draft
+      expect(await (await get('/')).text()).toContain('Free delivery over Rs. 5,000')
+      // only the home address takes a preview
+      expect(await (await get('/new?preview=good-token')).text()).not.toContain('Draft announcement')
+    })
   })
 
   describe('the home page (DOC-06.2)', () => {

@@ -17,7 +17,7 @@ export async function axeFindings(page) {
       nodes: v.nodes.filter((n) => v.id !== 'target-size' || !n.any.some((c) => /partially obscured/.test(c.message))),
     }))
     .filter((v) => v.nodes.length > 0)
-  return real.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).slice(0, 4).join(' | ')}`)
+  return real.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => `${n.target.join(' ')}${v.id === 'target-size' ? ` [${n.any.map((c) => c.message).join('; ')}]` : ''}`).slice(0, 4).join(' | ')}`)
 }
 
 /** @param {import('@playwright/test').Page} page */

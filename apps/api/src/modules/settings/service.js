@@ -1,7 +1,7 @@
 // Settings documents, CMS pages and menus: the admin side (plan/10-api/07) and the public reads (plan/10-api/01).
 // A document is validated by its schema in the contract and by the rules here, saved with an optimistic version, audited with a
 // field-level diff, and announced on the outbox with the cache tags a CDN purge needs.
-import { randomBytes } from 'node:crypto'
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { contrastFailures, CheckoutSettings, defaultHomeLayout, fullHomeOrder, HomeContent, PaymentSettings, StoreSettings, ThemeTokens, menuLimits, themePresets } from '@noor/contract'
 import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
@@ -10,6 +10,8 @@ import { uuidv7 } from '../../platform/ids.js'
 import { emit } from '../../platform/outbox.js'
 import { diffOf, record } from '../audit/index.js'
 import { readyIds } from '../media/repository.js'
+import { eq } from 'drizzle-orm'
+import { settings as settingsTable } from '../../db/schema/content.js'
 import { defaults } from './defaults.js'
 import * as repo from './repository.js'
 import { resolveTokens } from './tokens.js'
@@ -29,7 +31,12 @@ const DOCS = /** @type {const} */ ({
   checkout: { schema: CheckoutSettings, event: 'settings.updated', tags: ['store-config'], category: 'general' },
   payments: { schema: PaymentSettings, event: 'settings.updated', tags: ['store-config'], category: 'money' },
   home: { schema: HomeContent, event: 'content.updated', tags: ['home'], category: 'general' },
+  // the home page being prepared (plan/17 item 3): same shape, never shown to the public, changes nothing until it is published
+  home_draft: { schema: HomeContent, event: null, tags: /** @type {string[]} */ ([]), category: 'general' },
 })
+
+/** A preview link lives this long. */
+const PREVIEW_MS = 30 * 60_000
 
 /** Storefront paths that always exist. Others (/c, /collections, /p) are checked against the catalog once it exists. */
 const STATIC_PATHS = /** @type {const} */ ([
@@ -58,15 +65,21 @@ export function createSettingsService({ db, config, media, shippingFacts = async
   /** Media ids a document points at. @param {keyof typeof DOCS} key @param {any} value @returns {string[]} */
   const mediaIdsOf = (key, value) => {
     if (key === 'store') return [value.brand.logoLightMediaId, value.brand.logoDarkMediaId, value.brand.faviconMediaId].filter(Boolean)
-    if (key === 'home') return [...value.heroSlides.map((/** @type {{ mediaId: string }} */ s) => s.mediaId), value.editorial.mediaId].filter(Boolean)
+    if (key === 'home' || key === 'home_draft') return [...value.heroSlides.map((/** @type {{ mediaId: string }} */ s) => s.mediaId), value.editorial.mediaId].filter(Boolean)
     return []
   }
+
+  /** @param {number} expires */
+  const previewSignature = (expires) => createHmac('sha256', createHmac('sha256', Buffer.from(config.DATA_ENCRYPTION_KEY, 'base64')).update('rubaya-home-preview').digest()).update(String(expires)).digest('base64url')
+
+  /** What a document reads as before anyone saved it (the draft starts as the shop's own default home page). @param {keyof typeof DOCS} key */
+  const defaultOf = (key) => (key === 'home_draft' ? defaults.home : defaults[key])
 
   /** The stored value, or the default when nothing was saved or the stored JSON no longer fits the schema. @param {keyof typeof DOCS} key @param {import('../../platform/db.js').Executor} [x] the caller's transaction, when there is one */
   async function readValue(key, x = db) {
     const row = await repo.getSetting(x, key)
     const parsed = row ? DOCS[key].schema.safeParse(row.value) : null
-    return { value: /** @type {any} */ (parsed?.success ? parsed.data : defaults[key]), row }
+    return { value: /** @type {any} */ (parsed?.success ? parsed.data : defaultOf(key)), row }
   }
 
   /** What `admin.settings.get*` returns. @param {keyof typeof DOCS} key */
@@ -92,6 +105,7 @@ export function createSettingsService({ db, config, media, shippingFacts = async
   const rules = {
     store: (tx, v) => mustBeReady(tx, mediaIdsOf('store', v)),
     home: (tx, v) => mustBeReady(tx, mediaIdsOf('home', v)),
+    home_draft: (tx, v) => mustBeReady(tx, mediaIdsOf('home', v)),
     checkout: async () => {},
     theme: async (_tx, v) => {
       const pairs = contrastFailures(v.colors)
@@ -117,7 +131,7 @@ export function createSettingsService({ db, config, media, shippingFacts = async
       const current = locked?.version ?? 0
       if (input.version !== current) throw new DomainError('stale_write', { currentVersion: current })
       await rules[key](tx, value)
-      const before = locked ? locked.value : defaults[key]
+      const before = locked ? locked.value : defaultOf(key)
       const at = now()
       if (locked) await repo.updateSetting(tx, key, { value, version: current + 1, updatedAt: at, updatedBy: actor.staffId })
       else {
@@ -129,8 +143,9 @@ export function createSettingsService({ db, config, media, shippingFacts = async
           throw e
         }
       }
-      await record(tx, { ...actorOf(actor, req), action: `${key === 'home' ? 'content' : 'settings'}.updated`, entityType: key === 'home' ? 'content' : 'settings', entityId: key, entityLabel: key, diff: diffOf(before, value), category: doc.category })
-      await emit(tx, { type: doc.event, payload: { key, tags: doc.tags }, requestId: req.requestId })
+      const content = key === 'home' || key === 'home_draft'
+      await record(tx, { ...actorOf(actor, req), action: key === 'home_draft' ? 'content.draft_saved' : `${content ? 'content' : 'settings'}.updated`, entityType: content ? 'content' : 'settings', entityId: key, entityLabel: key, diff: diffOf(before, value), category: doc.category })
+      if (doc.event) await emit(tx, { type: doc.event, payload: { key, tags: doc.tags }, requestId: req.requestId })
     })
     return view(key)
   }
@@ -240,6 +255,63 @@ export function createSettingsService({ db, config, media, shippingFacts = async
     /** @param {keyof typeof DOCS} key @param {import('../../platform/db.js').Executor} [x] */
     value: (key, x) => readValue(key, x),
     save,
+
+    // ---- the home page being prepared (plan/17 item 3) --------------------------------------------------------------------
+
+    /** The draft, or the live page to start from when nothing was saved. Never changes what the public sees. */
+    async homeDraft() {
+      const [draft, live] = await Promise.all([repo.getSetting(db, 'home_draft'), view('home')])
+      const shown = draft ? await view('home_draft') : { ...live, version: 0 }
+      return { ...shown, hasDraft: Boolean(draft), liveVersion: live.version }
+    },
+
+    /** @param {Staff} actor @param {{ value: unknown, version: number }} input @param {RequestInfo} req */
+    async saveHomeDraft(actor, input, req) {
+      await save(actor, 'home_draft', input, req)
+      return this.homeDraft()
+    },
+
+    /** @param {Staff} actor @param {RequestInfo} req */
+    async discardHomeDraft(actor, req) {
+      await transaction(db, async (tx) => {
+        const locked = await repo.lockSetting(tx, 'home_draft')
+        if (!locked) return
+        await tx.delete(settingsTable).where(eq(settingsTable.key, 'home_draft'))
+        await record(tx, { ...actorOf(actor, req), action: 'content.draft_discarded', entityType: 'content', entityId: 'home_draft', entityLabel: 'home_draft', category: 'general' })
+      })
+      return this.homeDraft()
+    },
+
+    /**
+     * The draft becomes the live page, only if it is the draft the person saw and the live page is still the one it was made from (two people cannot overwrite each other unseen).
+     * @param {Staff} actor @param {{ version: number, liveVersion: number }} input @param {RequestInfo} req
+     */
+    async publishHome(actor, { version, liveVersion }, req) {
+      const draft = await repo.getSetting(db, 'home_draft')
+      if (!draft) throw new DomainError('not_found')
+      if (draft.version !== version) throw new DomainError('stale_write', { currentVersion: draft.version })
+      await save(actor, 'home', { value: draft.value, version: liveVersion }, req)
+      await transaction(db, async (tx) => {
+        await tx.delete(settingsTable).where(eq(settingsTable.key, 'home_draft'))
+        await record(tx, { ...actorOf(actor, req), action: 'content.draft_published', entityType: 'content', entityId: 'home', entityLabel: 'home', category: 'general' })
+      })
+      return view('home')
+    },
+
+    /** A link that lets the storefront show the draft for half an hour: the expiry and its signature, nothing else. */
+    previewLink() {
+      const expires = now().getTime() + PREVIEW_MS
+      return { token: `${expires}.${previewSignature(expires)}`, expiresAt: new Date(expires).toISOString() }
+    },
+
+    /** Is this a preview token of ours that has not run out. @param {string} token */
+    previewValid(token) {
+      const [expires, signature] = token.split('.')
+      if (!expires || !signature || !/^\d{10,15}$/.test(expires) || Number(expires) < now().getTime()) return false
+      const want = Buffer.from(previewSignature(Number(expires)))
+      const got = Buffer.from(signature)
+      return want.length === got.length && timingSafeEqual(want, got)
+    },
 
     async getPayments() {
       const v = await view('payments')
@@ -409,9 +481,10 @@ export function createSettingsService({ db, config, media, shippingFacts = async
       }
     },
 
-    /** @param {Locale} [locale] */
-    async home(locale) {
-      const { value: h } = await readValue('home')
+    /** The live home page; with a valid preview token, the draft (or the live page when there is no draft). @param {Locale} [locale] @param {string} [preview] */
+    async home(locale, preview) {
+      const source = preview && (await repo.getSetting(db, 'home_draft')) ? 'home_draft' : 'home'
+      const { value: h } = await readValue(source)
       const ur = h.i18n?.ur
       const images = await media.imagesFor(mediaIdsOf('home', h))
       const at = now().toISOString()

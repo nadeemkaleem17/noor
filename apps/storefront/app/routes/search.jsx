@@ -66,7 +66,7 @@ export default function Search() {
         <h1 className="font-heading text-h1">{t('listing.search.crumb')}</h1>
         <form role="search" method="get" action={path('/search')} className="mt-4 flex gap-2">
           <label className="sr-only" htmlFor="q">{t('shell.searchLabel')}</label>
-          <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
+          <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} placeholder={t('shell.searchPlaceholder')} className="h-(--control-h) min-w-0 flex-1 rounded-control border border-line-strong bg-bg px-3" />
           <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">{t('shell.searchSubmit')}</button>
         </form>
         {q ? <p className="mt-2 text-sm text-fg-soft">{t('listing.search.short')}</p> : null}
@@ -92,7 +92,7 @@ export default function Search() {
     <>
       <form role="search" method="get" action={path('/search')} className="mb-6 flex gap-2">
         <label className="sr-only" htmlFor="q">{t('shell.searchLabel')}</label>
-        <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} className="h-(--control-h) flex-1 rounded-control border border-line-strong bg-bg px-3" />
+        <input id="q" name="q" type="search" required minLength={2} maxLength={80} defaultValue={q} className="h-(--control-h) min-w-0 flex-1 rounded-control border border-line-strong bg-bg px-3" />
         <button type="submit" className="h-(--control-h) rounded-control bg-accent px-5 font-medium text-on-accent">{t('shell.searchSubmit')}</button>
       </form>
       <EmptyState

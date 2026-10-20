@@ -27,6 +27,7 @@
     "switch": "اردو"
   },
   "shell": {
+    "preview": "Preview of the unpublished home page. Visitors do not see this yet.",
     "skip": "Skip to main content",
     "menu": "Menu",
     "menuClose": "Close menu",

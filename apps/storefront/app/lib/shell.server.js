@@ -21,12 +21,16 @@ export const clearShellCache = () => memory.clear()
 /** The API did not answer: a short, uncached 503 that the error page shows (section 6). */
 const unavailable = () => new Response('Service unavailable', { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } })
 
-/** @param {import('@noor/i18n').Locale} locale */
-export async function loadShell(locale) {
+/**
+ * @param {import('@noor/i18n').Locale} locale
+ * @param {string} [preview] a preview token: the home page is then the draft, read fresh and never remembered; a token the API refuses leaves the live page
+ */
+export async function loadShell(locale, preview) {
   try {
+    const draft = preview ? await api('content.getHome', { query: { locale, preview } }).catch(() => undefined) : undefined
     const [config, home, main, footer, categories, collections, offers] = await Promise.all([
       cached(`config:${locale}`, () => api('store.getConfig', { query: { locale } })),
-      cached(`home:${locale}`, () => api('content.getHome', { query: { locale } })),
+      draft ?? cached(`home:${locale}`, () => api('content.getHome', { query: { locale } })),
       cached(`menu:main:${locale}`, () => api('content.getMenu', { params: { handle: 'main' }, query: { locale } })),
       cached(`menu:footer:${locale}`, () => api('content.getMenu', { params: { handle: 'footer' }, query: { locale } })),
       cached(`categories:${locale}`, () => api('catalog.listCategories', { query: { locale } })),
@@ -34,7 +38,7 @@ export async function loadShell(locale) {
       // the Offers page is linked from the footer only while there is an offer to show; a failure here is not a reason to lose the shop
       cached('offers', () => api('promos.listPublic')).catch(() => ({ items: [] })),
     ])
-    return { config, home, menus: { main: main.items, footer: footer.items }, categories: categories.items, collections: collections.items, hasOffers: offers.items.length > 0 }
+    return { preview: Boolean(draft), config, home, menus: { main: main.items, footer: footer.items }, categories: categories.items, collections: collections.items, hasOffers: offers.items.length > 0 }
   } catch (e) {
     console.error('shell data could not be loaded', e)
     throw unavailable()

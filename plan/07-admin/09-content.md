@@ -19,6 +19,8 @@ Needs `content:read`; edits need `content:write`; deleting a page or menu needs 
 
 ## 2. Home page (`/content/home`)
 
+**Draft, preview and publish (added 2026-10-21, plan/17 item 3).** The form edits a draft: **Save draft** stores it (setting `home_draft`, same shape as the home document) and nothing the public sees changes. **Preview draft** asks the API for a link that lasts 30 minutes and opens the shop's home address with `?preview=<token>` in a new tab: the shop shows the draft with a dark "Preview of the unpublished home page" bar, never kept by a cache and marked not to be indexed (only the home address takes a preview; a token the API refuses leaves the live page). **Publish** (after a question) makes the draft the live page and removes the draft. A publish needs the draft the person saw and the live page it was made from: if someone saved the live page meanwhile (a notice, for example, which are saved live from their own screen), the person is told and may start again from the published page. **Throw the draft away** removes it. Both buttons wait for the draft to be saved (no unsaved changes). Audit: `content.draft_saved`, `content.draft_published`, `content.draft_discarded`. Notices are not part of the draft: they are saved and go live from their own screen.
+
 One form, sections as cards, one Save. A "Preview storefront" link opens `/` in a new tab.
 
 | Card | Fields | Rules |

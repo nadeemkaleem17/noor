@@ -23,7 +23,7 @@ import { env } from '@/lib/env'
 import { messageFor } from '@/lib/errors'
 import { contractResolver, prune } from '@/lib/form'
 import { useCan } from '@/lib/session'
-import { contentKeys, homeQuery, useSaveHome } from '../api'
+import { homeDraftKey, homeDraftQuery, useHomeDraft } from '../api'
 
 const newId = () => `i${Math.random().toString(36).slice(2, 10)}`
 const GOOD_WIDTH = 1600
@@ -304,12 +304,15 @@ function body(v) {
   return { ...clean, announcement: { text: v.announcement?.text ?? '', ...(v.announcement?.href ? { href: v.announcement.href } : {}) }, footer: { about: v.footer?.about ?? '' } }
 }
 
-/** `/content/home` (plan/07-admin/09-content.md section 2): one form, one Save, the document saved whole with its version. */
+/**
+ * `/content/home` (plan/07-admin/09-content.md section 2): one form. Changes are saved as a draft the public does not see, looked at through a preview link, and published when ready
+ * (plan/17-owner-requests-2026-10.md item 3). The document is saved whole with its version.
+ */
 export function HomeForm() {
-  const home = useQuery(homeQuery)
+  const home = useQuery(homeDraftQuery)
   if (home.isPending) return <Spinner label="Loading the home page content" />
   if (home.isError) return <ErrorState title="The home page content could not be loaded" retryLabel="Try again" onRetry={() => void home.refetch()} />
-  return <Form key={home.data.version} doc={home.data} />
+  return <Form key={`${home.data.version}-${home.data.liveVersion}-${home.data.hasDraft}`} doc={home.data} />
 }
 
 /** @param {{ doc: any; }} props */
@@ -317,10 +320,12 @@ function Form({ doc }) {
   const can = useCan()
   const toast = useToast()
   const queryClient = useQueryClient()
-  const save = useSaveHome()
+  const draft = useHomeDraft()
+  const save = draft.save
   const writable = can('content:write')
   const [images, setImages] = useState(/** @type {Record<string, string>} */ (Object.fromEntries(Object.entries(doc.images).map(([id, img]) => [id, /** @type {{ src: string; }} */ (img).src]))))
   const [stale, setStale] = useState(false)
+  const [confirm, setConfirm] = useState(/** @type {'publish' | 'discard' | 'conflict' | null} */ (null))
   const leaving = useRef(false)
   const form = useForm({
     defaultValues: defaults(/** @type {import('@noor/contract').HomeContent} */ (doc.value)),
@@ -336,11 +341,44 @@ function Form({ doc }) {
     try {
       await save.mutateAsync(/** @type {never} */ ({ value: body(form.getValues()), version }))
       setStale(false)
-      toast.push({ title: 'Home page saved', tone: 'success' })
+      toast.push({ title: 'Draft saved', tone: 'success' })
     } catch (error) {
       if (error instanceof ApiError && error.code === 'stale_write') setStale(true)
       else if (error instanceof ApiError && error.issues.length > 0) for (const issue of error.issues) form.setError(/** @type {never} */ (issue.path), { type: issue.code, message: issue.code })
       else toast.push({ title: messageFor(error), tone: 'danger' })
+    }
+  }
+
+  /** Open the draft as the shop would show it, in a new tab, through a link that runs out in half an hour. */
+  async function preview() {
+    try {
+      const { token } = await draft.previewLink.mutateAsync()
+      window.open(`${env.storefrontUrl.replace(/\/+$/, '')}/?preview=${encodeURIComponent(token)}`, '_blank', 'noopener')
+    } catch (error) {
+      toast.push({ title: messageFor(error), tone: 'danger' })
+    }
+  }
+
+  async function publish() {
+    setConfirm(null)
+    try {
+      await draft.publish.mutateAsync({ version: doc.version, liveVersion: doc.liveVersion })
+      leaving.current = true
+      toast.push({ title: 'Home page published', tone: 'success' })
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'stale_write') setConfirm('conflict')
+      else toast.push({ title: messageFor(error), tone: 'danger' })
+    }
+  }
+
+  async function discard() {
+    setConfirm(null)
+    try {
+      await draft.discard.mutateAsync()
+      leaving.current = true
+      toast.push({ title: 'Draft thrown away', tone: 'success' })
+    } catch (error) {
+      toast.push({ title: messageFor(error), tone: 'danger' })
     }
   }
 
@@ -352,17 +390,36 @@ function Form({ doc }) {
           description="What the shop's front page says. Contact details come from the store settings."
           actions={
             <>
-              <Button variant="secondary" onClick={() => window.open(env.storefrontUrl, '_blank', 'noopener')}>
-                Preview storefront
+              <Button variant="secondary" loading={draft.previewLink.isPending} disabled={!doc.hasDraft || dirty} title={!doc.hasDraft ? 'Save a draft first' : dirty ? 'Save the draft first: the preview shows what is saved' : undefined} onClick={() => void preview()}>
+                Preview draft
               </Button>
               {writable ? (
-                <Button type="submit" loading={save.isPending}>
-                  Save
-                </Button>
+                <>
+                  <Button type="submit" variant="secondary" loading={save.isPending}>
+                    Save draft
+                  </Button>
+                  <Button disabled={!doc.hasDraft || dirty} loading={draft.publish.isPending} title={!doc.hasDraft ? 'Save a draft first' : dirty ? 'Save the draft first: publishing uses what is saved' : undefined} onClick={() => setConfirm('publish')}>
+                    Publish
+                  </Button>
+                </>
               ) : null}
             </>
           }
         />
+        <p role="status" className="rounded-card bg-surface-2 px-3 py-2 text-sm">
+          {doc.hasDraft ? (
+            <>
+              You are editing a <strong>draft</strong>. Visitors still see the published page until you press Publish.{' '}
+              {writable ? (
+                <Button variant="link" onClick={() => setConfirm('discard')}>
+                  Throw the draft away
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <>You are looking at the published page. Save draft keeps your changes to yourself until you publish them.</>
+          )}
+        </p>
         <AnnouncementCard writable={writable} />
         <NoticesCard />
         <HeroCard writable={writable} images={images} onPicture={remember} />
@@ -380,11 +437,35 @@ function Form({ doc }) {
         what="page"
         onReload={() => {
           leaving.current = true
-          void queryClient.invalidateQueries({ queryKey: contentKeys.home })
+          void queryClient.invalidateQueries({ queryKey: homeDraftKey })
           setStale(false)
         }}
-        onOverwrite={writable ? () => void queryClient.fetchQuery({ ...homeQuery, staleTime: 0 }).then((fresh) => submit(fresh.version)) : undefined}
+        onOverwrite={writable ? () => void queryClient.fetchQuery({ ...homeDraftQuery, staleTime: 0 }).then((fresh) => submit(fresh.version)) : undefined}
         saving={save.isPending}
+      />
+      <ConfirmDialog
+        open={confirm === 'publish'}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="Publish the home page?"
+        body="The shop's front page changes for every visitor, now."
+        confirmLabel="Publish"
+        onConfirm={() => void publish()}
+      />
+      <ConfirmDialog
+        open={confirm === 'discard'}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="Throw the draft away?"
+        body="Your unpublished changes are lost. The published page stays as it is."
+        confirmLabel="Throw away"
+        onConfirm={() => void discard()}
+      />
+      <ConfirmDialog
+        open={confirm === 'conflict'}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="The published page changed"
+        body="Someone saved the live home page (a notice, for example) after this draft was started, so publishing would undo their change. Start again from the published page?"
+        confirmLabel="Start again"
+        onConfirm={() => void discard()}
       />
       <ConfirmDialog
         open={blocker.state === 'blocked'}

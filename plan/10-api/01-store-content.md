@@ -22,7 +22,7 @@ All endpoints here: auth `public`, bucket `default`, `Cache-Control: public, s-m
 | Key | Method & path | Request | Response | Errors | Notes |
 |---|---|---|---|---|---|
 | `store.getConfig` | `GET /store/config` | Q: `locale?` | 200 `StoreConfigPublic` | — | Tag `store-config` |
-| `content.getHome` | `GET /content/home` | Q: `locale?` | 200 `HomePublic` | — | Tag `home` |
+| `content.getHome` | `GET /content/home` | Q: `locale?`, `preview?` (a token from `admin.content.homePreviewLink`) | 200 `HomePublic`; with a valid `preview` the unpublished draft (or the live page when there is none), `Cache-Control: private, no-store` | `forbidden` (a token that is wrong or has run out) | Tag `home` |
 | `content.getMenu` | `GET /content/menus/:handle` | P: `handle: 'main' \| 'footer'` | 200 `MenuPublic` | `not_found` | Tag `menus`. Items whose target is not live are omitted |
 | `content.getPage` | `GET /content/pages/:slug` | P: `slug` | 200 `PagePublic` | `not_found` (also for drafts) | Tag `page:<slug>`. If `slug` is an old slug: 200 `{ redirectTo: string }` |
 | `content.listPages` | `GET /content/pages` | — | 200 `{ items: { slug, title, updatedAt }[] }` | — | Active pages only; for the sitemap and pre-render |

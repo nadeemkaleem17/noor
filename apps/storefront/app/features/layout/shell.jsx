@@ -70,6 +70,7 @@ export default function Shell() {
         {t('shell.skip')}
       </a>
       <NavProgress />
+      {shell.preview ? <p role="status" className="bg-fg px-4 py-2 text-center text-small text-surface">{t('shell.preview')}</p> : null}
       {checkout ? null : <Announcement items={notices.filter((n) => n.position === 'bar')} />}
       {checkout ? null : <NoticePopup items={notices.filter((n) => n.position === 'popup')} />}
       {checkout ? null : <NoticeSide items={notices.filter((n) => n.position === 'side')} />}
