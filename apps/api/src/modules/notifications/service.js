@@ -3,14 +3,17 @@
 // with its text, to be copied into WhatsApp by hand; email goes out through SMTP when `MAIL_URL` is set and is `skipped` the same way when it is not.
 // Each message has a unique key, so a retried job never sends twice.
 import { createHash } from 'node:crypto'
-import { eq, lt } from 'drizzle-orm'
+import { and, count, desc, eq, lt } from 'drizzle-orm'
 import { formatDate, formatMoney } from '@noor/i18n'
 import { orderEvents, orderLines, orders } from '../../db/schema/orders.js'
 import { notificationLog } from '../../db/schema/notifications.js'
 import { now } from '../../platform/clock.js'
 import { uuidv7 } from '../../platform/ids.js'
+import { transaction } from '../../platform/db.js'
+import { record } from '../audit/index.js'
 import { trackingToken } from '../orders/tracking.js'
-import { htmlOf, render } from './templates.js'
+import { defaultEmails } from '@noor/contract'
+import { fillTokens, htmlOf, render } from './templates.js'
 
 /**
  * @typedef {import('../../platform/db.js').Database['db']} Database
@@ -31,6 +34,9 @@ function templatesFor(event, o, madeToOrder) {
   }
 }
 
+/** Made-up values for a preview when the shop has no order yet. */
+const sampleVars = { store: 'Rubaya', name: 'Ayesha', orderNo: 'RB-10001', total: 'Rs 7,240', link: 'https://rubaya.pk/orders/example', city: 'Lahore', items: 'Embroidered Khussa, Cotton Kurta', eta: '24 Oct to 28 Oct', leadDays: '0', courier: 'TCS', tracking: 'TCS123456', amountDue: 'Rs 7,240', account: 'Rubaya Atelier, Meezan Bank, 0123456789', method: 'cod', adminLink: '' }
+
 /** `Rs 7,240`, with an ordinary space: the formatter's non-breaking space does not survive being pasted into a chat. @param {number} paisa */
 const rupees = (paisa) => formatMoney({ amount: paisa, currency: 'PKR' }, 'en', { showDecimals: paisa % 100 !== 0, rounding: 'none' }).replace(/\u00a0/g, ' ')
 const isDuplicate = (/** @type {unknown} */ e) => /** @type {{ cause?: { errno?: number }, errno?: number }} */ (e).cause?.errno === 1062 || /** @type {{ errno?: number }} */ (e).errno === 1062
@@ -47,7 +53,7 @@ export function createNotifications({ db, config, settings, mailer }) {
    * Writes the message down once and, for email with a mailer, sends it. A message already sent or skipped is left alone.
    * @param {Message} m @returns {Promise<{ status: 'sent' | 'skipped' | 'failed', fresh: boolean }>}
    */
-  async function deliver(m) {
+  async function deliver(m, opts = /** @type {{ fromName?: string, replyTo?: string }} */ ({})) {
     const [existing] = await db.select().from(notificationLog).where(eq(notificationLog.uniqueKey, m.uniqueKey))
     if (existing && (existing.status === 'sent' || existing.status === 'skipped')) return { status: existing.status, fresh: false }
     const sends = m.channel === 'email' && mailer
@@ -65,7 +71,7 @@ export function createNotifications({ db, config, settings, mailer }) {
       if (!sends) return { status: 'skipped', fresh: true }
     }
     try {
-      const r = await /** @type {import('./mailer.js').Mailer} */ (mailer).send({ to: m.recipient, subject: m.subject, text: m.body, html: htmlOf(m.body) })
+      const r = await /** @type {import('./mailer.js').Mailer} */ (mailer).send({ to: m.recipient, subject: m.subject, text: m.body, html: htmlOf(m.body), fromName: opts.fromName, replyTo: opts.replyTo })
       await db.update(notificationLog).set({ status: 'sent', provider: 'smtp', providerRef: r.providerRef ?? null, error: null, sentAt: now() }).where(eq(notificationLog.id, id))
       return { status: 'sent', fresh: true }
     } catch (e) {
@@ -101,6 +107,12 @@ export function createNotifications({ db, config, settings, mailer }) {
     }
   }
 
+  /** The emails settings of the store, whole even for a store saved before they existed. */
+  async function emailSettings() {
+    const e = (await settings.value('store', db)).value.emails
+    return /** @type {import('@noor/contract').z.infer<typeof import('@noor/contract').EmailSettings>} */ (e ?? defaultEmails)
+  }
+
   /** @param {string} orderId */
   async function load(orderId) {
     const [o] = await db.select().from(orders).where(eq(orders.id, orderId))
@@ -122,10 +134,15 @@ export function createNotifications({ db, config, settings, mailer }) {
       const locale = /** @type {'en' | 'ur'} */ (o.locale)
       /** @type {Message[]} */
       const messages = []
+      const emails = await emailSettings()
+      const say = emails.events[/** @type {keyof typeof emails.events} */ (event.replace('order.', ''))]
       for (const template of templatesFor(event, o, lines.some((l) => l.leadMaxDays != null))) {
         const base = { template, audience: /** @type {const} */ ('customer'), orderId, locale, body: render(locale, template, vars), subject: render(locale, 'email.subject', vars) }
         messages.push({ ...base, uniqueKey: `${template}:${orderId}:whatsapp`, channel: 'whatsapp', recipient: o.customerPhone })
-        if (o.customerEmail) messages.push({ ...base, uniqueKey: `${template}:${orderId}:email`, channel: 'email', recipient: o.customerEmail })
+        // the email: only while emails are on, and this event's switch is on; staff's own words replace the shop's when they wrote any
+        if (o.customerEmail && emails.enabled && say?.enabled !== false) {
+          messages.push({ ...base, ...(say?.body ? { body: fillTokens(say.body, vars) } : {}), ...(say?.subject ? { subject: fillTokens(say.subject, vars) } : {}), uniqueKey: `${template}:${orderId}:email`, channel: 'email', recipient: o.customerEmail })
+        }
       }
       if (event === 'order.placed') {
         const emails = /** @type {string[]} */ ((await settings.value('store', db)).value.notifications?.staffEmails ?? [])
@@ -138,7 +155,7 @@ export function createNotifications({ db, config, settings, mailer }) {
       let skipped = 0
       let failed = 0
       for (const m of messages) {
-        const r = await deliver(m)
+        const r = await deliver(m, { fromName: emails.senderName, replyTo: emails.replyTo })
         if (r.status === 'failed') failed += 1
         else if (r.status === 'sent') sent += 1
         else skipped += 1
@@ -153,6 +170,68 @@ export function createNotifications({ db, config, settings, mailer }) {
     async preview(template, orderId) {
       const found = await load(orderId)
       return found ? render(/** @type {'en' | 'ur'} */ (found.o.locale), template, found.vars) : undefined
+    },
+
+    /**
+     * What an email would say for an event: with the subject and body staff are typing (not yet saved), else the saved ones, else the shop's own words. Filled from the newest
+     * order, or from made-up values when there is none.
+     * @param {{ event: string, subject?: string | undefined, body?: string | undefined }} draft
+     */
+    async render(draft) {
+      const emails = await emailSettings()
+      const say = emails.events[/** @type {keyof typeof emails.events} */ (draft.event)]
+      const [latest] = await db.select().from(orders).orderBy(desc(orders.placedAt)).limit(1)
+      const found = latest ? await load(latest.id) : undefined
+      const vars = found?.vars ?? sampleVars
+      const locale = /** @type {'en' | 'ur'} */ (found?.o.locale ?? 'en')
+      const template = `order.${draft.event}`
+      const subject = draft.subject !== undefined ? draft.subject : (say?.subject ?? '')
+      const body = draft.body !== undefined ? draft.body : (say?.body ?? '')
+      return {
+        subject: subject.trim() ? fillTokens(subject, vars) : render(locale, 'email.subject', vars),
+        body: body.trim() ? fillTokens(body, vars) : render(locale, template, vars),
+        sample: !found,
+      }
+    },
+
+    /** Whether mail can leave the server at all, and from which address. */
+    status: () => ({ configured: Boolean(mailer), from: mailer?.from ?? config.MAIL_FROM }),
+
+    /**
+     * A test message to an address staff type, so they can see what the customer will get. It is written to the log like any other and to the audit log.
+     * @param {{ staffId: string, name: string, role: string }} actor @param {{ event: string, to: string, subject?: string | undefined, body?: string | undefined }} draft @param {{ ip: string, userAgent: string, requestId: string }} req
+     */
+    async sendTest(actor, draft, req) {
+      const emails = await emailSettings()
+      const text = await this.render(draft)
+      const m = { uniqueKey: `test:${uuidv7()}`, template: `test.${draft.event}`, channel: /** @type {const} */ ('email'), audience: /** @type {const} */ ('staff'), orderId: undefined, recipient: draft.to, locale: /** @type {const} */ ('en'), subject: `[Test] ${text.subject}`, body: text.body }
+      const r = await deliver(/** @type {never} */ (m), { fromName: emails.senderName, replyTo: emails.replyTo })
+      await transaction(db, (tx) => record(tx, { actor: { type: 'staff', id: actor.staffId, label: actor.name, role: actor.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId, action: 'emails.test_sent', entityType: 'email', entityId: draft.event, entityLabel: `${draft.event} to ${draft.to}: ${r.status}` }))
+      const [row] = await db.select().from(notificationLog).where(eq(notificationLog.uniqueKey, m.uniqueKey))
+      return { status: r.status, ...(row?.error ? { error: row.error } : {}) }
+    },
+
+    /** The email messages, newest first: what was sent, what failed and why, what was only written down because no mail server is set up. @param {{ page: number, size: number, status?: string }} q */
+    async log(q) {
+      const where = and(eq(notificationLog.channel, 'email'), q.status ? eq(notificationLog.status, q.status) : undefined)
+      const [rows, total] = await Promise.all([
+        db
+          .select({ l: notificationLog, num: orders.number, prefix: orders.numberPrefix })
+          .from(notificationLog)
+          .leftJoin(orders, eq(orders.id, notificationLog.orderId))
+          .where(where)
+          .orderBy(desc(notificationLog.createdAt), desc(notificationLog.id))
+          .limit(q.size)
+          .offset((q.page - 1) * q.size),
+        db.select({ n: count() }).from(notificationLog).where(where),
+      ])
+      return {
+        items: rows.map(({ l, num, prefix }) => ({
+          id: l.id, template: l.template, recipient: l.recipient, status: /** @type {'queued' | 'sent' | 'failed' | 'skipped'} */ (l.status), body: l.body, createdAt: l.createdAt.toISOString(),
+          ...(num !== null && prefix ? { orderNumber: `${prefix}-${num}` } : {}), ...(l.error ? { error: l.error } : {}), ...(l.sentAt ? { sentAt: l.sentAt.toISOString() } : {}),
+        })),
+        total: total[0]?.n ?? 0, page: q.page, size: q.size,
+      }
     },
 
     /** Rows older than 90 days are deleted: they hold phones, emails and the text sent. */

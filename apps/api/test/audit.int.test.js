@@ -269,6 +269,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     }
     samples['admin.media.update'] = { prepare: slot, act: ({ b, id }) => b.call('PUT', `/admin/media/${id}`, { body: { alt: 'Green suit' } }) }
     samples['admin.customers.highlightRules.save'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('PUT', '/admin/customers/highlight-rules', { body: { rules: [{ kind: 'orders', minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New', enabled: true }] } }) }
+    samples['admin.emails.test'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/emails/test', { body: { event: 'placed', to: 'me@example.com' } }) }
     samples['admin.searchIndex.rebuild'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/search-index/rebuild') }
     samples['admin.media.delete'] = { prepare: slot, act: ({ b, id }) => b.call('DELETE', `/admin/media/${id}`) }
 
@@ -493,6 +494,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
 
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
+      'admin.emails.preview': 'only shows what a message would say; nothing is stored',
       'admin.delivery.people.create': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.people.update': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.assign': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',

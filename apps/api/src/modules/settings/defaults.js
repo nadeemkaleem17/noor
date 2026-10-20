@@ -1,6 +1,6 @@
 // What each settings document holds before anyone saves it (plan/09-data-model/09 section 2.1, "Seed values"). A document that was
 // never saved reads as its default with version 0, so the store works on an empty database.
-import { defaultHomeLayout, themePresets } from '@noor/contract'
+import { defaultEmails, defaultHomeLayout, themePresets } from '@noor/contract'
 
 /** @type {{ store: import('@noor/contract').StoreSettings, theme: import('@noor/contract').ThemeTokens, home: import('@noor/contract').HomeContent, payments: import('@noor/contract').PaymentSettings, checkout: import('@noor/contract').CheckoutSettings }} */
 export const defaults = {
@@ -16,6 +16,7 @@ export const defaults = {
     policies: {},
     seo: {},
     notifications: { staffEmails: [] },
+    emails: defaultEmails,
     thresholds: { lowStock: 3, highValueCodMinor: 2_500_000 },
   },
   theme: themePresets.atelier,

@@ -17,6 +17,26 @@ const Locale = Enum.locale
 
 // ---- store -----------------------------------------------------------------------------------------------------------------
 
+/** The order events that send the customer an email, and the words a message can take from the order (plan/17-owner-requests-2026-10.md item 13). */
+export const emailEvents = /** @type {const} */ (['placed', 'confirmed', 'dispatched', 'delivered', 'cancelled', 'returned'])
+export const emailTokens = /** @type {const} */ (['store', 'name', 'orderNo', 'total', 'link', 'city', 'items', 'eta', 'courier', 'tracking', 'amountDue', 'account'])
+const onlyKnownTokens = (/** @type {string | undefined} */ t) => [...(t ?? '').matchAll(/\{\{(\w*)\}\}/g)].every((m) => /** @type {readonly string[]} */ (emailTokens).includes(m[1] ?? ''))
+/** Empty `subject` and `body` mean the shop's own wording. */
+const EmailEvent = z.strictObject({ enabled: z.boolean(), subject: text(120).optional(), body: text(1500).optional() })
+  .refine((e) => onlyKnownTokens(e.subject), { message: 'invalid_format', path: ['subject'] })
+  .refine((e) => onlyKnownTokens(e.body), { message: 'invalid_format', path: ['body'] })
+export const defaultEmails = {
+  enabled: true,
+  events: { placed: { enabled: true }, confirmed: { enabled: true }, dispatched: { enabled: true }, delivered: { enabled: true }, cancelled: { enabled: true }, returned: { enabled: true } },
+}
+export const EmailSettings = z.strictObject({
+  enabled: z.boolean(),
+  /** The name the customer sees; the address it comes from is the server's (MAIL_FROM). */
+  senderName: text(60).optional(),
+  replyTo: z.email().max(254).optional(),
+  events: z.strictObject({ placed: EmailEvent, confirmed: EmailEvent, dispatched: EmailEvent, delivered: EmailEvent, cancelled: EmailEvent, returned: EmailEvent }),
+})
+
 export const StoreSettings = z.strictObject({
   brand: z.strictObject({
     name: z.string().trim().min(1).max(60),
@@ -56,6 +76,8 @@ export const StoreSettings = z.strictObject({
   }),
   seo: z.strictObject({ homeDescription: text(160).optional() }),
   notifications: z.strictObject({ staffEmails: z.array(z.email().max(254)).max(10) }),
+  /** The emails customers get about their order: on or off for each event, the words, the sender. */
+  emails: EmailSettings.default(defaultEmails),
   thresholds: z.strictObject({ lowStock: z.int().min(0).max(1000), highValueCodMinor: z.int().min(0) }),
   dispatchPromise: text(100).optional(),
 })

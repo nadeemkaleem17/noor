@@ -17,6 +17,9 @@ export function render(locale, id, vars) {
   return i18n.t(key, vars)
 }
 
+/** Puts the order's words into a text staff wrote: {{name}}, {{orderNo}} ... A word the order has no value for becomes empty. @param {string} text @param {Record<string, string>} vars */
+export const fillTokens = (text, vars) => text.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '')
+
 const escapeHtml = (/** @type {string} */ s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 /** The email's second version, from the same text: no images, the link made clickable. @param {string} text */

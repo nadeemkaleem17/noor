@@ -95,6 +95,10 @@ There is **no** "reset all data" in the admin. Development resets use `pnpm --fi
 **Never:** offer a destructive reset in a production UI; accept free-form CSS, font URLs or colour formats other than 6-digit hex; expose secrets on these screens.
 **Common mistakes:** a preview that uses different code from the storefront; saving a gold accent as the text colour; duplicating the phone number into CMS text.
 
+### Emails (`/settings/emails`, added 2026-10-20, plan/17 item 13)
+
+Needs `settings:manage`. One card **Emails** with its own Save, the key `emails` of the store document: **Send emails to customers** (all on or off), **Sender name** and **Replies go to**, and the six events (order received, confirmed, dispatched, delivered, cancelled, returned), each with a switch and **Edit the wording**: a subject and a message, with buttons that insert words from the order (`{{name}}`, `{{orderNo}}`, `{{total}}`, `{{link}}`, `{{items}}`, `{{eta}}`, `{{courier}}`, `{{tracking}}`, `{{amountDue}}`, `{{account}}`, `{{city}}`, `{{store}}`). A word the shop does not know is refused on save. Empty subject and message mean the shop's own wording (also what a bank transfer or made-to-order message uses when no own wording is set). **Preview** shows the text filled from the newest order (or made-up values) without saving; **Send a test** sends it to an address typed there. Below, **What was sent**: every email with its result (Sent, Failed with the server's reason, Not sent because no mail server is set up). The address mail comes from is the server's (`MAIL_FROM`): the mail service vouches for it, so only the name can be changed. The WhatsApp texts and the staff mail of a new order are not changed by these settings. Not built: Urdu wording, attachments, a per-product text, resending from the log.
+
 ## 6. Acceptance checklist
 
 - [x] The appearance preview and the storefront produce the same CSS for the same theme (shared function, unit test). (`appearance.test.jsx` compares the preview style with `themeCss`, the function the storefront uses.)

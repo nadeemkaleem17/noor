@@ -64,6 +64,10 @@ admin.delivery.runs.close
 admin.delivery.runs.get
 admin.delivery.runs.list
 admin.delivery.runs.sendOut
+admin.emails.log
+admin.emails.preview
+admin.emails.status
+admin.emails.test
 admin.formSchemas.create
 admin.formSchemas.delete
 admin.formSchemas.get

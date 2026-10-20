@@ -1,3 +1,4 @@
+import { defaultEmails } from '@noor/contract'
 import { screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
@@ -21,6 +22,7 @@ const zones = () => [
 ]
 const courier = { id: uid(200), name: 'TCS', trackingUrlPattern: 'https://tcs.example/t/{tracking}', trackingRequired: true, enabled: true, sortOrder: 0 }
 const storeValue = () => ({
+  emails: defaultEmails,
   brand: { name: 'Rubaya' },
   contact: { socials: [] },
   priceDisplay: { showDecimals: false, rounding: 'none' },

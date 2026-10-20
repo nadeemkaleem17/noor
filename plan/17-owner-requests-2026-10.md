@@ -24,7 +24,7 @@ Legend for the table in section 1: ✅ already there · 🟡 partly · 🔴 miss
 | 10 | User management and role-based login | ✅ | ✅ staff, invites, roles, two-step sign-in | 0 to S | check the screens with the owner |
 | 11 | Module-based rights per user | 🔴 | 🟡 fixed roles only | L | 4 |
 | 12 | 10 to 12 website themes | 🔴 + ❓ | 🟡 4 presets | M (colours) to XL (layouts) | 3, after we agree what "theme" means |
-| 13 | Order email notifications with admin settings, templates, preview, test send and log | 🔴 | 🟡 messages are written and can be sent, but there is no admin screen | L | 3 |
+| 13 | Order email notifications with admin settings, templates, preview, test send and log | 🔴 | ✅ **built 2026-10-20**: `/settings/emails` with on/off for six events, own wording with tokens, sender name and reply-to, preview, test send, log | L | 3 |
 | 14 | Delivery assignment, rider ledger, receipts, bulk assignment | 🔴 + ❓ | ✅ **built 2026-10-20** with the defaults of plan/18 §2 (delivery people, runs with bulk assignment, rider ledger, receipts, history); change a default by telling me | XL | 4, a design discussion first |
 
 **One root cause sits behind 5, 8 and 13** (and part of 1): the background worker is not running in the normal local set-up. See item 5.

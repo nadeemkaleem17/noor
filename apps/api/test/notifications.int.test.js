@@ -23,7 +23,7 @@ import { relayOnce } from '../src/platform/outbox.js'
 import { eventHandlers } from '../src/modules/index.js'
 import { createMailer, notificationJobs } from '../src/modules/notifications/index.js'
 import { createServices } from '../src/modules/services.js'
-import { closeHarness, config, createHarness, t } from './support/staff.js'
+import { closeHarness, config, createHarness, signedIn, t } from './support/staff.js'
 import { add, createShop, shop } from './support/shop.js'
 import { dbAvailable } from './support/db.js'
 
@@ -202,6 +202,99 @@ describe.skipIf(!dbAvailable)('notifications (MySQL)', () => {
       expect(working.sent).toHaveLength(2) // the customer's and the staff's, once each
       const told = (await t.db.select().from(orderEvents).where(eq(orderEvents.orderId, o.id))).filter((e) => e.type === 'notification')
       expect(told.map((e) => /** @type {{ channel: string, status: string }} */ (e.data)).map((d) => `${d.channel}/${d.status}`).sort()).toEqual(['email/sent', 'whatsapp/skipped'])
+    }, 90_000)
+
+    // ---- what staff can set (plan/17-owner-requests-2026-10.md item 13) --------------------------------------------------
+    /** Saves the emails settings of the store. @param {object} emails */
+    async function saveEmails(emails) {
+      const store = await S.owner.call('GET', '/admin/settings/store')
+      const put = await S.owner.call('PUT', '/admin/settings/store', { body: { value: { ...store.body.value, emails }, version: store.body.version } })
+      if (put.status !== 200) throw new Error(JSON.stringify(put.body))
+    }
+    const events = (/** @type {object} */ over = {}) => ({
+      placed: { enabled: true }, confirmed: { enabled: true }, dispatched: { enabled: true }, delivered: { enabled: true }, cancelled: { enabled: true }, returned: { enabled: true }, ...over,
+    })
+
+    it('an event switched off sends no email for it, but the WhatsApp text and the staff mail stay; all emails off sends none to the customer', async () => {
+      await ready()
+      await saveEmails({ enabled: true, events: events({ placed: { enabled: false } }) })
+      const m = mailerOf()
+      await place(await S.product({ price: 200000, stock: 5 }))
+      await drain(m.services)
+      expect(await summary()).toEqual(['order.placed/whatsapp/skipped', 'staff.new_order/email/sent'])
+      expect(m.sent.map((x) => x.to)).toEqual([STAFF_EMAIL])
+
+      await saveEmails({ enabled: false, events: events() })
+      const o2 = await place(await S.product({ price: 200000, stock: 5 }), { phone: '03211234567' })
+      await m.services.notifications.forOrder('order.placed', o2.id)
+      expect(m.sent.some((x) => x.to === EMAIL && x.subject.includes('RB-10002'))).toBe(false)
+    }, 120_000)
+
+    it("staff's own subject and body replace the shop's, filled from the order, and the sender name and reply-to go on the mail", async () => {
+      await ready()
+      await saveEmails({
+        enabled: true, senderName: 'Rubaya Care', replyTo: 'care@rubaya.test',
+        events: events({ placed: { enabled: true, subject: 'Thank you, {{name}}', body: 'Hello {{name}}, order {{orderNo}} of {{total}} is with us. Track it: {{link}}' } }),
+      })
+      const m = mailerOf()
+      await place(await S.product({ price: 200000, stock: 5 }))
+      await drain(m.services)
+      const mail = m.sent.find((x) => x.to === EMAIL)
+      expect(mail?.subject).toBe('Thank you, Sana')
+      expect(mail?.text).toMatch(/^Hello Sana, order RB-\d+ of Rs 2,250 is with us\. Track it: http:\/\/localhost:5174\/orders\/[\w-]{43}$/)
+      expect(/** @type {{ from?: { name: string, address: string }, replyTo?: string }} */ (/** @type {unknown} */ (mail))).toMatchObject({ from: { name: 'Rubaya Care' }, replyTo: 'care@rubaya.test' })
+      // the WhatsApp text is not touched by the email wording
+      expect((await log()).find((r) => r.template === 'order.placed' && r.channel === 'whatsapp')?.body).toMatch(/^Hi Sana, we received your order/)
+    }, 90_000)
+
+    it('refuses a word it does not know in a subject or body', async () => {
+      await ready()
+      const store = await S.owner.call('GET', '/admin/settings/store')
+      const bad = await S.owner.call('PUT', '/admin/settings/store', { body: { value: { ...store.body.value, emails: { enabled: true, events: events({ placed: { enabled: true, body: 'Hi {{name}} {{password}}' } }) } }, version: store.body.version } })
+      expect(bad.status).toBe(400)
+      expect(JSON.stringify(bad.body)).toContain('emails.events.placed.body')
+    }, 60_000)
+
+    it('shows what a message would say from made-up values when there is no order, and from the newest order when there is one', async () => {
+      await ready()
+      const draft = await S.owner.call('POST', '/admin/emails/preview', { body: { event: 'placed', subject: 'Hi {{name}}', body: 'Order {{orderNo}} for {{total}}' } })
+      expect(draft.body).toEqual({ subject: 'Hi Ayesha', body: 'Order RB-10001 for Rs 7,240', sample: true })
+      const own = await S.owner.call('POST', '/admin/emails/preview', { body: { event: 'dispatched' } })
+      expect(own.body.body).toMatch(/is on its way with TCS/)
+      await place(await S.product({ price: 200000, stock: 5 }))
+      const real = await S.owner.call('POST', '/admin/emails/preview', { body: { event: 'placed', body: 'Hello {{name}}, {{city}}' } })
+      expect(real.body).toMatchObject({ body: 'Hello Sana, Lahore', sample: false })
+    }, 90_000)
+
+    it('sends a test to an address, writes it in the log and in the audit log, and says so when no mail server is set up', async () => {
+      await ready()
+      const none = await S.owner.call('POST', '/admin/emails/test', { body: { event: 'confirmed', to: 'me@example.com' } })
+      expect(none.body).toEqual({ status: 'skipped' })
+      expect(S.owner && (await S.owner.call('GET', '/admin/emails/status')).body.configured).toBe(false)
+
+      const m = mailerOf()
+      const staffMember = { staffId: staff.id, name: 'Hina Owner', role: 'owner' }
+      const sent = await m.services.notifications.sendTest(staffMember, { event: 'confirmed', to: 'me@example.com', subject: 'Hi {{name}}', body: 'Order {{orderNo}} is confirmed.' }, { ip: '127.0.0.1', userAgent: 'vitest', requestId: 'r1' })
+      expect(sent).toEqual({ status: 'sent' })
+      expect(m.sent[0]).toMatchObject({ to: 'me@example.com', subject: '[Test] Hi Ayesha', text: 'Order RB-10001 is confirmed.' })
+      const row = (await log()).find((r) => r.template === 'test.confirmed' && r.status === 'sent')
+      expect(row).toMatchObject({ audience: 'staff', recipient: 'me@example.com', orderId: null })
+      expect((await t.db.select().from(auditLog)).some((a) => a.action === 'emails.test_sent')).toBe(true)
+    }, 90_000)
+
+    it('lists the email log, newest first, by status, for people who manage the settings only', async () => {
+      await ready()
+      const m = mailerOf()
+      await place(await S.product({ price: 200000, stock: 5 }))
+      await drain(m.services)
+      const all = await S.owner.call('GET', '/admin/emails/log')
+      expect(all.status, JSON.stringify(all.body)).toBe(200)
+      expect(all.body.items.map((/** @type {{ template: string }} */ r) => r.template).sort()).toEqual(['order.placed', 'staff.new_order'])
+      expect(all.body.items[0]).toMatchObject({ status: 'sent' })
+      expect((await S.owner.call('GET', '/admin/emails/log?status=failed')).body.items).toEqual([])
+      const { b } = await signedIn('support')
+      expect((await b.call('GET', '/admin/emails/log')).status).toBe(403)
+      expect((await b.call('POST', '/admin/emails/test', { body: { event: 'placed', to: 'x@example.com' } })).status).toBe(403)
     }, 90_000)
   })
 

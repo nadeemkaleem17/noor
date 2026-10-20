@@ -45,6 +45,10 @@ Provider credentials are **not** part of `PaymentSettings` and no endpoint reads
 | `admin.pages.update` | `PUT /pages/:id` | `content:write` | B: `PageInput & { version }` | 200 `AdminPage` | `stale_write`, `slug_taken`, `page_locked` (slug change or draft on a locked page) | Tag `page:<slug>`; a slug change writes a redirect |
 | `admin.pages.delete` | `DELETE /pages/:id` | `content:delete` | — | 204 | `page_locked` | |
 | `admin.pages.bulkDelete` | `POST /pages/bulk-delete` | `content:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
+| `admin.emails.status` | `GET /emails/status` | `settings:manage` | — | 200 `{ configured, from }` | `configured` is false while the server has no mail server (MAIL_URL); `from` is the server's sending address |
+| `admin.emails.preview` | `POST /emails/preview` | `settings:manage` | B: `{ event, subject?, body? }` (what staff are typing) | 200 `{ subject, body, sample }` | Fills the words from the newest order, or made-up values (`sample: true`) |
+| `admin.emails.test` | `POST /emails/test` | `settings:manage` | B: `{ event, to, subject?, body? }` | 200 `{ status: sent \| skipped \| failed, error? }` | Rate limited (bucket `admin`); logged as `test.<event>` and audited as `emails.test_sent` |
+| `admin.emails.log` | `GET /emails/log` | `settings:manage` | Q: `page`, `size`, `status?` | 200 `Page<EmailLogRow>` | The email rows of `notification_log`, newest first |
 | `admin.pages.preview` | `POST /pages/preview` | `content:read` | B: `{ bodyMd: string }` | 200 `{ bodyMd: string }` (tokens resolved) | — | The client renders it with the shared Markdown component (DOC-07.9 §3.2) |
 
 ```ts

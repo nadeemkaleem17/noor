@@ -1,6 +1,6 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Mail, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
@@ -32,6 +32,7 @@ const order = () => import('@/routes/order')
 const orderNew = () => import('@/routes/order-new')
 const customers = () => import('@/routes/customers')
 const customerHighlights = () => import('@/routes/customer-highlights')
+const settingsEmails = () => import('@/routes/settings-emails')
 const deliveryRuns = () => import('@/routes/delivery-runs')
 const deliveryRun = () => import('@/routes/delivery-run')
 const deliveryPeople = () => import('@/routes/delivery-people')
@@ -95,6 +96,7 @@ export const screens = [
   { path: '/settings/appearance', title: 'Appearance', permission: 'settings:read', group: 'Settings', icon: Palette, lazy: settingsAppearance },
   { path: '/settings/shipping', title: 'Shipping', permission: 'settings:read', group: 'Settings', icon: Truck, lazy: settingsShipping },
   { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: settingsPayments },
+  { path: '/settings/emails', title: 'Emails', permission: 'settings:manage', group: 'Settings', icon: Mail, lazy: settingsEmails },
   { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: staff },
   { path: '/staff/:id', title: 'Staff member', permission: 'staff:read', lazy: staffMember },
   { path: '/audit', title: 'Audit log', permission: 'audit:read', group: 'Settings', icon: ScrollText, lazy: audit },
