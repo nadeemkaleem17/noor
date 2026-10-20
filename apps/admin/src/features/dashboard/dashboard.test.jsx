@@ -96,6 +96,27 @@ describe('dashboard figures (plan/07-admin/02-dashboard.md sections 4 and 5)', (
   })
 })
 
+describe('website visits panel (plan/17-owner-requests-2026-10.md item 9)', () => {
+  const visits = { 'GET /admin/customers/visit-summary': () => json(200, { visits: 120, visitors: 80, newVisitors: 50, returningVisitors: 30, identifiedVisitors: 4, days: [], topPages: [{ path: '/', visits: 70 }, { path: '/p/lawn-kurta', visits: 31 }] }) }
+
+  it('shows the visits of the period and the pages people arrive on, for people who read customers', async () => {
+    fakeApi(session([...everything, 'customers:read'], visits))
+    renderApp('/')
+    const panel = within((await screen.findByRole('heading', { name: 'Website visits' })).closest('section') ?? document.body)
+    expect(await panel.findByText('120')).toBeTruthy()
+    expect(panel.getByText('Returning')).toBeTruthy()
+    expect(panel.getByText('/p/lawn-kurta')).toBeTruthy()
+    expect(panel.getByText('31')).toBeTruthy()
+  })
+
+  it('is not there for someone who may not read customers', async () => {
+    fakeApi(session(everything, visits))
+    renderApp('/')
+    await screen.findByRole('link', { name: 'Lawn Suit' })
+    expect(screen.queryByRole('heading', { name: 'Website visits' })).toBeNull()
+  })
+})
+
 describe('dashboard period (plan/07-admin/02-dashboard.md section 4)', () => {
   it('starts on the last 7 days of Pakistan days, and a change goes to the address and to the queries', async () => {
     /** @type {string[][]} */

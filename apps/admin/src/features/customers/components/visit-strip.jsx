@@ -46,6 +46,11 @@ export function VisitStrip() {
             <Figure label="Returning" value={summary.data.returningVisitors} note="Had come before" />
             <Figure label="Became customers" value={summary.data.identifiedVisitors} note="Ordered from that browser" />
           </dl>
+          {summary.data.topPages.length > 0 ? (
+            <p className="mt-3 text-sm text-muted">
+              Most visits began on: {summary.data.topPages.slice(0, 5).map((p) => `${p.path} (${p.visits})`).join(', ')}
+            </p>
+          ) : null}
           {summary.data.visits === 0 ? <p className="mt-3 text-sm text-muted">No visits counted yet. Visits are counted while Store settings → Features → Count visits is on.</p> : null}
         </>
       ) : null}

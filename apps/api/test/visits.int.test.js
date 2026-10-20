@@ -49,6 +49,9 @@ describe('what a visit is', () => {
   it('keeps only the address of the page', () => {
     expect(cleanPath('/search?q=lawn#top')).toBe('/search')
     expect(cleanPath('p/lawn-kurta')).toBe('/p/lawn-kurta')
+    expect(cleanPath('/orders/Tok_Secret-Abc/review/123?x=1')).toBe('/orders/*') // the link is a key to the order
+    expect(cleanPath('/ur/orders/Tok_Secret-Abc')).toBe('/ur/orders/*')
+    expect(cleanPath('/orders')).toBe('/orders')
     expect(cleanPath('/' + 'x'.repeat(300))).toHaveLength(120)
   })
 })
@@ -180,6 +183,7 @@ describe.skipIf(!dbAvailable)('visits and highlight rules (MySQL)', () => {
       await service.link({ visitor: A, order: 'token-of-sana' })
       const s = await service.summary('2026-10-18', '2026-10-19')
       expect(s).toMatchObject({ visits: 3, visitors: 2, newVisitors: 1, returningVisitors: 1, identifiedVisitors: 1 })
+      expect(s.topPages).toEqual([{ path: '/', visits: 3 }])
       expect(s.days).toEqual([
         { day: '2026-10-18', visits: 2, visitors: 2 },
         { day: '2026-10-19', visits: 1, visitors: 1 },

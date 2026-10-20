@@ -1,7 +1,7 @@
 // Visits: how often each browser comes back, kept by a random number in the shop's own cookie, and what that adds up to
 // (plan/17-owner-requests-2026-10.md section 6). A browser belongs to a customer only after that browser placed an order, because that is the one moment a person
 // names themselves; until then it is counted without a name, and never guessed at. Nothing here stores an address or a browser name.
-import { and, count, countDistinct, eq, gte, isNotNull, lt, sql } from 'drizzle-orm'
+import { and, count, countDistinct, desc, eq, gte, isNotNull, lt, sql } from 'drizzle-orm'
 import { visitors, visits } from '../../db/schema/visits.js'
 import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
@@ -19,10 +19,13 @@ const dayStart = (day) => new Date(`${day}T00:00:00+05:00`)
 /** @param {string} day @param {number} n */
 const addDays = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10)
 
-/** Only the address of the page, no query and no fragment (they can hold a search or an order link). @param {string} path */
+/**
+ * Only the address of the page: no query, no fragment (they can hold a search), and no order link (its token is a key to someone's order, so `/orders/<token>/...` is kept as `/orders/*`).
+ * @param {string} path
+ */
 export function cleanPath(path) {
   const bare = path.split(/[?#]/)[0] ?? ''
-  return (bare.startsWith('/') ? bare : `/${bare}`).slice(0, 120)
+  return (bare.startsWith('/') ? bare : `/${bare}`).replace(/^(\/ur)?\/orders\/[^/]+.*$/, '$1/orders/*').slice(0, 120)
 }
 
 /** @param {unknown} e */
@@ -93,11 +96,12 @@ export function createVisitsService({ db, customers, orders, enabled }) {
       const end = dayStart(addDays(to, 1))
       const inPeriod = and(gte(visits.startedAt, start), lt(visits.startedAt, end))
       const dayExpr = sql`date(date_add(${visits.startedAt}, interval ${sql.raw(String(PKT_HOURS))} hour))`
-      const [totals, perDay, fresh, identified] = await Promise.all([
+      const [totals, perDay, fresh, identified, pages] = await Promise.all([
         db.select({ visits: count(), visitors: countDistinct(visits.visitorId) }).from(visits).where(inPeriod),
         db.select({ day: sql`${dayExpr}`.mapWith(String), visits: count(), visitors: countDistinct(visits.visitorId) }).from(visits).where(inPeriod).groupBy(dayExpr).orderBy(dayExpr),
         db.select({ n: count() }).from(visitors).where(and(gte(visitors.firstSeenAt, start), lt(visitors.firstSeenAt, end))),
         db.select({ n: countDistinct(visits.visitorId) }).from(visits).innerJoin(visitors, eq(visitors.id, visits.visitorId)).where(and(inPeriod, isNotNull(visitors.customerId))),
+        db.select({ path: visits.landingPath, visits: count() }).from(visits).where(inPeriod).groupBy(visits.landingPath).orderBy(desc(count()), visits.landingPath).limit(8),
       ])
       const seen = totals[0]?.visitors ?? 0
       const newVisitors = fresh[0]?.n ?? 0
@@ -107,6 +111,7 @@ export function createVisitsService({ db, customers, orders, enabled }) {
         newVisitors,
         returningVisitors: Math.max(0, seen - newVisitors),
         identifiedVisitors: identified[0]?.n ?? 0,
+        topPages: pages.map((p) => ({ path: p.path, visits: p.visits })),
         days: perDay.map((d) => ({ day: String(d.day).slice(0, 10), visits: d.visits, visitors: d.visitors })),
       }
     },

@@ -6,6 +6,7 @@ import { Skeleton } from '@noor/ui/skeleton'
 import { useQuery } from '@tanstack/react-query'
 import { AppLink } from '@/components/app-link'
 import { relativeTime } from '@/lib/dates'
+import { visitSummaryQuery } from '@/lib/sales'
 import { dashboardQueries } from '../api'
 
 const rupees = (/** @type {import('@noor/contract').Money} */ m) => formatMoney(m, 'en', { showDecimals: false, rounding: 'none' })
@@ -82,6 +83,46 @@ export function ZeroSearches({ from, to }) {
           </li>
         ))}
       </ul>
+    </Panel>
+  )
+}
+
+/** Visits to the website, counted without names, and the pages people arrive on (plan/17 item 9). Needs `customers:read`, like the other visit figures. @param {{ from: string; to: string }} props */
+export function VisitsPanel({ from, to }) {
+  const q = useQuery(visitSummaryQuery({ from, to }))
+  const d = q.data
+  return (
+    <Panel id="visits-h" title="Website visits" query={q} isEmpty={d?.visits === 0} empty="No visits counted in this period. Counting is on under Settings, Store, Features.">
+      {d ? (
+        <>
+          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            {[
+              ['Visits', d.visits],
+              ['Visitors', d.visitors],
+              ['New', d.newVisitors],
+              ['Returning', d.returningVisitors],
+            ].map(([label, n]) => (
+              <div key={String(label)}>
+                <dt className="text-muted">{label}</dt>
+                <dd className="font-heading text-xl font-semibold tabular-nums">{Number(n).toLocaleString('en')}</dd>
+              </div>
+            ))}
+          </dl>
+          {d.topPages.length > 0 ? (
+            <>
+              <h3 className="mt-3 text-sm font-medium">Pages people arrive on</h3>
+              <ul className="divide-y divide-line text-sm">
+                {d.topPages.map((p) => (
+                  <li key={p.path} className="flex items-center justify-between gap-3 py-2">
+                    <span className="min-w-0 truncate"><bdi>{p.path}</bdi></span>
+                    <span className="text-muted tabular-nums">{p.visits}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </>
+      ) : null}
     </Panel>
   )
 }

@@ -197,6 +197,13 @@
       "when": 1792506288935,
       "tag": "0027_returns",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1792536073915,
+      "tag": "0028_scrub_visit_paths",
+      "breakpoints": true
     }
   ]
 }

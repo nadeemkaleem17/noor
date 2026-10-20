@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/page-header'
 import { useCan } from '@/lib/session'
 import { periodParams, presets, resolvePeriod, todayIn } from '../period'
 import { KpiTiles } from './kpi-tiles'
-import { RecentOrders, TopProducts, ZeroSearches } from './panels'
+import { RecentOrders, TopProducts, VisitsPanel, ZeroSearches } from './panels'
 import { SalesChart } from './sales-chart'
 import { TodoCards } from './todo-cards'
 
@@ -65,6 +65,7 @@ export function Dashboard() {
               <TopProducts from={period.from} to={period.to} />
               <RecentOrders />
               <ZeroSearches from={period.from} to={period.to} />
+              {can('customers:read') ? <VisitsPanel from={period.from} to={period.to} /> : null}
             </div>
           </>
         ) : (

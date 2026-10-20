@@ -99,6 +99,8 @@ export const VisitSummary = z.strictObject({
   /** Visitors who have since ordered from that browser (so they are linked to a customer). */
   identifiedVisitors: z.int(),
   days: z.array(z.strictObject({ day: Day, visits: z.int(), visitors: z.int() })),
+  /** The pages visits began on, most first (at most 8). An order link is counted as `/orders/*`. */
+  topPages: z.array(z.strictObject({ path: z.string(), visits: z.int() })).default([]),
 })
 /** @typedef {z.infer<typeof VisitSummary>} VisitSummary */
 

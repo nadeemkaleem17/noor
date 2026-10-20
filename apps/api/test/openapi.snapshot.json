@@ -14595,6 +14595,28 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "topPages": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "visits": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "visits"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -14603,7 +14625,8 @@
                     "newVisitors",
                     "returningVisitors",
                     "identifiedVisitors",
-                    "days"
+                    "days",
+                    "topPages"
                   ],
                   "additionalProperties": false
                 }
