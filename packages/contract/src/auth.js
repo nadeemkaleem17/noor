@@ -54,6 +54,10 @@ export const StaffUser = z.strictObject({
   inviteExpiresAt: IsoDate.optional(),
   version: z.number().int(),
   createdAt: IsoDate,
+  /** Added to the role for this person, taken from it, and what they may do in the end. */
+  grants: z.array(Permission),
+  revokes: z.array(Permission),
+  permissions: z.array(Permission),
 })
 /** @typedef {z.infer<typeof StaffUser>} StaffUser */
 
@@ -111,6 +115,11 @@ export const authRoutes = defineRoutes({
   'admin.staff.update': {
     method: 'PUT', path: '/admin/staff/:id', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams,
     body: z.strictObject({ name: z.string().trim().min(1).max(100), role: StaffRole, version: z.number().int() }),
+    response: StaffUser,
+  },
+  'admin.staff.setPermissions': {
+    method: 'PUT', path: '/admin/staff/:id/permissions', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams,
+    body: z.strictObject({ grants: z.array(Permission).max(60), revokes: z.array(Permission).max(60), version: z.number().int() }),
     response: StaffUser,
   },
   'admin.staff.resendInvite': { method: 'POST', path: '/admin/staff/:id/invite', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams, response: z.strictObject({ inviteLink: z.string().optional() }) },

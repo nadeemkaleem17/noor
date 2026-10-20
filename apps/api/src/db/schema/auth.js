@@ -2,7 +2,7 @@
 // No `roles` table: the five-plus-one roles are fixed in code (modules/auth/roles.js).
 import { enums } from '@noor/contract'
 import { sql } from 'drizzle-orm'
-import { bigint, boolean, check, customType, index, int, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { bigint, boolean, check, customType, index, int, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { binChar, binVarchar, utc, uuid } from '../types.js'
 
 /** `col IN ('a','b')` for a CHECK, from the contract's enum so the two cannot drift (DOC-09.0 section 5). */
@@ -20,6 +20,9 @@ export const staffUsers = mysqlTable(
     name: varchar('name', { length: 100 }).notNull(),
     role: binVarchar('role', { length: 32 }).notNull(),
     status: binVarchar('status', { length: 32 }).notNull().default('invited'),
+    /** Permissions given on top of the role, and taken off it: a list of `resource:action` (plan/17-owner-requests-2026-10.md item 11). Empty or null = the role as it is. */
+    grantedPermissions: json('granted_permissions'),
+    revokedPermissions: json('revoked_permissions'),
     passwordHash: varchar('password_hash', { length: 255 }), // Argon2id PHC string; null until the invite is accepted
     totpSecretEnc: buffer('totp_secret_enc'), // keyId | nonce | ciphertext | tag (AES-256-GCM); null = 2FA off
     totpLastStep: bigint('totp_last_step', { mode: 'number' }),

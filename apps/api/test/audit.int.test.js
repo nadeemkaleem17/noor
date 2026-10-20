@@ -234,6 +234,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       },
       'admin.me.sessions.revokeOthers': { prepare: async () => signedIn('viewer'), act: ({ b }) => b.call('POST', '/admin/me/sessions/revoke-others') },
       'admin.staff.invite': { prepare: async () => signedIn('owner'), act: ({ b }) => b.call('POST', '/admin/staff', { body: { name: 'Fresh', email: email(), role: 'viewer' } }) },
+      'admin.staff.setPermissions': { prepare: async () => ({ ...(await signedIn('owner')), u: await target() }), act: ({ b, u }) => b.call('PUT', `/admin/staff/${u.id}/permissions`, { body: { grants: ['orders:note'], revokes: [], version: 1 } }) },
       'admin.staff.update': { prepare: async () => ({ ...(await signedIn('owner')), u: await target() }), act: ({ b, u }) => b.call('PUT', `/admin/staff/${u.id}`, { body: { name: 'Renamed', role: 'support', version: 1 } }) },
       'admin.staff.resendInvite': {
         prepare: async () => {

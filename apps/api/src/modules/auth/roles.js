@@ -54,6 +54,18 @@ export const roleInfo = /** @type {Record<StaffRole, { label: string, summary: s
 /** @param {StaffRole} role @returns {ReadonlySet<Permission>} */
 export const permissionsOf = (role) => new Set(matrix[role])
 
+/**
+ * What a person may do: their role, plus what was added for them, less what was taken away. An owner keeps everything: nothing can be taken from them.
+ * @param {StaffRole} role @param {readonly string[] | null | undefined} grants @param {readonly string[] | null | undefined} revokes
+ */
+export function effectivePermissions(role, grants, revokes) {
+  const all = new Set(permissions)
+  const out = new Set(permissionsOf(role))
+  for (const g of grants ?? []) if (all.has(/** @type {Permission} */ (g))) out.add(/** @type {Permission} */ (g))
+  if (role !== 'owner') for (const r of revokes ?? []) out.delete(/** @type {Permission} */ (r))
+  return out
+}
+
 /** @param {StaffRole} role @param {Permission} permission */
 export const roleCan = (role, permission) => matrix[role].includes(permission)
 

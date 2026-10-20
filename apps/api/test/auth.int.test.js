@@ -441,6 +441,72 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
       expect(entry).toMatchObject({ entityId: target.id, category: 'security', diff: { role: ['support', 'fulfilment'] } })
     }, 60_000)
 
+    describe('module access: more or less than the role, per person (plan/17-owner-requests-2026-10.md item 11)', () => {
+      const put = (/** @type {Awaited<ReturnType<typeof signedIn>>['b']} */ b, /** @type {string} */ id, /** @type {object} */ body) => b.call('PUT', `/admin/staff/${id}/permissions`, { body })
+
+      it('adds and takes away permissions for one person, shown at once in what they may do, and keeps only what the role does not already say', async () => {
+        const { b: owner } = await signedIn('owner')
+        const target = await makeStaff('support')
+        const tb = browser('10.6.6.6')
+        await tb.login(target.email)
+        // a support person reads customers and delivery runs, and has no access to receipts
+        expect((await tb.call('GET', '/admin/customers')).status).toBe(200)
+        expect((await tb.call('GET', '/admin/delivery/receipts')).status).toBe(403)
+
+        const res = await put(owner, target.id, { grants: ['ledger:read', 'customers:read'], revokes: ['customers:read', 'promos:write'], version: 1 })
+        expect(res.status, JSON.stringify(res.body)).toBe(200)
+        // customers:read is in the role, so it is not a grant; promos:write is not in the role, so it is not a revoke
+        expect(res.body).toMatchObject({ grants: ['ledger:read'], revokes: ['customers:read'], version: 2 })
+        expect(res.body.permissions).toContain('ledger:read')
+        expect(res.body.permissions).not.toContain('customers:read')
+        // the person's open session follows the change: nothing to sign out of
+        expect((await tb.call('GET', '/admin/delivery/receipts')).status).toBe(200)
+        expect((await tb.call('GET', '/admin/customers')).status).toBe(403)
+        expect((await owner.call('GET', `/admin/staff/${target.id}`)).body).toMatchObject({ grants: ['ledger:read'], revokes: ['customers:read'] })
+
+        const [entry] = await t.db.select().from(auditLog).where(eq(auditLog.action, 'staff.permissions_changed'))
+        expect(entry).toMatchObject({ entityId: target.id, category: 'security', diff: { grants: [null, 'ledger:read'], revokes: [null, 'customers:read'] } })
+
+        // back to the role
+        const back = await put(owner, target.id, { grants: [], revokes: [], version: 2 })
+        expect(back.body).toMatchObject({ grants: [], revokes: [], version: 3 })
+        expect((await tb.call('GET', '/admin/customers')).status).toBe(200)
+      }, 90_000)
+
+      it('does not let anyone change their own access, reduce an owner, or hand out what they do not have', async () => {
+        const { b: owner, user } = await signedIn('owner')
+        expect((await put(owner, user.id, { grants: [], revokes: [], version: 1 })).status).toBe(403) // not their own
+        const second = await makeStaff('owner', { totp: newTotpSecret() })
+        expect((await put(owner, second.id, { grants: [], revokes: ['orders:read'], version: 1 })).status).toBe(400) // an owner keeps everything
+
+        const { b: manager } = await signedIn('manager')
+        const clerk = await makeStaff('viewer')
+        // a manager has no customers:export, so cannot give it
+        expect((await put(manager, clerk.id, { grants: ['customers:export'], revokes: [], version: 1 })).status).toBe(403)
+        expect((await put(manager, clerk.id, { grants: ['orders:note'], revokes: [], version: 1 })).status).toBe(200) // but can give what they hold
+        // and cannot touch an owner at all
+        expect((await put(manager, second.id, { grants: [], revokes: [], version: 1 })).status).toBe(403)
+      }, 90_000)
+
+      it('refuses an out-of-date version, and is for people who manage staff only', async () => {
+        const { b: owner } = await signedIn('owner')
+        const target = await makeStaff('viewer')
+        const stale = await put(owner, target.id, { grants: ['orders:note'], revokes: [], version: 7 })
+        expect(stale.status).toBe(409)
+        expect(stale.body).toMatchObject({ code: 'stale_write', currentVersion: 1 })
+        const { b: support } = await signedIn('support')
+        expect((await put(support, target.id, { grants: [], revokes: [], version: 1 })).status).toBe(403)
+      }, 60_000)
+
+      it('never takes anything from an owner even if the column holds a revoke', async () => {
+        const o = await makeStaff('owner', { totp: newTotpSecret() })
+        await t.db.update(staffUsers).set({ revokedPermissions: ['orders:read'] }).where(eq(staffUsers.id, o.id))
+        const { b } = await signedIn('owner')
+        const view = await b.call('GET', `/admin/staff/${o.id}`)
+        expect(view.body.permissions).toContain('orders:read')
+      }, 60_000)
+    })
+
     it('deactivation ends sessions and blocks sign-in; reactivation restores it', async () => {
       const { b: owner } = await signedIn('owner')
       const target = await makeStaff('viewer')

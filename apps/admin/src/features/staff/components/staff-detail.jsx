@@ -8,7 +8,9 @@ import { Ellipsis } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { SectionCard } from '@/components/section-card'
 import { formatDateTime, relativeTime } from '@/lib/dates'
+import { useCan } from '@/lib/session'
 import { staffQueries } from '../api'
+import { ModuleAccess } from './module-access'
 import { useStaffActions } from './staff-actions'
 import { StatusCell, TwoFactorBadge, humanise } from './staff-list'
 
@@ -26,6 +28,7 @@ const Item = ({ label, children }) => (
 /** `/staff/:id` (plan/07-admin/12-staff-roles.md section 3): one person, their sessions and the same actions as the list. @param {{ id: string; }} props */
 export function StaffDetail({ id }) {
   const person = useQuery(staffQueries.detail(id))
+  const can = useCan()
   const { menuFor, dialogs } = useStaffActions()
   if (person.isPending) return <Spinner label="Loading staff member" />
   if (person.isError) return <ErrorState title="This person could not be loaded" retryLabel="Try again" onRetry={() => void person.refetch()} />
@@ -64,6 +67,7 @@ export function StaffDetail({ id }) {
             <Item label="Added">{formatDateTime(s.createdAt)}</Item>
           </dl>
         </SectionCard>
+        <ModuleAccess key={`${s.id}-${s.version}`} staff={s} canEdit={can('staff:manage')} />
         <SectionCard id="sessions" title="Sessions">
           {s.sessions.length === 0 ? (
             <p className="text-sm text-muted">Not signed in anywhere.</p>

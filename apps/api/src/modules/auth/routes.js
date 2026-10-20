@@ -63,6 +63,7 @@ export function authHandlers(auth, config) {
     'admin.staff.get': async ({ actor, params }) => auth.getStaff(who(actor), params.id),
     'admin.staff.invite': async ({ actor, body, http, requestId }) => auth.inviteStaff(who(actor), body, info(http, requestId)),
     'admin.staff.update': async ({ actor, params, body, http, requestId }) => auth.updateStaff(who(actor), params.id, body, info(http, requestId)),
+    'admin.staff.setPermissions': async ({ actor, params, body, http, requestId }) => auth.setPermissions(who(actor), params.id, body, info(http, requestId)),
     'admin.staff.resendInvite': async ({ actor, params, http, requestId }) => auth.resendInvite(who(actor), params.id, info(http, requestId)),
     'admin.staff.resetPassword': async ({ actor, params, http, requestId }) => auth.createResetLink(who(actor), params.id, info(http, requestId)),
     'admin.staff.resetTwoFactor': async ({ actor, params, http, requestId }) => void (await auth.resetStaffTwoFactor(who(actor), params.id, info(http, requestId))),

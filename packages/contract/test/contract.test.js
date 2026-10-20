@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
   ApiError, CursorPage, Enum, Id, Money, PageQuery, PkMobile, ThemeTokens, createClient, csv, defineRoutes, enums,
-  errorCodes, errorStatus, fieldIssueCodes, flag, permissions, toFieldIssues, z, buildPath, buildQuery, money, contrastFailures, themePresets,
+  errorCodes, errorStatus, fieldIssueCodes, flag, permissionModules, permissions, toFieldIssues, z, buildPath, buildQuery, money, contrastFailures, themePresets,
 } from '../src/index.js'
 
 const ID = '0192f5aa-1111-7222-8333-444455556666'
@@ -72,6 +72,12 @@ describe('enums', () => {
     expect(Enum.orderStatus.parse('pending_confirmation')).toBe('pending_confirmation')
     expect(Enum.productKind.safeParse('made-to-order').success).toBe(false)
   })
+  it('every permission is in exactly one module of the module access screen', () => {
+    const listed = permissionModules.flatMap((m) => m.permissions)
+    expect(new Set(listed).size, 'a permission is in two modules').toBe(listed.length)
+    expect([...listed].sort()).toEqual([...permissions].sort())
+  })
+
   it('permissions are unique resource:action strings', () => {
     expect(new Set(permissions).size).toBe(permissions.length)
     for (const p of permissions) expect(p).toMatch(/^[a-z]+:[a-z]+$/)

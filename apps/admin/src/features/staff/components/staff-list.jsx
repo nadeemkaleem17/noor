@@ -52,7 +52,7 @@ const columns = [
       </span>
     ),
   },
-  { id: 'role', header: 'Role', cell: (s) => humanise(s.role) },
+  { id: 'role', header: 'Role', cell: (s) => <span>{humanise(s.role)}{s.grants.length + s.revokes.length > 0 ? <Badge tone="accent" className="ms-2">Custom access</Badge> : null}</span> },
   { id: 'twoFactor', header: 'Two-step', cell: (s) => <TwoFactorBadge staff={s} /> },
   { id: 'status', header: 'Status', cell: (s) => <StatusCell staff={s} /> },
   {

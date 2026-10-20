@@ -23,3 +23,22 @@ export const permissions = /** @type {const} */ ([
  * @typedef {(typeof permissions)[number]} Permission
  */
 export const Permission = z.enum(permissions)
+
+/**
+ * The permissions grouped by the part of the admin they belong to, for the "Module access" screen of a staff member (plan/17-owner-requests-2026-10.md item 11).
+ * Every permission is in exactly one module (a test checks).
+ */
+export const permissionModules = /** @type {const} */ ([
+  { id: 'dashboard', label: 'Dashboard', permissions: ['dashboard:read'] },
+  { id: 'products', label: 'Products and stock', permissions: ['products:read', 'products:write', 'products:publish', 'products:delete', 'products:export', 'inventory:adjust'] },
+  { id: 'catalog', label: 'Categories, collections, attributes and sizes', permissions: ['catalog:read', 'catalog:write', 'catalog:delete'] },
+  { id: 'orders', label: 'Orders', permissions: ['orders:read', 'orders:note', 'orders:confirm', 'orders:edit', 'orders:dispatch', 'orders:deliver', 'orders:cancel', 'orders:return', 'orders:payments', 'orders:export'] },
+  { id: 'delivery', label: 'Delivery, rider cash and receipts', permissions: ['deliveries:read', 'deliveries:assign', 'ledger:read', 'ledger:write', 'receipts:void'] },
+  { id: 'customers', label: 'Customers', permissions: ['customers:read', 'customers:write', 'customers:export', 'customers:anonymise'] },
+  { id: 'promos', label: 'Promo codes', permissions: ['promos:read', 'promos:write', 'promos:delete'] },
+  { id: 'reviews', label: 'Reviews', permissions: ['reviews:read', 'reviews:moderate'] },
+  { id: 'content', label: 'Content: home page, pages, menus, notices', permissions: ['content:read', 'content:write', 'content:delete'] },
+  { id: 'settings', label: 'Settings and emails', permissions: ['settings:read', 'settings:write', 'settings:manage'] },
+  { id: 'staff', label: 'Staff', permissions: ['staff:read', 'staff:manage'] },
+  { id: 'audit', label: 'Audit log', permissions: ['audit:read'] },
+])

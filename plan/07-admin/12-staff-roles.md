@@ -45,6 +45,12 @@ Custom roles are not in v1.
 
 Header action: **Invite staff**.
 
+### 3.1 Module access (added 2026-10-20, plan/17 item 11)
+
+The staff member page has a card **Module access**: the person's role, and under it the twelve modules of the admin (dashboard, products and stock, catalog, orders, delivery and rider cash, customers, promo codes, reviews, content, settings and emails, staff, audit) each with its permissions as tick boxes in plain words. A box is ticked when the person may; a note says "from the role", "added for this person" or "taken away". Each module has **Take away all of …** and **Back to the role**. **Save access** (step-up) sends two lists: what is added to the role and what is taken from it (`admin.staff.setPermissions`); only what differs from the role is kept. The result is what the person may do on their very next request: no sign-out is needed. The list marks such people **Custom access**.
+
+Rules: an owner keeps everything and cannot be reduced; nobody changes their own access; nobody gives a permission they do not hold themselves; only an owner touches an owner; every change is audited (`staff.permissions_changed`, category security, with the old and new lists). Roles themselves stay the six fixed ones (ADR on roles unchanged); a person's difference from their role is the "module-based right". Not built: custom named roles.
+
 ## 4. Staff actions
 
 | Action | Dialog and rules |

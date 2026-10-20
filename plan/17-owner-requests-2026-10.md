@@ -22,7 +22,7 @@ Legend for the table in section 1: ✅ already there · 🟡 partly · 🔴 miss
 | 8 | Product search does not work | 🐞 | ✅ **Stage 1 built 2026-10-19**: index health, repair job every 10 minutes and at start, "Rebuild the search index" button, title-prefix safety net | S | 1 (same cause as 5) |
 | 9 | Visitor tracking and analytics | 🔴 + ❓ | 🔴 (only anonymous speed and error numbers) | XL | later, after a privacy decision |
 | 10 | User management and role-based login | ✅ | ✅ staff, invites, roles, two-step sign-in | 0 to S | check the screens with the owner |
-| 11 | Module-based rights per user | 🔴 | 🟡 fixed roles only | L | 4 |
+| 11 | Module-based rights per user | 🔴 | ✅ **built 2026-10-20** as module access per person (extras and removals on top of the role); custom named roles not built | L | 4 |
 | 12 | 10 to 12 website themes | 🔴 + ❓ | 🟡 4 presets | M (colours) to XL (layouts) | 3, after we agree what "theme" means |
 | 13 | Order email notifications with admin settings, templates, preview, test send and log | 🔴 | ✅ **built 2026-10-20**: `/settings/emails` with on/off for six events, own wording with tokens, sender name and reply-to, preview, test send, log | L | 3 |
 | 14 | Delivery assignment, rider ledger, receipts, bulk assignment | 🔴 + ❓ | ✅ **built 2026-10-20** with the defaults of plan/18 §2 (delivery people, runs with bulk assignment, rider ledger, receipts, history); change a default by telling me | XL | 4, a design discussion first |

@@ -66,6 +66,7 @@ SessionInfo = { id: string, current: boolean, createdAt: IsoDate, lastSeenAt: Is
 | `admin.staff.get` | `GET /staff/:id` | `staff:read` | — | 200 `StaffUser & { sessions: SessionInfo[] }` | `not_found` | |
 | `admin.staff.invite` | `POST /staff` | `staff:manage` | B: `{ name, email, role }` | 201 `StaffUser & { inviteLink?: string }` | `email_taken`, `forbidden` (granting above own level) | Step-up. `inviteLink` is returned once, and only when no email provider is configured |
 | `admin.staff.update` | `PUT /staff/:id` | `staff:manage` | B: `{ name, role, version }` | 200 `StaffUser` | `stale_write`, `last_owner`, `forbidden` | Step-up. Role change ends that user's sessions |
+| `admin.staff.setPermissions` | `PUT /staff/:id/permissions` | `staff:manage` (step-up) | B: `{ grants: Permission[], revokes: Permission[], version }` | 200 `StaffUser` (`grants`, `revokes`, `permissions`) | `forbidden` (own access, an owner as a manager, a permission the actor lacks), `validation_failed` (a revoke on an owner), `stale_write` | Added 2026-10-20 |
 | `admin.staff.resendInvite` | `POST /staff/:id/invite` | `staff:manage` | — | 200 `{ inviteLink?: string }` | `action_not_allowed` (not `invited`) | Step-up |
 | `admin.staff.resetPassword` | `POST /staff/:id/password-reset` | `staff:manage` | — | 200 `{ resetLink?: string }` | `forbidden` | Step-up |
 | `admin.staff.resetTwoFactor` | `DELETE /staff/:id/2fa` | `staff:manage` | — | 204 | `forbidden` | Step-up |

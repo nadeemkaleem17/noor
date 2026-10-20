@@ -40,6 +40,7 @@ Built (M6-04): Reviews queue and drawer (`features/reviews/`; drawer at `?review
 **Built (M7-03)**: the admin sends no inline script (its theme is `public/theme-init.js`) and its response headers come from `security-headers.js` (`dist/_headers` at build, `vite preview` in the end-to-end run); `src/lib/env.js` reads its two settings by name, never `import.meta.env` whole.
 **Built (M7-03)**: the admin sends no inline script (its theme is `public/theme-init.js`) and its response headers come from `security-headers.js` (`dist/_headers` at build, `vite preview` in the end-to-end run); `src/lib/env.js` reads its two settings by name, never `import.meta.env` whole.
 **Built (M7-01)**: bulk Publish / Move to draft / Archive on the products list (`admin.products.bulk`, people with `products:publish`, ids only).
+**Built later (2026-10, plan/17)**: customer highlight rules and visits (`features/customers/`), Subcategories and bulk delete (`components/bulk-delete.jsx`, `lib/bulk-delete.js`), Notices and the home page sections (`features/content/`), Delivery runs, people, receipts and the rider ledger (`features/delivery/`, `lib/delivery.js` is what the Orders list shares), Emails (`features/settings/components/emails-page.jsx`), Module access per person (`features/staff/components/module-access.jsx`).
 **Not built yet**: Inventory screens beyond the product stock dialog.
 The API for all of these already exists (M4: `admin.orders.*`, `admin.customers.*`, `admin.promos.*`, `admin.reviews.*`, `admin.dashboard.*`, `admin.search`...): M6 is screens only.
 

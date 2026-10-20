@@ -5,7 +5,7 @@ import { fakeApi, ids, json, me, problem, renderApp, resetApp } from '@/test/app
 afterEach(resetApp)
 
 const uid = (/** @type {number} */ n) => `0194f1b2-7c3a-7000-8000-${String(n).padStart(12, '0')}`
-const person = (/** @type {Record<string, unknown>} */ over) => ({ id: uid(9), name: 'Bilal Raza', email: 'bilal@example.com', role: 'manager', status: 'active', twoFactorEnabled: false, version: 3, createdAt: '2026-09-01T05:00:00.000Z', lastSeenAt: '2026-10-05T08:00:00.000Z', ...over })
+const person = (/** @type {Record<string, unknown>} */ over) => ({ id: uid(9), name: 'Bilal Raza', email: 'bilal@example.com', role: 'manager', status: 'active', twoFactorEnabled: false, grants: [], revokes: [], permissions: [], version: 3, createdAt: '2026-09-01T05:00:00.000Z', lastSeenAt: '2026-10-05T08:00:00.000Z', ...over })
 const people = () => [
   person({ id: ids.staff, name: 'Ayesha Khan', email: 'ayesha@example.com', role: 'owner', twoFactorEnabled: true }),
   person({ id: uid(2), name: 'Bilal Raza', email: 'bilal@example.com', role: 'manager', twoFactorEnabled: false }),

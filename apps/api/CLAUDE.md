@@ -56,6 +56,8 @@ test/                  *.test.js (pure) and *.int.test.js (a scratch MySQL datab
 | `payments` | `status.js` the one `payment_status` formula, `recompute` the only writer of paid/refunded; providers `cod manual bank_transfer` (+test `fake`); webhook route outside the contract table; job `orders.expire_unpaid` |
 | `notifications` | job `notify.order` writes `notification_log` once per message (`skipped` while no provider; email via `MAIL_URL`) |
 | `reviews` | per order line, `pending` until moderated; `catalog/products.js recomputeRating` writes rating columns |
+| `visits` | visitors (a browser = the `nc_vid` cookie) and visits; linked to a customer only through an order link; `customers/highlights.js` colours customers by rules staff edit |
+| `delivery` | delivery people, runs, assignments (one live per order), the append-only `rider_ledger`, receipts; orders move only through `orders.transition`; DOC-18 |
 | `reporting` | dashboard/summary figures in SQL over Pakistan days, zero-result searches, admin search, system info, web vitals + client errors intake |
 
 ## Rules that bite (learned the hard way)

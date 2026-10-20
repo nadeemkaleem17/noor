@@ -189,6 +189,7 @@ admin.staff.resendInvite
 admin.staff.resetPassword
 admin.staff.resetTwoFactor
 admin.staff.revokeSessions
+admin.staff.setPermissions
 admin.staff.update
 admin.system.info
 cart.addLine

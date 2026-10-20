@@ -11,7 +11,7 @@ import { record } from '../audit/index.js'
 import { dummyHash, hashPassword, needsRehash, passwordProblem, verifyPassword } from './password.js'
 import { createRecoveryCodes, matchRecoveryCode } from './recovery.js'
 import * as repo from './repository.js'
-import { mayManage, permissionsOf, requiresTwoFactor, roleList } from './roles.js'
+import { effectivePermissions, mayManage, permissionsOf, requiresTwoFactor, roleList } from './roles.js'
 import { createSealer } from './secrets.js'
 import { createSession, publicSessionId, STEP_UP_MS } from './sessions.js'
 import { randomToken, sha256Hex } from './tokens.js'
@@ -64,6 +64,9 @@ export function createAuthService({ db, config }) {
   /** @param {StaffActor | { staffId: string, name: string, role: string }} a @param {RequestInfo} req */
   const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, ...(req.requestId ? { requestId: req.requestId } : {}) })
 
+  /** A permission list read from its json column: always an array of strings. @param {unknown} v @returns {string[]} */
+  const listOf = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [])
+
   /** @param {UserRow} u */
   const toStaffUser = (u, inviteExpiresAt = /** @type {Date | undefined} */ (undefined)) => ({
     id: u.id,
@@ -77,6 +80,10 @@ export function createAuthService({ db, config }) {
     ...(inviteExpiresAt ? { inviteExpiresAt: inviteExpiresAt.toISOString() } : {}),
     version: u.version,
     createdAt: u.createdAt.toISOString(),
+    // what was added to or taken from the role for this person, and what they may do in the end
+    grants: /** @type {import('@noor/contract').Permission[]} */ (listOf(u.grantedPermissions)),
+    revokes: /** @type {import('@noor/contract').Permission[]} */ (listOf(u.revokedPermissions)),
+    permissions: /** @type {import('@noor/contract').Permission[]} */ ([...effectivePermissions(/** @type {import('@noor/contract').StaffRole} */ (u.role), listOf(u.grantedPermissions), listOf(u.revokedPermissions))]),
   })
 
   /** What a freshly authenticated person must do next, and the session that goes with it. */
@@ -481,6 +488,35 @@ export function createAuthService({ db, config }) {
       return target
     },
 
+    /**
+     * Gives a person more than their role, or less: module by module, in the end permission by permission (plan/17-owner-requests-2026-10.md item 11). Only what the role does not
+     * already say is kept, nobody changes their own, nobody gives what they do not hold themselves, and an owner cannot be reduced.
+     * @param {StaffActor} actor @param {string} id @param {{ grants: import('@noor/contract').Permission[], revokes: import('@noor/contract').Permission[], version: number }} body @param {RequestInfo} req
+     */
+    async setPermissions(actor, id, { grants, revokes, version }, req) {
+      const target = await this._targetOf(actor, id)
+      if (target.id === actor.staffId) throw new DomainError('forbidden')
+      const role = /** @type {import('@noor/contract').StaffRole} */ (target.role)
+      if (role === 'owner' && revokes.length) throw new DomainError('validation_failed', { issues: [{ path: 'revokes', code: 'invalid_format' }] })
+      const base = permissionsOf(role)
+      const newGrants = [...new Set(grants)].filter((p) => !base.has(p)).toSorted()
+      const newRevokes = [...new Set(revokes)].filter((p) => base.has(p)).toSorted()
+      // nobody hands out what they do not have themselves
+      for (const p of newGrants) if (!actor.permissions.has(p)) throw new DomainError('forbidden')
+      return transaction(db, async (tx) => {
+        const locked = await repo.lockUserById(tx, id)
+        if (!locked) throw new DomainError('not_found')
+        if (locked.version !== version) throw new DomainError('stale_write', { currentVersion: locked.version })
+        const was = { grants: listOf(locked.grantedPermissions), revokes: listOf(locked.revokedPermissions) }
+        await repo.updateUser(tx, id, { grantedPermissions: newGrants.length ? newGrants : null, revokedPermissions: newRevokes.length ? newRevokes : null, updatedAt: now(), version: locked.version + 1 })
+        await record(tx, {
+          ...actorOf(actor, req), action: 'staff.permissions_changed', entityType: 'staff', entityId: id, entityLabel: locked.email, category: 'security',
+          diff: { grants: [was.grants.join(', ') || null, newGrants.join(', ') || null], revokes: [was.revokes.join(', ') || null, newRevokes.join(', ') || null] },
+        })
+        return toStaffUser(/** @type {UserRow} */ (await repo.findUserById(tx, id)))
+      })
+    },
+
     /** @param {StaffActor} actor @param {string} id @param {{ name: string, role: import('@noor/contract').StaffRole, version: number }} body @param {RequestInfo} req */
     async updateStaff(actor, id, { name, role, version }, req) {
       const target = await this._targetOf(actor, id)
@@ -606,7 +642,7 @@ export function createAuthService({ db, config }) {
         name: user.name,
         email: user.email,
         role,
-        permissions: permissionsOf(role),
+        permissions: effectivePermissions(role, listOf(user.grantedPermissions), listOf(user.revokedPermissions)),
         session: { idHash: session.idHash, kind: /** @type {import('./sessions.js').SessionKind} */ (session.kind), csrfToken: session.csrfToken, lastAuthAt: session.lastAuthAt, twoFactor: session.twoFactor },
       }
     },
