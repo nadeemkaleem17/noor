@@ -7,7 +7,7 @@ import { createServer } from 'node:http'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { StoreConfigPublic, themePresets } from '@noor/contract'
+import { defaultHomeLayout, StoreConfigPublic, themePresets } from '@noor/contract'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const state = /** @type {{ down: boolean, ur: boolean, wishlist: boolean, cartBody: any, calls: string[], blocked: boolean, order: any }} */ ({ down: false, ur: false, wishlist: true, cartBody: undefined, calls: [], blocked: false, order: undefined })
@@ -46,8 +46,9 @@ const fullHome = {
   promo: { eyebrow: 'Sale', heading: 'Up to 25% off', text: 'Until Sunday', buttonText: 'See the sale', buttonHref: '/sale' },
   editorial: { heading: 'Made by hand', text: 'Our story', buttonText: 'Read more', buttonHref: '/pages/about' },
   footer: { about: 'Pakistani fashion.' },
+  layout: defaultHomeLayout,
 }
-const emptyHome = { notices: [], heroSlides: [], footer: {} }
+const emptyHome = { notices: [], heroSlides: [], footer: {}, layout: defaultHomeLayout }
 
 const facets = [
   { key: 'size', label: 'Size', display: 'buttons', values: [{ value: 'M', label: 'M', count: 9, selected: false }, { value: 'L', label: 'L', count: 0, selected: false }] },

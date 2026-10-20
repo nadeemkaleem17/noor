@@ -493,6 +493,13 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
 
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
+      'admin.categories.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.attributes.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.sizeCharts.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.products.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.collections.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.promos.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
+      'admin.pages.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
       'admin.auth.requestPasswordReset': 'changes nothing until an email provider exists (DOC-12); only counted by the rate limiter',
       'admin.me.confirmPassword': 'refreshes the 15-minute step-up window of the current session; no data changes',
       'admin.media.createUpload': 'only reserves an upload slot that nobody can see or use; unconfirmed slots are purged after a day',

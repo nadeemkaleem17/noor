@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import { defaultHomeLayout } from '@noor/contract'
 import { afterEach, describe, expect, it } from 'vitest'
 import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
 
@@ -23,10 +24,46 @@ describe('home page content (plan/07-admin/09-content.md section 2)', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).not.toBeNull())
     expect(sent).toEqual({
-      value: { announcement: { text: 'Free delivery over Rs. 5,000' }, notices: [], heroSlides: [], promo: { enabled: false }, editorial: { enabled: false }, footer: { about: 'Rubaya makes clothes.' } },
+      value: { announcement: { text: 'Free delivery over Rs. 5,000' }, notices: [], heroSlides: [], promo: { enabled: false }, editorial: { enabled: false }, footer: { about: 'Rubaya makes clothes.' }, layout: defaultHomeLayout },
       version: 0,
     })
     expect((await screen.findAllByText('Home page saved')).length).toBeGreaterThan(0)
+  })
+
+  it('moves, switches off and sizes the sections of the home page, and sends the layout with the rest', async () => {
+    /** @type {any} */
+    let sent = null
+    fakeApi({ ...session(), 'GET /admin/content/home': () => json(200, doc({}, 3)), 'PUT /admin/content/home': ({ body }) => ((sent = body), json(200, doc(body.value, 4))) })
+    const { user } = renderApp('/content/home')
+    const card = within(await screen.findByRole('region', { name: 'Home page sections' }))
+    // the order starts as the shop shows it; New in goes above the category pictures
+    expect(card.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Category pictures', 'New in', 'Collections', 'Category blocks', 'Promo band', 'Bestsellers', 'Editorial band'])
+    await user.click(card.getByRole('button', { name: 'Move New in up' }))
+    expect(card.getAllByRole('heading', { level: 3 })[0]?.textContent).toBe('New in')
+    expect(card.getByRole('button', { name: 'Move New in up' }).hasAttribute('disabled')).toBe(true)
+    await user.click(card.getByRole('switch', { name: 'Show Bestsellers' }))
+    const newIn = card.getAllByRole('listitem')[0] ?? document.body
+    await user.type(within(newIn).getByLabelText('Heading'), 'Just landed')
+    const count = within(newIn).getByLabelText('How many products')
+    await user.clear(count)
+    await user.type(count, '6')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).not.toBeNull())
+    expect(sent.value.layout.order).toEqual(['newIn', 'categories', 'collections', 'categoryBlocks', 'promo', 'bestsellers', 'editorial'])
+    expect(sent.value.layout.newIn).toEqual({ enabled: true, heading: 'Just landed', count: 6 })
+    expect(sent.value.layout.bestsellers).toMatchObject({ enabled: false, count: 8 })
+  })
+
+  it('refuses a number of products the shop cannot show', async () => {
+    const calls = fakeApi({ ...session(), 'GET /admin/content/home': () => json(200, doc({}, 3)) })
+    const { user } = renderApp('/content/home')
+    const card = within(await screen.findByRole('region', { name: 'Home page sections' }))
+    const count = card.getAllByLabelText('How many products')[0] ?? document.body
+    await user.clear(count)
+    await user.type(count, '40')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect((await screen.findAllByText(/too large|too big|Too|between|at most|large/i)).length).toBeGreaterThan(0)
+    expect(calls.some((c) => c.startsWith('PUT'))).toBe(false)
   })
 
   it('refuses a slide with a link but no button text, and says where', async () => {

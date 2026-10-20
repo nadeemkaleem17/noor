@@ -2,7 +2,7 @@
 // The storefront routes that apply a code (`cart.applyPromo`) come with the cart (M4-03).
 import { z } from 'zod'
 import { Enum } from './enum-schemas.js'
-import { BulkResult, Page, PageQuery } from './pagination.js'
+import { BulkDeleteBody, BulkResult, Page, PageQuery } from './pagination.js'
 import { Money } from './money-schema.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
@@ -101,6 +101,7 @@ export const promoRoutes = defineRoutes({
   'admin.promos.create': { method: 'POST', path: '/admin/promos', auth: 'staff', permission: 'promos:write', status: 201, body: PromoInput, response: AdminPromo },
   'admin.promos.update': { method: 'PUT', path: '/admin/promos/:id', auth: 'staff', permission: 'promos:write', params: IdParams, body: PromoUpdate, response: AdminPromo },
   'admin.promos.delete': { method: 'DELETE', path: '/admin/promos/:id', auth: 'staff', permission: 'promos:delete', status: 204, params: IdParams, response: z.undefined() },
+  'admin.promos.bulkDelete': { method: 'POST', path: '/admin/promos/bulk-delete', auth: 'staff', permission: 'promos:delete', body: BulkDeleteBody, response: BulkResult },
   'admin.promos.preview': {
     method: 'POST', path: '/admin/promos/preview', auth: 'staff', permission: 'promos:read',
     body: z.strictObject({ promo: PromoInput, lines: z.array(z.strictObject({ variantId: Id, quantity: z.int().min(1).max(100) })).min(1).max(50) }),

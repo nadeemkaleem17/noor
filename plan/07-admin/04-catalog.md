@@ -52,6 +52,10 @@ All four need `catalog:read` to view, `catalog:write` to create/edit, `catalog:d
 | Delete | Blocked while the category has child categories or is the **primary** category of any product; the dialog says how many and links to them. Otherwise products merely tagged with it lose the tag |
 | Storefront effect | Saving purges the `categories` cache tag (DOC-08) |
 
+### 2.1 Subcategories (`/subcategories`, added 2026-10-19)
+
+A flat table of every category that has a parent: **Name** (with its address), **Parent** (the whole trail, "Women › Unstitched"), **Products**, **On the website** (and why not), actions. Search by name or handle; filter by parent (a parent also matches what is below it) and by shown / not shown. "New subcategory" opens the category drawer under the chosen parent; the row menu has Edit, Add a subcategory and Delete; checkboxes and "Delete selected" follow plan/07-admin/14 §5.4. It reads the same list as the tree, so the two cannot disagree.
+
 ## 3. Collections (`/collections`, `/collections/:id`)
 
 A collection is a hand-picked, ordered set of products with its own page `/collections/:handle` (GLOSSARY "Drop").

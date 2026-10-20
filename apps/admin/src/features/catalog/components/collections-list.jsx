@@ -4,6 +4,7 @@ import { formatDate } from '@noor/i18n/format'
 import { Link as RouterLink } from 'react-router'
 import { DataTable } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
+import { deleteAction } from '@/lib/bulk-delete'
 import { useCan } from '@/lib/session'
 import { collectionListSchema, collectionQueries } from '../api'
 
@@ -50,6 +51,8 @@ export function CollectionsList() {
         rowId={(c) => c.id}
         rowLabel={(c) => c.title}
         rowHref={(c) => `/collections/${c.id}`}
+        bulkActions={[deleteAction('admin.collections.bulkDelete', 'catalog:delete')]}
+        selectAllMatching={false}
         empty={{ title: 'No collections yet', body: can('catalog:write') ? 'Create one to group products for a drop or a season.' : undefined }}
       />
     </>

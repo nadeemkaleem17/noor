@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { Enum } from './enum-schemas.js'
 import { Link, LocaleQuery } from './settings.js'
-import { Page, PageQuery } from './pagination.js'
+import { BulkDeleteBody, BulkResult, Page, PageQuery } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'
 import { defineRoutes } from './routes.js'
 
@@ -74,6 +74,7 @@ export const contentRoutes = defineRoutes({
   'admin.pages.create': { method: 'POST', path: '/admin/pages', auth: 'staff', permission: 'content:write', status: 201, body: PageInput, response: AdminPage },
   'admin.pages.update': { method: 'PUT', path: '/admin/pages/:id', auth: 'staff', permission: 'content:write', params: IdParams, body: PageInput.extend({ version: z.int().min(1) }), response: AdminPage },
   'admin.pages.delete': { method: 'DELETE', path: '/admin/pages/:id', auth: 'staff', permission: 'content:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.pages.bulkDelete': { method: 'POST', path: '/admin/pages/bulk-delete', auth: 'staff', permission: 'content:delete', body: BulkDeleteBody, response: BulkResult },
   'admin.menus.get': { method: 'GET', path: '/admin/menus/:handle', auth: 'staff', permission: 'content:read', params: HandleParams, response: AdminMenu },
   'admin.menus.update': {
     method: 'PUT', path: '/admin/menus/:handle', auth: 'staff', permission: 'content:write', params: HandleParams,

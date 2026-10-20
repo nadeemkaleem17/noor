@@ -2,7 +2,7 @@
 // A document is validated by its schema in the contract and by the rules here, saved with an optimistic version, audited with a
 // field-level diff, and announced on the outbox with the cache tags a CDN purge needs.
 import { randomBytes } from 'node:crypto'
-import { contrastFailures, CheckoutSettings, HomeContent, PaymentSettings, StoreSettings, ThemeTokens, menuLimits, themePresets } from '@noor/contract'
+import { contrastFailures, CheckoutSettings, defaultHomeLayout, fullHomeOrder, HomeContent, PaymentSettings, StoreSettings, ThemeTokens, menuLimits, themePresets } from '@noor/contract'
 import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
 import { now } from '../../platform/clock.js'
@@ -450,6 +450,7 @@ export function createSettingsService({ db, config, media, shippingFacts = async
             }
           : {}),
         footer: h.footer.about ? { about: localised(locale, ur?.footerAbout, h.footer.about) } : {},
+        layout: { ...defaultHomeLayout, ...h.layout, order: fullHomeOrder(h.layout?.order ?? []) },
       }
     },
 

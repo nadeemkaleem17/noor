@@ -2,6 +2,7 @@
 // plan/10-api/05-admin-catalog.md sections 5 and 7, plan/09-data-model/03-catalog.md sections 3-4).
 import { z } from 'zod'
 import { Slug } from './content.js'
+import { BulkDeleteBody, BulkResult } from './pagination.js'
 import { Enum } from './enum-schemas.js'
 import { FormField, Id, Image, IsoDate, Swatch } from './primitives.js'
 import { defineRoutes } from './routes.js'
@@ -124,6 +125,7 @@ export const taxonomyRoutes = defineRoutes({
   },
   'admin.categories.update': { method: 'PUT', path: '/admin/categories/:id', auth: 'staff', permission: 'catalog:write', params: IdParams, body: CategoryInput.safeExtend({ version: z.int().min(1) }), response: AdminCategory },
   'admin.categories.delete': { method: 'DELETE', path: '/admin/categories/:id', auth: 'staff', permission: 'catalog:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.categories.bulkDelete': { method: 'POST', path: '/admin/categories/bulk-delete', auth: 'staff', permission: 'catalog:delete', body: BulkDeleteBody, response: BulkResult },
 
   'admin.attributes.list': { method: 'GET', path: '/admin/attributes', auth: 'staff', permission: 'catalog:read', response: Items(AdminAttribute) },
   'admin.attributes.create': { method: 'POST', path: '/admin/attributes', auth: 'staff', permission: 'catalog:write', status: 201, body: AttributeInput, response: AdminAttribute },
@@ -133,6 +135,7 @@ export const taxonomyRoutes = defineRoutes({
     params: z.strictObject({ id: Id, valueId: Id }), body: z.strictObject({ intoValueId: Id }), response: z.undefined(),
   },
   'admin.attributes.delete': { method: 'DELETE', path: '/admin/attributes/:id', auth: 'staff', permission: 'catalog:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.attributes.bulkDelete': { method: 'POST', path: '/admin/attributes/bulk-delete', auth: 'staff', permission: 'catalog:delete', body: BulkDeleteBody, response: BulkResult },
 
   'admin.sizeSystems.list': { method: 'GET', path: '/admin/size-systems', auth: 'staff', permission: 'catalog:read', response: Items(AdminSizeSystem) },
   'admin.sizeSystems.create': { method: 'POST', path: '/admin/size-systems', auth: 'staff', permission: 'catalog:write', status: 201, body: SizeSystemInput, response: AdminSizeSystem },
@@ -144,6 +147,7 @@ export const taxonomyRoutes = defineRoutes({
   'admin.sizeCharts.create': { method: 'POST', path: '/admin/size-charts', auth: 'staff', permission: 'catalog:write', status: 201, body: SizeChartInput, response: AdminSizeChart },
   'admin.sizeCharts.update': { method: 'PUT', path: '/admin/size-charts/:id', auth: 'staff', permission: 'catalog:write', params: IdParams, body: SizeChartInput.safeExtend({ version: z.int().min(1) }), response: AdminSizeChart },
   'admin.sizeCharts.delete': { method: 'DELETE', path: '/admin/size-charts/:id', auth: 'staff', permission: 'catalog:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.sizeCharts.bulkDelete': { method: 'POST', path: '/admin/size-charts/bulk-delete', auth: 'staff', permission: 'catalog:delete', body: BulkDeleteBody, response: BulkResult },
 
   'admin.formSchemas.list': { method: 'GET', path: '/admin/form-schemas', auth: 'staff', permission: 'catalog:read', response: Items(AdminFormSchema) },
   'admin.formSchemas.get': { method: 'GET', path: '/admin/form-schemas/:id', auth: 'staff', permission: 'catalog:read', params: IdParams, response: AdminFormSchema },

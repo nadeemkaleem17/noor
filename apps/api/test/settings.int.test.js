@@ -191,6 +191,30 @@ describe.skipIf(!dbAvailable)('settings, pages and menus (MySQL, through HTTP)',
       expect(JSON.stringify(home)).not.toContain('mediaId')
     }, 60_000)
 
+    it('gives the shop a whole home layout: the default when never set, and the order staff chose with every section once', async () => {
+      const { b } = await signedIn('manager')
+      const before = (await publicGet('/content/home')).json()
+      expect(before.layout.order).toEqual(['categories', 'newIn', 'collections', 'categoryBlocks', 'promo', 'bestsellers', 'editorial'])
+      expect(before.layout.newIn).toEqual({ enabled: true, count: 8 })
+      const value = base()
+      value.layout = { order: ['newIn', 'editorial', 'newIn'], categories: { enabled: false, count: 4 }, newIn: { enabled: true, heading: 'Just landed', count: 6 }, collections: { enabled: true, count: 3 }, categoryBlocks: { enabled: true, count: 2 }, bestsellers: { enabled: false, count: 8 } }
+      const saved = await b.call('PUT', '/admin/content/home', { body: { value, version: 0 } })
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200)
+      const home = (await publicGet('/content/home')).json()
+      // a section listed twice counts once, and the ones left out follow in the usual order
+      expect(home.layout.order).toEqual(['newIn', 'editorial', 'categories', 'collections', 'categoryBlocks', 'promo', 'bestsellers'])
+      expect(home.layout).toMatchObject({ categories: { enabled: false, count: 4 }, newIn: { heading: 'Just landed', count: 6 }, bestsellers: { enabled: false } })
+    }, 60_000)
+
+    it('refuses a section size outside what the shop can show', async () => {
+      const { b } = await signedIn('manager')
+      const value = base()
+      value.layout = { order: [], categories: { enabled: true, count: 40 }, newIn: { enabled: true, count: 8 }, collections: { enabled: true, count: 3 }, categoryBlocks: { enabled: true, count: 6 }, bestsellers: { enabled: true, count: 2 } }
+      const res = await b.call('PUT', '/admin/content/home', { body: { value, version: 0 } })
+      expect(res.status).toBe(400)
+      expect(res.body.issues.map((/** @type {{ path: string }} */ i) => i.path).sort()).toEqual(['value.layout.bestsellers.count', 'value.layout.categories.count'])
+    })
+
     it('refuses a button with only half of its pair, a bad link, a media that is not ready, and too many slides', async () => {
       const { b } = await signedIn('manager')
       const hero = await readyMedia()

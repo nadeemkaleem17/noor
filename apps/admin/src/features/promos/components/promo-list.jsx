@@ -14,6 +14,7 @@ import { DataTable } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
 import { formatDateTime } from '@/lib/dates'
 import { messageFor } from '@/lib/errors'
+import { deleteAction } from '@/lib/bulk-delete'
 import { useCan } from '@/lib/session'
 import { useShortcut } from '@/lib/shortcuts'
 import { useDrawer } from '@/lib/use-drawer'
@@ -136,6 +137,7 @@ export function PromoList() {
         bulkActions={[
           { id: 'enable', label: 'Switch on', permission: 'promos:write', done: (n) => `${n} switched on`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'enable' }) : { cancelled: true }) },
           { id: 'disable', label: 'Switch off', permission: 'promos:write', done: (n) => `${n} switched off`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'disable' }) : { cancelled: true }) },
+          deleteAction('admin.promos.bulkDelete', 'promos:delete'),
         ]}
         selectAllMatching={false}
         empty={{ title: 'No promo codes yet', body: can('promos:write') ? 'Make the first one for a sale or a goodwill gesture.' : undefined }}

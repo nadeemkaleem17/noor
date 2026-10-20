@@ -1,3 +1,4 @@
+admin.attributes.bulkDelete
 admin.attributes.create
 admin.attributes.delete
 admin.attributes.list
@@ -13,11 +14,13 @@ admin.auth.requestPasswordReset
 admin.auth.resetPassword
 admin.auth.verifyTwoFactor
 admin.background.status
+admin.categories.bulkDelete
 admin.categories.create
 admin.categories.delete
 admin.categories.list
 admin.categories.reorder
 admin.categories.update
+admin.collections.bulkDelete
 admin.collections.create
 admin.collections.delete
 admin.collections.get
@@ -87,6 +90,7 @@ admin.orders.quote
 admin.orders.recordPayment
 admin.orders.transition
 admin.orders.updateTracking
+admin.pages.bulkDelete
 admin.pages.create
 admin.pages.delete
 admin.pages.get
@@ -94,6 +98,7 @@ admin.pages.list
 admin.pages.preview
 admin.pages.update
 admin.products.bulk
+admin.products.bulkDelete
 admin.products.checkSku
 admin.products.checks
 admin.products.create
@@ -104,6 +109,7 @@ admin.products.list
 admin.products.previewLink
 admin.products.update
 admin.promos.bulk
+admin.promos.bulkDelete
 admin.promos.create
 admin.promos.delete
 admin.promos.get
@@ -139,6 +145,7 @@ admin.shipping.matchCities
 admin.shipping.updateCity
 admin.shipping.updateZone
 admin.shipping.zoneImpact
+admin.sizeCharts.bulkDelete
 admin.sizeCharts.create
 admin.sizeCharts.delete
 admin.sizeCharts.get

@@ -100,6 +100,36 @@ const bothOrNeither = (/** @type {{ buttonText?: string, buttonHref?: string }} 
 const buttonRule = { message: 'required', path: ['buttonText'] }
 const SlideId = z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'handle_invalid')
 
+/** The parts of the home page below the pictures, in the order they come: staff reorder, switch off and size them (plan/17-owner-requests-2026-10.md items 2 and 3). */
+export const homeSectionKeys = /** @type {const} */ (['categories', 'newIn', 'collections', 'categoryBlocks', 'promo', 'bestsellers', 'editorial'])
+const SectionKey = z.enum(homeSectionKeys)
+const Sized = (/** @type {number} */ min, /** @type {number} */ max) => z.int().min(min).max(max)
+/** What the shop shows when staff never touched it: the home page as it was before the layout could be edited. */
+export const defaultHomeLayout = {
+  order: [...homeSectionKeys],
+  categories: { enabled: true, count: 8 },
+  newIn: { enabled: true, count: 8 },
+  collections: { enabled: true, count: 3 },
+  categoryBlocks: { enabled: true, count: 6 },
+  bestsellers: { enabled: true, count: 8 },
+}
+export const HomeLayout = z.strictObject({
+  /** Sections not listed come last, in the default order; a section listed twice is used once. */
+  order: z.array(SectionKey).max(homeSectionKeys.length),
+  categories: z.strictObject({ enabled: z.boolean(), heading: text(60).optional(), count: Sized(2, 12) }),
+  newIn: z.strictObject({ enabled: z.boolean(), heading: text(60).optional(), count: Sized(4, 12) }),
+  collections: z.strictObject({ enabled: z.boolean(), heading: text(60).optional(), count: Sized(1, 6) }),
+  categoryBlocks: z.strictObject({ enabled: z.boolean(), count: Sized(1, 6) }),
+  bestsellers: z.strictObject({ enabled: z.boolean(), heading: text(60).optional(), count: Sized(4, 12) }),
+})
+/** @typedef {z.infer<typeof HomeLayout>} HomeLayout */
+
+/** The order with every section in it once: what staff listed first, then the ones they left out. @param {readonly string[]} listed */
+export const fullHomeOrder = (listed) => {
+  const known = listed.filter((k, i) => /** @type {readonly string[]} */ (homeSectionKeys).includes(k) && listed.indexOf(k) === i)
+  return /** @type {(typeof homeSectionKeys)[number][]} */ ([...known, ...homeSectionKeys.filter((k) => !known.includes(k))])
+}
+
 export const HomeContent = z.strictObject({
   announcement: z.strictObject({ text: text(100), href: Link.optional() }),
   notices: z.array(z.strictObject({
@@ -121,6 +151,7 @@ export const HomeContent = z.strictObject({
   promo: z.strictObject({ enabled: z.boolean(), eyebrow: text(30).optional(), heading: text(60).optional(), text: text(200).optional(), ...Button }).refine(bothOrNeither, buttonRule),
   editorial: z.strictObject({ enabled: z.boolean(), mediaId: Id.optional(), alt: text(150).optional(), eyebrow: text(30).optional(), heading: text(60).optional(), text: text(300).optional(), ...Button }).refine(bothOrNeither, buttonRule),
   footer: z.strictObject({ about: text(300) }),
+  layout: HomeLayout.default(defaultHomeLayout),
   /** Urdu text by the id of what it translates. Anything missing falls back to English. */
   i18n: z.strictObject({
     ur: z.strictObject({
@@ -201,6 +232,8 @@ export const HomePublic = z.strictObject({
   promo: z.strictObject({ eyebrow: z.string().optional(), heading: z.string(), text: z.string().optional(), ...PublicButton }).optional(),
   editorial: z.strictObject({ image: Image.optional(), eyebrow: z.string().optional(), heading: z.string(), text: z.string().optional(), ...PublicButton }).optional(),
   footer: z.strictObject({ about: z.string().optional() }),
+  /** Always whole: every section once, in order, with its size. */
+  layout: HomeLayout,
 })
 /** @typedef {z.infer<typeof HomePublic>} HomePublic */
 

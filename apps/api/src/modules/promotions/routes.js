@@ -1,4 +1,5 @@
 // Handlers for the promo routes of the contract (plan/10-api/06-admin-orders-customers.md section 4).
+import { eachOf } from '../../platform/bulk.js'
 const staff = (/** @type {unknown} */ actor) => /** @type {import('./service.js').Staff} */ (actor)
 
 /**
@@ -18,6 +19,7 @@ export function promotionsHandlers(s) {
     'admin.promos.delete': async ({ actor, params, http, requestId }) => {
       await s.delete(staff(actor), params.id, info(http, requestId))
     },
+    'admin.promos.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => s.delete(staff(actor), id, info(http, requestId))),
     'admin.promos.preview': async ({ body }) => s.preview(body.promo, body.lines),
     'admin.promos.bulk': async ({ actor, body, http, requestId }) => s.bulk(staff(actor), body.ids, body.action, info(http, requestId)),
   }

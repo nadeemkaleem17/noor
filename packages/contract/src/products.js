@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Slug } from './content.js'
 import { Enum } from './enum-schemas.js'
 import { Money } from './money-schema.js'
-import { BulkResult, Page, PageQuery } from './pagination.js'
+import { BulkDeleteBody, BulkResult, Page, PageQuery } from './pagination.js'
 import { InitialStock } from './inventory.js'
 import { Id, Image, IsoDate, Swatch } from './primitives.js'
 import { defineRoutes } from './routes.js'
@@ -210,6 +210,7 @@ export const productRoutes = defineRoutes({
   'admin.products.create': { method: 'POST', path: '/admin/products', auth: 'staff', permission: 'products:write', status: 201, body: ProductInput.safeExtend({ initialStock: InitialStock.optional() }), response: AdminProduct },
   'admin.products.update': { method: 'PUT', path: '/admin/products/:id', auth: 'staff', permission: 'products:write', params: IdParams, body: ProductInput.safeExtend({ version: z.int().min(1) }), response: AdminProduct },
   'admin.products.delete': { method: 'DELETE', path: '/admin/products/:id', auth: 'staff', permission: 'products:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.products.bulkDelete': { method: 'POST', path: '/admin/products/bulk-delete', auth: 'staff', permission: 'products:delete', body: BulkDeleteBody, response: BulkResult },
   'admin.products.duplicate': { method: 'POST', path: '/admin/products/:id/duplicate', auth: 'staff', permission: 'products:write', params: IdParams, status: 201, response: AdminProduct },
   'admin.products.bulk': {
     method: 'POST', path: '/admin/products/bulk', auth: 'staff', permission: 'products:publish',
@@ -229,4 +230,5 @@ export const productRoutes = defineRoutes({
   'admin.collections.create': { method: 'POST', path: '/admin/collections', auth: 'staff', permission: 'catalog:write', status: 201, body: CollectionInput, response: AdminCollection },
   'admin.collections.update': { method: 'PUT', path: '/admin/collections/:id', auth: 'staff', permission: 'catalog:write', params: IdParams, body: CollectionInput.safeExtend({ version: z.int().min(1) }), response: AdminCollection },
   'admin.collections.delete': { method: 'DELETE', path: '/admin/collections/:id', auth: 'staff', permission: 'catalog:delete', params: IdParams, status: 204, response: z.undefined() },
+  'admin.collections.bulkDelete': { method: 'POST', path: '/admin/collections/bulk-delete', auth: 'staff', permission: 'catalog:delete', body: BulkDeleteBody, response: BulkResult },
 })

@@ -13,12 +13,12 @@ Legend for the table in section 1: ✅ already there · 🟡 partly · 🔴 miss
 | # | Item | Kind | Today | Size | Priority I suggest |
 |---|---|---|---|---|---|
 | 1 | Categories added in the admin do not show on the website | 🐞 + ❓ | ✅ **Stage 1 built 2026-10-19**: Store setting "show categories with no products" (on by default), "coming" page, admin says why a category is not shown | S to M | 1 (quick, visible) |
-| 2 | "New in" settings missing on the home page (the Sale band has them) | 🔴 | 🔴 | M | 2, built together with 3 |
-| 3 | Home, header, theme and category display settings in the admin, with layouts, order, preview | 🔴 | 🟡 theme colours and a preview exist; home sections cannot be arranged | L | 2 |
+| 2 | "New in" settings missing on the home page (the Sale band has them) | 🔴 | ✅ **built 2026-10-20** with 3: heading, count and on/off for New in, Bestsellers, Collections, Category pictures, Category blocks | M | 2, built together with 3 |
+| 3 | Home, header, theme and category display settings in the admin, with layouts, order, preview | 🔴 | 🟡 **sections can now be ordered, switched off and sized (2026-10-20)**; draft and publish, other category layouts and header options are still open | L | 2 |
 | 4 | Notice management: popup, side and header notices, colours, design | 🔴 | 🟡 only a rotating strip above the header | M to L | 3 |
 | 5 | Image upload spinner never stops | 🐞 | ✅ **Stage 1 built 2026-10-19**: worker runs inside the API locally, inline fast path, upload with progress, cancel, retry and a clear failure, admin banner when the worker is down | S | **1 (blocks everything else)** |
-| 6 | Bulk delete everywhere | 🔴 + ❓ | 🟡 bulk actions exist on some lists, not delete | M | 3 |
-| 7 | A Subcategories tab | 🔴 | 🟡 sub-categories are inside the Categories tree | S to M | 2 |
+| 6 | Bulk delete everywhere | 🔴 + ❓ | ✅ **built 2026-10-20**: Delete in the bulk bar of Products, Promos, Collections, Pages, Attributes, Subcategories (real delete; trash still open) | M | 3 |
+| 7 | A Subcategories tab | 🔴 | ✅ **built 2026-10-20**: `/subcategories` with search, parent filter, add, edit, delete, bulk delete | S to M | 2 |
 | 8 | Product search does not work | 🐞 | ✅ **Stage 1 built 2026-10-19**: index health, repair job every 10 minutes and at start, "Rebuild the search index" button, title-prefix safety net | S | 1 (same cause as 5) |
 | 9 | Visitor tracking and analytics | 🔴 + ❓ | 🔴 (only anonymous speed and error numbers) | XL | later, after a privacy decision |
 | 10 | User management and role-based login | ✅ | ✅ staff, invites, roles, two-step sign-in | 0 to S | check the screens with the owner |

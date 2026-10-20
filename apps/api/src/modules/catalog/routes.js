@@ -1,4 +1,5 @@
 // Handlers for the catalog routes of the contract: admin (plan/10-api/05) and public (plan/10-api/02).
+import { eachOf } from '../../platform/bulk.js'
 import { publicCatalogHandlers } from './public-routes.js'
 
 
@@ -25,6 +26,7 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
     'admin.categories.delete': async ({ actor, params, http, requestId }) => {
       await categories.remove(staff(actor), params.id, info(http, requestId))
     },
+    'admin.categories.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => categories.remove(staff(actor), id, info(http, requestId))),
 
     'admin.attributes.list': async () => attributes.list(),
     'admin.attributes.create': async ({ actor, body, http, requestId }) => attributes.create(staff(actor), body, info(http, requestId)),
@@ -35,6 +37,7 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
     'admin.attributes.delete': async ({ actor, params, http, requestId }) => {
       await attributes.remove(staff(actor), params.id, info(http, requestId))
     },
+    'admin.attributes.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => attributes.remove(staff(actor), id, info(http, requestId))),
 
     'admin.sizeSystems.list': async () => sizes.list(),
     'admin.sizeSystems.create': async ({ actor, body, http, requestId }) => sizes.createSystem(staff(actor), body, info(http, requestId)),
@@ -50,6 +53,7 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
     'admin.sizeCharts.delete': async ({ actor, params, http, requestId }) => {
       await sizes.removeChart(staff(actor), params.id, info(http, requestId))
     },
+    'admin.sizeCharts.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => sizes.removeChart(staff(actor), id, info(http, requestId))),
 
     'admin.formSchemas.list': async () => sizes.listForms(),
     'admin.formSchemas.get': async ({ params }) => sizes.getForm(params.id),
@@ -68,6 +72,7 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
     'admin.products.delete': async ({ actor, params, http, requestId }) => {
       await products.remove(staff(actor), params.id, info(http, requestId))
     },
+    'admin.products.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => products.remove(staff(actor), id, info(http, requestId))),
     'admin.products.duplicate': async ({ actor, params, http, requestId }) => products.duplicate(publisher(actor), params.id, info(http, requestId)),
     'admin.products.bulk': async ({ actor, body, http, requestId }) => products.bulk(staff(actor), body.ids, body.action, info(http, requestId)),
     'admin.products.previewLink': async ({ params }) => products.previewLink(params.id),
@@ -79,5 +84,6 @@ export function catalogHandlers({ categories, attributes, sizes, products, colle
     'admin.collections.delete': async ({ actor, params, http, requestId }) => {
       await collections.remove(staff(actor), params.id, info(http, requestId))
     },
+    'admin.collections.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => collections.remove(staff(actor), id, info(http, requestId))),
   }
 }

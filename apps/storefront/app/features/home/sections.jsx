@@ -63,16 +63,16 @@ export function TrustStrip() {
   )
 }
 
-/** A row of the shop's main categories (a category with no picture yet gets its first letter in a circle); two or more make a row, fewer is not worth a section. @param {{ categories: { id: string, handle: string, name: string, image?: import('@noor/contract').Image | undefined }[] }} props */
-export function CategoryTiles({ categories }) {
+/** A row of the shop's main categories (a category with no picture yet gets its first letter in a circle); two or more make a row, fewer is not worth a section. @param {{ heading?: string, limit?: number, categories: { id: string, handle: string, name: string, image?: import('@noor/contract').Image | undefined }[] }} props */
+export function CategoryTiles({ categories, heading, limit = 8 }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
-  const tiles = categories.slice(0, 8)
+  const tiles = categories.slice(0, limit)
   if (tiles.length < 2) return null
   return (
     <section className="mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-categories">
       <h2 id="home-categories" className="sr-only">
-        {t('home.shopByCategory')}
+        {heading || t('home.shopByCategory')}
       </h2>
       <ul className="flex snap-x gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 lg:grid-cols-8">
         {tiles.map((c) => (
@@ -125,18 +125,18 @@ export function EditorialBand({ editorial }) {
   )
 }
 
-/** The shop's featured collections, up to three, each a picture and a name. @param {{ collections: import('@noor/contract').z.infer<typeof import('@noor/contract').CollectionSummary>[] }} props */
-export function CollectionsRow({ collections }) {
+/** The shop's featured collections, up to three, each a picture and a name. @param {{ heading?: string, limit?: number, collections: import('@noor/contract').z.infer<typeof import('@noor/contract').CollectionSummary>[] }} props */
+export function CollectionsRow({ collections, heading, limit = 3 }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   if (!collections.length) return null
   return (
     <section className="defer-render mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-collections">
       <h2 id="home-collections" className="mb-4 font-heading text-h2">
-        {t('home.collections')}
+        {heading || t('home.collections')}
       </h2>
       <ul className="grid gap-4 md:grid-cols-3">
-        {collections.slice(0, 3).map((c) => (
+        {collections.slice(0, limit).map((c) => (
           <li key={c.id}>
             <RouterLink to={path(`/collections/${c.handle}`)} className="flex flex-col gap-2">
               {c.image ? <Image {...imageProps(c.image)} alt="" sizes="(min-width:768px) 33vw, 100vw" className="w-full rounded-media" /> : null}

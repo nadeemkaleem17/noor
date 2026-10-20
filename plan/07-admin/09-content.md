@@ -32,6 +32,10 @@ One form, sections as cards, one Save. A "Preview storefront" link opens `/` in 
 
 Link fields use one component, `LinkInput` (`components/link-input.jsx`, built in M3-05 as a text field with the browser's own suggestion list instead of a `Combobox`; the contract's link rule runs in each form's resolver): it offers internal targets (categories, collections, products, CMS pages, `/new`, `/sale`) and accepting a typed URL; it validates with the same rule as the storefront (`/…`, `https://…`, `mailto:`, `tel:`, `https://wa.me/…`) so an invalid link is rejected here instead of silently hidden there.
 
+### 2.1 Home page sections (added 2026-10-20, plan/17 items 2 and 3)
+
+A card **Home page sections** lists the parts below the pictures in the order the shop shows them: Category pictures, New in, Collections, Category blocks, Promo band, Bestsellers, Editorial band. Each has up and down buttons. Category pictures, New in, Collections, Category blocks and Bestsellers also have a **Show** switch and a size (categories 2 to 12, products 4 to 12, collections 1 to 6, blocks 1 to 6); all but Category blocks have a **Heading** (empty = the usual words). The Promo and Editorial bands keep their own Show switch in their cards; here they are only placed. Stored as `layout` in the home document; a section left out of `order` follows in the default order; the first load is the home page as it was before. The shop reads `layout` from `content.getHome` (`routes/home.jsx`) and fetches only what is shown. Not built: a draft that is published later, other layouts for the category pictures (grid, list, scroll), a per-category "show on the home page" switch, and the definition of "new" by days (New in is the newest N products).
+
 ## 3. CMS pages
 
 ### 3.1 List (`/content/pages`)

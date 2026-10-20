@@ -62,6 +62,26 @@ describe('promo list (plan/07-admin/07-promos.md section 2)', () => {
     await waitFor(() => expect(sent.at(-1)).toEqual({ ids: [ids.sorry], action: 'enable' }))
   })
 
+  it('deletes chosen codes together, and a role without promos:delete is not offered it', async () => {
+    /** @type {any[]} */
+    const sent = []
+    fakeApi(session(owner, { 'GET /admin/promos': list, 'POST /admin/promos/bulk-delete': ({ body }) => (sent.push(body), json(200, { succeeded: body.ids, failed: [] })) }))
+    const { user } = renderApp('/promos')
+    await user.click(await screen.findByRole('checkbox', { name: /Select EID10/ }))
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(sent).toEqual([{ ids: [ids.eid] }]))
+  })
+
+  it('has no bulk Delete for a role that cannot delete promos', async () => {
+    fakeApi(session(writer, { 'GET /admin/promos': list }))
+    const { user } = renderApp('/promos')
+    await user.click(await screen.findByRole('checkbox', { name: /Select EID10/ }))
+    await screen.findByRole('toolbar', { name: 'Bulk actions' })
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Switch on' })).toBeTruthy()
+  })
+
   it('does not offer to delete a code an order has used, and deletes one that none has', async () => {
     let deleted = ''
     fakeApi(session(owner, { 'GET /admin/promos': list, [`DELETE /admin/promos/${ids.eid}`]: () => ((deleted = ids.eid), json(204)) }))

@@ -5,6 +5,7 @@ import { Lock } from 'lucide-react'
 import { Link as RouterLink } from 'react-router'
 import { DataTable } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
+import { deleteAction } from '@/lib/bulk-delete'
 import { useCan } from '@/lib/session'
 import { pageListSchema, pageQueries } from '../api'
 
@@ -59,6 +60,8 @@ export function PagesList() {
         rowId={(p) => p.id}
         rowLabel={(p) => p.title}
         rowHref={(p) => `/content/pages/${p.id}`}
+        bulkActions={[deleteAction('admin.pages.bulkDelete', 'content:delete')]}
+        selectAllMatching={false}
         empty={{ title: 'No pages yet', body: can('content:write') ? 'Create the first page.' : undefined }}
       />
     </>

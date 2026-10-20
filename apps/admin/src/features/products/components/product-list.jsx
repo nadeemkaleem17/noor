@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/page-header'
 import { categoriesQuery, categoryOptions } from '@/lib/catalog'
 import { env } from '@/lib/env'
 import { messageFor } from '@/lib/errors'
+import { deleteAction } from '@/lib/bulk-delete'
 import { useCan } from '@/lib/session'
 import { useShortcut } from '@/lib/shortcuts'
 import { productListSchema, productQueries, useProductMutations } from '../api'
@@ -116,6 +117,7 @@ export function ProductList() {
           { id: 'publish', label: 'Publish', permission: 'products:publish', done: (n) => `${n} published`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'publish' }) : { cancelled: true }) },
           { id: 'unpublish', label: 'Move to draft', permission: 'products:publish', done: (n) => `${n} moved to draft`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'unpublish' }) : { cancelled: true }) },
           { id: 'archive', label: 'Archive', permission: 'products:publish', done: (n) => `${n} archived`, run: async (t) => ('ids' in t ? bulk.mutateAsync({ ids: t.ids, action: 'archive' }) : { cancelled: true }) },
+          deleteAction('admin.products.bulkDelete', 'products:delete'),
         ]}
         empty={{ title: 'No products yet', body: can('products:write') ? 'Create the first product to start selling.' : undefined }}
       />

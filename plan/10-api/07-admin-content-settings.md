@@ -44,6 +44,7 @@ Provider credentials are **not** part of `PaymentSettings` and no endpoint reads
 | `admin.pages.create` | `POST /pages` | `content:write` | B: `PageInput` | 201 `AdminPage` | `slug_taken` | |
 | `admin.pages.update` | `PUT /pages/:id` | `content:write` | B: `PageInput & { version }` | 200 `AdminPage` | `stale_write`, `slug_taken`, `page_locked` (slug change or draft on a locked page) | Tag `page:<slug>`; a slug change writes a redirect |
 | `admin.pages.delete` | `DELETE /pages/:id` | `content:delete` | — | 204 | `page_locked` | |
+| `admin.pages.bulkDelete` | `POST /pages/bulk-delete` | `content:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 | `admin.pages.preview` | `POST /pages/preview` | `content:read` | B: `{ bodyMd: string }` | 200 `{ bodyMd: string }` (tokens resolved) | — | The client renders it with the shared Markdown component (DOC-07.9 §3.2) |
 
 ```ts

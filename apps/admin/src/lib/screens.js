@@ -1,11 +1,12 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Database, FileText, Folders, Gauge, Home, Layers, List, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+import { Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
 const productNew = () => import('@/routes/product-new')
 const categories = () => import('@/routes/categories')
+const subcategories = () => import('@/routes/subcategories')
 const attributes = () => import('@/routes/attributes')
 const sizes = () => import('@/routes/sizes')
 const collections = () => import('@/routes/collections')
@@ -65,6 +66,7 @@ export const screens = [
   { path: '/products/new', title: 'New product', permission: 'products:write', lazy: productNew },
   { path: '/products/:id', title: 'Product', permission: 'products:read', lazy: product },
   { path: '/categories', title: 'Categories', permission: 'catalog:read', group: 'Catalog', icon: Folders, lazy: categories },
+  { path: '/subcategories', title: 'Subcategories', permission: 'catalog:read', group: 'Catalog', icon: ListTree, lazy: subcategories },
   { path: '/collections', title: 'Collections', permission: 'catalog:read', group: 'Catalog', icon: Layers, lazy: collections },
   { path: '/collections/new', title: 'New collection', permission: 'catalog:write', lazy: collectionNew },
   { path: '/collections/:id', title: 'Collection', permission: 'catalog:read', lazy: collection },

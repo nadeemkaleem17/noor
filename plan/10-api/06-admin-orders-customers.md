@@ -132,6 +132,7 @@ AdminCustomer = AdminCustomerRow & { email?: string, noCodReason?: string, conse
 | `admin.promos.create` | `POST /promos` | `promos:write` | B: `PromoInput` | 201 `AdminPromo` | `validation_failed` (`code` `not_unique`) |
 | `admin.promos.update` | `PUT /promos/:id` | `promos:write` | B: `PromoInput & { version }` | 200 `AdminPromo` | `stale_write`, `validation_failed` (changing `code`/`type` of a used promo) |
 | `admin.promos.delete` | `DELETE /promos/:id` | `promos:delete` | — | 204 | `in_use` (has redemptions → disable instead) |
+| `admin.promos.bulkDelete` | `POST /promos/bulk-delete` | `promos:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 | `admin.promos.preview` | `POST /promos/preview` | `promos:read` | B: `{ promo: PromoInput, lines: { variantId: Id, quantity: int }[] }` | 200 `{ applies: boolean, reason?: string, discount: Money, eligibleSubtotal: Money, lineDiscounts: { variantId: Id, discount: Money }[] }` | — |
 | `admin.promos.bulk` | `POST /promos/bulk` | `promos:write` | `action`: `enable`, `disable` | 200 bulk result | — |
 

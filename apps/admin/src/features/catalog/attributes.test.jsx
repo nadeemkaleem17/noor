@@ -22,8 +22,8 @@ describe('attributes (plan/07-admin/04-catalog.md section 4)', () => {
     renderApp('/attributes')
     const table = await screen.findByRole('region', { name: 'Attributes' })
     const rows = within(table).getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell').map((c) => c.textContent))
-    expect(rows[0]?.slice(0, 7)).toEqual(['FabricMaterial', 'fabric', 'Enum', 'Checkbox', '3', 'Yes', '5 products'])
-    expect(rows[1]?.slice(0, 3)).toEqual(['Pieces', 'pieces', 'Number'])
+    expect(rows[0]?.slice(1, 8)).toEqual(['FabricMaterial', 'fabric', 'Enum', 'Checkbox', '3', 'Yes', '5 products'])
+    expect(rows[1]?.slice(1, 4)).toEqual(['Pieces', 'pieces', 'Number'])
   })
 
   it('creates an enum attribute: the key and value codes follow the labels', async () => {

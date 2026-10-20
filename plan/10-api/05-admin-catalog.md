@@ -26,6 +26,7 @@ All paths under `/api/v1/admin`; auth `staff`; `no-store`; every non-GET writes 
 | `admin.products.create` | `POST /products` | `products:write` (+ `products:publish` if status is `active`/`scheduled`) | B: `ProductInput` (+ `initialStock?: { variantKey: string, quantity: int }[]`) | 201 `AdminProduct` | `handle_taken`, `sku_taken`, `publish_checks_failed`, `media_not_ready` | |
 | `admin.products.update` | `PUT /products/:id` | same | B: `ProductInput & { version: int }` | 200 `AdminProduct` | `stale_write`, `handle_taken`, `sku_taken`, `publish_checks_failed`, `in_use` (removing a variant that has order lines) | Whole document. Variants are matched by `id`; a variant without `id` is created; one missing from the body is deleted if unused |
 | `admin.products.delete` | `DELETE /products/:id` | `products:delete` | — | 204 | `in_use` (has order lines → archive instead) | |
+| `admin.products.bulkDelete` | `POST /products/bulk-delete` | `products:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 | `admin.products.duplicate` | `POST /products/:id/duplicate` | `products:write` | — | 201 `AdminProduct` | — | Draft copy, handle `-copy`, blank SKUs, zero stock |
 | `admin.products.checkSku` | `GET /products/sku-available` | `products:read` | Q: `sku`, `exceptVariantId?` | 200 `{ available: boolean }` | — | |
 | `admin.products.checks` | `POST /products/publish-checks` | `products:read` | B: `ProductInput` | 200 `{ checks: { code: string, path?: string, ok: boolean }[] }` | — | Same function the save uses (DOC-07.3 §8) |
@@ -125,6 +126,7 @@ Built at M1-10 (`packages/contract/src/inventory.js`, `apps/api/src/modules/inve
 | `admin.categories.update` | `PUT /categories/:id` | `catalog:write` | B: `CategoryInput & { version }` | 200 `AdminCategory` | `stale_write`, `handle_taken`, `validation_failed` (cycle or depth) |
 | `admin.categories.reorder` | `POST /categories/reorder` | `catalog:write` | B: `{ parentId: Id \| null, orderedIds: Id[] }` | 204 | `validation_failed` (ids are not exactly the children) |
 | `admin.categories.delete` | `DELETE /categories/:id` | `catalog:delete` | — | 204 | `in_use` (children, or primary category of products) |
+| `admin.categories.bulkDelete` | `POST /categories/bulk-delete` | `catalog:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 
 ```ts
 CategoryInput = { name: string, handle: string, parentId?: Id | null, description?: string, imageMediaId?: Id | null, visible: boolean,
@@ -151,6 +153,7 @@ Built at M1-08 (`packages/contract/src/taxonomy.js`, `apps/api/src/modules/catal
 | `admin.collections.create` | `POST /collections` | `catalog:write` | B: `CollectionInput` | 201 `AdminCollection` | `handle_taken` |
 | `admin.collections.update` | `PUT /collections/:id` | `catalog:write` | B: `CollectionInput & { version }` | 200 `AdminCollection` | `stale_write`, `handle_taken`, `validation_failed` (a fourth featured: `details.featured`) |
 | `admin.collections.delete` | `DELETE /collections/:id` | `catalog:delete` | — | 204 | — |
+| `admin.collections.bulkDelete` | `POST /collections/bulk-delete` | `catalog:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 
 ```ts
 CollectionInput = { title: string, handle: string, description?: string, imageMediaId?: Id | null, status: 'draft' | 'active',
@@ -170,6 +173,7 @@ AdminCollectionRow = { id: Id, title: string, handle: string, status: string, fe
 | `admin.attributes.update` | `PUT /attributes/:id` | `catalog:write` | B: `AttributeInput` (`code`, `type` ignored if changed → `validation_failed`) | 200 `AdminAttribute` | `in_use` (removing a value used by products) |
 | `admin.attributes.mergeValue` | `POST /attributes/:id/values/:valueId/merge` | `catalog:write` | B: `{ intoValueId: Id }` | 204 | `not_found` |
 | `admin.attributes.delete` | `DELETE /attributes/:id` | `catalog:delete` | — | 204 | `in_use` |
+| `admin.attributes.bulkDelete` | `POST /attributes/bulk-delete` | `catalog:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 | `admin.sizeSystems.list` / `.create` / `.update` / `.delete` | `GET\|POST /size-systems`, `PUT\|DELETE /size-systems/:id` | `catalog:read` / `write` / `delete` | B: `{ name: string, values: { id?: Id, label: string }[] }` (order = size order) | `AdminSizeSystem` | `in_use` |
 | `admin.sizeCharts.list` / `.get` / `.create` / `.update` / `.delete` | `GET\|POST /size-charts`, `GET\|PUT\|DELETE /size-charts/:id` | same | B: `SizeChartInput & { version? }` | `AdminSizeChart` (+ `usedBy: int`) | `stale_write` |
 | `admin.formSchemas.list` / `.get` / `.create` / `.update` / `.delete` | `GET\|POST /form-schemas`, `GET\|PUT\|DELETE /form-schemas/:id` | same | B: `{ title: string, fields: FormField[], allowNotes: boolean, version? }` | `AdminFormSchema` (+ `usedBy: int`) | `stale_write`, `in_use`, `validation_failed` (a field `key` changed) |

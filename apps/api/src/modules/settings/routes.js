@@ -1,4 +1,5 @@
 // Handlers for the settings, content and public store routes of the contract.
+import { eachOf } from '../../platform/bulk.js'
 const staff = (/** @type {unknown} */ actor) => /** @type {import('./service.js').Staff} */ (actor)
 
 /**
@@ -31,6 +32,7 @@ export function settingsHandlers(s) {
     'admin.pages.delete': async ({ actor, params, http, requestId }) => {
       await s.deletePage(staff(actor), params.id, info(http, requestId))
     },
+    'admin.pages.bulkDelete': async ({ actor, body, http, requestId }) => eachOf(body.ids, (id) => s.deletePage(staff(actor), id, info(http, requestId))),
     'admin.menus.get': async ({ params }) => s.getMenu(params.handle),
     'admin.menus.update': async ({ actor, params, body, http, requestId }) => s.saveMenu(staff(actor), params.handle, body, info(http, requestId)),
     'admin.links.search': async ({ query }) => s.searchLinks(query.q),

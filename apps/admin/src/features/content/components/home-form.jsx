@@ -1,4 +1,4 @@
-import { ApiError, HomeContent } from '@noor/contract'
+import { ApiError, fullHomeOrder, HomeContent } from '@noor/contract'
 import { Button, IconButton } from '@noor/ui/button'
 import { ConfirmDialog } from '@noor/ui/confirm-dialog'
 import { ErrorState } from '@noor/ui/error-state'
@@ -195,6 +195,86 @@ function HeroCard({ writable, images, onPicture }) {
 }
 
 /**
+ * What each section of the home page is, and what staff can set on it (the shop reads these in routes/home.jsx).
+ * @type {Record<(typeof import('@noor/contract').homeSectionKeys)[number], { title: string; note: string; heading?: boolean; count?: [number, number]; countLabel?: string; band?: boolean }>}
+ */
+const sectionInfo = {
+  categories: { title: 'Category pictures', note: 'A row of round pictures of the main categories.', heading: true, count: [2, 12], countLabel: 'How many categories' },
+  newIn: { title: 'New in', note: 'The newest products, with a tab for each category.', heading: true, count: [4, 12], countLabel: 'How many products' },
+  collections: { title: 'Collections', note: 'Featured collections, each a picture and a name.', heading: true, count: [1, 6], countLabel: 'How many collections' },
+  categoryBlocks: { title: 'Category blocks', note: 'The best sellers of each main category, one block per category.', count: [1, 6], countLabel: 'How many categories' },
+  promo: { title: 'Promo band', note: 'Switched on and written in the Promo band card below.', band: true },
+  bestsellers: { title: 'Bestsellers', note: 'The products that sell most, with a tab for each category.', heading: true, count: [4, 12], countLabel: 'How many products' },
+  editorial: { title: 'Editorial band', note: 'Switched on and written in the Editorial band card below.', band: true },
+}
+
+/** The order, switches and sizes of the parts of the home page below the pictures (plan/17-owner-requests-2026-10.md items 2 and 3). @param {{ writable: boolean }} props */
+function LayoutCard({ writable }) {
+  const { control, setValue } = useFormContext()
+  const order = /** @type {(keyof typeof sectionInfo)[]} */ (useWatch({ control, name: 'layout.order' }))
+  /** @param {number} i @param {number} by */
+  const move = (i, by) => {
+    const next = [...order]
+    const [item] = next.splice(i, 1)
+    if (item) next.splice(i + by, 0, item)
+    setValue('layout.order', next, { shouldDirty: true })
+  }
+  return (
+    <SectionCard id="layout" title="Home page sections" description="The parts below the pictures, from top to bottom. Move them, switch them off, and say how many to show. The shop looks the same until you change something here.">
+      <ol className="space-y-3">
+        {order.map((key, i) => {
+          const info = sectionInfo[key]
+          return (
+            <li key={key} className="rounded-card border border-line p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="grid size-7 place-items-center rounded-full bg-surface-2 text-sm font-medium" aria-hidden>
+                  {i + 1}
+                </span>
+                <h3 className="me-auto font-medium">{info.title}</h3>
+                {writable ? (
+                  <>
+                    <IconButton label={`Move ${info.title} up`} icon={<ArrowUp aria-hidden className="size-4" />} disabled={i === 0} onClick={() => move(i, -1)} />
+                    <IconButton label={`Move ${info.title} down`} icon={<ArrowDown aria-hidden className="size-4" />} disabled={i === order.length - 1} onClick={() => move(i, 1)} />
+                  </>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-muted">{info.note}</p>
+              {info.band ? null : (
+                <div className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_8rem] sm:items-end">
+                  <Controller control={control} name={`layout.${key}.enabled`} render={({ field }) => <Switch label={`Show ${info.title}`} disabled={!writable} checked={Boolean(field.value)} onCheckedChange={field.onChange} />} />
+                  {info.heading ? (
+                    <RHFField control={control} name={`layout.${key}.heading`} label="Heading" hint="Empty: the usual words">
+                      {(field) => <Input {...text(field)} maxLength={60} readOnly={!writable} />}
+                    </RHFField>
+                  ) : (
+                    <span />
+                  )}
+                  {info.count ? (
+                    <RHFField control={control} name={`layout.${key}.count`} label={info.countLabel ?? 'How many'}>
+                      {(field) => (
+                        <Input
+                          {...field}
+                          type="number"
+                          inputMode="numeric"
+                          min={info.count?.[0]}
+                          max={info.count?.[1]}
+                          value={field.value ?? ''}
+                          readOnly={!writable}
+                        />
+                      )}
+                    </RHFField>
+                  ) : null}
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </SectionCard>
+  )
+}
+
+/**
  * The promo and editorial bands share one shape; the editorial band also has a picture.
  * @param {{ name: 'promo' | 'editorial'; title: string; writable: boolean; picture?: { images: Record<string, string>; onPicture: (id: string, src: string) => void; }; }} props
  */
@@ -253,11 +333,14 @@ const defaults = (v) => ({
   promo: v.promo,
   editorial: v.editorial,
   footer: v.footer,
+  layout: { ...v.layout, order: fullHomeOrder(v.layout?.order ?? []) },
 })
 
 /** What the API takes: empty optional fields left out, the two required texts kept even when empty. @param {any} v */
 function body(v) {
-  const clean = /** @type {any} */ (prune(v))
+  // the sizes are typed as text (so a number can be cleared and typed again) and are numbers on the wire
+  const sized = v.layout ? { ...v, layout: Object.fromEntries(Object.entries(v.layout).map(([k, sec]) => [k, sec && typeof sec === 'object' && 'count' in sec ? { ...sec, count: sec.count === '' || sec.count === undefined ? undefined : Number(sec.count) } : sec])) } : v
+  const clean = /** @type {any} */ (prune(sized))
   return { ...clean, announcement: { text: v.announcement?.text ?? '', ...(v.announcement?.href ? { href: v.announcement.href } : {}) }, footer: { about: v.footer?.about ?? '' } }
 }
 
@@ -323,6 +406,7 @@ function Form({ doc }) {
         <AnnouncementCard writable={writable} />
         <NoticesCard writable={writable} />
         <HeroCard writable={writable} images={images} onPicture={remember} />
+        <LayoutCard writable={writable} />
         <BandCard name="promo" title="Promo band" writable={writable} />
         <BandCard name="editorial" title="Editorial band" writable={writable} picture={{ images, onPicture: remember }} />
         <SectionCard id="footer" title="Footer" description="Phone, email, address and social links come from the store settings.">

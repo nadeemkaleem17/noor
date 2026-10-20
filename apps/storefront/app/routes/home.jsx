@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Fragment, Suspense } from 'react'
 import { useShell } from '~/features/layout/use-shell'
 import { useSite } from '~/features/seo/use-site'
 import { homeLd } from '~/features/seo/jsonld'
@@ -40,12 +40,13 @@ function withSafeButton(block) {
 export async function loader({ request }) {
   const locale = localeOfPath(new URL(request.url).pathname)
   const { config, home, categories } = await loadShell(locale)
-  const bestsellers = optional(api('catalog.listProducts', { query: { sort: 'bestselling', limit: 8, facets: false, locale } }))
+  const layout = home.layout
+  const bestsellers = layout.bestsellers.enabled ? optional(api('catalog.listProducts', { query: { sort: 'bestselling', limit: layout.bestsellers.count, facets: false, locale } })) : undefined
   // four best sellers of each top category for its block (up to six categories); a block that cannot be loaded is left out
-  const spotlights = Promise.all(categories.slice(0, 6).map(async (category) => ({ category, items: (await optional(api('catalog.listProducts', { query: { category: category.handle, sort: 'bestselling', limit: 4, facets: false, locale } })))?.items ?? [] })))
+  const spotlights = Promise.all((layout.categoryBlocks.enabled ? categories.slice(0, layout.categoryBlocks.count) : []).map(async (category) => ({ category, items: (await optional(api('catalog.listProducts', { query: { category: category.handle, sort: 'bestselling', limit: 4, facets: false, locale } })))?.items ?? [] })))
   const [newArrivals, collections, blocks] = await Promise.all([
-    optional(api('catalog.listProducts', { query: { sort: 'newest', limit: 8, facets: false, locale } })),
-    optional(api('catalog.listCollections', { query: { featured: true, limit: 3, locale } })),
+    layout.newIn.enabled ? optional(api('catalog.listProducts', { query: { sort: 'newest', limit: layout.newIn.count, facets: false, locale } })) : undefined,
+    layout.collections.enabled ? optional(api('catalog.listCollections', { query: { featured: true, limit: layout.collections.count, locale } })) : undefined,
     spotlights,
   ])
   return {
@@ -61,6 +62,7 @@ export async function loader({ request }) {
     collections: collections?.items ?? [],
     blocks,
     bestsellers,
+    layout,
   }
 }
 
@@ -69,25 +71,33 @@ export const meta = /** @type {import('./+types/home').Route.MetaFunction} */ ((
 
 export default function Home() {
   const { t } = useTranslation('storefront')
-  const { brand, slides, promo, editorial, categories, newArrivals, collections, blocks, bestsellers } = useLoaderData()
+  const { brand, slides, promo, editorial, categories, newArrivals, collections, blocks, bestsellers, layout } = useLoaderData()
   const site = useSite()
   const config = useShell()?.config
+  // every section, shown or not, in the order the home page settings give
+  const parts = {
+    categories: layout.categories.enabled ? <CategoryTiles categories={categories} heading={layout.categories.heading} limit={layout.categories.count} /> : null,
+    newIn: layout.newIn.enabled ? <TabbedSection id="home-new" title={layout.newIn.heading || t('home.newArrivals')} href="/new" sort="newest" items={newArrivals} categories={categories} /> : null,
+    collections: layout.collections.enabled ? <CollectionsRow collections={collections} heading={layout.collections.heading} limit={layout.collections.count} /> : null,
+    categoryBlocks: layout.categoryBlocks.enabled ? <CategorySpotlights blocks={blocks} /> : null,
+    promo: promo?.heading ? <PromoBand promo={promo} /> : null,
+    bestsellers: layout.bestsellers.enabled ? (
+      <Suspense fallback={null}>
+        <Await resolve={bestsellers} errorElement={null}>
+          {(list) => <TabbedSection id="home-best" title={layout.bestsellers.heading || t('home.bestsellers')} href="/new?sort=bestselling" sort="bestselling" items={list?.items ?? []} categories={categories} />}
+        </Await>
+      </Suspense>
+    ) : null,
+    editorial: editorial?.heading ? <EditorialBand editorial={editorial} /> : null,
+  }
   return (
     <>
       {site && config ? <JsonLd data={homeLd(site, { logo: config.brand.logoLight?.src, socials: config.contact.socials.map((x) => x.url), phone: config.contact.phone })} /> : null}
       {slides.length ? <Hero slides={slides} /> : <h1 className="sr-only">{brand}</h1>}
       <TrustStrip />
-      <CategoryTiles categories={categories} />
-      <TabbedSection id="home-new" title={t('home.newArrivals')} href="/new" sort="newest" items={newArrivals} categories={categories} />
-      <CollectionsRow collections={collections} />
-      <CategorySpotlights blocks={blocks} />
-      {promo?.heading ? <PromoBand promo={promo} /> : null}
-      <Suspense fallback={null}>
-        <Await resolve={bestsellers} errorElement={null}>
-          {(list) => <TabbedSection id="home-best" title={t('home.bestsellers')} href="/new?sort=bestselling" sort="bestselling" items={list?.items ?? []} categories={categories} />}
-        </Await>
-      </Suspense>
-      {editorial?.heading ? <EditorialBand editorial={editorial} /> : null}
+      {layout.order.map((/** @type {keyof typeof parts} */ key) => (
+        <Fragment key={key}>{parts[key]}</Fragment>
+      ))}
     </>
   )
 }

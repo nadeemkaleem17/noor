@@ -2,6 +2,7 @@
 // Query schemas accept both the wire form (strings) and the native form (numbers, arrays, booleans),
 // so the typed client can validate the same value the server later parses from the URL.
 import { z } from 'zod'
+import { Id } from './primitives.js'
 
 /**
  * Integer from "12" or 12.
@@ -74,3 +75,6 @@ export const BulkResult = z.strictObject({
 /**
  * @typedef {z.infer<typeof BulkResult>} BulkResult
  */
+
+/** Delete several of one thing: each is deleted by the same rules as a single delete, and the answer says which went and which did not (and why). */
+export const BulkDeleteBody = z.strictObject({ ids: z.array(Id).min(1).max(100) })

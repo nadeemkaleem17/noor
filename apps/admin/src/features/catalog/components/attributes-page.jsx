@@ -4,7 +4,10 @@ import { EmptyState } from '@noor/ui/empty-state'
 import { ErrorState } from '@noor/ui/error-state'
 import { Menu } from '@noor/ui/menu'
 import { Spinner } from '@noor/ui/spinner'
+import { Checkbox } from '@noor/ui/checkbox'
 import { Table, Td, Th } from '@noor/ui/table'
+import { VisuallyHidden } from '@noor/ui/visually-hidden'
+import { useBulkDelete } from '@/components/bulk-delete'
 import { useToast } from '@noor/ui/toast'
 import { useQuery } from '@tanstack/react-query'
 import { Ellipsis, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -31,6 +34,8 @@ export function AttributesPage() {
   const [deleting, setDeleting] = useState(/** @type {Attribute | null} */ (null))
   const items = /** @type {Attribute[]} */ (/** @type {unknown} */ (attributes.data?.items ?? []))
   const editing = drawer.editing ? (items.find((a) => a.id === drawer.editing) ?? null) : null
+  const bulk = useBulkDelete({ route: 'admin.attributes.bulkDelete', noun: ['attribute', 'attributes'], nameOf: (id) => items.find((a) => a.id === id)?.label ?? id, refresh: [attributesQuery.queryKey] })
+  const canDelete = can('catalog:delete')
   const groups = [...new Set(items.flatMap((a) => (a.group ? [a.group] : [])))]
 
   return (
@@ -43,11 +48,17 @@ export function AttributesPage() {
       {attributes.isPending ? <Spinner label="Loading attributes" /> : null}
       {attributes.isError ? <ErrorState title="Attributes could not be loaded" retryLabel="Try again" onRetry={() => void attributes.refetch()} /> : null}
       {attributes.isSuccess && items.length === 0 ? <EmptyState title="No attributes yet" body="Create the first one to describe your products." /> : null}
+      {bulk.bar}
       {items.length > 0 ? (
         <Table label="Attributes">
           <caption className="sr-only">Attributes</caption>
           <thead>
             <tr>
+              {canDelete ? (
+                <Th>
+                  <Checkbox label={<VisuallyHidden>Select all attributes</VisuallyHidden>} checked={items.every((a) => bulk.isSelected(a.id))} onCheckedChange={(on) => bulk.setAll(on ? items.map((a) => a.id) : [])} />
+                </Th>
+              ) : null}
               <Th>Label</Th>
               <Th>Key</Th>
               <Th>Type</Th>
@@ -63,6 +74,11 @@ export function AttributesPage() {
           <tbody>
             {items.map((a) => (
               <tr key={a.id}>
+                {canDelete ? (
+                  <Td>
+                    <Checkbox label={<VisuallyHidden>{`Select ${a.label}`}</VisuallyHidden>} checked={bulk.isSelected(a.id)} onCheckedChange={() => bulk.toggle(a.id)} />
+                  </Td>
+                ) : null}
                 <Td>
                   <button type="button" className="font-medium hover:underline" onClick={() => drawer.edit(a.id)}>
                     {a.label}
@@ -91,6 +107,7 @@ export function AttributesPage() {
         </Table>
       ) : null}
       {drawer.isOpen && attributes.isSuccess && (drawer.creating !== null || editing) ? <AttributeDrawer key={drawer.editing ?? 'new'} open attribute={editing} groups={groups} onClose={drawer.close} /> : null}
+      {bulk.dialogs}
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}

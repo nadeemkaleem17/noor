@@ -137,9 +137,15 @@ select rows ──► bar appears: "3 selected  [Publish] [Archive] [⋯]  ✕ c
 | Products | Publish, Unpublish, Archive, Add to collection, Remove from collection, Delete, Export | `products:publish`, `products:write`, `products:delete`, `products:export` |
 | Orders | Confirm, Mark dispatched (courier + tracking paste), Mark delivered, Print invoices, Export | `orders:confirm`, `orders:dispatch`, `orders:deliver`, `orders:export` |
 | Reviews | Approve, Reject (one reason for all) | `reviews:moderate` |
-| Promos | Enable, Disable | `promos:write` |
+| Promos | Enable, Disable, Delete (added 2026-10-19) | `promos:write`, `promos:delete` |
+| Collections, Pages | Delete (added 2026-10-19) | `catalog:delete`, `content:delete` |
+| Attributes, Subcategories | Delete, from checkboxes on a plain table (`useBulkDelete`; added 2026-10-19) | `catalog:delete` |
 | Customers | Export | `customers:export` |
 | Collection members | Remove | `catalog:write` |
+
+### 5.4 Bulk delete (added 2026-10-19, plan/17 item 6)
+
+Every list that can delete one item can delete several: choose rows, **Delete**, confirm (the count is named; above 20 it must be typed). Rules that never bend: it takes chosen ids only (never "everything that matches the filters"), at most 100 at a time; each item is deleted by the function and the rules of a single delete, in its own transaction and with its own audit entry; an order is never deleted; a product with orders, a category with children or products, and an attribute or size that products use are kept and reported ("It is used by 2 products, so it cannot be deleted."). The answer is the usual `{ succeeded, failed[{ id, code, detail }] }`; the toast says "N deleted, M not" with a way to see the reasons, and what could not go stays selected. Real delete, not a trash: the owner's question (plan/17 §4) is still open and a trash can be added behind the same buttons. Routes: `admin.<thing>.bulkDelete` for categories, collections, attributes, size charts, products, promos and pages; the helper is `apps/api/src/platform/bulk.js` `eachOf`.
 
 ## 6. Exports
 
