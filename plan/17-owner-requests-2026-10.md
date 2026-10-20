@@ -17,7 +17,7 @@ Legend for the table in section 1: ✅ already there · 🟡 partly · 🔴 miss
 | 3 | Home, header, theme and category display settings in the admin, with layouts, order, preview | 🔴 | 🟡 **sections can now be ordered, switched off and sized (2026-10-20)**; **draft, preview link and publish built 2026-10-21**; other category layouts and header options are still open | L | 2 |
 | 4 | Notice management: popup, side and header notices, colours, design | 🔴 | ✅ **built 2026-10-20**: `/content/notices` with strip, popup and side card, five colour pairs, dates, on/off, popup frequency | M to L | 3 |
 | 5 | Image upload spinner never stops | 🐞 | ✅ **Stage 1 built 2026-10-19**: worker runs inside the API locally, inline fast path, upload with progress, cancel, retry and a clear failure, admin banner when the worker is down | S | **1 (blocks everything else)** |
-| 6 | Bulk delete everywhere | 🔴 + ❓ | ✅ **built 2026-10-20**: Delete in the bulk bar of Products, Promos, Collections, Pages, Attributes, Subcategories (real delete; trash still open) | M | 3 |
+| 6 | Bulk delete everywhere | 🔴 + ❓ | ✅ **built 2026-10-20**: Delete in the bulk bar of Products, Promos, Collections, Pages, Attributes, Subcategories (real delete; **a trash is deliberately not built**, see the decision below) | M | 3 |
 | 7 | A Subcategories tab | 🔴 | ✅ **built 2026-10-20**: `/subcategories` with search, parent filter, add, edit, delete, bulk delete | S to M | 2 |
 | 8 | Product search does not work | 🐞 | ✅ **Stage 1 built 2026-10-19**: index health, repair job every 10 minutes and at start, "Rebuild the search index" button, title-prefix safety net | S | 1 (same cause as 5) |
 | 9 | Visitor tracking and analytics | 🔴 + ❓ | ✅ **built 2026-10-21 in the privacy-first form** (decided by the delivery lead, owner can widen it): the dashboard panel "Website visits" (visits, visitors, new, returning, the pages visits begin on) from the cookie-light visit counts of item 6; an order link is never stored (`/orders/*`, and older rows were scrubbed by migration 0028). No IP, no browser name, no third-party analytics, no consent banner needed. Not built: page-by-page paths, referrers, funnels (they need a consent decision) | XL | later, after a privacy decision |
@@ -311,3 +311,15 @@ The owner's second brief (Customer Management, Visit Tracking, Order History, Dy
 6. Tracking needs JavaScript (a beacon); a visitor with scripts off is not counted. The shop itself works without scripts.
 
 **Not built (not asked for, or needs the owner):** referrers, pages per visit, devices, countries (a fuller analytics tool: item 9 stays open); visit counts for customers who ordered before this change (their earlier visits were never recorded, so they start at the first visit after it).
+
+## Decisions taken on "things as you find best" (2026-10-21)
+
+The owner left the open questions to the delivery lead. What was decided, and why, so it can be changed later:
+
+| Question | Decision | Why |
+|---|---|---|
+| Draft and publish for the home page (item 3) | **Built.** Save draft, Preview draft (a 30-minute link), Publish, Throw away. | The owner asked for a preview; saving and then looking at the live shop shows customers half-finished work. |
+| A trash with 30-day restore for deletes (item 6) | **Not built.** Deletes stay real, but only of things nothing uses (the API refuses to delete what is in use, with the reason), after a question, and every delete is audited. | A trash needs a deleted-flag on six kinds of record and every list, search and public page to respect it, and "restore" has to re-check every rule that held when it was deleted. The cost and the risk of a wrong answer on a public page are higher than the harm it prevents, because what matters (products, orders, customers) is never really deleted: products are archived, orders are cancelled. If a delete is regretted, the audit entry holds what it was. Revisit if staff lose something they wanted. |
+| Visitor analytics (item 9) | **Built in the privacy-first form**: counts of visits, new and returning browsers and the pages visits begin on, no address, no browser name, no third-party tool, no consent banner needed. | Anything more (referrers, paths through the site, funnels) identifies people more closely and needs a consent decision under the laws that apply to visitors from the UK and EU. |
+| Order messages by WhatsApp or SMS (OR-08) | **Not built.** Needs a provider account (a WhatsApp Business or SMS gateway) and its fees and approval of message texts. Today messages are logged, and email goes out through `MAIL_URL`. | It cannot be tested or switched on without the owner's account; everything up to the provider (the texts, the log, the switch) already exists. |
+| Return requests: photos of a fault | **Not built**; the form says to send them on WhatsApp. | Reusing the review-photo upload would add a storage path and a moderation question; ask again if requests arrive without enough detail. |
