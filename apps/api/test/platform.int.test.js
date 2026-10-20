@@ -1,7 +1,7 @@
 // M1-01 integration tests against a real MySQL (DOC-08 section 17: jobs, idempotency, outbox, counters, rate limits).
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { counters, idempotencyKeys, jobs, jobsDead, outboxEvents, rateLimitHits } from '../src/db/schema/platform.js'
+import { counters, idempotencyKeys, jobs, jobsDead, outboxEvents, rateLimitHits, workerHeartbeats } from '../src/db/schema/platform.js'
 import { advanceClock, setClock } from '../src/platform/clock.js'
 import { ensureCounter, nextValue } from '../src/platform/counters.js'
 import { transaction } from '../src/platform/db.js'
@@ -10,6 +10,8 @@ import { withIdempotency } from '../src/platform/idempotency.js'
 import { backoffMs, claim, complete, enqueue, fail } from '../src/platform/jobs.js'
 import { emit, relayOnce } from '../src/platform/outbox.js'
 import { hit, subjectHash } from '../src/platform/rate-limit.js'
+import { beat, queueStatus } from '../src/platform/queue-status.js'
+import { startBackground } from '../src/platform/runtime.js'
 import { enqueueDue } from '../src/platform/scheduler.js'
 import { createWorker } from '../src/platform/worker.js'
 import { createTestDatabase, dbAvailable } from './support/db.js'
@@ -34,7 +36,7 @@ describe.skipIf(!dbAvailable)('platform (MySQL)', () => {
   })
   afterEach(async () => {
     setClock(null)
-    for (const table of [jobs, jobsDead, outboxEvents, idempotencyKeys, rateLimitHits, counters]) await t.db.delete(table)
+    for (const table of [jobs, jobsDead, outboxEvents, idempotencyKeys, rateLimitHits, counters, workerHeartbeats]) await t.db.delete(table)
   })
 
   describe('jobs', () => {
@@ -141,6 +143,50 @@ describe.skipIf(!dbAvailable)('platform (MySQL)', () => {
       await w.stop(5000)
       expect(finished).toBe(true)
       expect(await count(jobs)).toBe(0)
+    })
+  })
+
+  describe('background status (what the admin warning reads)', () => {
+    const at = new Date('2026-10-19T10:00:00.000Z')
+    const ago = (/** @type {number} */ ms) => new Date(at.getTime() - ms)
+
+    it('is idle with nothing waiting and nobody working, ok with a live worker, and says "down" when work waits for nobody', async () => {
+      expect(await queueStatus(t.db, at)).toMatchObject({ state: 'idle', workers: 0, waiting: 0 })
+      await beat(t.db, { workerId: 'w1', mode: 'inline', startedAt: ago(60_000), done: 3, failed: 0 }, ago(2_000))
+      expect(await queueStatus(t.db, at)).toMatchObject({ state: 'ok', workers: 1 })
+      await t.db.delete(workerHeartbeats)
+      await enqueue(t.db, { type: 'media.process', payload: {} }, ago(5 * 60_000))
+      const down = await queueStatus(t.db, at)
+      expect(down).toMatchObject({ state: 'down', workers: 0, waiting: 1, overdue: 1, oldestOverdueSeconds: 300, waitingTypes: ['media.process'] })
+    })
+
+    it('a worker that stopped reporting 30 seconds ago no longer counts, and a late job with a live worker is "stalled"', async () => {
+      await beat(t.db, { workerId: 'old', mode: 'separate', startedAt: ago(3_600_000), done: 0, failed: 0 }, ago(31_000))
+      expect((await queueStatus(t.db, at)).workers).toBe(0)
+      await beat(t.db, { workerId: 'live', mode: 'separate', startedAt: ago(60_000), done: 0, failed: 0 }, ago(1_000))
+      await enqueue(t.db, { type: 'search.reindex_product', payload: {} }, ago(2 * 60_000))
+      expect(await queueStatus(t.db, at)).toMatchObject({ state: 'stalled', workers: 1, overdue: 1 })
+    })
+
+    it('a job that is only waiting its turn (under a minute) or held by a running worker is not overdue; dead jobs are counted', async () => {
+      await beat(t.db, { workerId: 'live', mode: 'separate', startedAt: ago(60_000), done: 0, failed: 0 }, ago(1_000))
+      await enqueue(t.db, { type: 'x', payload: {} }, ago(20_000))
+      const [held] = await claim(t.db, 'live', { now: ago(100_000), limit: 1 })
+      expect(held).toBeUndefined() // not due at that moment: nothing to hold yet
+      await enqueue(t.db, { type: 'y', payload: {} }, ago(90_000))
+      await claim(t.db, 'live', { now: ago(30_000), limit: 5 })
+      expect(await queueStatus(t.db, at)).toMatchObject({ state: 'ok', overdue: 0, waiting: 2 })
+      await t.db.insert(jobsDead).values({ id: '0192f5aa-0000-7000-8000-000000000001', type: 'z', payload: {}, runAt: at, attempts: 8, maxAttempts: 8, lastError: 'x', createdAt: at, diedAt: at })
+      expect((await queueStatus(t.db, at)).dead).toBe(1)
+    })
+
+    it('a running background process reports in at once and takes its row away when it stops', async () => {
+      const bg = startBackground({ db: t.db, handlers: {}, eventHandlers: {}, schedule: [], mode: 'inline', relayMs: 60_000 })
+      await wait(async () => (await queueStatus(t.db)).workers === 1)
+      const [row] = await t.db.select().from(workerHeartbeats)
+      expect(row).toMatchObject({ mode: 'inline', jobsDone: 0, jobsFailed: 0 })
+      await bg.stop()
+      expect((await queueStatus(t.db)).workers).toBe(0)
     })
   })
 

@@ -1,5 +1,6 @@
 // What staff look at to run the shop (plan/10-api/08-admin-dashboard-ops.md, plan/07-admin/02-dashboard.md section 4) and what the browsers tell us about speed.
 // Every figure is worked out in SQL here, over days in Pakistan, and every section is left out for a person without the permission to read what it counts.
+import { queueStatus } from '../../platform/queue-status.js'
 import { and, asc, count, desc, eq, gte, inArray, like, lt, or, sql } from 'drizzle-orm'
 import { maskPkMobile } from '@noor/contract'
 import { customers } from '../../db/schema/customers.js'
@@ -267,6 +268,9 @@ export function createReporting({ db, config, settings, media }) {
         await record(tx, { actor: { type: 'staff', id: actor.staffId, label: actor.name ?? 'Staff', role: actor.role }, action: 'job.retried', entityType: 'job', entityId: id, entityLabel: j.type, ...req })
       })
     },
+
+    /** Whether the background queue is being worked (the admin's banner). */
+    backgroundStatus: () => queueStatus(db, now()),
 
     async systemInfo() {
       const [pending, dead, oldest] = await Promise.all([

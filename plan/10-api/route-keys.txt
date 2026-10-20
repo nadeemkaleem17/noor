@@ -12,6 +12,7 @@ admin.auth.logout
 admin.auth.requestPasswordReset
 admin.auth.resetPassword
 admin.auth.verifyTwoFactor
+admin.background.status
 admin.categories.create
 admin.categories.delete
 admin.categories.list
@@ -31,9 +32,12 @@ admin.customers.addNote
 admin.customers.anonymise
 admin.customers.export
 admin.customers.get
+admin.customers.highlightRules.list
+admin.customers.highlightRules.save
 admin.customers.list
 admin.customers.lookup
 admin.customers.update
+admin.customers.visits
 admin.dashboard.summary
 admin.dashboard.todo
 admin.dashboard.topProducts
@@ -114,6 +118,8 @@ admin.reviews.removePhoto
 admin.reviews.reply
 admin.roles.list
 admin.search
+admin.searchIndex.rebuild
+admin.searchIndex.status
 admin.settings.getCheckout
 admin.settings.getPayments
 admin.settings.getStore
@@ -182,6 +188,7 @@ orders.create
 orders.getByToken
 orders.switchToCod
 orders.track
+promos.listPublic
 reporting.clientError
 reporting.vitals
 reviews.createForOrderLine
@@ -191,3 +198,5 @@ reviews.listForProduct
 seo.listSitemapEntries
 shipping.listCities
 store.getConfig
+visits.link
+visits.record

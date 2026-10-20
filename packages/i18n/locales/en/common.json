@@ -63,5 +63,12 @@
   "dropHere": "Drop images here or choose files",
   "uploading": "Uploading",
   "uploadFailed": "Upload failed",
+  "uploadStage": {
+    "checking": "Checking the picture",
+    "sending": "Sending",
+    "sendingPercent": "Sending {percent}%",
+    "confirming": "Finishing",
+    "processing": "Getting it ready"
+  },
   "removeImage": "Remove image"
 }

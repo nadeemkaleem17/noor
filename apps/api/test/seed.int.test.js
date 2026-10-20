@@ -40,9 +40,9 @@ describe.skipIf(!dbAvailable)('seed (MySQL)', () => {
     it('creates what a shop needs, and nothing twice', async () => {
       const r = await runSeed({ db: t.migrate.db, config, flags: { baseOnly: true } })
       expect(r.owner).toBeUndefined()
-      expect(r.base).toMatchObject({ settings: 5, pages: 5, zones: 2, sizeSystems: 2, couriers: 6 })
+      expect(r.base).toMatchObject({ settings: 5, pages: 7, zones: 2, sizeSystems: 2, couriers: 6 })
       const n = await tableCounts()
-      expect(n).toMatchObject({ settings: 5, menus: 1 /* footer only: the navigation bar is automatic */, pages: 5, couriers: 6, zones: 2, sizeSystems: 2, products: 0, staff: 0 })
+      expect(n).toMatchObject({ settings: 5, menus: 1 /* footer only: the navigation bar is automatic */, pages: 7, couriers: 6, zones: 2, sizeSystems: 2, products: 0, staff: 0 })
       expect(n.cities).toBeGreaterThanOrEqual(200)
       expect(n.zoneCities, 'every city is in a zone').toBe(n.cities)
       expect(n.synonyms).toBeGreaterThan(40)
@@ -54,7 +54,7 @@ describe.skipIf(!dbAvailable)('seed (MySQL)', () => {
       expect((await t.db.select().from(shippingMethods)).map((m) => [m.feeMinor, m.freeAboveMinor, m.etaMinDays, m.etaMaxDays]).sort()).toEqual([[25_000, 500_000, 3, 5], [35_000, 800_000, 4, 7]])
 
       const again = await runSeed({ db: t.migrate.db, config, flags: { baseOnly: true } })
-      expect(again.base).toEqual({ settings: 0, pages: 0, zones: 0, sizeSystems: 0, cities: 0, couriers: 0, synonyms: 0 })
+      expect(again.base).toEqual({ settings: 0, pages: 0, zones: 0, sizeSystems: 0, cities: 0, couriers: 0, synonyms: 0, highlightRules: 0 })
       expect(await tableCounts()).toEqual(n)
     }, 120_000)
 

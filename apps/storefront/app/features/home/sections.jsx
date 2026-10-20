@@ -63,11 +63,11 @@ export function TrustStrip() {
   )
 }
 
-/** A row of the shop's main categories that have a picture; two or more make a row, fewer is not worth a section. @param {{ categories: { id: string, handle: string, name: string, image?: import('@noor/contract').Image | undefined }[] }} props */
+/** A row of the shop's main categories (a category with no picture yet gets its first letter in a circle); two or more make a row, fewer is not worth a section. @param {{ categories: { id: string, handle: string, name: string, image?: import('@noor/contract').Image | undefined }[] }} props */
 export function CategoryTiles({ categories }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
-  const tiles = categories.filter((c) => c.image).slice(0, 8)
+  const tiles = categories.slice(0, 8)
   if (tiles.length < 2) return null
   return (
     <section className="mx-auto max-w-7xl px-4 py-8" aria-labelledby="home-categories">
@@ -78,7 +78,13 @@ export function CategoryTiles({ categories }) {
         {tiles.map((c) => (
           <li key={c.id} className="w-28 shrink-0 snap-start md:w-auto">
             <RouterLink to={path(`/c/${c.handle}`)} className="flex flex-col items-center gap-2 text-center">
-              {c.image ? <Image {...imageProps(c.image)} alt="" sizes="(min-width:1024px) 12vw, 112px" ratio="1 / 1" className="w-full rounded-full" /> : null}
+              {c.image ? (
+                <Image {...imageProps(c.image)} alt="" sizes="(min-width:1024px) 12vw, 112px" ratio="1 / 1" className="w-full rounded-full" />
+              ) : (
+                <span aria-hidden="true" className="grid aspect-square w-full place-items-center rounded-full bg-surface-2 font-heading text-h2 text-fg-soft">
+                  {c.name.trim().charAt(0).toUpperCase()}
+                </span>
+              )}
               <span className="text-sm font-medium">{c.name}</span>
             </RouterLink>
           </li>

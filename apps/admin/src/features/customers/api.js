@@ -45,3 +45,22 @@ export function useCustomerMutations(id) {
     }),
   }
 }
+
+/** The rules that colour customers (they change rarely: saving them refreshes this, not the clock). */
+export const highlightRulesQuery = queryOptions({ queryKey: [...customerKeys.all, 'highlight-rules'], queryFn: ({ signal }) => api('admin.customers.highlightRules.list', { signal }), staleTime: 60_000 })
+
+/** @param {{ from: string, to: string }} period */
+export const visitSummaryQuery = (period) => queryOptions({ queryKey: [...customerKeys.all, 'visit-summary', period], queryFn: ({ signal }) => api('admin.customers.visits', { query: period, signal }), staleTime: 60_000 })
+
+/** Saving the whole list; the customers' colours depend on it, so the lists are fetched again. */
+export function useSaveHighlightRules() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (/** @type {never} */ rules) => api('admin.customers.highlightRules.save', { body: { rules } }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(highlightRulesQuery.queryKey, saved)
+      void queryClient.invalidateQueries({ queryKey: customerKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'detail'] })
+    },
+  })
+}

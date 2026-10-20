@@ -38,9 +38,13 @@ export const StoreSettings = z.strictObject({
   priceDisplay: z.strictObject({ showDecimals: z.boolean(), rounding: z.enum(['none', 'nearest', 'up']) }),
   orderNumberPrefix: z.string().regex(/^[A-Z]{2,4}$/, 'code_invalid'),
   locale: z.strictObject({ default: Locale, supported: z.array(Locale).min(1).max(2) }).refine((l) => l.supported.includes(l.default), { message: 'invalid_format', path: ['supported'] }),
-  features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean() }),
+  features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean(), /** Count visits per browser for the customer screens (the shop sends nothing when it is off). */ visitTracking: z.boolean().default(true) }),
   /** How the shop's navigation bar is made: from the categories and collections (default) or from the menu staff wrote (menu `main`). */
-  navigation: z.strictObject({ mode: z.enum(['automatic', 'custom']) }).default({ mode: 'automatic' }),
+  navigation: z.strictObject({
+    mode: z.enum(['automatic', 'custom']),
+    /** Offer a category as soon as it is visible, even with no product in it yet (its page then says so). Off: only categories with a live product are offered. */
+    showEmptyCategories: z.boolean().default(true),
+  }).default({ mode: 'automatic', showEmptyCategories: true }),
   /** Words shown under the search box before anyone has typed (DOC-06.11 section 5.2): up to 8, in the order staff wrote them. */
   popularSearches: z.array(z.string().trim().min(2).max(40)).max(8).default([]),
   policies: z.strictObject({

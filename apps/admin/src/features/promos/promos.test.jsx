@@ -21,7 +21,7 @@ const owner = /** @type {import('@noor/contract').Permission[]} */ ([...writer, 
 /** @param {import('@noor/contract').Permission[]} permissions @param {Record<string, (r: { body: any; headers: Headers; url: URL }) => Response>} [more] */
 const session = (permissions, more = {}) => ({
   'GET /admin/me': () => json(200, me({ permissions })),
-  'GET /admin/categories': () => json(200, { items: [{ id: ids.cat, name: 'Lawn', handle: 'lawn', parentId: null, visible: true, attributes: [], sortOrder: 0, productCount: 3, version: 1 }] }),
+  'GET /admin/categories': () => json(200, { items: [{ id: ids.cat, name: 'Lawn', handle: 'lawn', parentId: null, visible: true, attributes: [], sortOrder: 0, productCount: 3, version: 1, shop: { shown: true, liveProducts: 1 } }] }),
   ...more,
 })
 const list = () => page([promoFixture(), promoFixture({ id: ids.used, code: 'WELCOME', usageCount: 4, used: true, usageLimit: 100, status: 'expired', enabled: true, endsAt: '2026-09-30T00:00:00.000Z' }), promoFixture({ id: ids.sorry, code: 'SORRY', type: 'fixed', amount: money(50000), percent: undefined, status: 'disabled', enabled: false })])

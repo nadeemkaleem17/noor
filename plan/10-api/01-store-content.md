@@ -27,6 +27,9 @@ All endpoints here: auth `public`, bucket `default`, `Cache-Control: public, s-m
 | `content.getPage` | `GET /content/pages/:slug` | P: `slug` | 200 `PagePublic` | `not_found` (also for drafts) | Tag `page:<slug>`. If `slug` is an old slug: 200 `{ redirectTo: string }` |
 | `content.listPages` | `GET /content/pages` | — | 200 `{ items: { slug, title, updatedAt }[] }` | — | Active pages only; for the sitemap and pre-render |
 | `shipping.listCities` | `GET /shipping/cities` | — | 200 `{ items: CityPublic[] }` | — | Tag `store-config`. Only cities that belong to a zone with an enabled method |
+| `promos.listPublic` | `GET /offers` | — | 200 `{ items: { code, summary, minSpend?, endsAt? }[] }` | — | Only promos staff marked public that are active now; the Offers page and the footer link read it. |
+| `visits.record` | `POST /visits` | B: `{ visitor: 32 hex, path }` | 204 | `validation_failed` | Called by the shop's server with the visitor's own cookie value. Does nothing while the Store feature `visitTracking` is off. Stores only the page address without query or fragment. |
+| `visits.link` | `POST /visits/link` | B: `{ visitor, order: tracking token }` | 204 | `not_found` (a link that is not valid) | After an order: the order's link proves this browser placed it, so the browser's visits belong to that customer. A browser stays with the first customer who ordered from it. |
 
 ## 3. Schemas
 

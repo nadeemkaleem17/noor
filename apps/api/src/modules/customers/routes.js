@@ -11,6 +11,8 @@ export function customersHandlers(s) {
 
   return {
     'admin.customers.list': async ({ query }) => s.list(query),
+    'admin.customers.highlightRules.list': async () => s.rules(),
+    'admin.customers.highlightRules.save': async ({ actor, body, http, requestId }) => s.saveRules(staff(actor), body.rules, info(http, requestId)),
     'admin.customers.lookup': async ({ query }) => s.lookup(query.phone),
     'admin.customers.get': async ({ params }) => s.get(params.id),
     'admin.customers.update': async ({ actor, params, body, http, requestId }) => s.update(staff(actor), params.id, body, info(http, requestId)),

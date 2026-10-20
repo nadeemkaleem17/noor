@@ -160,10 +160,15 @@ export const customerFixture = (over = {}) => ({
   marketingConsent: false,
   addresses: [{ city: 'Lahore', address: 'House 12, Street 4, DHA Phase 5', lastUsedAt: at }],
   notes: [],
+  createdAt: '2026-08-01T10:00:00.000Z',
+  visitsCount: 0,
+  highlights: [],
+  recentVisits: [],
+  devices: 0,
   version: 4,
   ...over,
 })
 
-const rowKeys = ['id', 'name', 'phone', 'city', 'ordersCount', 'deliveredCount', 'refusedCount', 'spent', 'lastOrderAt', 'noCod', 'vip', 'marketingConsent']
+const rowKeys = ['id', 'name', 'phone', 'city', 'ordersCount', 'deliveredCount', 'refusedCount', 'spent', 'lastOrderAt', 'noCod', 'vip', 'marketingConsent', 'createdAt', 'visitsCount', 'highlights']
 /** @param {Record<string, unknown>} [over] */
 export const customerRowFixture = (over = {}) => ({ ...Object.fromEntries(Object.entries(customerFixture()).filter(([k]) => rowKeys.includes(k))), ...over })

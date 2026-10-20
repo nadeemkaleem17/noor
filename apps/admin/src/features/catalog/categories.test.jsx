@@ -6,7 +6,7 @@ afterEach(resetApp)
 
 const u = (/** @type {number} */ n) => `0194f1b2-7c3a-7000-8000-0000000004${String(n).padStart(2, '0')}`
 const cat = (/** @type {number} */ n, /** @type {string} */ name, /** @type {number | null} */ parent, sortOrder = 0, extra = {}) => ({
-  id: u(n), name, handle: name.toLowerCase(), parentId: parent === null ? null : u(parent), visible: true, attributes: [], sortOrder, productCount: n, version: 2, ...extra,
+  id: u(n), name, handle: name.toLowerCase(), parentId: parent === null ? null : u(parent), visible: true, attributes: [], sortOrder, productCount: n, version: 2, shop: { shown: true, liveProducts: n }, ...extra,
 })
 const women = cat(1, 'Women', null, 0)
 const stitched = cat(2, 'Stitched', 1, 1)
@@ -31,6 +31,22 @@ describe('categories (plan/07-admin/04-catalog.md section 2)', () => {
     expect(items.map((i) => within(i).getAllByRole('button')[1]?.textContent ?? '')).toEqual(expect.any(Array))
     expect(within(treeEl).getAllByText(/^\/c\//).map((e) => e.textContent)).toEqual(['/c/women', '/c/unstitched', '/c/lawn', '/c/stitched', '/c/footwear'])
     expect(within(treeEl).getByRole('link', { name: '5 products' }).getAttribute('href')).toBe(`/products?category=${u(5)}`)
+  })
+
+  it('says beside a category why the website does not offer it, so nobody has to guess', async () => {
+    const odd = [
+      cat(1, 'Volume1', null, 0, { shop: { shown: false, reason: 'no_live_products', liveProducts: 0 } }),
+      cat(2, 'Secret', null, 1, { visible: false, shop: { shown: false, reason: 'hidden', liveProducts: 3 } }),
+      cat(3, 'Insidesecret', 2, 0, { shop: { shown: false, reason: 'parent_hidden', liveProducts: 1 } }),
+      cat(4, 'Women', null, 2),
+    ]
+    fakeApi({ ...session(), 'GET /admin/categories': () => json(200, { items: odd }) })
+    renderApp('/categories')
+    const treeEl = await screen.findByRole('tree', { name: 'Categories' })
+    expect(within(treeEl).getByText(/no product for sale in it yet \(a draft does not count\)/)).toBeTruthy()
+    expect(within(treeEl).getByText('Hidden: not on the website')).toBeTruthy()
+    expect(within(treeEl).getByText(/a category above it is hidden/)).toBeTruthy()
+    expect(within(treeEl).getAllByText(/Not on the website|Hidden: not on the website/)).toHaveLength(3) // Women, shown, has no note
   })
 
   it('collapses and expands a branch', async () => {

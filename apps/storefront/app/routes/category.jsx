@@ -6,6 +6,7 @@ import { listingIndex } from '~/features/seo/listing'
 import { buildMeta, clip, plainText, siteOf, titleOf } from '~/features/seo/meta'
 import { redirect, useLoaderData } from 'react-router'
 import { CategoryLanding } from '~/features/catalog/category-landing'
+import { EmptyState } from '@noor/ui/empty-state'
 import { ListingPage } from '~/features/catalog/listing'
 import { api } from '~/lib/api.server'
 import { cacheControl } from '~/lib/cache'
@@ -40,7 +41,7 @@ export const meta = /** @type {import('./+types/category').Route.MetaFunction} *
   const description = c.seo.description ?? (c.description ? clip(plainText(c.description)) : undefined)
   return buildMeta({
     site: siteOf(matches), title: titleOf(name, data.brand), ogTitle: name, ...(description ? { description } : {}), canonical: `/c/${c.handle}${query}`,
-    ...(index ? {} : { robots: 'noindex,follow' }), alternates: index, ...(c.image ? { image: c.image } : {}),
+    ...(index && data.page.total > 0 ? {} : { robots: 'noindex,follow' }), alternates: index, ...(c.image ? { image: c.image } : {}),
   })
 })
 
@@ -54,7 +55,7 @@ export default function Category() {
   return (
     <>
       <JsonLd data={ld} />
-      <ListingPage crumbs={crumbs} title={category.name} {...(category.description ? { intro: category.description } : {})} siblings={category.siblings} lead={category.children.length ? <CategoryLanding category={category} rails={rails} /> : undefined} page={page} sorts={sorts} />
+      <ListingPage crumbs={crumbs} title={category.name} {...(category.description ? { intro: category.description } : {})} zero={<EmptyState title={t('listing.comingTitle', { name: category.name })} body={t('listing.comingBody')} />} siblings={category.siblings} lead={category.children.length ? <CategoryLanding category={category} rails={rails} /> : undefined} page={page} sorts={sorts} />
     </>
   )
 }

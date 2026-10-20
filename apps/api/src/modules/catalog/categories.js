@@ -1,4 +1,6 @@
 // Categories: a tree up to three levels deep, ordered among siblings, with the filters (attributes) each one shows (DOC-07.4 section 2).
+import { eq } from 'drizzle-orm'
+import { productCategories, products } from '../../db/schema/products.js'
 import { maxCategoryDepth } from '@noor/contract'
 import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
@@ -18,8 +20,9 @@ import * as repo from './repository.js'
  * @param {import('../../platform/db.js').Database['db']} deps.db
  * @param {import('./common.js').Usage} deps.usage
  * @param {{ imagesFor: (ids: string[]) => Promise<Record<string, import('@noor/contract').Image>> }} deps.media
+ * @param {() => Promise<boolean>} [deps.showEmptyCategories] the Store setting "show categories that have no products yet"
  */
-export function createCategories({ db, usage, media }) {
+export function createCategories({ db, usage, media, showEmptyCategories = async () => true }) {
   /** @param {repo.CategoryRow[]} all @param {string} id */
   const depthOf = (all, id) => {
     const byId = new Map(all.map((c) => [c.id, c]))
@@ -31,8 +34,8 @@ export function createCategories({ db, usage, media }) {
   /** The deepest level in the subtree under `id`, counting `id` as level 1. @param {repo.CategoryRow[]} all @param {string} id @returns {number} */
   const subtreeHeight = (all, id) => 1 + Math.max(0, ...all.filter((c) => c.parentId === id).map((c) => subtreeHeight(all, c.id)))
 
-  /** The row as an admin sees it. @param {repo.CategoryRow} c @param {{ attributeId: string, seoIndexable: boolean, required: boolean }[]} filters @param {number} productCount @param {import('@noor/contract').Image | undefined} image */
-  const toAdmin = (c, filters, productCount, image) => {
+  /** The row as an admin sees it. @param {repo.CategoryRow} c @param {{ attributeId: string, seoIndexable: boolean, required: boolean }[]} filters @param {number} productCount @param {import('@noor/contract').Image | undefined} image  @param {NonNullable<Awaited<ReturnType<typeof shopStatus>> extends Map<string, infer S> ? S : never>} shop */
+  const toAdmin = (c, filters, productCount, image, shop) => {
     const ur = /** @type {{ ur?: { name?: string, description?: string } } | null} */ (c.i18n)?.ur
     return {
       id: c.id,
@@ -49,7 +52,37 @@ export function createCategories({ db, usage, media }) {
       productCount,
       ...(image ? { image } : {}),
       version: c.version,
+      shop,
     }
+  }
+
+  /**
+   * Per category: whether the shop offers it, and if not, why. A hidden category or one below a hidden one is not; with the Store setting off, neither is one with no live product
+   * in or below it (draft and archived products do not count).
+   * @param {import('../../platform/db.js').Executor} x @param {repo.CategoryRow[]} all
+   * @returns {Promise<Map<string, { shown: boolean, reason?: 'hidden' | 'parent_hidden' | 'no_live_products', liveProducts: number }>>}
+   */
+  async function shopStatus(x, all) {
+    const showEmpty = await showEmptyCategories()
+    const tagged = await x.select({ category: productCategories.categoryId, product: productCategories.productId }).from(productCategories).innerJoin(products, eq(products.id, productCategories.productId)).where(eq(products.status, 'active'))
+    const byId = new Map(all.map((c) => [c.id, c]))
+    /** @param {string} id */
+    const below = (id) => {
+      const out = new Set([id])
+      for (const c of all) for (let p = c.parentId ? byId.get(c.parentId) : undefined; p; p = p.parentId ? byId.get(p.parentId) : undefined) if (p.id === id) out.add(c.id)
+      return out
+    }
+    return new Map(
+      all.map((c) => {
+        const set = below(c.id)
+        const liveProducts = new Set(tagged.filter((r) => set.has(r.category)).map((r) => r.product)).size
+        let ancestorHidden = false
+        for (let p = c.parentId ? byId.get(c.parentId) : undefined; p; p = p.parentId ? byId.get(p.parentId) : undefined) if (!p.visible) ancestorHidden = true
+        /** @type {'hidden' | 'parent_hidden' | 'no_live_products' | undefined} */
+        const reason = !c.visible ? 'hidden' : ancestorHidden ? 'parent_hidden' : !showEmpty && liveProducts === 0 ? 'no_live_products' : undefined
+        return [c.id, { shown: reason === undefined, ...(reason ? { reason } : {}), liveProducts }]
+      }),
+    )
   }
 
   /** @param {import('../../platform/db.js').Executor} x */
@@ -57,8 +90,9 @@ export function createCategories({ db, usage, media }) {
     const [all, filters] = await Promise.all([repo.allCategories(x), repo.allFilters(x)])
     const images = await media.imagesFor(all.flatMap((c) => (c.imageMediaId ? [c.imageMediaId] : [])))
     const counts = await usage.categoryProducts(all.map((c) => c.id))
+    const status = await shopStatus(x, all)
     return all.map((c) =>
-      toAdmin(c, filters.filter((f) => f.categoryId === c.id).map((f) => ({ attributeId: f.attributeId, seoIndexable: f.seoIndexable, required: f.required })), counts.get(c.id) ?? 0, c.imageMediaId ? images[c.imageMediaId] : undefined),
+      toAdmin(c, filters.filter((f) => f.categoryId === c.id).map((f) => ({ attributeId: f.attributeId, seoIndexable: f.seoIndexable, required: f.required })), counts.get(c.id) ?? 0, c.imageMediaId ? images[c.imageMediaId] : undefined, /** @type {NonNullable<ReturnType<typeof status.get>>} */ (status.get(c.id))),
     )
   }
 

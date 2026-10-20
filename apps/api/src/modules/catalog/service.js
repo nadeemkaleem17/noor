@@ -19,16 +19,17 @@ import { createUsage } from './usage.js'
  * @param {import('./product-loader.js').Stock} [deps.stock] what stock says about variants; inventory supplies it (M1-10)
  * @param {ReturnType<typeof createSearch>} [deps.search]
  * @param {() => Promise<{ freeAboveFrom?: import('@noor/contract').Money, defaultEta?: { minDays: number, maxDays: number }, codAvailable?: boolean }>} [deps.deliveryFacts] from shipping
+ * @param {() => Promise<boolean>} [deps.showEmptyCategories] the Store setting "show categories that have no products yet"
  * @param {() => Promise<boolean>} [deps.notifyEnabled] the back-in-stock feature switch of the store settings
  * @param {(input: { variantId: string, phone: string, locale?: 'en' | 'ur' }) => Promise<void>} [deps.subscribe] from inventory
  */
-export function createCatalogService({ db, config, media, usage = createUsage(db), stock = noStock, search = createSearch({ db }), deliveryFacts = async () => ({}), notifyEnabled = async () => false, subscribe = async () => {} }) {
-  const categories = createCategories({ db, usage, media })
+export function createCatalogService({ db, config, media, usage = createUsage(db), stock = noStock, search = createSearch({ db }), deliveryFacts = async () => ({}), notifyEnabled = async () => false, subscribe = async () => {}, showEmptyCategories = async () => true }) {
+  const categories = createCategories({ db, usage, media, showEmptyCategories })
   const products = createProducts({ db, config, media, stock, filtersOf: (id) => categories.effectiveFilters(id) })
   const listing = createListing({ db, media, search, filtersOf: (id) => categories.effectiveFilters(id), lowStock: () => stock.lowStockThreshold() })
   return {
     listing,
-    public: createPublicCatalog({ db, media, stock, listing, verifyPreview: (token) => products.verifyPreview(token), deliveryFacts, notifyEnabled, subscribe }),
+    public: createPublicCatalog({ db, media, stock, listing, verifyPreview: (token) => products.verifyPreview(token), deliveryFacts, notifyEnabled, subscribe, showEmptyCategories }),
     categories,
     attributes: createAttributes({ db, usage }),
     sizes: createSizes({ db, usage, media }),

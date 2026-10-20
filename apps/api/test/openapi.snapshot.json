@@ -3179,19 +3179,25 @@
                             },
                             "customSizing": {
                               "type": "boolean"
+                            },
+                            "visitTracking": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
                             "wishlist",
                             "reviews",
                             "notifyMe",
-                            "customSizing"
+                            "customSizing",
+                            "visitTracking"
                           ],
                           "additionalProperties": false
                         },
                         "navigation": {
                           "default": {
-                            "mode": "automatic"
+                            "mode": "automatic",
+                            "showEmptyCategories": true
                           },
                           "type": "object",
                           "properties": {
@@ -3201,10 +3207,15 @@
                                 "automatic",
                                 "custom"
                               ]
+                            },
+                            "showEmptyCategories": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
-                            "mode"
+                            "mode",
+                            "showEmptyCategories"
                           ],
                           "additionalProperties": false
                         },
@@ -3564,6 +3575,10 @@
                           },
                           "customSizing": {
                             "type": "boolean"
+                          },
+                          "visitTracking": {
+                            "default": true,
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -3576,7 +3591,8 @@
                       },
                       "navigation": {
                         "default": {
-                          "mode": "automatic"
+                          "mode": "automatic",
+                          "showEmptyCategories": true
                         },
                         "type": "object",
                         "properties": {
@@ -3586,6 +3602,10 @@
                               "automatic",
                               "custom"
                             ]
+                          },
+                          "showEmptyCategories": {
+                            "default": true,
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -3888,19 +3908,25 @@
                             },
                             "customSizing": {
                               "type": "boolean"
+                            },
+                            "visitTracking": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
                             "wishlist",
                             "reviews",
                             "notifyMe",
-                            "customSizing"
+                            "customSizing",
+                            "visitTracking"
                           ],
                           "additionalProperties": false
                         },
                         "navigation": {
                           "default": {
-                            "mode": "automatic"
+                            "mode": "automatic",
+                            "showEmptyCategories": true
                           },
                           "type": "object",
                           "properties": {
@@ -3910,10 +3936,15 @@
                                 "automatic",
                                 "custom"
                               ]
+                            },
+                            "showEmptyCategories": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
-                            "mode"
+                            "mode",
+                            "showEmptyCategories"
                           ],
                           "additionalProperties": false
                         },
@@ -7825,19 +7856,25 @@
                         },
                         "customSizing": {
                           "type": "boolean"
+                        },
+                        "visitTracking": {
+                          "default": true,
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "wishlist",
                         "reviews",
                         "notifyMe",
-                        "customSizing"
+                        "customSizing",
+                        "visitTracking"
                       ],
                       "additionalProperties": false
                     },
                     "navigation": {
                       "default": {
-                        "mode": "automatic"
+                        "mode": "automatic",
+                        "showEmptyCategories": true
                       },
                       "type": "object",
                       "properties": {
@@ -7847,10 +7884,15 @@
                             "automatic",
                             "custom"
                           ]
+                        },
+                        "showEmptyCategories": {
+                          "default": true,
+                          "type": "boolean"
                         }
                       },
                       "required": [
-                        "mode"
+                        "mode",
+                        "showEmptyCategories"
                       ],
                       "additionalProperties": false
                     },
@@ -11390,6 +11432,406 @@
         }
       }
     },
+    "/api/v1/visits": {
+      "post": {
+        "operationId": "visits.record",
+        "tags": [
+          "public"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visitor": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{32}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "visitor",
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/visits/link": {
+      "post": {
+        "operationId": "visits.link",
+        "tags": [
+          "public"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visitor": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{32}$"
+                  },
+                  "order": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "visitor",
+                  "order"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/customers/highlight-rules": {
+      "get": {
+        "operationId": "admin.customers.highlightRules.list",
+        "tags": [
+          "admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "orders",
+                              "visits"
+                            ]
+                          },
+                          "minCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000
+                          },
+                          "maxCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000
+                          },
+                          "color": {
+                            "type": "string",
+                            "pattern": "^#[0-9a-f]{6}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "minCount",
+                          "color",
+                          "label",
+                          "enabled"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "admin.customers.highlightRules.save",
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rules": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "orders",
+                            "visits"
+                          ]
+                        },
+                        "minCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000
+                        },
+                        "maxCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000
+                        },
+                        "color": {
+                          "type": "string",
+                          "pattern": "^#[0-9a-f]{6}$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "minCount",
+                        "color",
+                        "label",
+                        "enabled"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "rules"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "orders",
+                              "visits"
+                            ]
+                          },
+                          "minCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000
+                          },
+                          "maxCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100000
+                          },
+                          "color": {
+                            "type": "string",
+                            "pattern": "^#[0-9a-f]{6}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "minCount",
+                          "color",
+                          "label",
+                          "enabled"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/customers/visit-summary": {
+      "get": {
+        "operationId": "admin.customers.visits",
+        "tags": [
+          "admin"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "in": "query",
+            "name": "from",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "in": "query",
+            "name": "to",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "visits": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "visitors": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "newVisitors": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "returningVisitors": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "identifiedVisitors": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                          },
+                          "visits": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "visitors": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "day",
+                          "visits",
+                          "visitors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "visits",
+                    "visitors",
+                    "newVisitors",
+                    "returningVisitors",
+                    "identifiedVisitors",
+                    "days"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/customers": {
       "get": {
         "operationId": "admin.customers.list",
@@ -11437,7 +11879,7 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^-?(name|city|ordersCount|refusedCount|spent|lastOrderAt)$"
+              "pattern": "^-?(name|city|ordersCount|refusedCount|spent|lastOrderAt|visitsCount|createdAt)$"
             },
             "in": "query",
             "name": "sort",
@@ -11492,6 +11934,26 @@
             },
             "in": "query",
             "name": "hasRefusals",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000
+            },
+            "in": "query",
+            "name": "minVisits",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "query",
+            "name": "rule",
             "required": false
           }
         ],
@@ -11571,6 +12033,54 @@
                           },
                           "marketingConsent": {
                             "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "visitsCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "lastVisitAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "highlights": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "ruleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "orders",
+                                    "visits"
+                                  ]
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "color": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "ruleId",
+                                "kind",
+                                "label",
+                                "color"
+                              ],
+                              "additionalProperties": false
+                            }
                           }
                         },
                         "required": [
@@ -11583,7 +12093,10 @@
                           "spent",
                           "noCod",
                           "vip",
-                          "marketingConsent"
+                          "marketingConsent",
+                          "createdAt",
+                          "visitsCount",
+                          "highlights"
                         ],
                         "additionalProperties": false
                       }
@@ -11710,6 +12223,54 @@
                         },
                         "marketingConsent": {
                           "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "visitsCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "lastVisitAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "highlights": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "orders",
+                                  "visits"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "kind",
+                              "label",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -11722,7 +12283,10 @@
                         "spent",
                         "noCod",
                         "vip",
-                        "marketingConsent"
+                        "marketingConsent",
+                        "createdAt",
+                        "visitsCount",
+                        "highlights"
                       ],
                       "additionalProperties": false
                     }
@@ -11825,6 +12389,54 @@
                     "marketingConsent": {
                       "type": "boolean"
                     },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "visitsCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "lastVisitAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "highlights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ruleId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "orders",
+                              "visits"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "ruleId",
+                          "kind",
+                          "label",
+                          "color"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
                     "email": {
                       "type": "string"
                     },
@@ -11923,6 +12535,32 @@
                         "additionalProperties": false
                       }
                     },
+                    "recentVisits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "landingPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "startedAt",
+                          "landingPath"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "devices": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -11945,9 +12583,14 @@
                     "noCod",
                     "vip",
                     "marketingConsent",
+                    "createdAt",
+                    "visitsCount",
+                    "highlights",
                     "cancelledCount",
                     "addresses",
                     "notes",
+                    "recentVisits",
+                    "devices",
                     "version"
                   ],
                   "additionalProperties": false
@@ -12101,6 +12744,54 @@
                     "marketingConsent": {
                       "type": "boolean"
                     },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "visitsCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "lastVisitAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "highlights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ruleId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "orders",
+                              "visits"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "ruleId",
+                          "kind",
+                          "label",
+                          "color"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
                     "email": {
                       "type": "string"
                     },
@@ -12199,6 +12890,32 @@
                         "additionalProperties": false
                       }
                     },
+                    "recentVisits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "landingPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "startedAt",
+                          "landingPath"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "devices": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "version": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -12221,9 +12938,14 @@
                     "noCod",
                     "vip",
                     "marketingConsent",
+                    "createdAt",
+                    "visitsCount",
+                    "highlights",
                     "cancelledCount",
                     "addresses",
                     "notes",
+                    "recentVisits",
+                    "devices",
                     "version"
                   ],
                   "additionalProperties": false
@@ -12349,6 +13071,16 @@
                   },
                   "hasRefusals": {
                     "type": "boolean"
+                  },
+                  "minVisits": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "rule": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
                 "additionalProperties": false
@@ -33131,6 +33863,171 @@
         }
       }
     },
+    "/api/v1/admin/search-index": {
+      "get": {
+        "operationId": "admin.searchIndex.status",
+        "tags": [
+          "admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "indexed": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "missing": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "stale": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "orphaned": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "lastIndexedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "rebuildQueued": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "indexed",
+                    "missing",
+                    "stale",
+                    "orphaned",
+                    "rebuildQueued"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/search-index/rebuild": {
+      "post": {
+        "operationId": "admin.searchIndex.rebuild",
+        "tags": [
+          "admin"
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "queued": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "queued"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/background": {
+      "get": {
+        "operationId": "admin.background.status",
+        "tags": [
+          "admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "idle",
+                        "stalled",
+                        "down"
+                      ]
+                    },
+                    "workers": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "waiting": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "overdue": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "oldestOverdueSeconds": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "dead": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "waitingTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "workers",
+                    "waiting",
+                    "overdue",
+                    "oldestOverdueSeconds",
+                    "dead",
+                    "waitingTypes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/nav/counts": {
       "get": {
         "operationId": "admin.nav.counts",
@@ -34408,6 +35305,32 @@
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 9007199254740991
+                          },
+                          "shop": {
+                            "type": "object",
+                            "properties": {
+                              "shown": {
+                                "type": "boolean"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "hidden",
+                                  "parent_hidden",
+                                  "no_live_products"
+                                ]
+                              },
+                              "liveProducts": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "shown",
+                              "liveProducts"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -34418,7 +35341,8 @@
                           "id",
                           "sortOrder",
                           "productCount",
-                          "version"
+                          "version",
+                          "shop"
                         ],
                         "additionalProperties": false
                       }
@@ -34725,6 +35649,32 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991
+                    },
+                    "shop": {
+                      "type": "object",
+                      "properties": {
+                        "shown": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "hidden",
+                            "parent_hidden",
+                            "no_live_products"
+                          ]
+                        },
+                        "liveProducts": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "shown",
+                        "liveProducts"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -34735,7 +35685,8 @@
                     "id",
                     "sortOrder",
                     "productCount",
-                    "version"
+                    "version",
+                    "shop"
                   ],
                   "additionalProperties": false
                 }
@@ -35107,6 +36058,32 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991
+                    },
+                    "shop": {
+                      "type": "object",
+                      "properties": {
+                        "shown": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "hidden",
+                            "parent_hidden",
+                            "no_live_products"
+                          ]
+                        },
+                        "liveProducts": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "shown",
+                        "liveProducts"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -35117,7 +36094,8 @@
                     "id",
                     "sortOrder",
                     "productCount",
-                    "version"
+                    "version",
+                    "shop"
                   ],
                   "additionalProperties": false
                 }

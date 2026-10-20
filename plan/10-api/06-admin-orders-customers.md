@@ -111,6 +111,9 @@ InvoiceData = { store: { name: string, phone?: string, email?: string, address?:
 | `admin.customers.addNote` | `POST /customers/:id/notes` | `customers:write` | B: `{ body }` | 201 `{ id, body, staffName, createdAt }` | — | |
 | `admin.customers.anonymise` | `POST /customers/:id/anonymise` | `customers:anonymise` | B: `{ confirm: string }` (must equal the phone's last 4 digits) | 204 | `action_not_allowed` (open orders) | Step-up. Irreversible (DOC-11 §8.2) |
 | `admin.customers.export` | `POST /customers/exports` | `customers:export` | B: list filters | 202 `{ jobId }` | — | Step-up. ≤ 5,000 rows. Audited |
+| `admin.customers.highlightRules.list` | `GET /customers/highlight-rules` | `customers:read` | — | 200 `{ items: HighlightRule[] }` (`id, kind: orders | visits, minCount, maxCount?, color, label, enabled`) | — | Added 2026-10-19 |
+| `admin.customers.highlightRules.save` | `PUT /customers/highlight-rules` | `customers:write` | B: `{ rules: HighlightRuleInput[] }` (at most 30; an `id` changes that rule, none adds one, a rule left out is deleted) | 200 `{ items }` | `validation_failed` (`color` not `#rrggbb`, `maxCount` below `minCount`, unknown `id`) | Audited as `customer.highlight_rules_saved` |
+| `admin.customers.visits` | `GET /customers/visit-summary` | `customers:read` | Q: `from`, `to` (Pakistan days, at most 366) | 200 `VisitSummary` (`visits, visitors, newVisitors, returningVisitors, identifiedVisitors, days[]`) | `validation_failed` | No names |
 
 ```ts
 AdminCustomerRow = { id: Id, name: string, phone: string, city?: string, ordersCount: int, deliveredCount: int, refusedCount: int,

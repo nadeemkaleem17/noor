@@ -24,6 +24,7 @@ import { useCan } from '@/lib/session'
 import { useStepUp, wasCancelled } from '@/lib/step-up'
 import { isWholePhone, telLink, waLink } from '@/lib/phone-links'
 import { customerQueries, useCustomerMutations } from '../api'
+import { HighlightBadges } from './highlight-badges'
 import { Flags } from './customer-list'
 
 /** @typedef {import('../api').AdminCustomer} AdminCustomer */
@@ -195,8 +196,14 @@ export function CustomerDetail({ id, orders }) {
               ) : null}
             </p>
             {c.email ? <p className="text-sm">{c.email}</p> : null}
-            <p className="text-sm text-muted">{c.firstOrderAt ? `Customer since ${formatDateTime(c.firstOrderAt)}` : 'No orders yet'}</p>
-            <Flags c={c} />
+            <p className="text-sm text-muted">
+              Customer since {formatDateTime(c.createdAt)}
+              {c.firstOrderAt ? ` · first order ${formatDateTime(c.firstOrderAt)}` : ' · no orders yet'}
+            </p>
+            <p className="flex flex-wrap items-center gap-2">
+              <Flags c={c} />
+              <HighlightBadges highlights={c.highlights} />
+            </p>
             {gone ? <Badge tone="warning">Anonymised</Badge> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -258,6 +265,35 @@ export function CustomerDetail({ id, orders }) {
           </Block>
         </div>
         <div className="space-y-4">
+          <Block title="Website visits">
+            <dl className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <dt className="text-muted">Visits</dt>
+                <dd className="text-lg font-semibold tabular-nums">{c.visitsCount}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">Browsers</dt>
+                <dd className="text-lg font-semibold tabular-nums">{c.devices}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">Last visit</dt>
+                <dd className="font-semibold">{c.lastVisitAt ? relativeTime(c.lastVisitAt) : '—'}</dd>
+              </div>
+            </dl>
+            {c.recentVisits.length ? (
+              <ul className="divide-y divide-line text-sm">
+                {c.recentVisits.map((v) => (
+                  <li key={v.startedAt + v.landingPath} className="flex justify-between gap-3 py-1.5">
+                    <span className="truncate text-muted" dir="ltr">{v.landingPath}</span>
+                    <time dateTime={v.startedAt} className="shrink-0">{formatDateTime(v.startedAt)}</time>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted">No visits are linked to this customer yet.</p>
+            )}
+            <p className="text-xs text-muted">Counted from the browsers this customer ordered from, so earlier visits count too. Orders are counted separately.</p>
+          </Block>
           <Block title="Flags">
             <ul className="space-y-1 text-sm">
               <li>No cash on delivery: {c.noCod ? <strong>Yes</strong> : 'No'}{c.noCodReason ? <span className="block text-muted">{c.noCodReason}</span> : null}</li>

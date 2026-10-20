@@ -334,4 +334,54 @@ describe.skipIf(!dbAvailable)('search (MySQL FULLTEXT)', () => {
       expect((await rowOf(made.id))?.bodyText).toContain('Summer lawn')
     }, 60_000)
   })
+
+  describe('the index repairs itself (a worker that was off, a crash between a change and its job)', () => {
+    /** An active product that is NOT indexed: what a save leaves behind until its job has run. */
+    const unindexed = async (/** @type {string} */ title) =>
+      catalog.products.save(ACTOR, null, /** @type {never} */ ({
+        handle: `u-${uuidv7().slice(-10)}`, status: 'active', kind: 'accessory', title, primaryCategoryId: lawn, categoryIds: [], attributes: [], options: [], media: [{ mediaId: pic, alt: 'x' }],
+        variants: [{ key: 'v', sku: `UN-${++sku}`, optionValueKeys: [], price: pkr(1000), stockMode: 'made_to_order', maxPerOrder: 5, enabled: true }],
+      }), REQ)
+
+    it('counts what is missing, out of date and left over; reconcile puts it right, then finds nothing to do', async () => {
+      await fresh()
+      const kept = await product('Repair alpha')
+      const gone = await product('Repair gamma')
+      await unindexed('Repair beta')
+      await t.db.update(productSearch).set({ updatedAt: new Date(Date.now() - 3_600_000) }).where(eq(productSearch.productId, kept.id)) // the product changed after its row was written
+      await t.db.update(products).set({ status: 'archived' }).where(eq(products.id, gone.id)) // no longer sold, row still there
+      expect(await search.health()).toMatchObject({ active: 2, indexed: 2, missing: 1, stale: 1, orphaned: 1, rebuildQueued: false })
+      expect(await search.reconcile()).toEqual({ reindexed: 2, removed: 1, remaining: 0 })
+      expect(await search.health()).toMatchObject({ active: 2, indexed: 2, missing: 0, stale: 0, orphaned: 0 })
+      expect(await search.reconcile(), 'a healthy index costs a few counts and no work').toEqual({ reindexed: 0, removed: 0, remaining: 0 })
+      expect(await rowOf(gone.id)).toBeUndefined()
+    }, 60_000)
+
+    it('does a batch at a time and says how much is left', async () => {
+      await fresh()
+      for (let i = 0; i < 5; i++) await unindexed(`Batch item ${i}`)
+      expect(await search.reconcile({ limit: 3 })).toEqual({ reindexed: 3, removed: 0, remaining: 2 })
+      expect(await search.reconcile({ limit: 3 })).toEqual({ reindexed: 2, removed: 0, remaining: 0 })
+    }, 60_000)
+
+    it('a product the index does not hold yet is still found by the start of its name', async () => {
+      await fresh()
+      const made = await unindexed('Zebra unindexed kurta')
+      expect(await rowOf(made.id)).toBeUndefined()
+      const p = await search.predicate('Zebra unin')
+      if (p.empty) throw new Error('the text has words')
+      expect((await t.db.select({ id: products.id }).from(products).where(p.where)).map((r) => r.id)).toEqual([made.id])
+    }, 60_000)
+
+    it('a rebuild asked for in the admin queues one full reindex a minute and is written to the audit log', async () => {
+      await fresh()
+      const actor = { staffId: ACTOR.staffId, name: 'Tester', role: 'owner' }
+      await t.db.insert(staffUsers).values({ id: ACTOR.staffId, email: 'search-rebuild@example.com', name: 'Tester', role: 'owner', status: 'active', passwordHash: 'x', createdAt: new Date(), updatedAt: new Date(), lastSeenAt: new Date(), version: 1, createdBy: null }).onDuplicateKeyUpdate({ set: { name: 'Tester' } })
+      expect(await search.requestRebuild(actor, REQ)).toEqual({ queued: true })
+      await search.requestRebuild(actor, REQ)
+      expect((await t.db.select().from(jobs)).filter((j) => j.type === 'search.reindex_all')).toHaveLength(1)
+      expect((await search.health()).rebuildQueued).toBe(true)
+      expect((await t.migrate.db.select().from(auditLog)).map((a) => a.action)).toContain('search.rebuild_requested')
+    }, 60_000)
+  })
 })

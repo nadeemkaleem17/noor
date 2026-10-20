@@ -545,7 +545,15 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
   })
 
   describe('categories', () => {
+    /** The Store setting "Show categories that have no products yet". */
+    const showEmpty = async (/** @type {boolean} */ on) => {
+      const { b } = await signedIn('owner')
+      const cur = (await b.call('GET', '/admin/settings/store')).body
+      const r = await b.call('PUT', '/admin/settings/store', { body: { value: { ...cur.value, navigation: { ...cur.value.navigation, showEmptyCategories: on } }, version: cur.version } })
+      expect(r.status, JSON.stringify(r.body)).toBe(200)
+    }
     it('serve the visible tree with live product counts, in order, hiding a hidden branch whole', async () => {
+      await showEmpty(false)
       const tree = (await json('/categories')).items
       expect(tree.map((/** @type {{ handle: string }} */ c) => c.handle)).toEqual(['women', 'men'])
       expect(tree[0]).toMatchObject({ handle: 'women', name: 'Women', productCount: 5 })
@@ -556,7 +564,37 @@ describe.skipIf(!dbAvailable)('public catalog (MySQL, through HTTP)', () => {
       expect((await get('/categories/bare')).statusCode, 'but its own page opens by address').toBe(200)
     }, 60_000)
 
+    it('with "show categories that have no products yet" on, an empty visible category is offered like any other, but a hidden one still is not and the sitemap leaves the empty one out', async () => {
+      await showEmpty(true)
+      const tree = (await json('/categories')).items
+      const bare = tree.find((/** @type {{ handle: string }} */ c) => c.handle === 'bare')
+      expect(bare, 'an empty category is offered as soon as it is visible').toMatchObject({ handle: 'bare', productCount: 0 })
+      expect(JSON.stringify(tree), 'a category staff hid is not offered, empty or not').not.toContain('secret')
+      expect((await json('/categories/women')).siblings.map((/** @type {{ handle: string }} */ c) => c.handle)).toContain('bare')
+      const sitemap = JSON.stringify(await json('/sitemap-entries'))
+      expect(sitemap, 'a page with nothing on it is not sent to crawlers').not.toContain('/c/bare')
+      await showEmpty(false)
+      expect(JSON.stringify((await json('/categories')).items)).not.toContain('bare')
+    }, 60_000)
+
+    it('the admin list says for each category whether the shop offers it, and why not', async () => {
+      const { b } = await signedIn('owner')
+      const status = async () => new Map((await b.call('GET', '/admin/categories')).body.items.map((/** @type {{ handle: string, shop: object }} */ c) => [c.handle, c.shop]))
+      await showEmpty(false)
+      let by = await status()
+      expect(by.get('women')).toEqual({ shown: true, liveProducts: 5 })
+      expect(by.get('bare')).toEqual({ shown: false, reason: 'no_live_products', liveProducts: 0 })
+      expect(by.get('secret')).toMatchObject({ shown: false, reason: 'hidden' })
+      expect(by.get('secret-kid')).toMatchObject({ shown: false, reason: 'parent_hidden' })
+      await showEmpty(true)
+      by = await status()
+      expect(by.get('bare'), 'with the setting on an empty category is offered').toEqual({ shown: true, liveProducts: 0 })
+      expect(by.get('secret')).toMatchObject({ shown: false, reason: 'hidden' })
+      await showEmpty(false)
+    }, 60_000)
+
     it('a category page knows its path, its children and its SEO text; hidden and unknown are 404; an old handle redirects', async () => {
+      await showEmpty(false)
       await t.db.update(categories).set({ seoTitle: 'Women’s clothing', description: 'All of it' }).where(eq(categories.id, d.women))
       const w = await json('/categories/women')
       expect(w).toMatchObject({ handle: 'women', description: 'All of it', breadcrumb: [{ handle: 'women', name: 'Women' }], children: [{ handle: 'unstitched', name: 'Unstitched' }, { handle: 'stitched', name: 'Stitched' }], seo: { title: 'Women’s clothing' } })

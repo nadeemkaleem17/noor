@@ -170,7 +170,7 @@ function CollectionForm({ collection }) {
                       const last = list.at(-1)
                       setImage(last ? { id: last.id, src: last.src, alt: last.alt ?? '' } : null)
                     }}
-                    upload={(file) => uploadImage(file)}
+                    upload={(file, control) => uploadImage(file, undefined, undefined, control)}
                     describeError={uploadErrorText}
                   />
                   {image ? <Input aria-label="Image alt text" placeholder="Alt text: describe the picture" value={image.alt} maxLength={300} onChange={(e) => setImage({ ...image, alt: e.target.value })} /> : null}

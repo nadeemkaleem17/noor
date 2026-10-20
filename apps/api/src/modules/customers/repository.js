@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, gte, like, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, inArray, like, lte, or, sql } from 'drizzle-orm'
 import { staffUsers } from '../../db/schema/auth.js'
 import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { customerNotes, customers } from '../../db/schema/customers.js'
+import { customerHighlightRules, visitors, visits } from '../../db/schema/visits.js'
 
 /** @typedef {import('../../platform/db.js').Executor} Db */
 /** @typedef {typeof customers.$inferSelect} CustomerRow */
@@ -13,14 +14,19 @@ const sorts = /** @type {const} */ ({
   refusedCount: customers.refusedCount,
   spent: customers.spentMinor,
   lastOrderAt: customers.lastOrderAt,
+  visitsCount: customers.visitsCount,
+  createdAt: customers.createdAt,
 })
 
 /**
  * @param {Db} db
- * @param {{ q?: string, cityName?: string, flag?: 'no_cod' | 'vip' | 'consent', minOrders?: number, hasRefusals?: boolean, sort?: string, page: number, size: number }} f
+ * @param {{ q?: string, cityName?: string, flag?: 'no_cod' | 'vip' | 'consent', minOrders?: number, hasRefusals?: boolean, minVisits?: number, rule?: string, sort?: string, page: number, size: number }} f
  */
-export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefusals, sort, page, size }) {
+export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefusals, minVisits, rule, sort, page, size }) {
   const phone = q ? phonePrefix(q) : undefined
+  // "the customers this rule colours": the rule's own range on the count it is about (a rule that is off or gone matches nobody)
+  const ruleRow = rule ? (await db.select().from(customerHighlightRules).where(eq(customerHighlightRules.id, rule)))[0] : undefined
+  const column = ruleRow?.kind === 'visits' ? customers.visitsCount : customers.ordersCount
   const where = and(
     // the start of a name or a phone number, or a whole e-mail address: each is an index
     q ? or(like(customers.name, likePrefix(q)), eq(customers.email, q), phone ? like(customers.phone, phone) : undefined) : undefined,
@@ -28,10 +34,12 @@ export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefus
     flag === 'no_cod' ? eq(customers.noCod, true) : flag === 'vip' ? eq(customers.vip, true) : flag === 'consent' ? eq(customers.marketingConsent, true) : undefined,
     minOrders ? gte(customers.ordersCount, minOrders) : undefined,
     hasRefusals ? gte(customers.refusedCount, 1) : undefined,
+    minVisits ? gte(customers.visitsCount, minVisits) : undefined,
+    rule ? (ruleRow?.enabled ? and(gte(column, ruleRow.minCount), ruleRow.maxCount === null ? undefined : lte(column, ruleRow.maxCount)) : sql`false`) : undefined,
   )
   const key = /** @type {keyof typeof sorts} */ ((sort ?? '-lastOrderAt').replace(/^-/, ''))
-  const column = sorts[key] ?? sorts.lastOrderAt
-  const order = (sort ?? '-lastOrderAt').startsWith('-') ? desc(column) : asc(column)
+  const sortColumn = sorts[key] ?? sorts.lastOrderAt
+  const order = (sort ?? '-lastOrderAt').startsWith('-') ? desc(sortColumn) : asc(sortColumn)
   const [rows, total] = await Promise.all([
     db.select().from(customers).where(where).orderBy(order, asc(customers.id)).limit(size).offset((page - 1) * size),
     db.select({ n: count() }).from(customers).where(where),
@@ -92,3 +100,40 @@ export const insertNote = (db, row) => db.insert(customerNotes).values(row)
 
 /** @param {Db} db @param {string} customerId */
 export const deleteNotes = (db, customerId) => db.delete(customerNotes).where(eq(customerNotes.customerId, customerId))
+
+/** @param {Db} db @param {string} id @param {number} added @param {Date} at */
+export const bumpVisits = (db, id, added, at) =>
+  db
+    .update(customers)
+    .set({ visitsCount: sql`${customers.visitsCount} + ${added}`, lastVisitAt: sql`greatest(coalesce(${customers.lastVisitAt}, ${at}), ${at})`, updatedAt: at })
+    .where(eq(customers.id, id))
+
+/** The latest visits of every browser linked to the customer, and how many browsers that is. @param {Db} db @param {string} customerId */
+export async function visitsOf(db, customerId) {
+  const [recent, devices] = await Promise.all([
+    db
+      .select({ startedAt: visits.startedAt, landingPath: visits.landingPath })
+      .from(visits)
+      .innerJoin(visitors, eq(visitors.id, visits.visitorId))
+      .where(eq(visitors.customerId, customerId))
+      .orderBy(desc(visits.startedAt), desc(visits.id))
+      .limit(10),
+    db.select({ n: count() }).from(visitors).where(eq(visitors.customerId, customerId)),
+  ])
+  return { recent, devices: devices[0]?.n ?? 0 }
+}
+
+/** The browsers of an anonymised customer are forgotten, with their visits (they cascade). @param {Db} db @param {string} customerId */
+export const forgetVisitors = (db, customerId) => db.delete(visitors).where(eq(visitors.customerId, customerId))
+
+/** @param {Db} db */
+export const allRules = (db) => db.select().from(customerHighlightRules).orderBy(asc(customerHighlightRules.kind), asc(customerHighlightRules.minCount), asc(customerHighlightRules.id))
+
+/** @param {Db} db @param {typeof customerHighlightRules.$inferInsert} row */
+export const insertRule = (db, row) => db.insert(customerHighlightRules).values(row)
+
+/** @param {Db} db @param {string} id @param {Partial<typeof customerHighlightRules.$inferInsert>} set */
+export const updateRule = (db, id, set) => db.update(customerHighlightRules).set(set).where(eq(customerHighlightRules.id, id))
+
+/** @param {Db} db @param {string[]} ids */
+export const deleteRules = (db, ids) => (ids.length ? db.delete(customerHighlightRules).where(inArray(customerHighlightRules.id, ids)) : Promise.resolve())

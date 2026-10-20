@@ -22,6 +22,9 @@ Admin paths under `/api/v1/admin`; auth `staff`; `no-store`.
 | Key | Method & path | Permission | Request | Response | Notes |
 |---|---|---|---|---|---|
 | `admin.nav.counts` | `GET /nav/counts` | any signed-in user | — | 200 `{ ordersNeedingAction?: int, reviewsPending?: int }` | A field is absent when the user lacks the permission for that area, and `reviewsPending` is also absent while `features.reviews` is off in the store settings (the menu then has no Reviews). One query each, both on indexed status columns |
+| `admin.background.status` | `GET /admin/background` | any signed-in user | — | 200 `BackgroundStatus` (`state: ok | idle | stalled | down`, `workers`, `waiting`, `overdue`, `oldestOverdueSeconds`, `dead`, `waitingTypes`) | Read from `worker_heartbeats` and the `jobs` table; the admin shows a strip when the state is `stalled` or `down`. |
+| `admin.searchIndex.status` | `GET /admin/search-index` | `settings:manage` | — | 200 `SearchIndexStatus` (`active`, `indexed`, `missing`, `stale`, `orphaned`, `lastIndexedAt?`, `rebuildQueued`) | Counts products that should be in the search index against what it holds. |
+| `admin.searchIndex.rebuild` | `POST /admin/search-index/rebuild` | `settings:manage` | — | 202 `{ queued }` | Queues the `search.reconcile` repair (one at a time) and writes an audit entry. |
 | `admin.dashboard.todo` | `GET /dashboard/todo` | `dashboard:read` | — | 200 `TodoCounts` | Fields absent by permission |
 | `admin.dashboard.summary` | `GET /dashboard/summary` | `dashboard:read` + `orders:read` | Q: `from`, `to` (dates, ≤ 366 days) | 200 `SalesSummary` | Days are Asia/Karachi |
 | `admin.dashboard.topProducts` | `GET /dashboard/top-products` | `dashboard:read` + `orders:read` | Q: `from`, `to`, `limit?` (≤ 20, default 10) | 200 `{ items: { productId: Id, title: string, image?: Image, units: int, sales: Money }[] }` | |

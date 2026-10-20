@@ -42,7 +42,7 @@ export const problem = (status, code, extra = {}) => json(status, { title: code,
  */
 export function fakeApi(table) {
   // the catalog lookups every product screen reads; a test overrides the ones it cares about
-  table = { "GET /admin/nav/counts": () => json(200, {}), "GET /admin/attributes": () => json(200, { items: [] }), "GET /admin/size-systems": () => json(200, { items: [] }), "GET /admin/size-charts": () => json(200, { items: [] }), "GET /admin/form-schemas": () => json(200, { items: [] }), ...table }
+  table = { "GET /admin/customers/highlight-rules": () => json(200, { items: [] }), "GET /admin/customers/visit-summary": () => json(200, { visits: 0, visitors: 0, newVisitors: 0, returningVisitors: 0, identifiedVisitors: 0, days: [] }), "GET /admin/search-index": () => json(200, { active: 3, indexed: 3, missing: 0, stale: 0, orphaned: 0, rebuildQueued: false }), "GET /admin/background": () => json(200, { state: "ok", workers: 1, waiting: 0, overdue: 0, oldestOverdueSeconds: 0, dead: 0, waitingTypes: [] }), "GET /admin/nav/counts": () => json(200, {}), "GET /admin/attributes": () => json(200, { items: [] }), "GET /admin/size-systems": () => json(200, { items: [] }), "GET /admin/size-charts": () => json(200, { items: [] }), "GET /admin/form-schemas": () => json(200, { items: [] }), ...table }
   /** @type {string[]} */
   const calls = []
   vi.stubGlobal(
@@ -55,6 +55,38 @@ export function fakeApi(table) {
       if (!handler) throw new Error(`unexpected API call: ${key}`)
       return handler({ body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined, headers: new Headers(init?.headers), url })
     }),
+  )
+  // a picture goes to storage by XMLHttpRequest (that is how progress is known); here the same table answers it, as it would a fetch
+  vi.stubGlobal(
+    'XMLHttpRequest',
+    class {
+      upload = {}
+      status = 0
+      method = 'GET'
+      url = ''
+      /** @type {(() => void) | null} */ onload = null
+      /** @type {(() => void) | null} */ onerror = null
+      /** @type {(() => void) | null} */ onabort = null
+      /** @param {string} method @param {string} url */
+      open(method, url) {
+        this.method = method
+        this.url = url
+      }
+      setRequestHeader() {}
+      abort() {
+        this.onabort?.()
+      }
+      /** @param {unknown} body */
+      send(body) {
+        globalThis.fetch(this.url, { method: this.method, body: /** @type {never} */ (body) }).then(
+          (r) => {
+            this.status = r.status
+            this.onload?.()
+          },
+          () => this.onerror?.(),
+        )
+      }
+    },
   )
   return calls
 }
@@ -132,7 +164,7 @@ export const productFixture = (over = {}) => ({
 export const categoriesAnswer = () =>
   json(200, {
     items: [
-      { id: ids2.cat, name: 'Women', handle: 'women', parentId: null, visible: true, attributes: [], sortOrder: 0, productCount: 2, version: 1 },
-      { id: ids2.cat2, name: 'Stitched', handle: 'stitched', parentId: ids2.cat, visible: true, attributes: [], sortOrder: 0, productCount: 1, version: 1 },
+      { id: ids2.cat, name: 'Women', handle: 'women', parentId: null, visible: true, attributes: [], sortOrder: 0, productCount: 2, version: 1, shop: { shown: true, liveProducts: 1 } },
+      { id: ids2.cat2, name: 'Stitched', handle: 'stitched', parentId: ids2.cat, visible: true, attributes: [], sortOrder: 0, productCount: 1, version: 1, shop: { shown: true, liveProducts: 1 } },
     ],
   })

@@ -7,6 +7,7 @@ import { deliveryCities, placeOrder, quote, valuesOf } from '~/lib/checkout.serv
 import { localeOfPath } from '~/lib/locale'
 import { localePath } from '~/lib/paths'
 import { loadShell } from '~/lib/shell.server'
+import { linkVisitor } from '~/lib/visit.server'
 
 // one visitor's, with their address in it: never kept by a cache, never indexed
 export const headers = /** @type {import('./+types/checkout').Route.HeadersFunction} */ (() => ({ 'Cache-Control': cacheControl.private }))
@@ -51,6 +52,7 @@ export async function action({ request }) {
 
   const { config } = await loadShell(locale)
   const result = await placeOrder(request, values, config.checkout.extraFields, locale)
+  if (result.ok && result.token) await linkVisitor(request, result.token)
   if (result.ok) throw redirect(result.redirectUrl ?? localePath(locale, `/orders/${result.token}?placed=1`), { headers: { 'Set-Cookie': clearCartCookie() } })
   // the price moved or stock ran short: the new cart, and a new key (the old one belongs to the cart the customer saw)
   if (result.error === 'changed') return data({ values: { ...values, idempotencyKey: crypto.randomUUID() }, cart: result.cart, result })

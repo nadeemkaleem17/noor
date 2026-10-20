@@ -268,6 +268,7 @@ const featureList = /** @type {const} */ ([
   ['reviews', 'Reviews', 'Customers can rate and review products, and the Reviews screen appears here.'],
   ['notifyMe', 'Back-in-stock alerts', 'Customers can ask to be told when a sold-out size returns.'],
   ['customSizing', 'Custom sizing', 'Made-to-order products can ask for measurements.'],
+  ['visitTracking', 'Count visits', 'The shop counts how often each browser comes back, so Customers can show it. It stores a random number in a cookie, never an address or a name, and does nothing for visitors whose browser says Do Not Track.'],
 ])
 
 /** @param {{ doc: any; }} props */
@@ -321,18 +322,33 @@ function NavigationCard({ doc }) {
   return (
     <SettingsCard id="navigation" title="Navigation bar" defaults={{ navigation: { ...doc.value.navigation } }} schema={StoreSettings.pick({ navigation: true })} toValue={(f) => ({ navigation: { ...f.navigation } })} save={(slice) => save.mutateAsync(slice)}>
       {(form, writable) => (
-        <RHFField control={form.control} name="navigation.mode" label="The bar shows" hint="Automatic: New in, every category with products (and its sub-categories), featured collections and Sale. Custom: exactly the menu you wrote under Content, Menus.">
-          {(field) => (
-            <NativeSelect
-              {...field}
-              disabled={!writable}
-              options={[
-                { value: 'automatic', label: 'Categories and collections (automatic)' },
-                { value: 'custom', label: 'My own menu (Content, Menus)' },
-              ]}
-            />
-          )}
-        </RHFField>
+        <div className="flex flex-col gap-4">
+          <RHFField control={form.control} name="navigation.mode" label="The bar shows" hint="Automatic: New in, every visible category (and its sub-categories), featured collections and Sale. Custom: exactly the menu you wrote under Content, Menus.">
+            {(field) => (
+              <NativeSelect
+                {...field}
+                disabled={!writable}
+                options={[
+                  { value: 'automatic', label: 'Categories and collections (automatic)' },
+                  { value: 'custom', label: 'My own menu (Content, Menus)' },
+                ]}
+              />
+            )}
+          </RHFField>
+          <Controller
+            control={form.control}
+            name="navigation.showEmptyCategories"
+            render={({ field }) => (
+              <div className="flex flex-col gap-1">
+                <Switch label="Show categories that have no products yet" disabled={!writable} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                <p className="text-sm text-muted">
+                  On: a category appears on the website as soon as it is visible, even before it has a product (its page says products are coming). Off: only categories with at least one product a customer can buy are shown.
+                  A category you hid, or one inside a hidden category, is never shown.
+                </p>
+              </div>
+            )}
+          />
+        </div>
       )}
     </SettingsCard>
   )

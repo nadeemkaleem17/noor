@@ -29,6 +29,7 @@ export const HANDLER_TIMEOUT_MS = 60_000
 export function createWorker({ db, handlers, workerId = `worker:${process.pid}`, concurrency = 5, busyMs = 1000, idleMs = 5000, lockTimeoutMs, timeoutsMs = {}, onDead, log }) {
   let stopping = false
   let running = 0
+  const stats = { done: 0, failed: 0 }
   /** @type {Promise<void> | null} */
   let loop = null
   /** @type {(() => void) | null} */
@@ -48,7 +49,9 @@ export function createWorker({ db, handlers, workerId = `worker:${process.pid}`,
         new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('handler timed out')))),
       ])
       await complete(db, job.id)
+      stats.done++
     } catch (error) {
+      stats.failed++
       log?.error({ jobId: job.id, type: job.type, attempts: job.attempts, err: error instanceof Error ? error.message : String(error) }, 'job failed')
       const outcome = await fail(db, job, error, now())
       if (outcome === 'dead') await onDead?.({ id: job.id, type: job.type }, error)
@@ -112,6 +115,10 @@ export function createWorker({ db, handlers, workerId = `worker:${process.pid}`,
     },
     get running() {
       return running
+    },
+    /** Jobs finished and failed since this worker started (the heartbeat reports them). */
+    get stats() {
+      return { ...stats }
     },
   }
 }

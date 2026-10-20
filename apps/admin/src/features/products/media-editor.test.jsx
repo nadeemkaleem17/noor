@@ -81,7 +81,7 @@ describe('product media (plan/07-admin/03-products.md section 6)', () => {
     })
     const { user } = renderApp(`/products/${ids2.product}`)
     await user.upload(await screen.findByLabelText('Drop pictures here or choose files'), picture(1600))
-    expect((await screen.findByRole('alert', {}, { timeout: 10_000 })).textContent).toBe('The file is not really a picture')
+    expect((await screen.findByRole('alert', {}, { timeout: 10_000 })).textContent).toContain('The file is not really a picture')
   })
 
   it('reorders, makes a picture the main one, and removes one', async () => {

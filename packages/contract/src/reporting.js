@@ -58,7 +58,35 @@ export const DeadJob = z.strictObject({ id: Id, type: z.string(), attempts: z.in
 
 const short = (/** @type {number} */ n) => z.string().transform((s) => s.slice(0, n))
 
+/** Whether anyone is working the background queue (pictures, search updates, emails ...): the admin warns when not. */
+export const BackgroundStatus = z.strictObject({
+  state: z.enum(['ok', 'idle', 'stalled', 'down']),
+  workers: z.int(),
+  waiting: z.int(),
+  overdue: z.int(),
+  oldestOverdueSeconds: z.int(),
+  dead: z.int(),
+  waitingTypes: z.array(z.string()),
+})
+/** @typedef {z.infer<typeof BackgroundStatus>} BackgroundStatus */
+
+/** How complete the shop's search index is: products it should hold, products it holds, the ones it lacks or holds out of date, and rows of products no longer sold. */
+export const SearchIndexStatus = z.strictObject({
+  active: z.int(),
+  indexed: z.int(),
+  missing: z.int(),
+  stale: z.int(),
+  orphaned: z.int(),
+  lastIndexedAt: IsoDate.optional(),
+  /** A rebuild or repair is already waiting in the queue. */
+  rebuildQueued: z.boolean(),
+})
+/** @typedef {z.infer<typeof SearchIndexStatus>} SearchIndexStatus */
+
 export const reportingRoutes = defineRoutes({
+  'admin.searchIndex.status': { method: 'GET', path: '/admin/search-index', auth: 'staff', permission: 'settings:manage', response: SearchIndexStatus },
+  'admin.searchIndex.rebuild': { method: 'POST', path: '/admin/search-index/rebuild', auth: 'staff', permission: 'settings:manage', status: 202, response: z.strictObject({ queued: z.boolean() }) },
+  'admin.background.status': { method: 'GET', path: '/admin/background', auth: 'staff-any', response: BackgroundStatus },
   'admin.nav.counts': { method: 'GET', path: '/admin/nav/counts', auth: 'staff-any', response: NavCounts },
   'admin.dashboard.todo': { method: 'GET', path: '/admin/dashboard/todo', auth: 'staff', permission: 'dashboard:read', response: TodoCounts },
   // the permission to read orders is checked as well: the handler answers 403 without it

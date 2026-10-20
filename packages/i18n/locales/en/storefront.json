@@ -146,6 +146,8 @@
     "readMore": "Read more",
     "subcategories": "Subcategories",
     "siblings": "More categories",
+    "comingTitle": "{name}: products are on their way",
+    "comingBody": "There is nothing in this category yet. Have a look at the other categories above, or at what is new.",
     "density": { "label": "Products per row", "compact": "More products per row", "roomy": "Larger products" },
     "shopBy": "Shop by category",
     "tileCount": "{count, plural, one {# piece} other {# pieces}}",

@@ -15,6 +15,11 @@ export const settingsKeys = {
 export const storeQuery = queryOptions({ queryKey: settingsKeys.store, queryFn: ({ signal }) => api('admin.settings.getStore', { signal }) })
 export const checkoutQuery = queryOptions({ queryKey: settingsKeys.checkout, queryFn: ({ signal }) => api('admin.settings.getCheckout', { signal }) })
 export const paymentsQuery = queryOptions({ queryKey: settingsKeys.payments, queryFn: ({ signal }) => api('admin.settings.getPayments', { signal }) })
+/** How complete the shop's search index is; asked again every few seconds while a rebuild is waiting. */
+export const searchIndexQuery = queryOptions({
+  queryKey: [...settingsKeys.system, 'search-index'],
+  queryFn: ({ signal }) => api('admin.searchIndex.status', { signal }),
+})
 export const systemQuery = queryOptions({ queryKey: settingsKeys.system, queryFn: ({ signal }) => api('admin.system.info', { signal }) })
 export const translationQuery = queryOptions({ queryKey: settingsKeys.translation, queryFn: ({ signal }) => api('admin.settings.translationStatus', { signal }) })
 

@@ -26,7 +26,6 @@ export function InfoSections({ product: p, descriptionHtml }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const hasDetails = Boolean(p.descriptionMd) || p.highlights.length > 0
-  const hasFabric = p.attributes.length > 0 || p.care.length > 0
   return (
     <div className="border-t border-line">
       {hasDetails ? (
@@ -60,22 +59,21 @@ export function InfoSections({ product: p, descriptionHtml }) {
           {p.kind === 'unstitched' ? <p className="mt-2 text-sm">{t('pdp.included.note')}</p> : null}
         </Section>
       ) : null}
-      {hasFabric ? (
-        <Section title={t('pdp.sections.fabric')}>
-          {p.attributes.length ? (
-            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
-              {p.attributes.map((a) => (
-                <div key={a.label} className="contents">
-                  <dt className="font-medium text-fg">{a.label}</dt>
-                  <dd>{a.values.join(', ')}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
-          {p.care.length ? <ul className="mt-2 list-disc ps-5">{p.care.map((c) => <li key={c}>{c}</li>)}</ul> : null}
-          <p className="mt-2"><RouterLink to={path('/pages/care')} className="underline underline-offset-4">{t('pdp.careGuide')}</RouterLink></p>
-        </Section>
-      ) : null}
+      {/* every product links to the care guide; the facts above the link come when the product has them */}
+      <Section title={t('pdp.sections.fabric')}>
+        {p.attributes.length ? (
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+            {p.attributes.map((a) => (
+              <div key={a.label} className="contents">
+                <dt className="font-medium text-fg">{a.label}</dt>
+                <dd>{a.values.join(', ')}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        {p.care.length ? <ul className="mt-2 list-disc ps-5">{p.care.map((c) => <li key={c}>{c}</li>)}</ul> : null}
+        <p className="mt-2"><RouterLink to={path('/pages/care')} className="underline underline-offset-4">{t('pdp.careGuide')}</RouterLink></p>
+      </Section>
       <Section title={t('pdp.sections.delivery')}>
         <p>
           {p.delivery.etaMinDays !== undefined && p.delivery.etaMaxDays !== undefined ? t('pdp.delivery.eta', { min: p.delivery.etaMinDays, max: p.delivery.etaMaxDays }) : null}

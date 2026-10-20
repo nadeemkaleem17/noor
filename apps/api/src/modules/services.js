@@ -18,6 +18,7 @@ import { createReviewsService } from './reviews/index.js'
 import { createSearch } from './search/index.js'
 import { createSettingsService } from './settings/index.js'
 import { createShippingService } from './shipping/index.js'
+import { createVisitsService } from './visits/index.js'
 
 /**
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, providers?: ReturnType<typeof createProviders>, mailer?: ReturnType<typeof createMailer> }} deps
@@ -39,15 +40,17 @@ export function createServices({ db, config, storage = createStorage(config), pr
     db, config, media, stock: inventory.stock, search,
     deliveryFacts: () => shipping.facts(),
     notifyEnabled: async () => (await settings.get('store')).value.features.notifyMe,
+    showEmptyCategories: async () => (await settings.get('store')).value.navigation?.showEmptyCategories ?? true,
     subscribe: (s) => inventory.subscribe(s),
   })
   settings = createSettingsService({ db, config, media, shippingFacts: () => shipping.facts() })
   const cart = createCartService({ db, media, stock: inventory.stock, shipping, settings, promotions, customers })
   const payments = createPaymentsService({ db, providers })
   const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media })
+  const visits = createVisitsService({ db, customers, orders, enabled: async () => (await settings.get('store')).value.features.visitTracking !== false })
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
   const notifications = createNotifications({ db, config, settings, mailer })
   const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
   const reporting = createReporting({ db, config, settings, media })
-  return { reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  return { visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

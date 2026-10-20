@@ -19,6 +19,13 @@ import { CategoryDrawer } from './category-drawer'
 
 /** @typedef {import('./category-drawer').Category} Category */
 
+/** Why the shop does not offer a category, in the words shown beside its name. A draft product does not count, which is the usual surprise. */
+const notShown = /** @type {Record<'hidden' | 'parent_hidden' | 'no_live_products', string>} */ ({
+  hidden: 'Hidden: not on the website',
+  parent_hidden: 'Not on the website: a category above it is hidden',
+  no_live_products: 'Not on the website: no product for sale in it yet (a draft does not count)',
+})
+
 /**
  * The category tree (plan/07-admin/04-catalog.md section 2): expand and collapse, reorder within siblings, edit in a drawer.
  * @param {{ all: Category[]; parentId: string | null; level: number; collapsed: Set<string>; onToggle: (id: string) => void; canWrite: boolean; canDelete: boolean; onEdit: (id: string) => void; onAdd: (parentId: string) => void; onDelete: (c: Category) => void; onMove: (parentId: string | null, orderedIds: string[]) => void; }} props
@@ -49,7 +56,7 @@ function Branch({ all, parentId, level, collapsed, onToggle, canWrite, canDelete
                 <button type="button" className="font-medium hover:underline" onClick={() => onEdit(c.id)}>
                   {c.name}
                 </button>
-                {c.visible ? null : <span className="ms-2 text-xs text-muted">Hidden</span>}
+                {c.shop.shown ? null : <span className="ms-2 text-xs text-warning">{notShown[c.shop.reason ?? 'hidden']}</span>}
                 <span className="block text-xs text-muted">/c/{c.handle}</span>
               </span>
               <AppLink to={`/products?category=${c.id}`} className="whitespace-nowrap text-sm text-accent-text underline underline-offset-2">

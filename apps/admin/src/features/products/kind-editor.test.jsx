@@ -8,8 +8,8 @@ const u = (/** @type {number} */ n) => `0194f1b2-7c3a-7000-8000-0000000003${Stri
 const fabric = { id: u(1), code: 'fabric', label: 'Fabric', type: 'enum', display: 'checkbox', filterable: true, usedByProducts: 0, usedByCategories: 1, values: [{ id: u(2), code: 'cotton', label: 'Cotton', usedByProducts: 0 }, { id: u(3), code: 'lawn', label: 'Lawn', usedByProducts: 0 }] }
 const cats = {
   items: [
-    { id: ids2.cat, name: 'Women', handle: 'women', parentId: null, visible: true, attributes: [{ attributeId: fabric.id, seoIndexable: false, required: true }], sortOrder: 0, productCount: 2, version: 1 },
-    { id: ids2.cat2, name: 'Stitched', handle: 'stitched', parentId: ids2.cat, visible: true, attributes: [], sortOrder: 0, productCount: 1, version: 1 },
+    { id: ids2.cat, name: 'Women', handle: 'women', parentId: null, visible: true, attributes: [{ attributeId: fabric.id, seoIndexable: false, required: true }], sortOrder: 0, productCount: 2, version: 1, shop: { shown: true, liveProducts: 1 } },
+    { id: ids2.cat2, name: 'Stitched', handle: 'stitched', parentId: ids2.cat, visible: true, attributes: [], sortOrder: 0, productCount: 1, version: 1, shop: { shown: true, liveProducts: 1 } },
   ],
 }
 const session = {

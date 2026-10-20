@@ -8,6 +8,7 @@ import { now } from '../../platform/clock.js'
 import { count, rupees, toCsv } from '../../platform/csv.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { record } from '../audit/index.js'
+import { highlightsFor } from './highlights.js'
 import * as repo from './repository.js'
 
 /**
@@ -52,8 +53,14 @@ export function createCustomersService({ db, orders = noOrders }) {
   /** @param {Staff} a @param {RequestInfo} req */
   const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId })
 
-  /** @param {repo.CustomerRow} c */
-  const toRow = (c) => ({
+  /** The rules that colour customers, as rows with a numeric range. @param {Db} x */
+  const rulesOf = async (x) => (await repo.allRules(x)).map((r) => ({ id: r.id, kind: r.kind, minCount: r.minCount, maxCount: r.maxCount, color: r.color, label: r.label, enabled: r.enabled }))
+
+  /** A rule as the API answers: no `maxCount` at all when there is no upper limit. @param {import('./highlights.js').Rule} r */
+  const ruleView = ({ maxCount, ...r }) => (maxCount === null ? r : { ...r, maxCount })
+
+  /** @param {repo.CustomerRow} c @param {import('./highlights.js').Rule[]} rules */
+  const toRow = (c, rules) => ({
     id: c.id,
     name: c.name,
     phone: c.phone,
@@ -66,15 +73,21 @@ export function createCustomersService({ db, orders = noOrders }) {
     noCod: c.noCod,
     vip: c.vip,
     marketingConsent: c.marketingConsent,
+    createdAt: c.createdAt.toISOString(),
+    visitsCount: c.visitsCount,
+    ...(c.lastVisitAt ? { lastVisitAt: iso(c.lastVisitAt) } : {}),
+    highlights: highlightsFor(rules, c),
   })
 
   /** @param {Db} x @param {string} id */
   async function view(x, id) {
     const c = await repo.findById(x, id)
     if (!c) throw new DomainError('not_found')
-    const [notes, addresses] = await Promise.all([repo.notesOf(x, id), orders.addresses(x, id)])
+    const [notes, addresses, rules, seen] = await Promise.all([repo.notesOf(x, id), orders.addresses(x, id), rulesOf(x), repo.visitsOf(x, id)])
     return {
-      ...toRow(c),
+      ...toRow(c, rules),
+      recentVisits: seen.recent.map((v) => ({ startedAt: v.startedAt.toISOString(), landingPath: v.landingPath })),
+      devices: seen.devices,
       ...(c.email ? { email: c.email } : {}),
       ...(c.noCodReason ? { noCodReason: c.noCodReason } : {}),
       ...(c.consentNote ? { consentNote: c.consentNote } : {}),
@@ -146,6 +159,39 @@ export function createCustomersService({ db, orders = noOrders }) {
       return c ? { ordersCount: c.ordersCount, deliveredCount: c.deliveredCount, refusedCount: c.refusedCount, noCod: c.noCod, vip: c.vip } : undefined
     },
 
+    /**
+     * Visits are added only here, in the transaction of the visits module (the order counters have `applyOrderChange`; this is the other half).
+     * @param {Db} tx @param {string} customerId @param {number} added visits to add @param {Date} at when the latest of them was
+     */
+    async addVisits(tx, customerId, added, at) {
+      await repo.bumpVisits(tx, customerId, added, at)
+    },
+
+    /** The rules that colour customers, for the screen where staff edit them. */
+    rules: async () => ({ items: (await rulesOf(db)).map(ruleView) }),
+
+    /**
+     * Replaces the list of rules with the one staff sent: a rule with an id is changed, one without is new, one left out is removed.
+     * @param {Staff} actor @param {import('@noor/contract').z.infer<typeof import('@noor/contract').HighlightRuleInput>[]} input @param {RequestInfo} req
+     */
+    async saveRules(actor, input, req) {
+      await transaction(db, async (tx) => {
+        const current = await repo.allRules(tx)
+        const known = new Set(current.map((r) => r.id))
+        for (const r of input) if (r.id && !known.has(r.id)) throw new DomainError('validation_failed', { issues: [{ path: 'rules', code: 'not_found' }] })
+        const kept = new Set(input.flatMap((r) => (r.id ? [r.id] : [])))
+        const at = now()
+        await repo.deleteRules(tx, current.filter((r) => !kept.has(r.id)).map((r) => r.id))
+        for (const r of input) {
+          const fields = { kind: r.kind, minCount: r.minCount, maxCount: r.maxCount ?? null, color: r.color.toLowerCase(), label: r.label, enabled: r.enabled, updatedAt: at }
+          if (r.id) await repo.updateRule(tx, r.id, fields)
+          else await repo.insertRule(tx, { id: uuidv7(), ...fields, createdAt: at })
+        }
+        await record(tx, { ...actorOf(actor, req), action: 'customer.highlight_rules_saved', entityType: 'customer_highlight_rules', entityId: 'all', entityLabel: `${input.length} rules`, diff: { rules: [current.length, input.length] } })
+      })
+      return { items: (await rulesOf(db)).map(ruleView) }
+    },
+
     /** The customer ticked the marketing box at checkout. Never switched off from here: only staff or the customer can take consent back. @param {Db} tx @param {string} id @param {string} note */
     async recordConsent(tx, id, note) {
       await repo.update(tx, id, { marketingConsent: true, consentNote: note, updatedAt: now() })
@@ -153,8 +199,8 @@ export function createCustomersService({ db, orders = noOrders }) {
 
     /** @param {Parameters<typeof repo.listCustomers>[1]} query */
     async list(query) {
-      const { rows, total } = await repo.listCustomers(db, query)
-      return { items: rows.map(toRow), total, page: query.page, size: query.size }
+      const [{ rows, total }, rules] = await Promise.all([repo.listCustomers(db, query), rulesOf(db)])
+      return { items: rows.map((c) => toRow(c, rules)), total, page: query.page, size: query.size }
     },
 
     /**
@@ -165,8 +211,8 @@ export function createCustomersService({ db, orders = noOrders }) {
       const { rows, total } = await repo.listCustomers(db, { ...filter, sort: 'name', page: 1, size: 5000 })
       if (total > 5000) throw new DomainError('validation_failed', { issues: [{ path: 'q', code: 'too_big' }] })
       const file = toCsv(
-        ['Name', 'Phone', 'Email', 'City', 'Orders', 'Delivered', 'Refused', 'Cancelled', 'Spent', 'First order', 'Last order', 'No cash on delivery', 'VIP', 'Marketing consent'],
-        rows.map((c) => [c.name, formatPkMobileLocal(c.phone), c.email, c.city, count(c.ordersCount), count(c.deliveredCount), count(c.refusedCount), count(c.cancelledCount), rupees(c.spentMinor), c.firstOrderAt?.toISOString(), c.lastOrderAt?.toISOString(), c.noCod ? 'yes' : 'no', c.vip ? 'yes' : 'no', c.marketingConsent ? 'yes' : 'no']),
+        ['Name', 'Phone', 'Email', 'City', 'Orders', 'Delivered', 'Refused', 'Cancelled', 'Spent', 'First order', 'Last order', 'No cash on delivery', 'VIP', 'Marketing consent', 'Customer since', 'Visits', 'Last visit'],
+        rows.map((c) => [c.name, formatPkMobileLocal(c.phone), c.email, c.city, count(c.ordersCount), count(c.deliveredCount), count(c.refusedCount), count(c.cancelledCount), rupees(c.spentMinor), c.firstOrderAt?.toISOString(), c.lastOrderAt?.toISOString(), c.noCod ? 'yes' : 'no', c.vip ? 'yes' : 'no', c.marketingConsent ? 'yes' : 'no', c.createdAt.toISOString(), count(c.visitsCount), c.lastVisitAt?.toISOString()]),
       )
       await transaction(db, (tx) => record(tx, { ...actorOf(actor, req), action: 'customer.exported', entityType: 'customer', entityId: 'export', entityLabel: `${rows.length} customers`, category: 'security' }))
       return { filename: `customers-${now().toISOString().slice(0, 10)}.csv`, rowCount: rows.length, csv: file }
@@ -178,7 +224,7 @@ export function createCustomersService({ db, orders = noOrders }) {
     /** For the staff order form: the customer behind a typed phone number, if there is one. @param {string} phone */
     async lookup(phone) {
       const c = await findByPhone(db, phone)
-      return c ? { customer: toRow(c) } : {}
+      return c ? { customer: toRow(c, await rulesOf(db)) } : {}
     },
 
     /** @param {Staff} actor @param {string} id @param {import('@noor/contract').z.infer<typeof import('@noor/contract').CustomerUpdate>} input @param {RequestInfo} req */
@@ -242,11 +288,14 @@ export function createCustomersService({ db, orders = noOrders }) {
           city: null,
           marketingConsent: false,
           consentNote: null,
+          visitsCount: 0,
+          lastVisitAt: null,
           anonymisedAt: at,
           version: c.version + 1,
           updatedAt: at,
         })
         await repo.deleteNotes(tx, id)
+        await repo.forgetVisitors(tx, id)
         await orders.anonymise(tx, id)
         await record(tx, { ...actorOf(actor, req), action: 'customer.anonymised', entityType: 'customer', entityId: id, entityLabel: id, category: 'security' })
       })

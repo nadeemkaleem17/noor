@@ -24,10 +24,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
  * @param {ReturnType<typeof import('./public-listing.js').createListing>} deps.listing
  * @param {(token: string) => string | null} deps.verifyPreview the product id a preview token opens
  * @param {() => Promise<{ freeAboveFrom?: import('@noor/contract').Money, defaultEta?: { minDays: number, maxDays: number }, codAvailable?: boolean }>} deps.deliveryFacts
+ * @param {() => Promise<boolean>} [deps.showEmptyCategories] Store setting "Show categories that have no products yet": when off, a branch with no live product is left out of the tree
  * @param {() => Promise<boolean>} deps.notifyEnabled is the back-in-stock feature on
  * @param {(input: { variantId: string, phone: string, locale?: Locale }) => Promise<void>} deps.subscribe
  */
-export function createPublicCatalog({ db, media, stock, listing, verifyPreview, deliveryFacts, notifyEnabled, subscribe }) {
+export function createPublicCatalog({ db, media, stock, listing, verifyPreview, deliveryFacts, notifyEnabled, subscribe, showEmptyCategories = async () => true }) {
   // ================================ categories ================================
   const loadCategories = () => db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name))
 
@@ -208,8 +209,9 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
     },
 
     // ================================ categories ================================
-    /** The visible tree with the number of live products in each branch; a branch with none is left out. @param {Locale} locale */
+    /** The visible tree with the number of live products in each branch; a branch with none is left out unless the shop shows empty categories. @param {Locale} locale */
     async listCategories(locale = 'en') {
+      const showEmpty = await showEmptyCategories()
       const all = visibleOf(await loadCategories())
       const tagged = await db.execute(sql`select pc.category_id as category, pc.product_id as product from product_categories pc join products p on p.id = pc.product_id where p.status = 'active'`)
       const rows = /** @type {{ category: string, product: string }[]} */ (/** @type {unknown} */ (tagged[0]))
@@ -227,8 +229,8 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
             productCount: new Set(rows.filter((r) => below.has(r.category)).map((r) => r.product)).size,
             children,
           }
-          // a branch with no live product is not offered anywhere (navigation, home, footer, /categories); its own page still opens by address
-        }).filter((n) => n.productCount > 0)
+          // with the setting off, a branch with no live product is not offered anywhere (navigation, home, footer, /categories); its own page still opens by address
+        }).filter((n) => showEmpty || n.productCount > 0)
       return { items: build(null) }
     },
 
@@ -352,7 +354,7 @@ export function createPublicCatalog({ db, media, stock, listing, verifyPreview, 
       const entries = [{ loc: '/', lastmod: (activeProducts.map((p) => p.updatedAt).sort((a, b) => b.getTime() - a.getTime())[0] ?? at).toISOString(), type: 'home' }]
       // a category with no live product is a thin page: crawlers are not sent to it (it is also left out of the public tree)
       const live = /** @type {Set<string>} */ (new Set())
-      const mark = (/** @type {import('@noor/contract').CategoryNode[]} */ nodes) => nodes.forEach((n) => { live.add(n.handle); mark(n.children) })
+      const mark = (/** @type {import('@noor/contract').CategoryNode[]} */ nodes) => nodes.forEach((n) => { if (n.productCount > 0) live.add(n.handle); mark(n.children) })
       mark((await this.listCategories()).items)
       for (const c of cats) if (live.has(c.handle)) entries.push({ loc: `/c/${c.handle}`, lastmod: c.updatedAt.toISOString(), type: 'category' })
       for (const c of cols) entries.push({ loc: `/collections/${c.handle}`, lastmod: c.updatedAt.toISOString(), type: 'collection' })

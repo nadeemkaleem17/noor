@@ -1,6 +1,11 @@
 // Text search over active products with InnoDB FULLTEXT (ADR-0010, plan/09-data-model/05-search.md). `product_search` holds one row per
 // active product, rebuilt by jobs when a product or the structure around it changes; `run` is the one query every text search goes through.
-import { and, eq, inArray, lt, notInArray, sql } from 'drizzle-orm'
+import { and, count, eq, gt, inArray, isNull, lt, max, notInArray, sql } from 'drizzle-orm'
+import { jobs } from '../../db/schema/platform.js'
+import { transaction } from '../../platform/db.js'
+import { enqueue } from '../../platform/jobs.js'
+import { likePrefix } from '../../platform/search-text.js'
+import { record } from '../audit/index.js'
 import { now } from '../../platform/clock.js'
 import { attributeValues, attributes, categories } from '../../db/schema/taxonomy.js'
 import { productAttributeValues, productCategories, products, variants } from '../../db/schema/products.js'
@@ -108,6 +113,71 @@ export function createSearch({ db }) {
       return active.length
     },
 
+    /**
+     * How complete the index is, from the database alone: active products with no row (missing), rows older than their product (stale), and rows of products that
+     * are no longer sold (orphaned). Cheap: a handful of counts.
+     */
+    async health() {
+      const [[active], [indexed], [missing], [stale], [orphaned], [last], [queued]] = await Promise.all([
+        db.select({ n: count() }).from(products).where(eq(products.status, 'active')),
+        db.select({ n: count() }).from(productSearch),
+        db.select({ n: count() }).from(products).leftJoin(productSearch, eq(productSearch.productId, products.id)).where(and(eq(products.status, 'active'), isNull(productSearch.productId))),
+        db.select({ n: count() }).from(products).innerJoin(productSearch, eq(productSearch.productId, products.id)).where(and(eq(products.status, 'active'), gt(products.updatedAt, productSearch.updatedAt))),
+        db.select({ n: count() }).from(productSearch).innerJoin(products, eq(products.id, productSearch.productId)).where(sql`${products.status} <> 'active'`),
+        db.select({ at: max(productSearch.updatedAt) }).from(productSearch),
+        db.select({ n: count() }).from(jobs).where(sql`${jobs.type} in ('search.reindex_all', 'search.reconcile')`),
+      ])
+      return {
+        active: active?.n ?? 0,
+        indexed: indexed?.n ?? 0,
+        missing: missing?.n ?? 0,
+        stale: stale?.n ?? 0,
+        orphaned: orphaned?.n ?? 0,
+        ...(last?.at ? { lastIndexedAt: new Date(last.at).toISOString() } : {}),
+        rebuildQueued: (queued?.n ?? 0) > 0,
+      }
+    },
+
+    /**
+     * Job `search.reconcile` (every 10 minutes, and once when a background process starts): puts right whatever the event-driven updates missed (a worker that was off, a
+     * crash between the product change and its job). The usual answer is "nothing to do" after a few counts; otherwise it reindexes the missing and out-of-date products
+     * (up to `limit` at a time, the rest on the next run) and drops rows of products that are no longer sold.
+     * @param {{ limit?: number }} [opts]
+     * @returns {Promise<{ reindexed: number, removed: number, remaining: number }>}
+     */
+    async reconcile({ limit = 500 } = {}) {
+      const h = await this.health()
+      if (!h.missing && !h.stale && !h.orphaned) return { reindexed: 0, removed: 0, remaining: 0 }
+      const rows = await db
+        .select({ id: products.id })
+        .from(products)
+        .leftJoin(productSearch, eq(productSearch.productId, products.id))
+        .where(and(eq(products.status, 'active'), sql`(${productSearch.productId} is null or ${products.updatedAt} > ${productSearch.updatedAt})`))
+        .orderBy(products.updatedAt)
+        .limit(limit)
+      for (let i = 0; i < rows.length; i += BATCH) await reindex(db, rows.slice(i, i + BATCH).map((r) => r.id))
+      let removed = 0
+      if (h.orphaned) {
+        const gone = await db.select({ id: productSearch.productId }).from(productSearch).innerJoin(products, eq(products.id, productSearch.productId)).where(sql`${products.status} <> 'active'`)
+        if (gone.length) await db.delete(productSearch).where(inArray(productSearch.productId, gone.map((g) => g.id)))
+        removed = gone.length
+      }
+      return { reindexed: rows.length, removed, remaining: Math.max(0, h.missing + h.stale - rows.length) }
+    },
+
+    /**
+     * "Rebuild search index" in the admin: queues a full reindex (one at a time) and writes it to the audit log.
+     * @param {{ staffId: string, name: string, role: string }} actor @param {{ ip: string, userAgent: string, requestId: string }} req
+     */
+    async requestRebuild(actor, req) {
+      const at = now()
+      await transaction(db, async (tx) => {
+        await enqueue(tx, { type: 'search.reindex_all', payload: {}, uniqueKey: `search.reindex_all:manual:${Math.floor(at.getTime() / 60_000)}` }, at)
+        await record(tx, { actor: { type: 'staff', id: actor.staffId, label: actor.name, role: actor.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId, action: 'search.rebuild_requested', entityType: 'search_index', entityId: 'products', entityLabel: 'Search index' })
+      })
+      return { queued: true }
+    },
+
     /** Idempotent: adds spellings that are missing and leaves the others alone. */
     async seedSynonyms() {
       const have = new Set((await db.select({ term: searchSynonyms.term }).from(searchSynonyms)).map((r) => r.term))
@@ -167,7 +237,9 @@ export function createSearch({ db }) {
       const typed = q.trim().toUpperCase()
       const skuHit = /^[A-Z0-9._-]{1,40}$/.test(typed) ? (await db.select({ id: variants.productId }).from(variants).where(eq(variants.sku, typed)).limit(1))[0]?.id : undefined
       if (!expr && !skuHit) return { empty: true }
-      const matches = expr ? sql`${products.id} in (select ps2.product_id from product_search ps2 where match(ps2.title_text, ps2.body_text) against (${expr} in boolean mode))` : sql`1 = 0`
+      // a safety net for a product the index does not hold yet (added or renamed a moment ago, or a worker that was off): a title that starts with what was typed
+      const typedPrefix = typed.length >= 2 ? sql`${products.title} like ${likePrefix(q.trim())}` : sql`1 = 0`
+      const matches = expr ? sql`(${products.id} in (select ps2.product_id from product_search ps2 where match(ps2.title_text, ps2.body_text) against (${expr} in boolean mode)) or ${typedPrefix})` : sql`1 = 0`
       const where = skuHit ? sql`(${products.id} = ${skuHit} or ${matches})` : matches
       const score = expr ? sql`coalesce(match(ps.title_text) against (${expr} in boolean mode) * 3 + match(ps.title_text, ps.body_text) against (${expr} in boolean mode), 0)` : sql`0`
       return { empty: false, where, order: skuHit ? sql`(${score} + (${products.id} = ${skuHit}) * 1000000)` : score }

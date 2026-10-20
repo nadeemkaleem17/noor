@@ -24,8 +24,13 @@ const Env = z.object({
   DATA_ENCRYPTION_KEY: z.string().refine((v) => /^[A-Za-z0-9+/]{43}=$/.test(v) && Buffer.from(v, 'base64').length === 32, 'must be 32 bytes in base64'),
   /** Staff session cookie name. Production uses the __Host- prefix (needs HTTPS). */
   SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{3,40}$/).default('__Host-rb_admin'),
-  /** Run the job worker, outbox relay and scheduler inside the API process (local development only). */
-  DEV_INLINE_WORKER: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
+  /**
+   * Run the job worker, outbox relay and scheduler inside the API process. Left unset it is on when APP_ENV is local or ci (pictures, search, emails and
+   * every other background task would silently wait otherwise) and off elsewhere, where `src/worker.js` runs as its own process.
+   */
+  DEV_INLINE_WORKER: z.enum(['0', '1']).optional().transform((v) => (v === undefined ? undefined : v === '1')),
+  /** How many milliseconds a picture's confirm request may spend making the picture ready itself before leaving it to the queue; 0 always queues. */
+  MEDIA_INLINE_BUDGET_MS: z.coerce.number().int().min(0).max(30_000).default(6_000),
   /** Where files live. Only `local` (a folder, development only) exists yet; the S3 driver comes with deployment (plan/14-devops.md). */
   STORAGE_DRIVER: z.enum(['local']).default('local'),
   LOCAL_STORAGE_DIR: z.string().min(1).default('.data/storage'),
@@ -56,7 +61,7 @@ const Env = z.object({
   if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
     ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for development only' })
   }
-})
+}).transform((env) => ({ ...env, DEV_INLINE_WORKER: env.DEV_INLINE_WORKER ?? (env.APP_ENV === 'local' || env.APP_ENV === 'ci') }))
 
 /**
  * @typedef {Readonly<z.output<typeof Env>>} Config

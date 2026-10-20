@@ -10,6 +10,7 @@ import { sessionEvents } from '@/lib/events'
 import { startShortcuts } from '@/lib/shortcuts'
 import { setPrefs, usePrefs } from '@/lib/prefs'
 import { meKey, useCan, useMe } from '@/lib/session'
+import { BackgroundBanner } from './background-banner'
 import { CommandPalette } from './command-palette'
 import { GlobalShortcuts } from './global-shortcuts'
 import { ShortcutHelp } from './shortcut-help'
@@ -77,6 +78,7 @@ function Shell() {
             {me.environment === 'staging' ? 'Staging' : 'Local'}: test data
           </p>
         )}
+        <BackgroundBanner />
         <TopBar onOpenMenu={() => setDrawer(true)} onOpenPalette={() => setPalette(true)} />
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none lg:p-6">
           {required && !can(required) ? <ErrorState title="You don't have access to this page" body="Ask an owner or manager." /> : <Outlet />}

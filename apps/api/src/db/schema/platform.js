@@ -34,6 +34,19 @@ export const jobs = mysqlTable(
   (t) => [uniqueIndex('jobs_unique_key_uq').on(t.uniqueKey), index('jobs_claim_idx').on(t.runAt), index('jobs_type_idx').on(t.type)],
 )
 
+/**
+ * One row for each background process that has run: it writes `beatAt` every few seconds while it lives. A reader that finds no recent beat knows the queue is
+ * not being worked (the admin warns), without anyone having to look at the server. The counters say what this process has done since it started.
+ */
+export const workerHeartbeats = mysqlTable('worker_heartbeats', {
+  workerId: varchar('worker_id', { length: 64 }).primaryKey(),
+  mode: varchar('mode', { length: 16 }).notNull(), // 'inline' (inside the API) or 'separate' (src/worker.js)
+  startedAt: utc('started_at').notNull(),
+  beatAt: utc('beat_at').notNull(),
+  jobsDone: int('jobs_done').notNull().default(0),
+  jobsFailed: int('jobs_failed').notNull().default(0),
+})
+
 export const jobsDead = mysqlTable(
   'jobs_dead',
   {

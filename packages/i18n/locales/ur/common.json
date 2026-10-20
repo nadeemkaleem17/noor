@@ -63,5 +63,12 @@
   "dropHere": "تصاویر یہاں چھوڑیں یا فائلیں چنیں",
   "uploading": "اپ لوڈ ہو رہا ہے",
   "uploadFailed": "اپ لوڈ نہیں ہو سکا",
+  "uploadStage": {
+    "checking": "Checking the picture",
+    "sending": "Sending",
+    "sendingPercent": "Sending {percent}%",
+    "confirming": "Finishing",
+    "processing": "Getting it ready"
+  },
   "removeImage": "تصویر ہٹائیں"
 }

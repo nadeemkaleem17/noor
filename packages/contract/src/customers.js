@@ -4,9 +4,32 @@ import { z } from 'zod'
 import { Money } from './money-schema.js'
 import { CsvFile, Page, PageQuery, flag, qint } from './pagination.js'
 import { Id, IsoDate } from './primitives.js'
+import { Day } from './reporting.js'
 import { defineRoutes } from './routes.js'
 
 const IdParams = z.strictObject({ id: Id })
+
+/** A colour the admin gives a customer because of a rule staff wrote (customers with orders in a range, or visits in a range). */
+export const CustomerHighlight = z.strictObject({ ruleId: Id, kind: z.enum(['orders', 'visits']), label: z.string(), color: z.string() })
+/** @typedef {z.infer<typeof CustomerHighlight>} CustomerHighlight */
+
+export const HighlightColor = z.string().regex(/^#[0-9a-f]{6}$/i, 'invalid_format')
+const ruleShape = {
+  kind: z.enum(['orders', 'visits']),
+  minCount: z.int().min(0).max(100_000),
+  /** Empty: no upper limit. */
+  maxCount: z.int().min(0).max(100_000).optional(),
+  color: HighlightColor,
+  label: z.string().trim().min(1).max(40),
+  enabled: z.boolean(),
+}
+const maxAfterMin = (/** @type {{ minCount: number, maxCount?: number }} */ r) => r.maxCount === undefined || r.maxCount >= r.minCount
+const tooSmall = { message: 'too_small', path: ['maxCount'] }
+/** A rule with an `id` is a change to that rule; one without is new; a rule left out of the list is deleted. */
+export const HighlightRuleInput = z.strictObject({ id: Id.optional(), ...ruleShape }).refine(maxAfterMin, tooSmall)
+export const HighlightRule = z.strictObject({ id: Id, ...ruleShape }).refine(maxAfterMin, tooSmall)
+/** @typedef {z.infer<typeof HighlightRule>} HighlightRule */
+export const maxHighlightRules = 30
 
 export const AdminCustomerRow = z.strictObject({
   id: Id,
@@ -22,6 +45,13 @@ export const AdminCustomerRow = z.strictObject({
   noCod: z.boolean(),
   vip: z.boolean(),
   marketingConsent: z.boolean(),
+  /** When the customer was first recorded: their first order. */
+  createdAt: IsoDate,
+  /** Visits by the browsers this customer ordered from; the order counts above are a separate thing. */
+  visitsCount: z.int(),
+  lastVisitAt: IsoDate.optional(),
+  /** The enabled rules that match this customer now: at most one for orders and one for visits. */
+  highlights: z.array(CustomerHighlight),
 })
 
 export const CustomerNote = z.strictObject({ id: Id, body: z.string(), staffName: z.string().optional(), createdAt: IsoDate })
@@ -36,21 +66,41 @@ export const AdminCustomer = AdminCustomerRow.extend({
   /** Taken from the customer's orders (M4-04); empty until there are any. */
   addresses: z.array(z.strictObject({ city: z.string(), address: z.string(), landmark: z.string().optional(), lastUsedAt: IsoDate })),
   notes: z.array(CustomerNote),
+  /** The latest visits of the browsers linked to this customer, newest first. */
+  recentVisits: z.array(z.strictObject({ startedAt: IsoDate, landingPath: z.string() })),
+  /** How many browsers (phones, laptops) are linked to this customer. */
+  devices: z.int(),
   version: z.int(),
   anonymisedAt: IsoDate.optional(),
 })
 /** @typedef {z.infer<typeof AdminCustomer>} AdminCustomer */
 /** @typedef {z.infer<typeof AdminCustomerRow>} AdminCustomerRow */
 
-export const customerSorts = /** @type {const} */ (['name', 'city', 'ordersCount', 'refusedCount', 'spent', 'lastOrderAt'])
+export const customerSorts = /** @type {const} */ (['name', 'city', 'ordersCount', 'refusedCount', 'spent', 'lastOrderAt', 'visitsCount', 'createdAt'])
 
 export const CustomerListQuery = PageQuery.extend({
-  sort: z.string().regex(/^-?(name|city|ordersCount|refusedCount|spent|lastOrderAt)$/).optional(),
+  sort: z.string().regex(/^-?(name|city|ordersCount|refusedCount|spent|lastOrderAt|visitsCount|createdAt)$/).optional(),
   cityName: z.string().trim().min(1).max(60).optional(),
   flag: z.enum(['no_cod', 'vip', 'consent']).optional(),
   minOrders: qint(z.number().int().min(1).max(1000)).optional(),
   hasRefusals: flag.optional(),
+  minVisits: qint(z.number().int().min(1).max(100_000)).optional(),
+  /** Only the customers one highlight rule colours now. */
+  rule: Id.optional(),
 })
+
+export const VisitSummary = z.strictObject({
+  visits: z.int(),
+  visitors: z.int(),
+  /** Visitors whose first visit is in the period. */
+  newVisitors: z.int(),
+  /** Visitors seen in the period who had come before it. */
+  returningVisitors: z.int(),
+  /** Visitors who have since ordered from that browser (so they are linked to a customer). */
+  identifiedVisitors: z.int(),
+  days: z.array(z.strictObject({ day: Day, visits: z.int(), visitors: z.int() })),
+})
+/** @typedef {z.infer<typeof VisitSummary>} VisitSummary */
 
 export const CustomerExportBody = CustomerListQuery.omit({ page: true, size: true, sort: true }).strict()
 
@@ -67,7 +117,20 @@ export const CustomerUpdate = z
   })
   .refine((c) => !c.noCod || Boolean(c.noCodReason), { message: 'required', path: ['noCodReason'] })
 
+const VisitorId = z.string().regex(/^[0-9a-f]{32}$/, 'invalid_format')
+
 export const customerRoutes = defineRoutes({
+  // a browser says a page was opened; the shop's server passes it on with the visitor's own cookie value and never with an address or a browser name
+  'visits.record': { method: 'POST', path: '/visits', auth: 'public', status: 204, body: z.strictObject({ visitor: VisitorId, path: z.string().max(200) }), response: z.undefined() },
+  // after an order: the order's link proves this browser placed it, so its visits belong to that customer from now on
+  'visits.link': { method: 'POST', path: '/visits/link', auth: 'public', status: 204, body: z.strictObject({ visitor: VisitorId, order: z.string().min(10).max(200) }), response: z.undefined() },
+  'admin.customers.highlightRules.list': { method: 'GET', path: '/admin/customers/highlight-rules', auth: 'staff', permission: 'customers:read', response: z.strictObject({ items: z.array(HighlightRule) }) },
+  'admin.customers.highlightRules.save': {
+    method: 'PUT', path: '/admin/customers/highlight-rules', auth: 'staff', permission: 'customers:write',
+    body: z.strictObject({ rules: z.array(HighlightRuleInput).max(maxHighlightRules) }),
+    response: z.strictObject({ items: z.array(HighlightRule) }),
+  },
+  'admin.customers.visits': { method: 'GET', path: '/admin/customers/visit-summary', auth: 'staff', permission: 'customers:read', query: z.strictObject({ from: Day, to: Day }), response: VisitSummary },
   'admin.customers.list': { method: 'GET', path: '/admin/customers', auth: 'staff', permission: 'customers:read', query: CustomerListQuery, response: Page(AdminCustomerRow) },
   'admin.customers.lookup': {
     method: 'GET', path: '/admin/customers/by-phone', auth: 'staff', permission: 'orders:edit',

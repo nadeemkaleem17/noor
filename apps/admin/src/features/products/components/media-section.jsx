@@ -60,10 +60,10 @@ export function MediaSection({ onBusyChange }) {
       {media.fields.length < maxImages ? (
         <ImageUpload
           multiple
-          value={[]}
+          value={/** @type {{ id: string, src: string, alt?: string }[]} */ ([])}
           maxFiles={maxImages - media.fields.length}
           label="Drop pictures here or choose files"
-          upload={(file) => uploadImage(file, (note) => toast.push({ title: note, tone: 'warning' }))}
+          upload={(file, control) => uploadImage(file, (note) => toast.push({ title: note, tone: 'warning' }), undefined, control)}
           describeError={uploadErrorText}
           onBusyChange={onBusyChange}
           onChange={(uploaded) => {

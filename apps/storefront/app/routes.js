@@ -34,4 +34,4 @@ const pages = (id) => [
   ]),
 ]
 
-export default /** @satisfies {import('@react-router/dev/routes').RouteConfig} */ ([route('healthz', 'routes/healthz.js'), route('vitals', 'routes/vitals.js'), route('robots.txt', 'routes/robots.js'), route('sitemap.xml', 'routes/sitemap.js'), route('sitemap/:n.xml', 'routes/sitemap-file.js'), ...pages(''), ...prefix('ur', pages('-ur'))])
+export default /** @satisfies {import('@react-router/dev/routes').RouteConfig} */ ([route('healthz', 'routes/healthz.js'), route('vitals', 'routes/vitals.js'), route('visit', 'routes/visit.js'), route('robots.txt', 'routes/robots.js'), route('sitemap.xml', 'routes/sitemap.js'), route('sitemap/:n.xml', 'routes/sitemap-file.js'), ...pages(''), ...prefix('ur', pages('-ur'))])

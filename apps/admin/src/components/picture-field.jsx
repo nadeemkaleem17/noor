@@ -15,7 +15,7 @@ export function PictureField({ mediaId, src, onPick, label, disabled = false, li
         const last = list.at(-1)
         onPick(last ? { id: last.id, src: last.src } : null)
       }}
-      upload={(file) => uploadImage(file, onWarn, limits)}
+      upload={(file, control) => uploadImage(file, onWarn, limits, control)}
       describeError={uploadErrorText}
     />
   )

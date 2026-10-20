@@ -20,7 +20,7 @@ const app = await buildApp({ config, db, readiness: databaseReadiness(pool) })
 app.addHook('onClose', async () => pool.end())
 
 if (config.DEV_INLINE_WORKER) {
-  const background = startBackground({ db, ...backgroundOf({ db, config, log: app.log }), eventHandlers, log: app.log })
+  const background = startBackground({ db, ...backgroundOf({ db, config, log: app.log }), eventHandlers, log: app.log, mode: 'inline' })
   app.addHook('onClose', async () => background.stop())
 }
 

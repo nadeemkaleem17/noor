@@ -192,7 +192,7 @@ describe.skipIf(!dbAvailable)('media (MySQL + local storage, through HTTP)', () 
   })
 
   describe('confirming', () => {
-    it('needs the file to be there, and queues the check once however often it is called', async () => {
+    it('needs the file to be there, then makes a small picture ready in the same request and leaves nothing in the queue', async () => {
       const { b } = await signedIn('catalog')
       const data = await jpeg(100, 100)
       const slot = (await b.call('POST', '/admin/media/uploads', { body: { filename: 'a.jpg', contentType: 'image/jpeg', bytes: data.length } })).body
@@ -201,10 +201,26 @@ describe.skipIf(!dbAvailable)('media (MySQL + local storage, through HTTP)', () 
       expect(await t.db.select().from(jobs)).toHaveLength(0)
       const url = new URL(slot.uploadUrl)
       await app.inject({ method: 'PUT', url: url.pathname + url.search, headers: { ...slot.headers, origin: ORIGIN }, payload: data })
-      for (let i = 0; i < 3; i++) expect((await b.call('POST', `/admin/media/${slot.mediaId}/confirm`)).body.status).toBe('pending')
+      const first = await b.call('POST', `/admin/media/${slot.mediaId}/confirm`)
+      expect(first.body).toMatchObject({ status: 'ready', width: 100, height: 100 })
+      expect(await t.db.select().from(jobs), 'the fast path finished the work, so its queued job was removed').toHaveLength(0)
+      for (let i = 0; i < 2; i++) expect((await b.call('POST', `/admin/media/${slot.mediaId}/confirm`)).body.status).toBe('ready')
+      expect(await t.db.select().from(jobs)).toHaveLength(0)
+    }, 60_000)
+
+    it('with no time budget, or when the fast path runs out of it, the work stays queued once however often confirm is called, and the job finishes it', async () => {
+      const { b } = await signedIn('catalog')
+      const data = await jpeg(100, 100)
+      const slot = (await b.call('POST', '/admin/media/uploads', { body: { filename: 'a.jpg', contentType: 'image/jpeg', bytes: data.length } })).body
+      const url = new URL(slot.uploadUrl)
+      await app.inject({ method: 'PUT', url: url.pathname + url.search, headers: { ...slot.headers, origin: ORIGIN }, payload: data })
+      const queuedOnly = createMediaService({ db: t.db, config, storage, inlineBudgetMs: 0 })
+      for (let i = 0; i < 3; i++) expect((await queuedOnly.confirm(slot.mediaId)).status).toBe('pending')
       const queued = await t.db.select().from(jobs)
       expect(queued).toHaveLength(1)
       expect(queued[0]).toMatchObject({ type: 'media.process', payload: { mediaId: slot.mediaId } })
+      await service.process(slot.mediaId) // what the worker does with the job
+      expect((await service.get(slot.mediaId)).status).toBe('ready')
     }, 60_000)
 
     it('processing the same media twice changes nothing the second time', async () => {

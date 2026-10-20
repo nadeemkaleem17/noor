@@ -4,6 +4,7 @@ import { now } from '../platform/clock.js'
 import { ensureCounter } from '../platform/counters.js'
 import { uuidv7 } from '../platform/ids.js'
 import { menus, pages, settings } from '../db/schema/content.js'
+import { customerHighlightRules } from '../db/schema/visits.js'
 import { shippingZones } from '../db/schema/shipping.js'
 import { sizeSystemValues, sizeSystems } from '../db/schema/taxonomy.js'
 import { defaults } from '../modules/settings/defaults.js'
@@ -20,6 +21,14 @@ const REVIEW = ' (review fees before launch)'
 export const baseSizeSystems = [
   { name: "Women's stitched", labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
   { name: 'Footwear EU', labels: ['36', '37', '38', '39', '40', '41'] },
+]
+
+/** A first set of highlight rules, only to show how it works: staff change, switch off or delete every one of them in Customers. */
+export const baseHighlightRules = [
+  { kind: /** @type {const} */ ('orders'), minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New customer' },
+  { kind: /** @type {const} */ ('orders'), minCount: 6, maxCount: 10, color: '#f59e0b', label: 'Regular' },
+  { kind: /** @type {const} */ ('orders'), minCount: 11, maxCount: null, color: '#16a34a', label: 'Loyal' },
+  { kind: /** @type {const} */ ('visits'), minCount: 2, maxCount: null, color: '#8b5cf6', label: 'Repeat visitor' },
 ]
 
 /**
@@ -41,6 +50,14 @@ export async function seedBase(db, { search }) {
   const docs = /** @type {const} */ (['store', 'theme', 'home', 'payments', 'checkout']).filter((k) => !have.has(k))
   for (const key of docs) await db.insert(settings).values({ key, value: defaults[key], version: 1, updatedAt: at })
   done.settings = docs.length
+
+  // the colours of Customers: written once, when there are none; a shop that deleted every rule would get them back from a later run of the seed
+  const haveRules = (await db.select({ id: customerHighlightRules.id }).from(customerHighlightRules).limit(1)).length
+  done.highlightRules = 0
+  if (!haveRules) {
+    for (const r of baseHighlightRules) await db.insert(customerHighlightRules).values({ id: uuidv7(), ...r, enabled: true, createdAt: at, updatedAt: at })
+    done.highlightRules = baseHighlightRules.length
+  }
 
   // menus
   const haveMenus = new Set((await db.select({ h: menus.handle }).from(menus)).map((m) => m.h))

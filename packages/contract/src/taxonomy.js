@@ -28,6 +28,13 @@ export const CategoryInput = z.strictObject({
 })
 export const AdminCategory = CategoryInput.safeExtend({
   id: Id, sortOrder: z.int(), productCount: z.int(), image: Image.optional(), version: z.int().min(1),
+  /** Whether the shop offers this category and, when it does not, why: so nobody has to guess why a category they made is not on the website. */
+  shop: z.strictObject({
+    shown: z.boolean(),
+    reason: z.enum(['hidden', 'parent_hidden', 'no_live_products']).optional(),
+    /** Products a customer can buy in it or below it (active ones only: a draft does not count). */
+    liveProducts: z.int(),
+  }),
 })
 
 // ---- attributes --------------------------------------------------------------------------------------------------------------

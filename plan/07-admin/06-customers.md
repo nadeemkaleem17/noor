@@ -28,9 +28,21 @@ A customer is the record the API keeps **per phone number** (E.164), created or 
 | Refused / returned | Count; `danger` tone when > 0 | yes |
 | Spent | Sum of delivered order totals | yes |
 | Last order | Relative date | yes (default, newest) |
-| Flags | "No COD", "VIP", marketing consent | |
+| Customer since | When the customer was first recorded (their first order) | yes |
+| Visits | Visits by the browsers this customer ordered from (kept apart from Orders); `Last visit` beside it | yes |
+| Flags | "No COD", "VIP", marketing consent, then the **highlight chips** (§2.1) | |
 
-Filters: `q` (name, phone digits, email), `city`, `flag`, `minOrders`, `hasRefusals`. No bulk actions except Export (needs `customers:export`; the export is logged in the audit log with the filter used, and capped at 5,000 rows per request).
+Filters: `q` (name, phone digits, email), `city`, `flag`, `minOrders`, `hasRefusals`, `minVisits`, `rule` (the customers one highlight rule colours). No bulk actions except Export (needs `customers:export`; the export is logged in the audit log with the filter used, and capped at 5,000 rows per request).
+
+### 2.1 Website visits strip and highlight chips (added 2026-10-19)
+
+Above the table, **Website visits** shows, for the last 7, 30 or 90 days (Pakistan days): visits, visitors, new visitors, returning visitors and "Became customers" (visitors who later ordered from that browser). These are totals without names. A visit is the first page of a stay that begins more than 30 minutes after the browser's last page.
+
+Beside the name, a chip per matching **highlight rule** (at most one for orders and one for visits). The chip is the rule's own colour with black or white text, whichever reads better, and always shows the rule's name, so colour is never the only signal. The rules are rows staff edit; nothing about ranges or colours is in the code.
+
+### 2.2 Highlight rules (`/customers/highlights`)
+
+`customers:read` sees the rules, `customers:write` edits them. One form for the whole list: each rule has **Counts** (orders placed or website visits), **From**, **Up to** (empty = no limit), **Name shown**, **Colour** (picker and `#rrggbb`), **On** (a rule that is off colours nobody) and Delete. A live preview chip shows the result. Add a rule with "Add a rule" (at most 30). Nothing is saved until **Save rules**; "Discard changes" returns to the saved list. Save is refused, with the reason beside the field, for a colour that is not `#rrggbb`, a name over 40 characters or an "Up to" below "From". When two enabled rules of one kind overlap, a warning says which one is used (the one that starts lower; ties go to the older rule). Every save is written to the audit log. The first set (1 to 5 orders blue, 6 to 10 amber, 11 and over green, 2 or more visits violet) is only an example: the base seed adds it to a shop with no rules, and staff may change or delete every one.
 
 ## 3. Detail (`/customers/:id`)
 

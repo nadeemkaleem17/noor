@@ -60,6 +60,16 @@ Derived counters are updated in the order transition transaction by `customers.a
 
 `id` PK · `customer_id` FK → `customers.id` CASCADE, IX · `body varchar(1000)` NN · `staff_user_id` FK → `staff_users.id` SET NULL · `created_at`. Add-only.
 
+### 2.3 Visits and highlight rules (added 2026-10-19)
+
+`customers` gets two derived columns, `visits_count int NN default 0` and `last_visit_at`, changed only by `customers.addVisits` (called in the visits module's transaction), kept apart from the order counters.
+
+| Table | Columns | Notes |
+|---|---|---|
+| `visitors` | `id char(32)` PK (the value of the shop's cookie `nc_vid`) · `customer_id` FK → `customers.id` SET NULL, IX · `first_seen_at` · `last_visit_at` (the last page, so it also measures the 30-minute gap) · `visits_count` | One row per browser. No address, no browser name. Linked to a customer only by `visits.link` after an order. Deleted when its customer is anonymised. |
+| `visits` | `id` PK · `visitor_id` FK → `visitors.id` CASCADE · `started_at` · `landing_path varchar(120)` | One row per visit. IX `(visitor_id, started_at)`, `(started_at)`. |
+| `customer_highlight_rules` | `id` PK · `kind enum('orders','visits')` · `min_count` · `max_count` NULL (no limit) · `color varchar(7)` · `label varchar(40)` · `enabled` · `created_at` · `updated_at` | IX `(kind, min_count)`. Edited as a whole list. |
+
 ## 3. Order tables
 
 ### 3.1 `orders`

@@ -268,6 +268,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       return { ...s, id: r.body.mediaId }
     }
     samples['admin.media.update'] = { prepare: slot, act: ({ b, id }) => b.call('PUT', `/admin/media/${id}`, { body: { alt: 'Green suit' } }) }
+    samples['admin.customers.highlightRules.save'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('PUT', '/admin/customers/highlight-rules', { body: { rules: [{ kind: 'orders', minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New', enabled: true }] } }) }
+    samples['admin.searchIndex.rebuild'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/search-index/rebuild') }
     samples['admin.media.delete'] = { prepare: slot, act: ({ b, id }) => b.call('DELETE', `/admin/media/${id}`) }
 
     /** The five documents, a page and a menu: one sample each. Versions start at 0 because nothing was saved yet. */

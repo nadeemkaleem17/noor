@@ -6,6 +6,7 @@
 export function reportingHandlers(s) {
   return {
     'admin.nav.counts': async ({ actor }) => s.navCounts(actor),
+    'admin.background.status': async () => s.backgroundStatus(),
     'admin.dashboard.todo': async ({ actor }) => s.todo(actor),
     'admin.dashboard.summary': async ({ actor, query }) => s.summary(actor, query),
     'admin.dashboard.topProducts': async ({ actor, query }) => s.topProducts(actor, query),

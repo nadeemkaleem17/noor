@@ -306,6 +306,7 @@ Rules: no secret in the repository, in the contract, in the database, in logs or
 | Review display name, text, photos | reviews | public once approved | Until removed |
 | Staff name, email, IP, user agent | staff, sessions, audit | owner, manager | Sessions 14 days; audit per §6 |
 | IP addresses of customers | rate-limit counters, access logs | system | Counters 24 h; logs per DOC-14 |
+| Visitor number (`nc_vid` cookie) and the visits of that browser | `visitors`, `visits` | `customers:read` (counts and the last 10 page addresses of a customer) | Visits are kept; a customer's browsers are deleted when the customer is anonymised. The shop sends nothing and sets no cookie for a browser that sends Do Not Track or Global Privacy Control, for known robots, or while Store settings → Features → Count visits is off. |
 
 Payment card data is never collected or stored by us (hosted redirect only, ADR-0017).
 

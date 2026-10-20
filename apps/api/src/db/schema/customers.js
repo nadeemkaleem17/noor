@@ -25,6 +25,9 @@ export const customers = mysqlTable(
     spentMinor: bigint('spent_minor', { mode: 'number' }).notNull().default(0),
     firstOrderAt: utc('first_order_at'),
     lastOrderAt: utc('last_order_at'),
+    // Derived from the visitors that belong to this customer (modules/visits is the only writer): kept apart from the order counters on purpose.
+    visitsCount: int('visits_count').notNull().default(0),
+    lastVisitAt: utc('last_visit_at'),
     anonymisedAt: utc('anonymised_at'),
     version: int('version').notNull().default(1),
     createdAt: utc('created_at').notNull(),
@@ -37,6 +40,7 @@ export const customers = mysqlTable(
     index('customers_email_idx').on(t.email),
     index('customers_city_idx').on(t.city),
     index('customers_refused_idx').on(t.refusedCount),
+    index('customers_visits_idx').on(t.visitsCount),
   ],
 )
 

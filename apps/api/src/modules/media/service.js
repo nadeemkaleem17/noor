@@ -4,7 +4,7 @@ import { DomainError } from '../../platform/errors.js'
 import { transaction } from '../../platform/db.js'
 import { now } from '../../platform/clock.js'
 import { uuidv7 } from '../../platform/ids.js'
-import { enqueue } from '../../platform/jobs.js'
+import { complete, enqueue } from '../../platform/jobs.js'
 import { newMediaKey } from '../../platform/storage.js'
 import { record } from '../audit/index.js'
 import { EXTENSIONS, SNIFF_BYTES, sniff, toImage } from './images.js'
@@ -12,6 +12,11 @@ import { RejectedUpload, processImage } from './processor.js'
 import * as repo from './repository.js'
 
 const DAY = 86_400_000
+/**
+ * The default time a confirm request may spend making the picture ready itself (`MEDIA_INLINE_BUDGET_MS`). Most pictures are done well inside it, so the person sees
+ * the result at once and nothing waits for a queue; a slow or failing one is left to the background job, which is always queued first (nothing is lost if this process dies half way).
+ */
+export const INLINE_BUDGET_MS = 6_000
 
 /**
  * @typedef {{ staffId: string, name: string, role: string }} Staff
@@ -24,8 +29,9 @@ const DAY = 86_400_000
  * @param {import('../../platform/config.js').Config} deps.config
  * @param {import('../../platform/storage.js').Storage} deps.storage
  * @param {(mediaId: string) => Promise<boolean>} [deps.inUse] does something outside the database's foreign keys (a settings document) still use this file?
+ * @param {number} [deps.inlineBudgetMs] overrides the configuration (tests); 0 always leaves the work to the queue
  */
-export function createMediaService({ db, config, storage, inUse = async () => false }) {
+export function createMediaService({ db, config, storage, inUse = async () => false, inlineBudgetMs = config.MEDIA_INLINE_BUDGET_MS ?? INLINE_BUDGET_MS }) {
   /** @param {Staff} a @param {RequestInfo} req */
   const actorOf = (a, req) => ({ actor: { type: /** @type {const} */ ('staff'), id: a.staffId, label: a.name, role: a.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId })
 
@@ -60,7 +66,7 @@ export function createMediaService({ db, config, storage, inUse = async () => fa
     await storage.removeWithSizes(m.objectKey)
   }
 
-  return {
+  const self = {
     /** A customer's review photo has no staff member behind it (`actor` undefined). @param {Staff | undefined} actor @param {{ contentType: keyof typeof EXTENSIONS, bytes: number }} input */
     async createUpload(actor, { contentType, bytes }) {
       const id = uuidv7()
@@ -75,10 +81,24 @@ export function createMediaService({ db, config, storage, inUse = async () => fa
       const m = await mustFind(id)
       if (m.status !== 'pending' || m.confirmedAt) return toInfo(m) // confirming twice changes nothing
       if ((await storage.size(m.objectKey)) === null) throw new DomainError('validation_failed', { issues: [{ path: 'upload', code: 'required' }] })
+      /** @type {string} */
+      let jobId = ''
       await transaction(db, async (tx) => {
         await repo.update(tx, id, { confirmedAt: now() })
-        await enqueue(tx, { type: 'media.process', payload: { mediaId: id }, uniqueKey: `media.process:${id}` })
+        jobId = await enqueue(tx, { type: 'media.process', payload: { mediaId: id }, uniqueKey: `media.process:${id}` })
       })
+      // the fast path: make it ready now if that takes no longer than the budget; then the queued job is no longer needed
+      if (inlineBudgetMs > 0) {
+        let timer
+        const finished = await Promise.race([
+          self.process(id).then(() => true, () => false),
+          new Promise((resolve) => {
+            timer = setTimeout(() => resolve(false), inlineBudgetMs)
+          }),
+        ])
+        clearTimeout(timer)
+        if (finished) await complete(db, jobId)
+      }
       return toInfo(await mustFind(id))
     },
 
@@ -167,4 +187,5 @@ export function createMediaService({ db, config, storage, inUse = async () => fa
       }
     },
   }
+  return self
 }

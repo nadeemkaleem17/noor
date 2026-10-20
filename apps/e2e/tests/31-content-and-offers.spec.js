@@ -29,7 +29,7 @@ test('the FAQ and the care guide exist, are in the footer under Help, and the FA
 
 test('a product links to the care guide', async ({ page }) => {
   await page.goto('/p/cotton-kurta')
-  await page.getByText('Fabric and care', { exact: true }).first().click()
+  await page.locator('summary', { hasText: 'Fabric and care' }).click()
   await expect(page.getByRole('link', { name: 'Fabric and care guide' })).toHaveAttribute('href', '/pages/care')
 })
 
@@ -50,7 +50,8 @@ test('the footer of every page has the trust row', async ({ page }) => {
 
 test('a promo staff make public is on the Offers page with its code and rule, and the footer links to it', async ({ page }) => {
   const api = await adminApi()
-  await createPromo(api, { code: 'WELCOME10', percent: 10, minSpendRupees: 3000 }).then(async (p) => {
+  const offerCode = `WELCOME${Date.now().toString(36).slice(-5).toUpperCase()}` // one a run: a code cannot be made twice
+  await createPromo(api, { code: offerCode, percent: 10, minSpendRupees: 3000 }).then(async (p) => {
     // made public after creating it, the way staff do it from the form
     await api.put(`/admin/promos/${p.id}`, { ...Object.fromEntries(Object.entries(p).filter(([k]) => !['id', 'status', 'usageCount', 'used', 'targets', 'summary', 'createdAt'].includes(k))), public: true })
   })
@@ -59,10 +60,11 @@ test('a promo staff make public is on the Offers page with its code and rule, an
   // the shop keeps what it knows for 30 s: look again until the code is there
   await expect(async () => {
     await page.reload()
-    await expect(page.getByText('WELCOME10')).toBeVisible({ timeout: 1500 })
+    await expect(page.getByText(offerCode)).toBeVisible({ timeout: 1500 })
+    // the footer link comes from the shell data, which is kept for 30 s on its own: it is looked at in the same loop
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Offers' })).toHaveAttribute('href', '/offers', { timeout: 1500 })
   }).toPass({ timeout: 45_000 })
-  await expect(page.getByText(/10% off, on orders over Rs\. 3,000/)).toBeVisible()
-  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Offers' })).toHaveAttribute('href', '/offers')
-  await expect(page.getByRole('button', { name: 'Copy code' })).toBeVisible()
+  await expect(page.getByRole('listitem').filter({ hasText: offerCode }).getByText(/10% off, on orders over Rs\. 3,000/)).toBeVisible()
+  await expect(page.getByRole('listitem').filter({ hasText: offerCode }).getByRole('button', { name: 'Copy code' })).toBeVisible()
   await expectNoViolations(page)
 })
