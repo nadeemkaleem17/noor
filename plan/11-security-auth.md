@@ -146,6 +146,11 @@ A permission is a `resource:action` string; a role is a fixed set of them (GLOSS
 | `customers:write` (notes, flags) | ✓ | ✓ | | | ✓ | |
 | `customers:export` | ✓ | | | | | |
 | `customers:anonymise` | ✓ | | | | | |
+| `deliveries:read` (delivery people, runs, a run's orders) | ✓ | ✓ | | ✓ | ✓ | |
+| `deliveries:assign` (give orders to a rider, send out, deliver, fail, return, close) | ✓ | ✓ | | ✓ | | |
+| `ledger:read` (a rider's cash ledger and the receipts) | ✓ | ✓ | | | | |
+| `ledger:write` (cash handed in, fee payouts, adjustments) | ✓ | ✓ | | | | |
+| `receipts:void` | ✓ | ✓ | | | | |
 | `promos:read` | ✓ | ✓ | | | ✓ | |
 | `promos:write` | ✓ | ✓ | | | | |
 | `promos:delete` | ✓ | ✓ | | | | |

@@ -1,6 +1,6 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Bell, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
@@ -32,6 +32,11 @@ const order = () => import('@/routes/order')
 const orderNew = () => import('@/routes/order-new')
 const customers = () => import('@/routes/customers')
 const customerHighlights = () => import('@/routes/customer-highlights')
+const deliveryRuns = () => import('@/routes/delivery-runs')
+const deliveryRun = () => import('@/routes/delivery-run')
+const deliveryPeople = () => import('@/routes/delivery-people')
+const deliveryPerson = () => import('@/routes/delivery-person')
+const deliveryReceipts = () => import('@/routes/delivery-receipts')
 const customer = () => import('@/routes/customer')
 const promos = () => import('@/routes/promos')
 const reviews = () => import('@/routes/reviews')
@@ -60,6 +65,11 @@ export const screens = [
   { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: customers },
   { path: '/customers/highlights', title: 'Highlight rules', permission: 'customers:read', lazy: customerHighlights },
   { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: customer },
+  { path: '/delivery/runs', title: 'Delivery runs', permission: 'deliveries:read', group: 'Sales', icon: Truck, lazy: deliveryRuns },
+  { path: '/delivery/runs/:id', title: 'Delivery run', permission: 'deliveries:read', lazy: deliveryRun },
+  { path: '/delivery/people', title: 'Delivery people', permission: 'deliveries:read', group: 'Sales', icon: Bike, lazy: deliveryPeople },
+  { path: '/delivery/people/:id', title: 'Delivery person', permission: 'ledger:read', lazy: deliveryPerson },
+  { path: '/delivery/receipts', title: 'Receipts', permission: 'ledger:read', group: 'Sales', icon: Receipt, lazy: deliveryReceipts },
   { path: '/promos', title: 'Promo codes', permission: 'promos:read', group: 'Sales', icon: Tag, lazy: promos },
   { path: '/reviews', title: 'Reviews', permission: 'reviews:read', group: 'Sales', icon: Star, badge: 'reviewsPending', feature: 'reviews', lazy: reviews },
 

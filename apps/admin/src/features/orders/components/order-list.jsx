@@ -17,6 +17,7 @@ import { useShortcut } from '@/lib/shortcuts'
 import { orderListSchema, orderQueries } from '../api'
 import { ageText, ageTone, isWholePhone, waLink } from '../format'
 import { humanise, methodLabel } from '../labels'
+import { AssignDialog } from './assign-dialog'
 import { BulkOrderDialog } from './bulk-order-dialog'
 import { ExportDialog } from './export-dialog'
 import { RiskChips } from './risk-chips'
@@ -183,11 +184,21 @@ export function OrderList() {
   /** @param {import('@/components/bulk-bar').BulkTarget} target @param {'confirm' | 'dispatch' | 'deliver'} kind @returns {Promise<import('@/components/bulk-bar').BulkOutcome>} */
   const ask = (target, kind) => new Promise((resolve) => (('ids' in target) ? setBulk({ kind, ids: target.ids, resolve }) : resolve({ cancelled: true })))
 
+  const [assigning, setAssigning] = useState(/** @type {string[] | null} */ (null))
   /** @type {import('@/components/bulk-bar').BulkAction[]} */
   const bulkActions = [
     { id: 'confirm', label: 'Confirm', permission: 'orders:confirm', done: (n) => `${n} confirmed`, run: (t) => ask(t, 'confirm') },
     { id: 'dispatch', label: 'Mark dispatched', permission: 'orders:dispatch', done: (n) => `${n} dispatched`, run: (t) => ask(t, 'dispatch') },
     { id: 'deliver', label: 'Mark delivered', permission: 'orders:deliver', done: (n) => `${n} delivered`, run: (t) => ask(t, 'deliver') },
+    {
+      id: 'assign',
+      label: 'Assign to a rider',
+      permission: 'deliveries:assign',
+      run: async (t) => {
+        if ('ids' in t) setAssigning(t.ids)
+        return { cancelled: true }
+      },
+    },
     {
       id: 'print',
       label: 'Print invoices',
@@ -267,6 +278,7 @@ export function OrderList() {
         empty={{ title: 'No orders here', body: 'Orders appear here as customers place them.' }}
       />
       <BulkOrderDialog request={bulk} onClose={() => setBulk(null)} />
+      <AssignDialog ids={assigning} nameOf={(id) => id.slice(0, 8)} onClose={() => setAssigning(null)} />
       <ExportDialog open={exporting} onClose={() => setExporting(false)} />
     </>
   )

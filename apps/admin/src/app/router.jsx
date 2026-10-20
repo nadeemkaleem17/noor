@@ -57,6 +57,7 @@ export const routes = [
   ...moved.map(([from, to]) => ({ path: from, loader: () => redirect(to) })),
   // the invoice pages have no shell: they are for the printer (plan/07-admin/05-orders.md section 5.2)
   ...['/orders/print', '/orders/:id/print'].map((path) => ({ path, loader: printLoader, lazy: () => import('@/routes/order-print'), HydrateFallback: Loading })),
+  ...[['/delivery/receipts/:id/print', 'delivery-receipt-print'], ['/delivery/runs/:id/print', 'delivery-run-print']].map(([path, file]) => ({ path, loader: printLoader, lazy: () => import(`../routes/${file}.jsx`), HydrateFallback: Loading })),
   {
     path: '/',
     loader: shellLoader,

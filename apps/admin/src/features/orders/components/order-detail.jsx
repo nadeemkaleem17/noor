@@ -309,8 +309,8 @@ function Notes({ order }) {
   )
 }
 
-/** `/orders/:id` (plan/07-admin/05-orders.md section 3). @param {{ id: string }} props */
-export function OrderDetail({ id }) {
+/** `/orders/:id` (plan/07-admin/05-orders.md section 3). `delivery` draws the delivery history of the order (composed by the route). @param {{ id: string; delivery?: (orderId: string) => import('react').ReactNode }} props */
+export function OrderDetail({ id, delivery }) {
   const can = useCan()
   const query = useQuery(orderQueries.detail(id))
   const { refetch } = useOrderMutations(id)
@@ -420,6 +420,7 @@ export function OrderDetail({ id }) {
         <div className="space-y-4">
           <Customer order={order} />
           <Delivery order={order} onEdit={allowed.some((a) => offers[a]?.action === 'edit') ? () => setAction('edit') : undefined} />
+          {delivery?.(order.id)}
           <Payment order={order} onPay={allowed.includes('record_payment') ? () => setAction('payment') : undefined} />
           {can('orders:note') ? <Notes order={order} /> : null}
         </div>

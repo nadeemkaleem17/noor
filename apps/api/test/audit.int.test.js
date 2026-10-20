@@ -493,6 +493,19 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
 
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
+      'admin.delivery.people.create': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.people.update': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.assign': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.runs.sendOut': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.runs.close': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.assignments.deliver': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.assignments.fail': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.assignments.return': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.assignments.remove': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.ledger.deposit': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.ledger.payFee': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.ledger.adjust': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
+      'admin.delivery.receipts.void': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.categories.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
       'admin.attributes.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',
       'admin.sizeCharts.bulkDelete': 'each item goes through the single delete, which writes its own audit entry (test/bulk-delete.int.test.js counts them)',

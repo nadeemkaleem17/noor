@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | ID | DOC-18 |
-| Status | Draft: decisions below are the defaults taken to build; the owner can change them |
+| Status | Built 2026-10-20 with the defaults below; the owner can change them |
 | Owner | Product owner |
 | Last updated | 2026-10-20 |
 | Depends on | DOC-09.7 (orders, payments), DOC-07.5 (admin orders), DOC-17 item 14 |
@@ -66,7 +66,7 @@ Every step writes an audit entry and appears in the **history** of the order, th
 
 ## 7. Routes
 
-`admin.delivery.people.{list,get,create,update}`, `admin.delivery.assign` (bulk), `admin.delivery.runs.{list,get,sendOut,close}`, `admin.delivery.assignments.{deliver,fail,return,remove}`, `admin.delivery.ledger.{statement,deposit,adjust,payFee}`, `admin.delivery.receipts.{list,get,void}`, `admin.orders.delivery` (the order's panel). Specified in `plan/10-api/09-admin-delivery.md`.
+`admin.delivery.people.{list,get,create,update}`, `admin.delivery.assign` (bulk), `admin.delivery.runs.{list,get,sendOut,close}`, `admin.delivery.assignments.{deliver,fail,return,remove}`, `admin.delivery.ledger.{statement,deposit,adjust,payFee}`, `admin.delivery.receipts.{list,get,void}`, `admin.orders.delivery` (the order's panel). Specified in `plan/10-api/09-admin-delivery.md`. Code: `apps/api/src/modules/delivery/`, `apps/admin/src/features/delivery/`, `apps/admin/src/lib/delivery.js` (shared by the Orders list).
 
 ## 8. Not built (say if wanted)
 

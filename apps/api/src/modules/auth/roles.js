@@ -11,6 +11,7 @@ const manager = /** @type {Permission[]} */ ([
   'orders:read', 'orders:note', 'orders:confirm', 'orders:edit', 'orders:dispatch', 'orders:deliver', 'orders:cancel', 'orders:return', 'orders:payments', 'orders:export',
   'customers:read', 'customers:write', 'promos:read', 'promos:write', 'promos:delete', 'reviews:read', 'reviews:moderate',
   'content:read', 'content:write', 'content:delete', 'settings:read', 'settings:write', 'settings:manage', 'staff:read', 'staff:manage', 'audit:read',
+  'deliveries:read', 'deliveries:assign', 'ledger:read', 'ledger:write', 'receipts:void',
 ])
 
 /** @type {Record<StaffRole, readonly Permission[]>} */
@@ -25,11 +26,11 @@ const matrix = {
   fulfilment: [
     'dashboard:read', 'products:read', 'inventory:adjust', 'catalog:read',
     'orders:read', 'orders:note', 'orders:confirm', 'orders:edit', 'orders:dispatch', 'orders:deliver', 'orders:cancel', 'orders:return', 'orders:payments',
-    'customers:read',
+    'customers:read', 'deliveries:read', 'deliveries:assign',
   ],
   support: [
     'dashboard:read', 'products:read', 'catalog:read', 'orders:read', 'orders:note', 'customers:read', 'customers:write',
-    'promos:read', 'reviews:read', 'reviews:moderate',
+    'promos:read', 'reviews:read', 'reviews:moderate', 'deliveries:read',
   ],
   viewer: ['dashboard:read', 'products:read', 'catalog:read', 'orders:read'],
 }

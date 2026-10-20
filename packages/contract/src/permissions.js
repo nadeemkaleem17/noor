@@ -16,6 +16,7 @@ export const permissions = /** @type {const} */ ([
   'settings:read', 'settings:write', 'settings:manage',
   'staff:read', 'staff:manage',
   'audit:read',
+  'deliveries:read', 'deliveries:assign', 'ledger:read', 'ledger:write', 'receipts:void',
 ])
 
 /**
