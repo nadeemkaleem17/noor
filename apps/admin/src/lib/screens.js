@@ -1,6 +1,6 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+import { Bell, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Package, Palette, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
@@ -13,6 +13,7 @@ const collections = () => import('@/routes/collections')
 const collection = () => import('@/routes/collection')
 const collectionNew = () => import('@/routes/collection-new')
 const contentHome = () => import('@/routes/content-home')
+const contentNotices = () => import('@/routes/content-notices')
 const pages = () => import('@/routes/pages')
 const page = () => import('@/routes/page')
 const pageNew = () => import('@/routes/page-new')
@@ -74,6 +75,7 @@ export const screens = [
   { path: '/sizes', title: 'Sizes & charts', permission: 'catalog:read', group: 'Catalog', icon: Ruler, lazy: sizes },
 
   { path: '/content/home', title: 'Home page', permission: 'content:read', group: 'Content', icon: Home, lazy: contentHome },
+  { path: '/content/notices', title: 'Notices', permission: 'content:read', group: 'Content', icon: Bell, lazy: contentNotices },
   { path: '/content/pages', title: 'Pages', permission: 'content:read', group: 'Content', icon: FileText, lazy: pages },
   { path: '/content/pages/new', title: 'New page', permission: 'content:write', lazy: pageNew },
   { path: '/content/pages/:id', title: 'Page', permission: 'content:read', lazy: page },

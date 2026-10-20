@@ -206,6 +206,37 @@ describe.skipIf(!dbAvailable)('settings, pages and menus (MySQL, through HTTP)',
       expect(home.layout).toMatchObject({ categories: { enabled: false, count: 4 }, newIn: { heading: 'Just landed', count: 6 }, bestsellers: { enabled: false } })
     }, 60_000)
 
+    it('sends the shop its notices with place, colour and wording, leaves out the ones that are off, and fills in the old ones', async () => {
+      const { b } = await signedIn('manager')
+      const value = base()
+      value.notices = [
+        { id: 'old', text: 'An old notice', severity: 'info' },
+        { id: 'pop', text: 'Eid sale', title: 'Eid sale', body: 'Up to 30% off.', buttonText: 'Shop', href: '/sale', severity: 'promo', position: 'popup', palette: 'warning', popupEvery: 'once' },
+        { id: 'off', text: 'Switched off', severity: 'info', position: 'side', active: false },
+      ]
+      const saved = await b.call('PUT', '/admin/content/home', { body: { value, version: 0 } })
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200)
+      const home = (await publicGet('/content/home')).json()
+      expect(home.notices.map((/** @type {{ id: string }} */ n) => n.id)).toEqual(['old', 'pop'])
+      expect(home.notices[0]).toEqual({ id: 'old', text: 'An old notice', severity: 'info', position: 'bar', palette: 'accent', popupEvery: 'day' })
+      expect(home.notices[1]).toEqual({ id: 'pop', text: 'Eid sale', title: 'Eid sale', body: 'Up to 30% off.', buttonText: 'Shop', href: '/sale', severity: 'promo', position: 'popup', palette: 'warning', popupEvery: 'once' })
+    }, 60_000)
+
+    it('refuses a notice button without a link, an unknown colour or place, and more than ten notices', async () => {
+      const { b } = await signedIn('manager')
+      const n = (/** @type {number} */ i, /** @type {object} */ extra = {}) => ({ id: `n${i}`, text: 'Hello', severity: 'info', ...extra })
+      const put = (/** @type {object[]} */ notices) => {
+        const v = base()
+        v.notices = notices
+        return b.call('PUT', '/admin/content/home', { body: { value: v, version: 0 } })
+      }
+      expect((await put([n(1, { buttonText: 'Go' })])).status).toBe(400)
+      expect((await put([n(1, { palette: 'hotpink' })])).status).toBe(400)
+      expect((await put([n(1, { position: 'footer' })])).status).toBe(400)
+      expect((await put(Array.from({ length: 11 }, (_, i) => n(i)))).status).toBe(400)
+      expect((await put(Array.from({ length: 10 }, (_, i) => n(i)))).status).toBe(200)
+    }, 60_000)
+
     it('refuses a section size outside what the shop can show', async () => {
       const { b } = await signedIn('manager')
       const value = base()
@@ -228,7 +259,7 @@ describe.skipIf(!dbAvailable)('settings, pages and menus (MySQL, through HTTP)',
       expect((await put((v) => (v.heroSlides = [slide(1, { buttonText: 'Go', buttonHref: 'javascript:alert(1)' })]))).status).toBe(400)
       expect((await put((v) => (v.heroSlides = [slide(1, { alt: '' })]))).status).toBe(400)
       expect((await put((v) => (v.heroSlides = Array.from({ length: 7 }, (_, i) => slide(i))))).status).toBe(400)
-      expect((await put((v) => (v.notices = Array.from({ length: 6 }, (_, i) => ({ id: `n${i}`, text: 'x', severity: 'info' }))))).status).toBe(400)
+      expect((await put((v) => (v.notices = Array.from({ length: 11 }, (_, i) => ({ id: `n${i}`, text: 'x', severity: 'info' }))))).status).toBe(400)
       const gone = await put((v) => (v.heroSlides = [{ ...slide(1), mediaId: uuidv7() }]))
       expect([gone.status, gone.body.code]).toEqual([409, 'media_not_ready'])
     }, 60_000)

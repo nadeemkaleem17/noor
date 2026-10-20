@@ -423,8 +423,17 @@ export function createSettingsService({ db, config, media, shippingFacts = async
       return {
         ...(announcement ? { announcement: { text: announcement, ...(h.announcement.href ? { href: h.announcement.href } : {}) } } : {}),
         notices: h.notices
-          .filter((/** @type {{ startsAt?: string, endsAt?: string }} */ n) => (!n.startsAt || n.startsAt <= at) && (!n.endsAt || at < n.endsAt))
-          .map((/** @type {{ id: string, text: string, href?: string, severity: string }} */ n) => ({ id: n.id, text: localised(locale, ur?.notices?.[n.id], n.text), ...defined({ href: n.href }), severity: n.severity })),
+          // an inactive one is kept for staff and never sent; the dates decide the rest
+          .filter((/** @type {{ active?: boolean, startsAt?: string, endsAt?: string }} */ n) => n.active !== false && (!n.startsAt || n.startsAt <= at) && (!n.endsAt || at < n.endsAt))
+          .map((/** @type {any} */ n) => ({
+            id: n.id,
+            text: localised(locale, ur?.notices?.[n.id], n.text),
+            ...defined({ title: n.title, body: n.body, href: n.href, buttonText: n.buttonText }),
+            severity: n.severity,
+            position: n.position ?? 'bar',
+            palette: n.palette ?? 'accent',
+            popupEvery: n.popupEvery ?? 'day',
+          })),
         heroSlides: h.heroSlides
           .filter((/** @type {{ mediaId: string }} */ s) => images[s.mediaId])
           .map((/** @type {any} */ s) => {

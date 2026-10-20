@@ -4,7 +4,6 @@ import { ConfirmDialog } from '@noor/ui/confirm-dialog'
 import { ErrorState } from '@noor/ui/error-state'
 import { RHFField } from '@noor/ui/field'
 import { Input } from '@noor/ui/input'
-import { NativeSelect } from '@noor/ui/native-select'
 import { Spinner } from '@noor/ui/spinner'
 import { Switch } from '@noor/ui/switch'
 import { Textarea } from '@noor/ui/textarea'
@@ -14,12 +13,12 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form'
 import { useBlocker } from 'react-router'
+import { AppLink } from '@/components/app-link'
 import { LinkInput } from '@/components/link-input'
 import { PictureField } from '@/components/picture-field'
 import { PageHeader } from '@/components/page-header'
 import { SectionCard } from '@/components/section-card'
 import { StaleWriteDialog } from '@/components/stale-write-dialog'
-import { fromLocalInput, toLocalInput } from '@/lib/dates'
 import { env } from '@/lib/env'
 import { messageFor } from '@/lib/errors'
 import { contractResolver, prune } from '@/lib/form'
@@ -82,54 +81,15 @@ function AnnouncementCard({ writable }) {
   )
 }
 
-/** @param {{ writable: boolean; }} props */
-function NoticesCard({ writable }) {
-  const { control } = useFormContext()
-  const rows = useFieldArray({ control, name: 'notices', keyName: 'rid' })
+/** The notices have a screen of their own now (plan/17-owner-requests-2026-10.md item 4); the list is carried through this form unchanged. */
+function NoticesCard() {
   return (
-    <SectionCard id="notices" title="Notices" description="Short messages shown in turn while their dates allow. Up to 5.">
-      {rows.fields.map((f, i) => (
-        <fieldset key={f.rid} className="space-y-2 rounded-card border border-line p-3">
-          <legend className="px-1 text-sm font-medium">{`Notice ${i + 1}`}</legend>
-          <RHFField control={control} name={`notices.${i}.text`} label="Text" required>
-            {(field) => <Input {...text(field)} maxLength={140} readOnly={!writable} />}
-          </RHFField>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <RHFField control={control} name={`notices.${i}.href`} label="Link">
-              {(field) => <LinkInput {...text(field)} readOnly={!writable} />}
-            </RHFField>
-            <RHFField control={control} name={`notices.${i}.severity`} label="Kind">
-              {(field) => (
-                <NativeSelect
-                  {...field}
-                  disabled={!writable}
-                  options={[
-                    { value: 'info', label: 'Information' },
-                    { value: 'promo', label: 'Promotion' },
-                    { value: 'notice', label: 'Notice' },
-                  ]}
-                />
-              )}
-            </RHFField>
-            <RHFField control={control} name={`notices.${i}.startsAt`} label="Starts" hint="Optional. Pakistan time.">
-              {(field) => <Input type="datetime-local" name={field.name} ref={field.ref} onBlur={field.onBlur} readOnly={!writable} value={toLocalInput(field.value)} onChange={(e) => field.onChange(fromLocalInput(e.target.value))} />}
-            </RHFField>
-            <RHFField control={control} name={`notices.${i}.endsAt`} label="Ends" hint="Optional.">
-              {(field) => <Input type="datetime-local" name={field.name} ref={field.ref} onBlur={field.onBlur} readOnly={!writable} value={toLocalInput(field.value)} onChange={(e) => field.onChange(fromLocalInput(e.target.value))} />}
-            </RHFField>
-          </div>
-          {writable ? (
-            <Button variant="ghost" size="sm" iconStart={<Trash2 aria-hidden className="size-4" />} onClick={() => rows.remove(i)}>
-              Remove notice {i + 1}
-            </Button>
-          ) : null}
-        </fieldset>
-      ))}
-      {writable && rows.fields.length < 5 ? (
-        <Button variant="secondary" iconStart={<Plus aria-hidden className="size-4" />} onClick={() => rows.append({ id: newId(), text: '', severity: 'info' })}>
-          Add a notice
-        </Button>
-      ) : null}
+    <SectionCard id="notices" title="Notices" description="Strips, popups and side cards now have their own screen, with colours, places and dates.">
+      <p>
+        <AppLink to="/content/notices" className="font-medium text-accent-text underline underline-offset-2">
+          Open Notices
+        </AppLink>
+      </p>
     </SectionCard>
   )
 }
@@ -404,7 +364,7 @@ function Form({ doc }) {
           }
         />
         <AnnouncementCard writable={writable} />
-        <NoticesCard writable={writable} />
+        <NoticesCard />
         <HeroCard writable={writable} images={images} onPicture={remember} />
         <LayoutCard writable={writable} />
         <BandCard name="promo" title="Promo band" writable={writable} />

@@ -5975,7 +5975,7 @@
                           "additionalProperties": false
                         },
                         "notices": {
-                          "maxItems": 5,
+                          "maxItems": 10,
                           "type": "array",
                           "items": {
                             "type": "object",
@@ -5989,9 +5989,21 @@
                                 "minLength": 1,
                                 "maxLength": 140
                               },
+                              "title": {
+                                "type": "string",
+                                "maxLength": 60
+                              },
+                              "body": {
+                                "type": "string",
+                                "maxLength": 300
+                              },
                               "href": {
                                 "type": "string",
                                 "maxLength": 500
+                              },
+                              "buttonText": {
+                                "type": "string",
+                                "maxLength": 24
                               },
                               "severity": {
                                 "type": "string",
@@ -6000,6 +6012,39 @@
                                   "promo",
                                   "notice"
                                 ]
+                              },
+                              "position": {
+                                "default": "bar",
+                                "type": "string",
+                                "enum": [
+                                  "bar",
+                                  "popup",
+                                  "side"
+                                ]
+                              },
+                              "palette": {
+                                "default": "accent",
+                                "type": "string",
+                                "enum": [
+                                  "accent",
+                                  "ink",
+                                  "sand",
+                                  "success",
+                                  "warning"
+                                ]
+                              },
+                              "popupEvery": {
+                                "default": "day",
+                                "type": "string",
+                                "enum": [
+                                  "visit",
+                                  "day",
+                                  "once"
+                                ]
+                              },
+                              "active": {
+                                "default": true,
+                                "type": "boolean"
                               },
                               "startsAt": {
                                 "type": "string",
@@ -6015,7 +6060,11 @@
                             "required": [
                               "id",
                               "text",
-                              "severity"
+                              "severity",
+                              "position",
+                              "palette",
+                              "popupEvery",
+                              "active"
                             ],
                             "additionalProperties": false
                           }
@@ -6543,7 +6592,7 @@
                         "additionalProperties": false
                       },
                       "notices": {
-                        "maxItems": 5,
+                        "maxItems": 10,
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -6557,9 +6606,21 @@
                               "minLength": 1,
                               "maxLength": 140
                             },
+                            "title": {
+                              "type": "string",
+                              "maxLength": 60
+                            },
+                            "body": {
+                              "type": "string",
+                              "maxLength": 300
+                            },
                             "href": {
                               "type": "string",
                               "maxLength": 500
+                            },
+                            "buttonText": {
+                              "type": "string",
+                              "maxLength": 24
                             },
                             "severity": {
                               "type": "string",
@@ -6568,6 +6629,39 @@
                                 "promo",
                                 "notice"
                               ]
+                            },
+                            "position": {
+                              "default": "bar",
+                              "type": "string",
+                              "enum": [
+                                "bar",
+                                "popup",
+                                "side"
+                              ]
+                            },
+                            "palette": {
+                              "default": "accent",
+                              "type": "string",
+                              "enum": [
+                                "accent",
+                                "ink",
+                                "sand",
+                                "success",
+                                "warning"
+                              ]
+                            },
+                            "popupEvery": {
+                              "default": "day",
+                              "type": "string",
+                              "enum": [
+                                "visit",
+                                "day",
+                                "once"
+                              ]
+                            },
+                            "active": {
+                              "default": true,
+                              "type": "boolean"
                             },
                             "startsAt": {
                               "type": "string",
@@ -7051,7 +7145,7 @@
                           "additionalProperties": false
                         },
                         "notices": {
-                          "maxItems": 5,
+                          "maxItems": 10,
                           "type": "array",
                           "items": {
                             "type": "object",
@@ -7065,9 +7159,21 @@
                                 "minLength": 1,
                                 "maxLength": 140
                               },
+                              "title": {
+                                "type": "string",
+                                "maxLength": 60
+                              },
+                              "body": {
+                                "type": "string",
+                                "maxLength": 300
+                              },
                               "href": {
                                 "type": "string",
                                 "maxLength": 500
+                              },
+                              "buttonText": {
+                                "type": "string",
+                                "maxLength": 24
                               },
                               "severity": {
                                 "type": "string",
@@ -7076,6 +7182,39 @@
                                   "promo",
                                   "notice"
                                 ]
+                              },
+                              "position": {
+                                "default": "bar",
+                                "type": "string",
+                                "enum": [
+                                  "bar",
+                                  "popup",
+                                  "side"
+                                ]
+                              },
+                              "palette": {
+                                "default": "accent",
+                                "type": "string",
+                                "enum": [
+                                  "accent",
+                                  "ink",
+                                  "sand",
+                                  "success",
+                                  "warning"
+                                ]
+                              },
+                              "popupEvery": {
+                                "default": "day",
+                                "type": "string",
+                                "enum": [
+                                  "visit",
+                                  "day",
+                                  "once"
+                                ]
+                              },
+                              "active": {
+                                "default": true,
+                                "type": "boolean"
                               },
                               "startsAt": {
                                 "type": "string",
@@ -7091,7 +7230,11 @@
                             "required": [
                               "id",
                               "text",
-                              "severity"
+                              "severity",
+                              "position",
+                              "palette",
+                              "popupEvery",
+                              "active"
                             ],
                             "additionalProperties": false
                           }
@@ -8719,7 +8862,16 @@
                           "text": {
                             "type": "string"
                           },
+                          "title": {
+                            "type": "string"
+                          },
+                          "body": {
+                            "type": "string"
+                          },
                           "href": {
+                            "type": "string"
+                          },
+                          "buttonText": {
                             "type": "string"
                           },
                           "severity": {
@@ -8729,12 +8881,41 @@
                               "promo",
                               "notice"
                             ]
+                          },
+                          "position": {
+                            "type": "string",
+                            "enum": [
+                              "bar",
+                              "popup",
+                              "side"
+                            ]
+                          },
+                          "palette": {
+                            "type": "string",
+                            "enum": [
+                              "accent",
+                              "ink",
+                              "sand",
+                              "success",
+                              "warning"
+                            ]
+                          },
+                          "popupEvery": {
+                            "type": "string",
+                            "enum": [
+                              "visit",
+                              "day",
+                              "once"
+                            ]
                           }
                         },
                         "required": [
                           "id",
                           "text",
-                          "severity"
+                          "severity",
+                          "position",
+                          "palette",
+                          "popupEvery"
                         ],
                         "additionalProperties": false
                       }

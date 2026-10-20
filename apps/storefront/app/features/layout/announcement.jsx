@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { Link } from '@noor/ui/link'
 import { safeHref } from '@noor/ui/safe-href'
 import { cookieIn, readCookies, subscribeCookies, writeCookie } from '~/lib/browser-cookie'
+import { paletteClass } from './notice-palette'
 import { useLocalePath } from './use-shell'
 
-/** @typedef {{ id: string, text: string, href?: string | undefined }} Notice */
+/** @typedef {{ id: string, text: string, href?: string | undefined, palette?: string | undefined }} Notice */
 
 const COOKIE = 'nc_dismissed'
 const ROTATE_MS = 6_000
@@ -45,7 +46,7 @@ export function Announcement({ items }) {
 
   return (
     <div
-      className="bg-accent text-on-accent"
+      className={paletteClass[current.palette ?? 'accent'] ?? paletteClass.accent}
       role="region"
       aria-label={t('shell.announcementLabel', { defaultValue: 'Announcement' })}
       onMouseEnter={() => setPaused(true)}

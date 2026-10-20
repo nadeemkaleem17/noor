@@ -60,7 +60,7 @@ export async function loader({ request }) {
     config,
     // the Appearance settings of the header (DOC-06.12): left or centre, and whether it stays at the top
     headerBar: { layout: theme?.header.layout ?? 'left', sticky: theme?.header.sticky ?? true },
-    notices: [...(shell.home.announcement ? [{ id: 'announcement', text: shell.home.announcement.text, href: shell.home.announcement.href }] : []), ...shell.home.notices.map((n) => ({ id: n.id, text: n.text, href: n.href }))],
+    notices: [...(shell.home.announcement ? [{ id: 'announcement', text: shell.home.announcement.text, href: shell.home.announcement.href, severity: /** @type {const} */ ('info'), position: /** @type {const} */ ('bar'), palette: /** @type {const} */ ('accent'), popupEvery: /** @type {const} */ ('day') }] : []), ...shell.home.notices],
     about: shell.home.footer.about,
     nav: { header: navItems({ locale, mode: shell.config.navigation.mode, menu: shell.menus.main, categories: shell.categories, collections: shell.collections, labels }), footer: footerColumns({ locale, categories: shell.categories, collections: shell.collections, pages: safeItems(locale, shell.menus.footer), labels: footerLabels, hasOffers: shell.hasOffers }) },
     categories: shell.categories.map((c) => ({ id: c.id, handle: c.handle, name: c.name })),

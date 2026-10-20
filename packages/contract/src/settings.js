@@ -130,16 +130,32 @@ export const fullHomeOrder = (listed) => {
   return /** @type {(typeof homeSectionKeys)[number][]} */ ([...known, ...homeSectionKeys.filter((k) => !known.includes(k))])
 }
 
+export const noticePositions = /** @type {const} */ (['bar', 'popup', 'side'])
+export const noticePalettes = /** @type {const} */ (['accent', 'ink', 'sand', 'success', 'warning'])
+
 export const HomeContent = z.strictObject({
   announcement: z.strictObject({ text: text(100), href: Link.optional() }),
   notices: z.array(z.strictObject({
     id: SlideId,
+    /** The one line of a bar notice; the heading of a popup or a side notice when it has no `title`. */
     text: z.string().trim().min(1).max(140),
+    title: text(60).optional(),
+    body: text(300).optional(),
     href: Link.optional(),
+    buttonText: text(24).optional(),
     severity: z.enum(['info', 'promo', 'notice']),
+    /** Where it shows: a strip above the header, a popup when the shop opens, or a card at the side of the page. */
+    position: z.enum(noticePositions).default('bar'),
+    /** One of the shop's own colour pairs, so the words are always readable. */
+    palette: z.enum(noticePalettes).default('accent'),
+    /** How often one visitor sees a popup again. */
+    popupEvery: z.enum(['visit', 'day', 'once']).default('day'),
+    /** Off means kept but not shown. */
+    active: z.boolean().default(true),
     startsAt: IsoDate.optional(),
     endsAt: IsoDate.optional(),
-  }).refine((n) => !n.startsAt || !n.endsAt || n.startsAt < n.endsAt, { message: 'invalid_format', path: ['endsAt'] })).max(5),
+  }).refine((n) => !n.startsAt || !n.endsAt || n.startsAt < n.endsAt, { message: 'invalid_format', path: ['endsAt'] })
+    .refine((n) => !n.buttonText || Boolean(n.href), { message: 'required', path: ['href'] })).max(10),
   heroSlides: z.array(z.strictObject({
     id: SlideId,
     mediaId: Id,
@@ -227,7 +243,10 @@ export const StoreConfigPublic = z.strictObject({
 const PublicButton = { buttonText: z.string().optional(), buttonHref: z.string().optional() }
 export const HomePublic = z.strictObject({
   announcement: z.strictObject({ text: z.string(), href: z.string().optional() }).optional(),
-  notices: z.array(z.strictObject({ id: z.string(), text: z.string(), href: z.string().optional(), severity: z.enum(['info', 'promo', 'notice']) })),
+  notices: z.array(z.strictObject({
+    id: z.string(), text: z.string(), title: z.string().optional(), body: z.string().optional(), href: z.string().optional(), buttonText: z.string().optional(),
+    severity: z.enum(['info', 'promo', 'notice']), position: z.enum(noticePositions), palette: z.enum(noticePalettes), popupEvery: z.enum(['visit', 'day', 'once']),
+  })),
   heroSlides: z.array(z.strictObject({ id: z.string(), image: Image, heading: z.string(), subheading: z.string().optional(), ...PublicButton })),
   promo: z.strictObject({ eyebrow: z.string().optional(), heading: z.string(), text: z.string().optional(), ...PublicButton }).optional(),
   editorial: z.strictObject({ image: Image.optional(), eyebrow: z.string().optional(), heading: z.string(), text: z.string().optional(), ...PublicButton }).optional(),

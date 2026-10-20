@@ -4,6 +4,8 @@ import { Link as RouterLink, Outlet, useLocation } from 'react-router'
 import { ToastProvider } from '@noor/ui/toast'
 import { CartDrawerProvider } from '../cart/cart-drawer'
 import { Announcement } from './announcement'
+import { NoticePopup } from './notice-popup'
+import { NoticeSide } from './notice-side'
 import { CheckoutHeader } from './checkout-header'
 import { Footer } from './footer'
 import { Header } from './header'
@@ -68,7 +70,9 @@ export default function Shell() {
         {t('shell.skip')}
       </a>
       <NavProgress />
-      {checkout ? null : <Announcement items={notices} />}
+      {checkout ? null : <Announcement items={notices.filter((n) => n.position === 'bar')} />}
+      {checkout ? null : <NoticePopup items={notices.filter((n) => n.position === 'popup')} />}
+      {checkout ? null : <NoticeSide items={notices.filter((n) => n.position === 'side')} />}
       {checkout ? <CheckoutHeader brand={config.brand.name} logo={config.brand.logoLight} /> : <Header brand={config.brand.name} logo={config.brand.logoLight} items={nav.header} wishlist={config.features.wishlist} bar={headerBar} />}
       <main id="main" tabIndex={-1}>
         <Outlet />
