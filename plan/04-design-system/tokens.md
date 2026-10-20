@@ -103,6 +103,10 @@ The admin sidebar keeps its own four tokens (`--sem-sidebar-bg` `#1C1918`/`#0F0D
 
 Numbers in brackets are the lowest ratio across `bg`/`surface`/`surface-2`. Changes from the current storefront CSS: `--gold-text` `#886615` → `#806010`; `--stone`/`--panel-muted` → the `muted` values above (botanical `#7C8574` was 3.46:1); botanical `--sale` `#B2582F` (4.37:1) → `#A04A22`.
 
+### 4.2.1 More presets (added 2026-10-20, plan/17 item 12)
+
+Eight more ship in `packages/contract/src/theme-presets.js`, each different in shape as well as colour: `rose-garden` (rose, round buttons, 4/5 pictures), `midnight` (**dark**: warm black page, gold accent, centred header), `emerald`, `sandstone` (terracotta, square corners), `ocean` (blue, Instrument Sans, 2/3 pictures, square buttons), `lavender` (violet, fully round), `saffron` (amber on cream, 4/5), `slate` (grey-blue, compact density, 1/1 pictures, centred header). All pass the same contrast gate as the first four (`packages/ui/test/contrast.test.js` iterates every preset; the dark one carries its own lighter status colours). Appearance shows them as a **gallery of preview cards** (each drawn in its own colours, fonts and corners, `aria-pressed` for the one in use) instead of a dropdown; choosing one fills the form and nothing is saved until Save, so the same preview (phone and large screen) shows the whole shop in it first. A theme is still one `ThemeTokens` object: there is no second code path.
+
 ### 4.3 Storefront dark (reserved, not shipped in v1)
 
 `storefront-gold` dark set, already checked: bg `#141210`, surface `#1E1B17`, surface-2 `#28241E`, fg `#F3EEE6`, fg-soft `#C9C1B5`, muted `#A39B8F` (5.61), line `#3A342B`, line-strong `#857C72`, accent `#C9A227`, on-accent `#1A1408`, accent-text `#E8C766` (9.40), sale/danger `#EE8377` (5.99), success `#6FBE8C`, warning `#E0AD5C`, focus `#8FA0F0` (6.91). See §6 for why it is off.

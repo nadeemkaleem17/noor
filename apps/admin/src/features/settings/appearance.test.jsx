@@ -6,7 +6,7 @@ import { fakeApi, json, me, problem, renderApp, resetApp } from '@/test/app'
 
 afterEach(resetApp)
 
-const labels = { atelier: 'Atelier', 'storefront-gold': 'Storefront gold', monochrome: 'Monochrome', botanical: 'Botanical' }
+const labels = { atelier: 'Atelier', 'storefront-gold': 'Storefront gold', monochrome: 'Monochrome', botanical: 'Botanical', 'rose-garden': 'Rose garden', midnight: 'Midnight', emerald: 'Emerald', sandstone: 'Sandstone', ocean: 'Ocean', lavender: 'Lavender', saffron: 'Saffron', slate: 'Slate' }
 const presetList = () => ({ items: Object.entries(themePresets).map(([id, theme]) => ({ id, label: labels[/** @type {keyof typeof labels} */ (id)], theme })) })
 const gold = () => structuredClone(themePresets['storefront-gold'])
 const perms = /** @type {import('@noor/contract').Permission[]} */ (['dashboard:read', 'settings:read', 'settings:write'])
@@ -39,7 +39,7 @@ describe('appearance (plan/07-admin/11-settings.md section 3)', () => {
     const expected = themeCss(gold()).replace(':root[data-brand="storefront"]', '.theme-preview[data-brand="storefront"]')
     expect(previewStyles()[0]).toBe(expected)
     expect(document.querySelectorAll('.theme-preview')).toHaveLength(2) // phone and large screen
-    expect(screen.getByRole('combobox', { name: 'Preset' }).getAttribute('data-value') ?? (/** @type {HTMLSelectElement} */ (screen.getByRole('combobox', { name: 'Preset' }))).value).toBe('storefront-gold')
+    expect(within(screen.getByRole('group', { name: 'Preset' })).getByRole('button', { name: /Storefront gold/ }).getAttribute('aria-pressed')).toBe('true')
   })
 
   it('changes the preview when a colour is typed', async () => {
@@ -92,13 +92,15 @@ describe('appearance (plan/07-admin/11-settings.md section 3)', () => {
   it('a preset fills every value; editing one then shows the theme as custom', async () => {
     server()
     const { user } = renderApp('/settings/appearance')
-    const preset = await screen.findByRole('combobox', { name: 'Preset' })
-    await user.selectOptions(preset, 'botanical')
+    const gallery = within(await screen.findByRole('group', { name: 'Preset' }))
+    expect(gallery.getAllByRole('button')).toHaveLength(Object.keys(themePresets).length)
+    expect(gallery.getByRole('button', { name: /Storefront gold/ }).getAttribute('aria-pressed')).toBe('true')
+    await user.click(gallery.getByRole('button', { name: /Botanical/ }))
     await waitFor(() => expect(hexOf('Page background').value).toBe(themePresets.botanical.colors.bg))
-    expect((/** @type {HTMLSelectElement} */ (preset)).value).toBe('botanical')
+    expect(gallery.getByRole('button', { name: /Botanical/ }).getAttribute('aria-pressed')).toBe('true')
     await user.clear(hexOf('Accent (buttons)'))
     await user.type(hexOf('Accent (buttons)'), '#123456')
-    expect(await screen.findByText('Custom (based on Botanical)', { selector: 'option' })).toBeTruthy()
+    expect(await screen.findByText('Custom, based on Botanical')).toBeTruthy()
     await user.click(screen.getByRole('button', { name: 'Reset to Botanical' }))
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Reset' }))
     await waitFor(() => expect(hexOf('Accent (buttons)').value).toBe(themePresets.botanical.colors.accent))

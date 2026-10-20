@@ -183,6 +183,54 @@ export function AppearancePage() {
   return <ThemeForm key={theme.data.version} doc={theme.data} presets={presets.data.items} />
 }
 
+/** @type {Record<string, string>} */
+const previewRadius = { sharp: '0px', soft: '6px', round: '9999px' }
+
+/** One card per preset: its own colours, fonts and shape, so a choice is seen before it is made. Choosing fills the form; nothing is saved until Save.
+ * @param {{ presets: { id: string; label: string; theme: any; }[]; chosenId?: string; basedOn?: { label: string }; disabled: boolean; onPick: (p: any) => void; }} props */
+function PresetGallery({ presets, chosenId, basedOn, disabled, onPick }) {
+  return (
+    <div role="group" aria-label="Preset">
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {presets.map((p) => {
+          const t = resolveColors(p.theme.colors)
+          const on = p.id === chosenId
+          return (
+            <li key={p.id}>
+              <button
+                type="button"
+                aria-pressed={on}
+                disabled={disabled}
+                onClick={() => onPick(p)}
+                className={`block w-full rounded-card border p-2 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${on ? 'border-accent ring-2 ring-accent' : 'border-line hover:border-line-strong'}`}
+              >
+                <span aria-hidden="true" className="block border p-3" style={{ background: t.bg, color: t.fg, borderColor: t.line, borderRadius: previewRadius[p.theme.radius.card] }}>
+                  <span className="block text-lg leading-tight" style={{ fontFamily: `"${p.theme.fonts.heading}", serif` }}>Aa</span>
+                  <span className="mt-1 block text-xs" style={{ fontFamily: `"${p.theme.fonts.body}", sans-serif`, color: t['fg-soft'] }}>New season</span>
+                  <span className="mt-2 flex items-center gap-2">
+                    <span className="px-3 py-1 text-xs" style={{ background: t.accent, color: t['on-accent'], borderRadius: previewRadius[p.theme.radius.control] }}>Add to bag</span>
+                    <span className="text-xs underline" style={{ color: t['accent-text'] }}>Details</span>
+                  </span>
+                  <span className="mt-2 flex gap-1">
+                    {['bg', 'surface-2', 'accent', 'accent-text', 'fg'].map((k) => (
+                      <span key={k} className="size-4 rounded-full border" style={{ background: t[k], borderColor: t['line-strong'] }} />
+                    ))}
+                  </span>
+                </span>
+                <span className="mt-2 flex items-center justify-between gap-2 px-1 text-sm font-medium">
+                  {p.label}
+                  {on ? <Badge tone="success">In use</Badge> : null}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {chosenId ? null : <p className="mt-2 text-sm text-muted">{basedOn ? `Custom, based on ${basedOn.label}` : 'Custom'}</p>}
+    </div>
+  )
+}
+
 /** @param {{ doc: any; presets: { id: string; label: string; theme: any; }[]; }} props */
 function ThemeForm({ doc, presets }) {
   const can = useCan()
@@ -255,18 +303,7 @@ function ThemeForm({ doc, presets }) {
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-4">
             <SectionCard id="preset" title="Starting point">
-              <Field label="Preset" hint={chosen ? undefined : basedOn ? `Custom, based on ${basedOn.label}` : 'Custom'}>
-                <NativeSelect
-                  value={chosen?.id ?? ''}
-                  placeholder={basedOn ? `Custom (based on ${basedOn.label})` : 'Custom'}
-                  disabled={!writable}
-                  options={presets.map((p) => ({ value: p.id, label: p.label }))}
-                  onChange={(e) => {
-                    const p = presets.find((x) => x.id === e.target.value)
-                    if (p) apply(p.theme)
-                  }}
-                />
-              </Field>
+              <PresetGallery presets={presets} chosenId={chosen?.id} basedOn={basedOn} disabled={!writable} onPick={(p) => apply(p.theme)} />
               {writable && basedOn ? (
                 <Button variant="secondary" onClick={() => setConfirmReset(true)}>
                   Reset to {basedOn.label}
