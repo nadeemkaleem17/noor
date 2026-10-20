@@ -140,6 +140,8 @@ admin.promos.get
 admin.promos.list
 admin.promos.preview
 admin.promos.update
+admin.returns.list
+admin.returns.update
 admin.reviews.bulk
 admin.reviews.get
 admin.reviews.list
@@ -218,6 +220,7 @@ content.listPages
 orders.cancelByToken
 orders.create
 orders.getByToken
+orders.requestReturn
 orders.switchToCod
 orders.track
 promos.listPublic

@@ -504,13 +504,55 @@
     },
     "needCancel": "Need to cancel? WhatsApp us",
     "switchToCod": "Pay cash on delivery instead",
+    "buyAgain": "Buy again",
     "whatsapp": "WhatsApp us about this order",
     "print": "Print",
     "waText": "Hi, this is about my order {orderNo}.",
     "errors": {
       "notAllowed": "This cannot be done to the order any more. WhatsApp us and we will help.",
       "busy": "Too many attempts. Please wait a minute.",
-      "failed": "Something went wrong. Please try again."
+      "failed": "Something went wrong. Please try again.",
+      "buyAgainNone": "None of these items can be bought again right now.",
+    "returnInvalid": "Choose at least one item, and no more pieces than you bought. Then try again."
+    },
+    "returns": {
+      "title": "Returns and exchanges",
+      "ask": "Ask for a return or exchange",
+      "until": "You can ask until {date}.",
+      "expired": "The {days} days for a return or exchange are over. WhatsApp us and we will see what we can do.",
+      "kind": "What would you like?",
+      "kindReturn": "Return it for a refund",
+      "kindExchange": "Exchange it",
+      "pieces": "Pieces of {title}",
+      "piecesHint": "Up to {n}. Leave 0 for an item you keep.",
+      "reason": "Why?",
+      "reasonOptions": {
+        "wrong_size": "It does not fit",
+        "not_as_described": "It is not as shown or described",
+        "defective": "It is damaged or has a fault",
+        "changed_mind": "I changed my mind",
+        "other": "Something else"
+      },
+      "exchangeNote": "If you want an exchange: the size or colour you would like",
+      "note": "Anything we should know (optional)",
+      "photos": "For a fault, please send photos on WhatsApp after you ask.",
+      "submit": "Send the request",
+      "sent": "Your request {number} was sent. We will look at it and tell you here and on WhatsApp.",
+      "yours": "Your requests",
+      "kindShort": {
+        "return": "Return",
+        "exchange": "Exchange"
+      },
+      "status": {
+        "requested": "Waiting for us",
+        "approved": "Approved",
+        "declined": "Not accepted",
+        "received": "We have the items",
+        "completed": "Done"
+      },
+      "pickup": "Pickup on {date}",
+      "refund": "Refund: {amount}",
+      "note2": "Our note: {note}"
     }
   },
   "track": {

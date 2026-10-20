@@ -496,6 +496,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     /** Mutating routes that deliberately write no entry, each with the reason. */
     const exempt = {
       'admin.emails.preview': 'only shows what a message would say; nothing is stored',
+      'admin.returns.update': 'needs a delivered order with a request; every status change writes its audit entry, which test/returns.int.test.js checks',
       'admin.delivery.people.create': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.people.update': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.assign': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',

@@ -96,6 +96,27 @@ export async function addToCart(request, form) {
   }
 }
 
+/**
+ * "Buy again": each line of a past order into the bag, one by one (the API says no to what is out of stock or no longer sold; those are counted, not fatal). The cart token the first
+ * line makes is carried to the next ones. Never a price: the cart is priced by the API.
+ * @param {Request} request @param {{ variantId: string, quantity: number }[]} lines
+ * @returns {Promise<{ cartToken: string | undefined, added: number, skipped: number }>}
+ */
+export async function buyAgain(request, lines) {
+  let token = cookieValue(request.headers.get('cookie'), CART_COOKIE)
+  let added = 0
+  for (const l of lines) {
+    try {
+      const cart = await api('cart.addLine', { body: { variantId: l.variantId, quantity: Math.min(l.quantity, 99) }, ...(token ? { headers: { 'x-cart-token': token } } : {}) })
+      token = cart.cartToken ?? token
+      added += 1
+    } catch (e) {
+      if (!(e instanceof ApiError) || e.status >= 500 || e.code === 'rate_limited') throw e
+    }
+  }
+  return { cartToken: token, added, skipped: lines.length - added }
+}
+
 /** The cookie that ends the cart: after the order is placed the cart belongs to the order. */
 export const clearCartCookie = () => `${CART_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${cookieSecure()}`
 

@@ -1,6 +1,6 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Mail, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Users, Wallet } from 'lucide-react'
+import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Mail, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Undo2, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
@@ -30,6 +30,7 @@ const audit = () => import('@/routes/audit')
 const orders = () => import('@/routes/orders')
 const order = () => import('@/routes/order')
 const orderNew = () => import('@/routes/order-new')
+const returnsQueue = () => import('@/routes/returns')
 const customers = () => import('@/routes/customers')
 const customerHighlights = () => import('@/routes/customer-highlights')
 const settingsEmails = () => import('@/routes/settings-emails')
@@ -63,6 +64,7 @@ export const screens = [
   { path: '/orders', title: 'Orders', permission: 'orders:read', group: 'Sales', icon: ShoppingBag, badge: 'ordersNeedingAction', lazy: orders },
   { path: '/orders/new', title: 'New order', permission: 'orders:edit', lazy: orderNew },
   { path: '/orders/:id', title: 'Order', permission: 'orders:read', lazy: order },
+  { path: '/returns', title: 'Returns', permission: 'orders:read', group: 'Sales', icon: Undo2, lazy: returnsQueue },
   { path: '/customers', title: 'Customers', permission: 'customers:read', group: 'Sales', icon: Users, lazy: customers },
   { path: '/customers/highlights', title: 'Highlight rules', permission: 'customers:read', lazy: customerHighlights },
   { path: '/customers/:id', title: 'Customer', permission: 'customers:read', lazy: customer },

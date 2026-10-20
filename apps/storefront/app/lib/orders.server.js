@@ -1,6 +1,6 @@
 // The storefront's side of an order's own pages (plan/06-storefront/06-orders-tracking.md): the order by its token, what its customer may do with it, the lookup by number and phone, and the
 // review of a line. The token is the key: it is a path parameter and goes nowhere else (no query, no log). Never imported by browser code.
-import { ApiError, normalizePkMobile, ReviewInput } from '@noor/contract'
+import { ApiError, CreateReturnBody, normalizePkMobile, ReviewInput } from '@noor/contract'
 import { api } from './api.server'
 import { normalizeOrderNumber } from './order-number'
 
@@ -14,9 +14,20 @@ export function orNoOrder(e) {
 export const loadOrder = (token) => api('orders.getByToken', { params: { token } }).catch(orNoOrder)
 
 /**
+ * The request form as the contract's body: one `qty_<lineId>` number per line, the pieces left at 0 are not part of it. Nothing here decides what is allowed (the API does).
+ * @param {FormData} form
+ */
+function returnBody(form) {
+  const lines = [...form.entries()].flatMap(([k, v]) => (k.startsWith('qty_') && Number(v) > 0 ? [{ lineId: k.slice(4), quantity: Number(v) }] : []))
+  const text = (/** @type {string} */ k) => String(form.get(k) ?? '').trim() || undefined
+  const parsed = CreateReturnBody.safeParse({ kind: form.get('kind'), reason: form.get('reason'), note: text('note'), exchangeNote: text('exchangeNote'), lines })
+  return parsed.success ? parsed.data : undefined
+}
+
+/**
  * What the customer may do with the order: cancel it, or switch it to cash on delivery. The API decides if it is allowed (`allowedActions`); a refusal is shown as such.
  * @param {string} token @param {FormData} form
- * @returns {Promise<{ ok: true } | { ok: false, error: 'notAllowed' | 'busy' | 'failed' }>}
+ * @returns {Promise<{ ok: true, requested?: string } | { ok: false, error: 'notAllowed' | 'busy' | 'failed' | 'returnInvalid' }>}
  */
 export async function orderAction(token, form) {
   const intent = form.get('intent')
@@ -26,12 +37,17 @@ export async function orderAction(token, form) {
       await api('orders.cancelByToken', { params: { token }, body: reason ? { reason: reason.slice(0, 200) } : {} })
     } else if (intent === 'switchToCod') {
       await api('orders.switchToCod', { params: { token } })
+    } else if (intent === 'return') {
+      const body = returnBody(form)
+      if (!body) return { ok: false, error: 'returnInvalid' }
+      return { ok: true, requested: (await api('orders.requestReturn', { params: { token }, body })).number }
     } else {
       return { ok: false, error: 'failed' }
     }
     return { ok: true }
   } catch (e) {
     if (e instanceof ApiError) {
+      if (e.code === 'validation_failed') return { ok: false, error: 'returnInvalid' }
       if (e.code === 'invalid_transition' || e.code === 'forbidden' || e.status === 409 || e.status === 422) return { ok: false, error: 'notAllowed' }
       if (e.code === 'rate_limited') return { ok: false, error: 'busy' }
     }

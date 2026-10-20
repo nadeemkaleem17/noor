@@ -15,6 +15,7 @@ import { createPaymentsService, createProviders } from './payments/index.js'
 import { createPromotionsService } from './promotions/index.js'
 import { createReporting } from './reporting/index.js'
 import { createReviewsService } from './reviews/index.js'
+import { createReturnsService } from './returns/index.js'
 import { createSearch } from './search/index.js'
 import { createSettingsService } from './settings/index.js'
 import { createShippingService } from './shipping/index.js'
@@ -50,9 +51,10 @@ export function createServices({ db, config, storage = createStorage(config), pr
   const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media })
   const visits = createVisitsService({ db, customers, orders, enabled: async () => (await settings.get('store')).value.features.visitTracking !== false })
   const delivery = createDeliveryService({ db, orders, settings })
+  const returns = createReturnsService({ db, orders, settings })
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
   const notifications = createNotifications({ db, config, settings, mailer })
   const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
   const reporting = createReporting({ db, config, settings, media })
-  return { delivery, visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  return { returns, delivery, visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }

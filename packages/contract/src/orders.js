@@ -1,5 +1,6 @@
 // Placing an order: what the storefront calls (plan/10-api/03-cart-orders-public.md section 3). The body is strict: a price, discount, fee or total
 // anywhere in it is a 400 (ADR-0020); the server prices the cart it finds behind the cart token.
+import { ReturnsOffer } from './returns.js'
 import { z } from 'zod'
 import { Enum } from './enum-schemas.js'
 import { Money } from './money-schema.js'
@@ -50,7 +51,7 @@ export const OrderPublic = z.strictObject({
   lines: z.array(
     z.strictObject({
       id: Id, title: z.string(), variantLabel: z.string(), image: Image.optional(), quantity: z.int(), unitPrice: Money, lineTotal: Money,
-      customizationSummary: z.string().optional(), review: z.strictObject({ available: z.boolean(), submitted: z.boolean() }).optional(), leadTime: z.strictObject({ minDays: z.int(), maxDays: z.int() }).optional(),
+      customizationSummary: z.string().optional(), /** How many of this line can still be put in a return request. */ returnable: z.int().optional(), /** The variant to put in the bag again ("Buy again"); absent for a line made to measure. */ variantId: Id.optional(), review: z.strictObject({ available: z.boolean(), submitted: z.boolean() }).optional(), leadTime: z.strictObject({ minDays: z.int(), maxDays: z.int() }).optional(),
     }),
   ),
   subtotal: Money, discount: Money, promoCode: z.string().optional(), shippingFee: Money, total: Money,
@@ -65,6 +66,8 @@ export const OrderPublic = z.strictObject({
     courier: z.string().optional(), trackingNumber: z.string().optional(), trackingUrl: z.string().optional(),
   }),
   allowedActions: z.array(z.enum(['cancel', 'switch_to_cod', 'retry_payment'])),
+  /** Only when the shop takes return requests (`policies.returnsDays`) and the order was delivered or already has one. */
+  returns: ReturnsOffer.optional(),
   locale: Enum.locale,
 })
 /** @typedef {z.infer<typeof OrderPublic>} OrderPublic */

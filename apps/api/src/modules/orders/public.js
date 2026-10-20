@@ -11,6 +11,7 @@ import { reviewState } from '../reviews/window.js'
 import * as repo from './repository.js'
 import { isFinal } from './transitions.js'
 import { trackingHash, trackingToken } from './tracking.js'
+import { returnsOffer } from '../returns/offer.js'
 
 /**
  * @typedef {import('../../platform/db.js').Executor} Db
@@ -55,6 +56,7 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
     const [lines, payments, store, courier] = await Promise.all([repo.linesOf(db, o.id), settings.value('payments', db), settings.value('store', db), o.courierId ? shipping.courierById(db, o.courierId) : undefined])
     const done = new Set(lines.length ? (await db.select({ id: reviews.orderLineId }).from(reviews).where(inArray(reviews.orderLineId, lines.map((l) => l.id)))).map((r) => r.id) : [])
     const reviewsOn = Boolean(store.value.features?.reviews)
+    const { returnable, offer: returns } = await returnsOffer(db, o, lines, store.value.policies.returnsDays ?? 0, now())
     const images = await media.imagesFor(lines.flatMap((l) => (l.imageMediaId ? [l.imageMediaId] : [])))
     const status = /** @type {import('./transitions.js').OrderStatus} */ (o.status)
     const open = !isFinal(status)
@@ -86,6 +88,8 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
         return {
           id: l.id, title: l.title, variantLabel: l.variantLabel, ...(image ? { image } : {}), quantity: l.quantity, unitPrice: money(l.unitPriceMinor), lineTotal: money(l.lineSubtotalMinor),
           ...(summary ? { customizationSummary: summary } : {}),
+          ...(returnable.get(l.id) ? { returnable: returnable.get(l.id) } : {}),
+          ...(l.customization == null ? { variantId: l.variantId } : {}),
           ...(reviewsOn && status === 'delivered' ? { review: { available: reviewState(o, l, now()) === 'ok' && !done.has(l.id), submitted: done.has(l.id) } } : {}),
           ...(l.leadMinDays != null && l.leadMaxDays != null ? { leadTime: { minDays: l.leadMinDays, maxDays: l.leadMaxDays } } : {}),
         }
@@ -102,6 +106,7 @@ export function createPublicOrders({ db, config, changes, settings, shipping, me
         ...(o.courierName ? { courier: o.courierName } : {}), ...(o.trackingNumber ? { trackingNumber: o.trackingNumber } : {}), ...(trackingUrl ? { trackingUrl } : {}),
       },
       allowedActions,
+      ...(returns ? { returns } : {}),
       locale: /** @type {'en' | 'ur'} */ (o.locale),
     }
   }

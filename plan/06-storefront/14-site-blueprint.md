@@ -213,7 +213,7 @@ Research: the order page answers "where is my order?" first; show the dates and 
 | OR-04 | What you can still do and until when: cancel (before dispatch), switch to cash on delivery, edit address via WhatsApp | M | Y | BM |
 | OR-05 | Track page: order number and mobile; the same page as the link; the same message for wrong phone and unknown number (anti-enumeration, exists) | M | Y | OW |
 | OR-06 | Print invoice view | M | Y | OW |
-| OR-07 | **Buy again**: add all lines of a past order to the bag (stock permitting) | S | N | pattern |
+| OR-07 | **Buy again**: add all lines of a past order to the bag (stock permitting) | S | Y | pattern |
 | OR-08 | Order messages by WhatsApp or SMS at placed, confirmed, dispatched, delivered (needs a provider; today they are logged and skipped) | S | P | PK |
 | OR-09 | Review prompt after delivery (RV-08) | S | P | PK |
 | OR-10 | WhatsApp help button prefilled with the order number (number only, no personal data) | M | Y | OW |
@@ -226,9 +226,9 @@ Research: 54% of shops have severe returns usability issues; returns UI matters 
 | ID | Requirement | Pri | Today | Basis |
 |---|---|---|---|---|
 | RT-01 | Returns policy page with the window, conditions, what is not returnable (made to order), how refunds work (cash on delivery: refund method), and how to start | M | P | BM |
-| RT-02 | **Return or exchange request** from the order page within the window: choose items, reason, exchange for another size or refund, photos for defects; creates a request staff see in the admin | S | N | BM |
-| RT-03 | Request status visible on the order page; messages by WhatsApp | S | N | BM |
-| RT-04 | Admin: returns queue, approve or decline with a reason, pickup scheduled, refund recorded (new admin screen) | S | N | BM |
+| RT-02 | **Return or exchange request** from the order page within the window: choose items, reason, exchange for another size or refund, photos for defects; creates a request staff see in the admin | S | Y | BM |
+| RT-03 | Request status visible on the order page; messages by WhatsApp | S | Y | BM |
+| RT-04 | Admin: returns queue, approve or decline with a reason, pickup scheduled, refund recorded (new admin screen) | S | Y | BM |
 
 ### 2.12 Content, help and trust pages (CM, TR)
 
@@ -318,7 +318,7 @@ The best interface fails on weak content. These rules are for staff and are chec
 
 ## 3. Counts
 
-Counted from the rows above (184 functions): **136 Must, 39 Should, 9 Later**. Today the shop has **59 of them complete (Y), 66 partly (P) and 59 not at all (N)**.
+Counted from the rows above (184 functions): **136 Must, 39 Should, 9 Later**. Today the shop has **63 of them complete (Y), 66 partly (P) and 55 not at all (N)**.
 
 | Area | Must | Should | Later |
 |---|---|---|---|

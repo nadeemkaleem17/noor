@@ -133,12 +133,13 @@ const step = (/** @type {string} */ name, /** @type {string | undefined} */ at, 
 const orderOf = (status, over = {}) => ({
   orderNumber: 'RB-10458', status, placedAt: '2026-10-02T10:45:00.000Z',
   timeline: [step('placed', '2026-10-02T10:45:00.000Z', status === 'pending' || status === 'pending_confirmation'), step('confirmed', ['confirmed', 'dispatched', 'delivered'].includes(status) ? '2026-10-02T12:00:00.000Z' : undefined, status === 'confirmed'), step('dispatched', ['dispatched', 'delivered'].includes(status) ? '2026-10-03T09:00:00.000Z' : undefined, status === 'dispatched'), step('delivered', status === 'delivered' ? '2026-10-05T09:00:00.000Z' : undefined, status === 'delivered')],
-  lines: [{ id: uuid(850), title: 'Lawn 3-Piece', variantLabel: 'M', quantity: 1, unitPrice: money(699000), lineTotal: money(699000), ...(status === 'delivered' ? { review: { available: true, submitted: false } } : {}) }],
+  lines: [{ id: uuid(850), variantId: uuid(851), title: 'Lawn 3-Piece', variantLabel: 'M', quantity: 1, unitPrice: money(699000), lineTotal: money(699000), ...(status === 'delivered' ? { review: { available: true, submitted: false }, returnable: 1 } : {}) }],
   subtotal: money(699000), discount: money(0), shippingFee: money(25000), total: money(724000), paid: money(0), dueOnDelivery: money(724000),
   paymentMethod: 'cod', paymentLabel: 'Cash on delivery', paymentStatus: 'unpaid',
   customer: { firstName: 'Ayesha', phoneMasked: '0300 ••••567' },
   delivery: { city: 'Lahore', addressMasked: 'House 12, Str•••', methodLabel: 'Standard delivery', ...(status === 'dispatched' ? { courier: 'TCS', trackingNumber: 'T123', trackingUrl: 'https://tcs.example/t/T123' } : {}) },
   allowedActions: status === 'pending' || status === 'pending_confirmation' ? ['cancel'] : [], locale: 'en',
+  ...(status === 'delivered' ? { returns: { windowDays: 7, eligibleUntil: '2026-12-31T00:00:00.000Z', requests: [{ number: 'RR-0007', kind: 'exchange', status: 'approved', reason: 'wrong_size', requestedAt: '2026-10-05T09:00:00.000Z', lines: [{ title: 'Lawn 3-Piece', variantLabel: 'S', quantity: 1 }], decisionNote: 'Send it back unwashed', pickupOn: '2026-10-08' }] } } : {}),
   ...(status === 'cancelled' ? { closed: { status: 'cancelled', at: '2026-10-03T09:00:00.000Z', reason: 'customer_request' } } : {}),
   ...over,
 })
@@ -181,6 +182,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (!orderStates.includes(status)) return undefined
     if (rest === '') return orderOf(status)
     if (rest === '/cancel') { state.calls.push('CANCEL'); return orderOf('cancelled') }
+    if (rest === '/returns' && req.method === 'POST') { state.calls.push(`RETURN ${JSON.stringify(req.body)}`); return { number: 'RR-0008' } }
     if (rest === '/switch-to-cod') { state.calls.push('SWITCH'); return orderOf('pending_confirmation') }
     if (rest === `/lines/${uuid(850)}/review` && req.method === 'GET') return { product: { title: 'Lawn 3-Piece' }, displayNameDefault: 'Ayesha K.', sized: true, submitted: false }
     if (rest === `/lines/${uuid(850)}/review` && req.method === 'POST') { state.calls.push(`REVIEW ${JSON.stringify(req.body)}`); return { status: 'pending' } }
@@ -996,6 +998,42 @@ describe('the storefront through its whole stack', () => {
       expect(cancelled).toContain('This order was cancelled on')
       expect(cancelled).toContain('Cancelled at your request.')
       expect(cancelled).not.toMatch(/<ol[^>]*aria-label="Order progress"/) // the timeline gives way to the banner
+    })
+
+    it('a delivered order offers a return or exchange while the window is open, and shows the requests made', async () => {
+      const html = plain(await (await get('/orders/Tok_delivered_Abc')).text())
+      expect(html).toContain('Returns and exchanges')
+      expect(html).toMatch(/RR-0007(<!-- -->)? · (<!-- -->)?Exchange/)
+      expect(html).toContain('Approved')
+      expect(html).toContain('Our note: Send it back unwashed')
+      expect(html).toContain('Ask for a return or exchange')
+      expect(html).toMatch(/name="qty_[0-9a-f-]+"/)
+      expect(html).toContain('Up to 1. Leave 0 for an item you keep.')
+      expect(plain(await (await get('/orders/Tok_confirmed_Abc')).text())).not.toContain('Returns and exchanges') // the API sent no offer
+    })
+
+    it('sending the request without JavaScript posts only the pieces asked for, and the page says it was sent', async () => {
+      state.calls = []
+      const body = new URLSearchParams({ intent: 'return', kind: 'exchange', reason: 'wrong_size', exchangeNote: 'Size L', note: '', [`qty_${uuid(850)}`]: '1' })
+      const r = await get('/orders/Tok_delivered_Abc', { method: 'POST', body, headers: form })
+      expect(r.status).toBe(200)
+      expect(state.calls).toEqual([`RETURN {"kind":"exchange","reason":"wrong_size","exchangeNote":"Size L","lines":[{"lineId":"${uuid(850)}","quantity":1}]}`])
+      expect(plain(await r.text())).toContain('Your request RR-0008 was sent.')
+      // nothing chosen: refused here, before the API
+      state.calls = []
+      const empty = await get('/orders/Tok_delivered_Abc', { method: 'POST', body: new URLSearchParams({ intent: 'return', kind: 'return', reason: 'other', [`qty_${uuid(850)}`]: '0' }), headers: form })
+      expect(plain(await empty.text())).toContain('Choose at least one item')
+      expect(state.calls).toEqual([])
+    })
+
+    it('Buy again puts each line of the order into the bag with no price sent, and opens the bag with the new cart cookie', async () => {
+      state.cartBody = undefined
+      const r = await get('/orders/Tok_delivered_Abc', { method: 'POST', body: new URLSearchParams({ intent: 'buyAgain' }), headers: form })
+      expect(r.status).toBe(302)
+      expect(r.headers.get('location')).toBe('/cart')
+      expect(r.headers.get('set-cookie')).toContain('nc_cart=tok-123')
+      expect(state.cartBody).toEqual({ variantId: uuid(851), quantity: 1 })
+      expect(plain(await (await get('/orders/Tok_delivered_Abc')).text())).toContain('Buy again')
     })
 
     it('the thank-you variant of the same page, and a token no order has is a 404', async () => {

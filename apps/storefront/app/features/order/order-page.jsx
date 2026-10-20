@@ -11,6 +11,7 @@ import { Link } from '@noor/ui/link'
 import { useHydrated } from '../catalog/filters'
 import { ShopPrice as Price } from '../catalog/shop-price'
 import { useLocalePath, useShell } from '../layout/use-shell'
+import { ReturnRequests } from './returns'
 
 /** @typedef {import('@noor/contract').OrderPublic} Order */
 
@@ -132,9 +133,9 @@ function CancelOrder({ order }) {
 /**
  * The order page (plan/06-storefront/06-orders-tracking.md section 4): one page for the link people are sent and for the lookup. Everything shown is what the API sent, already masked; what the
  * customer may do is what the API lists in `allowedActions`. While the order is not in a final state the page asks again every minute and when the tab comes back.
- * @param {{ order: Order, placed: boolean, reviewed: boolean, whatsapp: string | undefined, token: string, error?: string | undefined }} props
+ * @param {{ order: Order, placed: boolean, reviewed: boolean, whatsapp: string | undefined, token: string, requested?: string | undefined, error?: string | undefined }} props
  */
-export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
+export function OrderPage({ order, placed, reviewed, whatsapp, token, requested, error }) {
   const { t } = useTranslation('storefront')
   const path = useLocalePath()
   const shell = useShell()
@@ -142,6 +143,7 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
   const hydrated = useHydrated()
   const revalidator = useRevalidator()
   const toCod = useFetcher()
+  const buyAgain = useFetcher()
   const closed = order.closed
   const live = !finalStatuses.includes(order.status)
 
@@ -225,6 +227,8 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
           <p className="text-sm text-fg-soft">{order.delivery.methodLabel}{order.delivery.eta ? ` · ${t('order.eta', { from: formatDate(order.delivery.eta.from, locale), to: formatDate(order.delivery.eta.to, locale) })}` : ''}</p>
         </section>
 
+        <ReturnRequests order={order} requested={requested} />
+
         <div className="flex flex-wrap items-center gap-3 print:hidden">
           {order.allowedActions.includes('cancel') ? <CancelOrder order={order} /> : <WhatsAppNeedCancel number={whatsapp} order={order} />}
           {order.allowedActions.includes('switch_to_cod') ? (
@@ -235,6 +239,12 @@ export function OrderPage({ order, placed, reviewed, whatsapp, token, error }) {
           ) : null}
           {whatsapp ? (
             <LinkButton href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('order.waText', { orderNo: order.orderNumber }))}`} variant="secondary">{t('order.whatsapp')}</LinkButton>
+          ) : null}
+          {order.lines.some((l) => l.variantId) ? (
+            <buyAgain.Form method="post">
+              <input type="hidden" name="intent" value="buyAgain" />
+              <Button type="submit" variant="secondary" loading={buyAgain.state !== 'idle'}>{t('order.buyAgain')}</Button>
+            </buyAgain.Form>
           ) : null}
           {hydrated ? <Button variant="ghost" onClick={() => window.print()}>{t('order.print')}</Button> : null}
         </div>
