@@ -10,9 +10,10 @@ import { notificationLog } from '../../db/schema/notifications.js'
 import { now } from '../../platform/clock.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { transaction } from '../../platform/db.js'
+import { DomainError } from '../../platform/errors.js'
 import { record } from '../audit/index.js'
 import { trackingToken } from '../orders/tracking.js'
-import { defaultEmails } from '@noor/contract'
+import { defaultEmails, normalizePkMobile } from '@noor/contract'
 import { fillTokens, htmlOf, render } from './templates.js'
 
 /**
@@ -47,16 +48,21 @@ const isDuplicate = (/** @type {unknown} */ e) => /** @type {{ cause?: { errno?:
  * @param {import('../../platform/config.js').Config} deps.config
  * @param {{ value: (key: 'store' | 'payments', x: Database) => Promise<{ value: any }> }} deps.settings
  * @param {import('./mailer.js').Mailer | undefined} deps.mailer
+ * @param {import('./gateway.js').Gateway | undefined} [deps.gateway] the SMS or WhatsApp gateway; without one the phone messages are only written down
  */
-export function createNotifications({ db, config, settings, mailer }) {
+export function createNotifications({ db, config, settings, mailer, gateway }) {
+  /** Do the customer's phone messages go out: there is a gateway, and the shop switched it on (Settings, Emails). */
+  const gatewayOn = async () => Boolean(gateway) && (await settings.value('store', db)).value.messages?.enabled === true
+
   /**
    * Writes the message down once and, for email with a mailer, sends it. A message already sent or skipped is left alone.
    * @param {Message} m @returns {Promise<{ status: 'sent' | 'skipped' | 'failed', fresh: boolean }>}
    */
-  async function deliver(m, opts = /** @type {{ fromName?: string, replyTo?: string }} */ ({})) {
+  async function deliver(m, opts = /** @type {{ fromName?: string, replyTo?: string, gateway?: boolean }} */ ({})) {
     const [existing] = await db.select().from(notificationLog).where(eq(notificationLog.uniqueKey, m.uniqueKey))
     if (existing && (existing.status === 'sent' || existing.status === 'skipped')) return { status: existing.status, fresh: false }
-    const sends = m.channel === 'email' && mailer
+    const viaGateway = m.channel === 'whatsapp' && opts.gateway === true && Boolean(gateway)
+    const sends = (m.channel === 'email' && mailer) || viaGateway
     const id = existing?.id ?? uuidv7()
     if (!existing) {
       try {
@@ -70,12 +76,15 @@ export function createNotifications({ db, config, settings, mailer }) {
       }
       if (!sends) return { status: 'skipped', fresh: true }
     }
+    const provider = viaGateway ? 'gateway' : 'smtp'
     try {
-      const r = await /** @type {import('./mailer.js').Mailer} */ (mailer).send({ to: m.recipient, subject: m.subject, text: m.body, html: htmlOf(m.body), fromName: opts.fromName, replyTo: opts.replyTo })
-      await db.update(notificationLog).set({ status: 'sent', provider: 'smtp', providerRef: r.providerRef ?? null, error: null, sentAt: now() }).where(eq(notificationLog.id, id))
+      const r = viaGateway
+        ? await /** @type {import('./gateway.js').Gateway} */ (gateway).send({ to: m.recipient, text: m.body, reference: m.uniqueKey })
+        : await /** @type {import('./mailer.js').Mailer} */ (mailer).send({ to: m.recipient, subject: m.subject, text: m.body, html: htmlOf(m.body), fromName: opts.fromName, replyTo: opts.replyTo })
+      await db.update(notificationLog).set({ status: 'sent', provider, providerRef: r.providerRef ?? null, error: null, sentAt: now() }).where(eq(notificationLog.id, id))
       return { status: 'sent', fresh: true }
     } catch (e) {
-      await db.update(notificationLog).set({ status: 'failed', provider: 'smtp', error: String(/** @type {Error} */ (e).message).slice(0, 300) }).where(eq(notificationLog.id, id))
+      await db.update(notificationLog).set({ status: 'failed', provider, error: String(/** @type {Error} */ (e).message).slice(0, 300) }).where(eq(notificationLog.id, id))
       return { status: 'failed', fresh: false }
     }
   }
@@ -135,6 +144,7 @@ export function createNotifications({ db, config, settings, mailer }) {
       /** @type {Message[]} */
       const messages = []
       const emails = await emailSettings()
+      const phoneOn = await gatewayOn()
       const say = emails.events[/** @type {keyof typeof emails.events} */ (event.replace('order.', ''))]
       for (const template of templatesFor(event, o, lines.some((l) => l.leadMaxDays != null))) {
         const base = { template, audience: /** @type {const} */ ('customer'), orderId, locale, body: render(locale, template, vars), subject: render(locale, 'email.subject', vars) }
@@ -155,7 +165,7 @@ export function createNotifications({ db, config, settings, mailer }) {
       let skipped = 0
       let failed = 0
       for (const m of messages) {
-        const r = await deliver(m, { fromName: emails.senderName, replyTo: emails.replyTo })
+        const r = await deliver(m, { fromName: emails.senderName, replyTo: emails.replyTo, gateway: phoneOn })
         if (r.status === 'failed') failed += 1
         else if (r.status === 'sent') sent += 1
         else skipped += 1
@@ -192,6 +202,26 @@ export function createNotifications({ db, config, settings, mailer }) {
         body: body.trim() ? fillTokens(body, vars) : render(locale, template, vars),
         sample: !found,
       }
+    },
+
+    /** Whether the server has an SMS or WhatsApp gateway at all. */
+    messagesStatus: () => ({ configured: Boolean(gateway) }),
+
+    /**
+     * One text message to a phone staff type, to see that the gateway works. It goes whether or not the shop has switched phone messages on (that switch is for the customers' messages); it is
+     * written to the log and to the audit log like any other.
+     * @param {{ staffId: string, name: string, role: string }} actor @param {{ to: string, text?: string | undefined }} input @param {{ ip: string, userAgent: string, requestId: string }} req
+     */
+    async sendTestMessage(actor, input, req) {
+      const to = normalizePkMobile(input.to)
+      if (!to) throw new DomainError('validation_failed', { issues: [{ path: 'to', code: 'invalid_format' }] })
+      const store = await settings.value('store', db)
+      const text = input.text || `Test message from ${String(store.value.brand?.name ?? 'the shop')}. If you can read this, order messages reach phones.`
+      const m = { uniqueKey: `test:${uuidv7()}`, template: 'test.message', channel: /** @type {const} */ ('whatsapp'), audience: /** @type {const} */ ('staff'), orderId: undefined, recipient: to, locale: /** @type {const} */ ('en'), subject: '', body: text }
+      const r = await deliver(/** @type {never} */ (m), { gateway: true })
+      await transaction(db, (tx) => record(tx, { actor: { type: 'staff', id: actor.staffId, label: actor.name, role: actor.role }, ip: req.ip, userAgent: req.userAgent, requestId: req.requestId, action: 'messages.test_sent', entityType: 'message', entityId: m.uniqueKey, entityLabel: `to ${to.slice(0, 6)}...`, category: 'general' }))
+      const [row] = await db.select().from(notificationLog).where(eq(notificationLog.uniqueKey, m.uniqueKey))
+      return { status: r.status, ...(row?.error ? { error: row.error } : {}) }
     },
 
     /** Whether mail can leave the server at all, and from which address. */

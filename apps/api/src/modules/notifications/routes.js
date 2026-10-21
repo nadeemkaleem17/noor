@@ -10,6 +10,8 @@ export function emailHandlers(n) {
     'admin.emails.status': async () => n.status(),
     'admin.emails.preview': async ({ body }) => n.render(body),
     'admin.emails.test': async ({ actor, body, http, requestId }) => n.sendTest(staff(actor), body, { ip: http.ip, userAgent: http.userAgent, requestId }),
+    'admin.messages.status': async () => n.messagesStatus(),
+    'admin.messages.test': async ({ actor, body, http, requestId }) => n.sendTestMessage(staff(actor), body, { ip: http.ip, userAgent: http.userAgent, requestId }),
     'admin.emails.log': async ({ query }) => n.log(query),
   }
 }

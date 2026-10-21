@@ -21,7 +21,7 @@ import { transaction } from '../src/platform/db.js'
 import { uuidv7 } from '../src/platform/ids.js'
 import { relayOnce } from '../src/platform/outbox.js'
 import { eventHandlers } from '../src/modules/index.js'
-import { createMailer, notificationJobs } from '../src/modules/notifications/index.js'
+import { createGateway, createMailer, notificationJobs } from '../src/modules/notifications/index.js'
 import { createServices } from '../src/modules/services.js'
 import { closeHarness, config, createHarness, signedIn, t } from './support/staff.js'
 import { add, createShop, shop } from './support/shop.js'
@@ -329,6 +329,84 @@ describe.skipIf(!dbAvailable)('notifications (MySQL)', () => {
       await svc.notifications.cleanup()
       expect((await log()).map((r) => r.channel)).toEqual(['email'])
       expect(o.id).toBeTruthy()
+    }, 90_000)
+  })
+
+  // ---- the phone messages through a gateway (the owner's open question on order messages, decided 2026-10-21) ---------------------
+  describe('with a gateway', () => {
+    /** @param {{ status?: number, answer?: object }} [how] @returns {{ calls: { url: string, auth: string | null, body: any }[], services: ReturnType<typeof createServices> }} */
+    const gatewayOf = ({ status = 200, answer = { id: 'wamid.77' } } = {}) => {
+      /** @type {{ url: string, auth: string | null, body: any }[]} */
+      const calls = []
+      const fetchImpl = /** @type {typeof fetch} */ (async (url, init) => {
+        calls.push({ url: String(url), auth: new Headers(init?.headers).get('authorization'), body: JSON.parse(String(init?.body)) })
+        return new Response(JSON.stringify(answer), { status, headers: { 'content-type': 'application/json' } })
+      })
+      const gateway = createGateway({ MESSAGE_GATEWAY_URL: 'https://gateway.example/send', MESSAGE_GATEWAY_KEY: 'secret-key-1' }, fetchImpl)
+      return { calls, services: createServices({ db: t.db, config, gateway }) }
+    }
+    /** @param {boolean} enabled */
+    async function switchMessages(enabled) {
+      const store = await S.owner.call('GET', '/admin/settings/store')
+      const put = await S.owner.call('PUT', '/admin/settings/store', { body: { value: { ...store.body.value, messages: { enabled } }, version: store.body.version } })
+      if (put.status !== 200) throw new Error(JSON.stringify(put.body))
+    }
+
+    it('with the gateway there but the switch off, the phone message is only written down', async () => {
+      await ready([])
+      const g = gatewayOf()
+      await place(await S.product({ price: 200000, stock: 5 }))
+      await drain(g.services)
+      expect(g.calls).toEqual([])
+      expect(await summary()).toEqual(['order.placed/email/skipped', 'order.placed/whatsapp/skipped'])
+    }, 90_000)
+
+    it('with the switch on, the customer message goes to the gateway once, with the key, and the log says so', async () => {
+      await ready([])
+      await switchMessages(true)
+      const g = gatewayOf()
+      await place(await S.product({ price: 200000, stock: 5 }))
+      await drain(g.services)
+      await drain(g.services) // again: nothing is sent twice
+      expect(g.calls).toHaveLength(1)
+      expect(g.calls[0]).toMatchObject({ url: 'https://gateway.example/send', auth: 'Bearer secret-key-1', body: { to: expect.stringMatching(/^\+923\d{9}$/), text: expect.stringMatching(/^Hi Sana, we received your order/), reference: expect.stringMatching(/^order\.placed:/) } })
+      const row = (await log()).find((r) => r.channel === 'whatsapp')
+      expect(row).toMatchObject({ status: 'sent', provider: 'gateway', providerRef: 'wamid.77', error: null })
+      expect(row?.sentAt).toBeTruthy()
+    }, 90_000)
+
+    it('a gateway that refuses marks the message failed and fails the job to be retried; the retry sends it', async () => {
+      await ready([])
+      await switchMessages(true)
+      const bad = gatewayOf({ status: 502, answer: {} })
+      const o = await place(await S.product({ price: 200000, stock: 5 }))
+      await expect(drain(bad.services)).rejects.toThrow('not sent')
+      expect((await log()).find((r) => r.channel === 'whatsapp')).toMatchObject({ status: 'failed', provider: 'gateway', error: 'the gateway answered 502' })
+      const good = gatewayOf()
+      await good.services.notifications.forOrder('order.placed', o.id)
+      expect((await log()).find((r) => r.channel === 'whatsapp')).toMatchObject({ status: 'sent', provider: 'gateway' })
+      expect(good.calls).toHaveLength(1)
+    }, 90_000)
+
+    it('a test message goes through the gateway whether or not the switch is on, and is audited; a bad number is refused', async () => {
+      await ready([])
+      const g = gatewayOf()
+      const actor = { staffId: staff.id, name: 'Hina Owner', role: 'owner' }
+      const req = { ip: '10.0.0.1', userAgent: 'test', requestId: 'r1' }
+      expect(g.services.notifications.messagesStatus()).toEqual({ configured: true })
+      expect(await g.services.notifications.sendTestMessage(actor, { to: '0300 5551234' }, req)).toEqual({ status: 'sent' })
+      expect(g.calls[0]?.body).toMatchObject({ to: '+923005551234', text: expect.stringMatching(/^Test message from /) })
+      await expect(g.services.notifications.sendTestMessage(actor, { to: 'abc' }, req)).rejects.toMatchObject({ code: 'validation_failed' })
+      expect((await t.db.select().from(auditLog)).some((a) => a.action === 'messages.test_sent')).toBe(true)
+    }, 90_000)
+
+    it('over HTTP: the status says whether the server has a gateway; without one a test is written down, not sent; only people who manage settings', async () => {
+      await ready([])
+      expect((await S.owner.call('GET', '/admin/messages/status')).body).toEqual({ configured: false })
+      expect((await S.owner.call('POST', '/admin/messages/test', { body: { to: '0300 5551234' } })).body).toEqual({ status: 'skipped' })
+      expect((await S.owner.call('POST', '/admin/messages/test', { body: { to: 'abc' } })).status).toBe(400)
+      const { b } = await signedIn('viewer')
+      expect((await b.call('GET', '/admin/messages/status')).status).toBe(403)
     }, 90_000)
   })
 })

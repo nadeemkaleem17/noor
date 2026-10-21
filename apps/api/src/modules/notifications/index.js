@@ -2,6 +2,7 @@ import { createNotifications } from './service.js'
 
 export { createNotifications }
 export { createMailer } from './mailer.js'
+export { createGateway } from './gateway.js'
 
 /** The events that make the order messages, all handled by one job. */
 export const notificationEvents = Object.fromEntries(['order.placed', 'order.confirmed', 'order.dispatched', 'order.delivered', 'order.cancelled', 'order.returned'].map((e) => [e, ['notify.order']]))

@@ -7,7 +7,7 @@ import { createCartService } from './cart/index.js'
 import { createCatalogService } from './catalog/index.js'
 import { createCustomersService } from './customers/index.js'
 import { createInventory } from './inventory/index.js'
-import { createMailer, createNotifications } from './notifications/index.js'
+import { createGateway, createMailer, createNotifications } from './notifications/index.js'
 import { createMediaService } from './media/index.js'
 import { createAdminOrders } from './orders/admin.js'
 import { createOrdersService, customerOrders } from './orders/index.js'
@@ -23,9 +23,9 @@ import { createDeliveryService } from './delivery/index.js'
 import { createVisitsService } from './visits/index.js'
 
 /**
- * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, providers?: ReturnType<typeof createProviders>, mailer?: ReturnType<typeof createMailer> }} deps
+ * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, providers?: ReturnType<typeof createProviders>, mailer?: ReturnType<typeof createMailer>, gateway?: ReturnType<typeof createGateway> }} deps
  */
-export function createServices({ db, config, storage = createStorage(config), providers = createProviders(), mailer = createMailer(config) }) {
+export function createServices({ db, config, storage = createStorage(config), providers = createProviders(), mailer = createMailer(config), gateway = createGateway(config) }) {
   const auth = createAuthService({ db, config })
   const audit = createAuditService(db)
   const search = createSearch({ db })
@@ -53,7 +53,7 @@ export function createServices({ db, config, storage = createStorage(config), pr
   const delivery = createDeliveryService({ db, orders, settings })
   const returns = createReturnsService({ db, orders, settings })
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
-  const notifications = createNotifications({ db, config, settings, mailer })
+  const notifications = createNotifications({ db, config, settings, mailer, gateway })
   const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
   const reporting = createReporting({ db, config, settings, media })
   return { returns, delivery, visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }

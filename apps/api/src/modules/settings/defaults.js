@@ -17,6 +17,7 @@ export const defaults = {
     seo: {},
     notifications: { staffEmails: [] },
     emails: defaultEmails,
+    messages: { enabled: false },
     thresholds: { lowStock: 3, highValueCodMinor: 2_500_000 },
   },
   theme: themePresets.atelier,

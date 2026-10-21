@@ -43,6 +43,9 @@ const Env = z.object({
   /** Where customer and staff emails go out (`smtp://user:pass@host:587`; Mailpit locally). Without it the messages are only written to the log. */
   MAIL_URL: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(3).default('Rubaya <no-reply@rubaya.pk>'),
+  /** Where the customer's order messages go as SMS or WhatsApp (one JSON POST, see modules/notifications/gateway.js). Without it they are only written to the log. */
+  MESSAGE_GATEWAY_URL: z.url().optional(),
+  MESSAGE_GATEWAY_KEY: z.string().min(8).optional(),
   /** Owners and managers must use two-step sign-in. Can be switched off only in local development and CI (the check below). */
   TWO_FACTOR_REQUIRED: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
   /** Accept any password of five or more characters (no blocklist, no name check). Allowed only when APP_ENV is local: for a throwaway account on a development machine. */

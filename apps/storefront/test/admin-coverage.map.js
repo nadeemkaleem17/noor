@@ -36,6 +36,7 @@ export const storeSettings = {
   'features.notifyMe': ['shown', 'features.notifyMe'],
   'features.customSizing': ['shown', 'features.customSizing'],
   'features.visitTracking': ['shown', 'visitTracking'],
+  'messages.enabled': api('decides whether order messages go to the customer phone: read by the API, not the shop'),
   'features.visitConsent': ['shown', 'the notice with Accept and Decline'],
   'popularSearches[]': ['shown', 'popularSearches'],
   'navigation.mode': ['shown', 'navigation'],

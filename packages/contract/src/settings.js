@@ -78,6 +78,8 @@ export const StoreSettings = z.strictObject({
   notifications: z.strictObject({ staffEmails: z.array(z.email().max(254)).max(10) }),
   /** The emails customers get about their order: on or off for each event, the words, the sender. */
   emails: EmailSettings.default(defaultEmails),
+  /** Send the customer's order messages to their phone through the shop's gateway (SMS or WhatsApp). Does nothing until the server has a gateway address. */
+  messages: z.strictObject({ enabled: z.boolean() }).default({ enabled: false }),
   thresholds: z.strictObject({ lowStock: z.int().min(0).max(1000), highValueCodMinor: z.int().min(0) }),
   dispatchPromise: text(100).optional(),
 })

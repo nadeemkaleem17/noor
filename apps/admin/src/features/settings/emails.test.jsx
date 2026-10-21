@@ -16,13 +16,14 @@ const storeValue = (/** @type {object} */ emails = defaultEmails) => ({
   seo: {},
   notifications: { staffEmails: [] },
   emails,
+  messages: { enabled: false },
   thresholds: { lowStock: 3, highValueCodMinor: 2_500_000 },
 })
 const perms = /** @type {import('@noor/contract').Permission[]} */ (['dashboard:read', 'settings:read', 'settings:write', 'settings:manage'])
 const logRow = (/** @type {number} */ n, /** @type {object} */ over = {}) => ({ id: `0194f1b2-7c3a-7000-8000-0000000006${String(n).padStart(2, '0')}`, template: 'order.placed', recipient: 'sana@example.com', status: 'sent', orderNumber: 'RB-10001', body: 'Hi', createdAt: '2026-10-20T10:00:00.000Z', ...over })
 
-/** @param {{ configured?: boolean, emails?: object, more?: Record<string, (r: { body: any; headers: Headers; url: URL }) => Response> }} [o] */
-function server({ configured = true, emails = defaultEmails, more = {} } = {}) {
+/** @param {{ configured?: boolean, gateway?: boolean, emails?: object, more?: Record<string, (r: { body: any; headers: Headers; url: URL }) => Response> }} [o] */
+function server({ configured = true, gateway = true, emails = defaultEmails, more = {} } = {}) {
   const state = { puts: /** @type {any[]} */ ([]), previews: /** @type {any[]} */ ([]), tests: /** @type {any[]} */ ([]) }
   fakeApi({
     'GET /admin/me': () => json(200, me({ permissions: perms })),
@@ -31,11 +32,40 @@ function server({ configured = true, emails = defaultEmails, more = {} } = {}) {
     'GET /admin/emails/status': () => json(200, { configured, from: 'Rubaya <no-reply@rubaya.pk>' }),
     'GET /admin/emails/log': () => json(200, { items: [logRow(1), logRow(2, { status: 'failed', error: 'connection refused', recipient: 'ali@example.com' }), logRow(3, { status: 'skipped', template: 'test.placed' })], total: 3, page: 1, size: 50 }),
     'POST /admin/emails/preview': ({ body }) => (state.previews.push(body), json(200, { subject: 'Hi Ayesha', body: 'Order RB-10001 for Rs 7,240', sample: true })),
+    'GET /admin/messages/status': () => json(200, { configured: gateway }),
+    'POST /admin/messages/test': ({ body }) => (state.tests.push({ phone: body }), json(200, { status: 'sent' })),
     'POST /admin/emails/test': ({ body }) => (state.tests.push(body), json(200, { status: 'sent' })),
     ...more,
   })
   return state
 }
+
+describe('phone messages (SMS or WhatsApp through the gateway of the server)', () => {
+  it('has a switch that saves only the messages setting, and says whether the server has a gateway', async () => {
+    const s = server({ gateway: false })
+    const { user } = renderApp('/settings/emails')
+    const card = within(await screen.findByRole('region', { name: 'Phone messages' }))
+    expect(await card.findByText(/This server has no gateway/)).toBeTruthy()
+    await user.click(card.getByRole('switch', { name: /Send order messages to customers' phones/ }))
+    await user.click(card.getByRole('button', { name: 'Save phone messages' }))
+    await waitFor(() => expect(s.puts).toHaveLength(1))
+    expect(s.puts[0].value.messages).toEqual({ enabled: true })
+    expect(s.puts[0].value.emails).toEqual(storeValue().emails) // nothing else was touched
+  })
+
+  it('sends a test message to the number typed and says it went', async () => {
+    const s = server()
+    const { user } = renderApp('/settings/emails')
+    const card = within(await screen.findByRole('region', { name: 'Phone messages' }))
+    expect(await card.findByText(/This server has a gateway/)).toBeTruthy()
+    expect(card.getByRole('button', { name: 'Send a test message' }).hasAttribute('disabled')).toBe(true)
+    await user.type(card.getByLabelText(/^Send a test message to/), '0300 5551234')
+    await user.click(card.getByRole('button', { name: 'Send a test message' }))
+    await waitFor(() => expect(s.tests.some((x) => x.phone)).toBe(true))
+    expect(s.tests.find((x) => x.phone)?.phone).toEqual({ to: '0300 5551234' })
+    expect((await screen.findAllByText('A test message was sent to 0300 5551234')).length).toBeGreaterThan(0)
+  })
+})
 
 describe('the emails screen (plan/17-owner-requests-2026-10.md item 13)', () => {
   it('lists the six events with their switches, says where mail comes from, and shows the log', async () => {

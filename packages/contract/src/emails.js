@@ -23,6 +23,12 @@ export const EmailLogRow = z.strictObject({
 })
 
 export const emailRoutes = defineRoutes({
+  'admin.messages.status': { method: 'GET', path: '/admin/messages/status', auth: 'staff', permission: 'settings:manage', response: z.strictObject({ configured: z.boolean() }) },
+  'admin.messages.test': {
+    method: 'POST', path: '/admin/messages/test', auth: 'staff', permission: 'settings:manage', rateLimit: 'admin',
+    body: z.strictObject({ to: z.string().trim().min(5).max(40), text: z.string().trim().max(300).optional() }),
+    response: z.strictObject({ status: z.enum(['sent', 'skipped', 'failed']), error: z.string().optional() }),
+  },
   'admin.emails.status': { method: 'GET', path: '/admin/emails/status', auth: 'staff', permission: 'settings:manage', response: z.strictObject({ configured: z.boolean(), from: z.string() }) },
   'admin.emails.preview': { method: 'POST', path: '/admin/emails/preview', auth: 'staff', permission: 'settings:manage', body: Draft, response: RenderedEmail },
   'admin.emails.test': {

@@ -2,7 +2,7 @@ import { StoreSettings, emailEvents, emailTokens, routes } from '@noor/contract'
 import { Badge } from '@noor/ui/badge'
 import { Button } from '@noor/ui/button'
 import { ErrorState } from '@noor/ui/error-state'
-import { RHFField } from '@noor/ui/field'
+import { Field, RHFField } from '@noor/ui/field'
 import { Input } from '@noor/ui/input'
 import { Spinner } from '@noor/ui/spinner'
 import { Switch } from '@noor/ui/switch'
@@ -37,6 +37,7 @@ const tokenHelp = /** @type {Record<string, string>} */ ({
 })
 
 const statusQuery = queryOptions({ queryKey: ['settings', 'emails', 'status'], queryFn: ({ signal }) => api('admin.emails.status', { signal }), staleTime: 60_000 })
+const messagesStatusQuery = queryOptions({ queryKey: ['settings', 'messages', 'status'], queryFn: ({ signal }) => api('admin.messages.status', { signal }), staleTime: 60_000 })
 const logSchema = routes['admin.emails.log'].query
 
 /** @type {import('@/components/data-table').Column<LogRow>[]} */
@@ -189,6 +190,65 @@ function SendingCard({ doc }) {
   )
 }
 
+/**
+ * The customer's order message to their phone (SMS or WhatsApp) through the gateway the server has: one switch, and a test message to a number staff type. The gateway's address and key are the
+ * server's settings, never kept here.
+ * @param {{ doc: any }} props
+ */
+function PhoneMessagesCard({ doc }) {
+  const save = useSaveStoreSlice()
+  const toast = useToast()
+  const status = useQuery(messagesStatusQuery)
+  const [to, setTo] = useState('')
+  const test = useMutation({
+    mutationFn: () => api('admin.messages.test', { body: { to } }),
+    onSuccess: (r) =>
+      toast.push({
+        title: r.status === 'sent' ? `A test message was sent to ${to}` : r.status === 'skipped' ? 'No gateway is set up on this server, so nothing was sent.' : `The gateway did not take it: ${r.error ?? 'unknown error'}`,
+        tone: r.status === 'sent' ? 'success' : 'danger',
+      }),
+    onError: (e) => toast.push({ title: messageFor(e), tone: 'danger' }),
+  })
+  return (
+    <div className="mt-4">
+      <SettingsCard
+        id="phone-messages"
+        title="Phone messages"
+        description="The same order messages, sent as SMS or WhatsApp to the number the customer gave. Without this, each one is only written down on the order for staff to copy into WhatsApp."
+        defaults={{ messages: { enabled: doc.value.messages?.enabled === true } }}
+        schema={StoreSettings.pick({ messages: true })}
+        toValue={(f) => ({ messages: { enabled: f.messages.enabled === true } })}
+        save={(slice) => save.mutateAsync(slice)}
+      >
+        {(form, writable) => (
+          <>
+            <Controller control={form.control} name="messages.enabled" render={({ field }) => <Switch label="Send order messages to customers' phones" disabled={!writable} checked={field.value === true} onCheckedChange={field.onChange} />} />
+            {status.data ? (
+              <p className={`rounded-control px-3 py-2 text-sm ${status.data.configured ? 'bg-success-soft' : 'bg-warning-soft'}`} role="status">
+                {status.data.configured
+                  ? 'This server has a gateway, so messages can leave it once the switch is on.'
+                  : 'This server has no gateway, so nothing can leave it even with the switch on. Setting one up is a change to the server settings (MESSAGE_GATEWAY_URL and MESSAGE_GATEWAY_KEY), made by whoever runs the server.'}
+              </p>
+            ) : null}
+            {writable ? (
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-56 flex-1">
+                  <Field label="Send a test message to" hint="A mobile number, such as 0300 1234567. It goes whether or not the switch is on.">
+                    <Input value={to} type="tel" inputMode="tel" maxLength={40} onChange={(e) => setTo(e.target.value)} />
+                  </Field>
+                </div>
+                <Button type="button" variant="secondary" loading={test.isPending} disabled={to.trim().length < 5} onClick={() => test.mutate()}>
+                  Send a test message
+                </Button>
+              </div>
+            ) : null}
+          </>
+        )}
+      </SettingsCard>
+    </div>
+  )
+}
+
 /** `/settings/emails` (plan/17-owner-requests-2026-10.md item 13): which order emails go out, in whose name and in which words, with a preview, a test message and the log of what happened. */
 export function EmailsPage() {
   const store = useQuery(storeQuery)
@@ -204,6 +264,7 @@ export function EmailsPage() {
       {store.isPending ? <Spinner label="Loading the email settings" /> : null}
       {store.isError ? <ErrorState title="The email settings could not be loaded" retryLabel="Try again" onRetry={() => void store.refetch()} /> : null}
       {store.isSuccess ? <SendingCard doc={store.data} /> : null}
+      {store.isSuccess ? <PhoneMessagesCard doc={store.data} /> : null}
       <h2 className="mb-2 mt-8 font-heading text-lg font-semibold">What was sent</h2>
       <DataTable
         id="email-log"

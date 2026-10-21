@@ -4520,6 +4520,10 @@
                             "visitTracking": {
                               "default": true,
                               "type": "boolean"
+                            },
+                            "visitConsent": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -4527,7 +4531,8 @@
                             "reviews",
                             "notifyMe",
                             "customSizing",
-                            "visitTracking"
+                            "visitTracking",
+                            "visitConsent"
                           ],
                           "additionalProperties": false
                         },
@@ -4802,6 +4807,21 @@
                           ],
                           "additionalProperties": false
                         },
+                        "messages": {
+                          "default": {
+                            "enabled": false
+                          },
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false
+                        },
                         "thresholds": {
                           "type": "object",
                           "properties": {
@@ -4840,6 +4860,7 @@
                         "seo",
                         "notifications",
                         "emails",
+                        "messages",
                         "thresholds"
                       ],
                       "additionalProperties": false
@@ -5095,6 +5116,10 @@
                             "type": "boolean"
                           },
                           "visitTracking": {
+                            "default": true,
+                            "type": "boolean"
+                          },
+                          "visitConsent": {
                             "default": true,
                             "type": "boolean"
                           }
@@ -5377,6 +5402,21 @@
                         ],
                         "additionalProperties": false
                       },
+                      "messages": {
+                        "default": {
+                          "enabled": false
+                        },
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "additionalProperties": false
+                      },
                       "thresholds": {
                         "type": "object",
                         "properties": {
@@ -5610,6 +5650,10 @@
                             "visitTracking": {
                               "default": true,
                               "type": "boolean"
+                            },
+                            "visitConsent": {
+                              "default": true,
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -5617,7 +5661,8 @@
                             "reviews",
                             "notifyMe",
                             "customSizing",
-                            "visitTracking"
+                            "visitTracking",
+                            "visitConsent"
                           ],
                           "additionalProperties": false
                         },
@@ -5892,6 +5937,21 @@
                           ],
                           "additionalProperties": false
                         },
+                        "messages": {
+                          "default": {
+                            "enabled": false
+                          },
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "additionalProperties": false
+                        },
                         "thresholds": {
                           "type": "object",
                           "properties": {
@@ -5930,6 +5990,7 @@
                         "seo",
                         "notifications",
                         "emails",
+                        "messages",
                         "thresholds"
                       ],
                       "additionalProperties": false
@@ -13505,6 +13566,10 @@
                         "visitTracking": {
                           "default": true,
                           "type": "boolean"
+                        },
+                        "visitConsent": {
+                          "default": true,
+                          "type": "boolean"
                         }
                       },
                       "required": [
@@ -13512,7 +13577,8 @@
                         "reviews",
                         "notifyMe",
                         "customSizing",
-                        "visitTracking"
+                        "visitTracking",
+                        "visitConsent"
                       ],
                       "additionalProperties": false
                     },
@@ -24251,6 +24317,97 @@
                     "lines",
                     "orderTotal",
                     "next"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/messages/status": {
+      "get": {
+        "operationId": "admin.messages.status",
+        "tags": [
+          "admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "configured": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "configured"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/messages/test": {
+      "post": {
+        "operationId": "admin.messages.test",
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 40
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "to"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "sent",
+                        "skipped",
+                        "failed"
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
                   ],
                   "additionalProperties": false
                 }

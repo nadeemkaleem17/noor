@@ -270,6 +270,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
     }
     samples['admin.media.update'] = { prepare: slot, act: ({ b, id }) => b.call('PUT', `/admin/media/${id}`, { body: { alt: 'Green suit' } }) }
     samples['admin.customers.highlightRules.save'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('PUT', '/admin/customers/highlight-rules', { body: { rules: [{ kind: 'orders', minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New', enabled: true }] } }) }
+    samples['admin.messages.test'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/messages/test', { body: { to: '0300 1234567' } }) }
     samples['admin.emails.test'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/emails/test', { body: { event: 'placed', to: 'me@example.com' } }) }
     samples['admin.searchIndex.rebuild'] = { prepare: async () => signedIn('owner'), act: (/** @type {any} */ { b }) => b.call('POST', '/admin/search-index/rebuild') }
     samples['admin.media.delete'] = { prepare: slot, act: ({ b, id }) => b.call('DELETE', `/admin/media/${id}`) }

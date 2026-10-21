@@ -51,6 +51,8 @@ Provider credentials are **not** part of `PaymentSettings` and no endpoint reads
 | `admin.pages.delete` | `DELETE /pages/:id` | `content:delete` | — | 204 | `page_locked` | |
 | `admin.pages.bulkDelete` | `POST /pages/bulk-delete` | `content:delete` | B: `{ ids: Id[] }` (1 to 100) | 200 `BulkResult` | `validation_failed` | Each id by the rules of the single delete; failures say why (added 2026-10-19) |
 | `admin.emails.status` | `GET /emails/status` | `settings:manage` | — | 200 `{ configured, from }` | `configured` is false while the server has no mail server (MAIL_URL); `from` is the server's sending address |
+| `admin.messages.status` | `GET /messages/status` | `settings:manage` | — | 200 `{ configured }` (does the server have a gateway) | — |
+| `admin.messages.test` | `POST /messages/test` | `settings:manage` | B: `{ to, text? }` (a Pakistani mobile number as typed) | 200 `{ status: 'sent' \| 'skipped' \| 'failed', error? }` (`skipped`: no gateway); audited as `messages.test_sent` | `validation_failed` (`to` is not a mobile number) |
 | `admin.emails.preview` | `POST /emails/preview` | `settings:manage` | B: `{ event, subject?, body? }` (what staff are typing) | 200 `{ subject, body, sample }` | Fills the words from the newest order, or made-up values (`sample: true`) |
 | `admin.emails.test` | `POST /emails/test` | `settings:manage` | B: `{ event, to, subject?, body? }` | 200 `{ status: sent \| skipped \| failed, error? }` | Rate limited (bucket `admin`); logged as `test.<event>` and audited as `emails.test_sent` |
 | `admin.emails.log` | `GET /emails/log` | `settings:manage` | Q: `page`, `size`, `status?` | 200 `Page<EmailLogRow>` | The email rows of `notification_log`, newest first |

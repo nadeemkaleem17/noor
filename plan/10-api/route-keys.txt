@@ -26,7 +26,12 @@ admin.collections.delete
 admin.collections.get
 admin.collections.list
 admin.collections.update
+admin.content.discardHomeDraft
 admin.content.getHome
+admin.content.getHomeDraft
+admin.content.homePreviewLink
+admin.content.publishHome
+admin.content.saveHomeDraft
 admin.content.updateHome
 admin.couriers.create
 admin.couriers.list
@@ -96,6 +101,8 @@ admin.media.get
 admin.media.update
 admin.menus.get
 admin.menus.update
+admin.messages.status
+admin.messages.test
 admin.nav.counts
 admin.orders.addNote
 admin.orders.bulk
