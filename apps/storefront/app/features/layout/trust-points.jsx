@@ -10,7 +10,7 @@ export function TrustPoints({ whatsappHref, row: sideBySide = false }) {
   const config = useShell()?.config
   const cod = config?.payments.some((p) => p.type === 'cod')
   const days = config?.policies.returnsDays
-  const line = 'flex items-center gap-3 text-small text-fg-soft hover:text-fg'
+  const line = 'flex min-h-6 items-center gap-3 text-small text-fg-soft hover:text-fg'
   const items = [
     cod ? { id: 'cod', icon: Banknote, text: t('home.trustCod'), href: path('/pages/shipping-returns') } : undefined,
     days ? { id: 'returns', icon: RotateCcw, text: t('home.trustReturns', { days }), href: path('/pages/shipping-returns') } : undefined,

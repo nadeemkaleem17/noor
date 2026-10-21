@@ -29,6 +29,10 @@ test('visits are counted only after the visitor accepts; a decline keeps nothing
       await expect(notice).toBeVisible({ timeout: 1500 })
     }).toPass({ timeout: 45_000 })
     await expectNoViolations(shop)
+    // an earlier look, before the shop's 30 seconds of remembered settings ran out, may have counted without asking: start from nothing
+    await context.clearCookies()
+    await shop.reload()
+    await expect(notice).toBeVisible()
     expect(await visitCookie(), 'nothing is set before the answer').toBeUndefined()
 
     // no: nothing kept
