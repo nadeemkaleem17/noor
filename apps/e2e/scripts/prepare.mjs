@@ -44,6 +44,8 @@ try {
     await auth.createOwner({ email: person.email, name: person.name, password })
     if (person.role !== 'owner') await pool.query('UPDATE staff_users SET role = ? WHERE email = ?', [person.role, person.email])
   }
+  // the journeys count visits without asking (a notice over the foot of every page would cover their buttons); 40-cookie-notice turns the question on for itself
+  await pool.query("UPDATE settings SET value = JSON_SET(value, '$.features.visitConsent', false) WHERE `key` = 'store'")
 } finally {
   await pool.end()
 }

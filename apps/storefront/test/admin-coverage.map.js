@@ -36,6 +36,7 @@ export const storeSettings = {
   'features.notifyMe': ['shown', 'features.notifyMe'],
   'features.customSizing': ['shown', 'features.customSizing'],
   'features.visitTracking': ['shown', 'visitTracking'],
+  'features.visitConsent': ['shown', 'the notice with Accept and Decline'],
   'popularSearches[]': ['shown', 'popularSearches'],
   'navigation.mode': ['shown', 'navigation'],
   'navigation.showEmptyCategories': ['shown', 'navigation'],

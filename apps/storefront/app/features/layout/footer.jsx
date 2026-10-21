@@ -14,9 +14,9 @@ const dialable = (/** @type {string} */ phone) => phone.replace(/[^\d+]/g, '')
 
 /**
  * The foot of every page (plan/06-storefront/01-sitemap.md section 3): about the shop, the footer menu, how to reach it, the ways to pay, and the year.
- * @param {{ brand: string, about?: string | undefined, columns: { shop: NavItem[], collections: NavItem[], help: NavItem[], company: NavItem[] }, contact: import('@noor/contract').StoreConfigPublic['contact'], payments: { type: string, label: string }[], languageSwitch?: import('react').ReactNode }} props
+ * @param {{ brand: string, about?: string | undefined, columns: { shop: NavItem[], collections: NavItem[], help: NavItem[], company: NavItem[] }, contact: import('@noor/contract').StoreConfigPublic['contact'], payments: { type: string, label: string }[], languageSwitch?: import('react').ReactNode, cookieChoices?: import('react').ReactNode }} props
  */
-export function Footer({ brand, about, columns, contact, payments, languageSwitch }) {
+export function Footer({ brand, about, columns, contact, payments, languageSwitch, cookieChoices }) {
   const { t } = useTranslation('storefront')
   const whatsapp = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : undefined
   const socials = contact.socials.flatMap((s) => (safeHref(s.url) ? [s] : []))
@@ -69,6 +69,7 @@ export function Footer({ brand, about, columns, contact, payments, languageSwitc
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-sm text-fg-soft">
           <p>{t('shell.rights', { year: new Date().getFullYear(), brand })}</p>
           {languageSwitch}
+          {cookieChoices}
           {payments.length ? (
             <p>
               {t('shell.footerPayments')}: {payments.map((p) => p.label).join(' · ')}

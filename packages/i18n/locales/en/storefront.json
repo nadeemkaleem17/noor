@@ -149,7 +149,11 @@
     "siblings": "More categories",
     "comingTitle": "{name}: products are on their way",
     "comingBody": "There is nothing in this category yet. Have a look at the other categories above, or at what is new.",
-    "density": { "label": "Products per row", "compact": "More products per row", "roomy": "Larger products" },
+    "density": {
+      "label": "Products per row",
+      "compact": "More products per row",
+      "roomy": "Larger products"
+    },
     "shopBy": "Shop by category",
     "tileCount": "{count, plural, one {# piece} other {# pieces}}",
     "railNew": "New in {name}",
@@ -514,7 +518,7 @@
       "busy": "Too many attempts. Please wait a minute.",
       "failed": "Something went wrong. Please try again.",
       "buyAgainNone": "None of these items can be bought again right now.",
-    "returnInvalid": "Choose at least one item, and no more pieces than you bought. Then try again."
+      "returnInvalid": "Choose at least one item, and no more pieces than you bought. Then try again."
     },
     "returns": {
       "title": "Returns and exchanges",
@@ -652,5 +656,12 @@
     "newDescription": "The newest stitched, unstitched and made-to-order pieces, fresh in the shop. Delivery across Pakistan, cash on delivery.",
     "saleDescription": "Pieces on sale: lawn, formals and more at a lower price. Delivery across Pakistan, cash on delivery.",
     "sizeGuideDescription": "Size charts in inches and centimetres, and how to take your measurements."
+  },
+  "consent": {
+    "label": "Cookies and visit counting",
+    "text": "We count how often a browser comes back to this shop, using one random number in a cookie. We keep no name, address or browser details, and we count nothing unless you accept.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "change": "Cookie choices"
   }
 }

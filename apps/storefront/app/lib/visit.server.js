@@ -20,6 +20,9 @@ export const newVisitor = () => randomBytes(16).toString('hex')
 /** Set again on every visit, so the year runs from the last one. @param {string} id */
 export const visitorCookie = (id) => `${VISITOR_COOKIE}=${id}; Path=/; Max-Age=${ONE_YEAR}; HttpOnly; SameSite=Lax${cookieSecure()}`
 
+/** Ends the visitor number: a no from the visitor, so nothing of them is kept in the browser. */
+export const clearVisitorCookie = () => `${VISITOR_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${cookieSecure()}`
+
 /** Global Privacy Control and Do Not Track: both mean "do not follow me". @param {Request} request */
 export const refusesTracking = (request) => request.headers.get('sec-gpc') === '1' || request.headers.get('dnt') === '1'
 

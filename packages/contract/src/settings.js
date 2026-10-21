@@ -58,7 +58,7 @@ export const StoreSettings = z.strictObject({
   priceDisplay: z.strictObject({ showDecimals: z.boolean(), rounding: z.enum(['none', 'nearest', 'up']) }),
   orderNumberPrefix: z.string().regex(/^[A-Z]{2,4}$/, 'code_invalid'),
   locale: z.strictObject({ default: Locale, supported: z.array(Locale).min(1).max(2) }).refine((l) => l.supported.includes(l.default), { message: 'invalid_format', path: ['supported'] }),
-  features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean(), /** Count visits per browser for the customer screens (the shop sends nothing when it is off). */ visitTracking: z.boolean().default(true) }),
+  features: z.strictObject({ wishlist: z.boolean(), reviews: z.boolean(), notifyMe: z.boolean(), customSizing: z.boolean(), /** Count visits per browser for the customer screens (the shop sends nothing when it is off). */ visitTracking: z.boolean().default(true), /** Ask visitors before counting them: nothing is counted until they accept. */ visitConsent: z.boolean().default(true) }),
   /** How the shop's navigation bar is made: from the categories and collections (default) or from the menu staff wrote (menu `main`). */
   navigation: z.strictObject({
     mode: z.enum(['automatic', 'custom']),

@@ -10,7 +10,7 @@ const storeValue = () => ({
   priceDisplay: { showDecimals: false, rounding: 'none' },
   orderNumberPrefix: 'RB',
   locale: { default: 'en', supported: ['en'] },
-  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true },
+  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true, visitConsent: true },
   policies: { returnsDays: 7, returns: 'Return within 7 days.' },
   seo: { homeDescription: 'Fashion from Lahore.' },
   notifications: { staffEmails: ['orders@rubaya.pk'] },
@@ -129,7 +129,7 @@ describe('store settings (plan/07-admin/11-settings.md section 2)', () => {
     const { user } = renderApp('/settings/store')
     await user.click(await screen.findByRole('switch', { name: 'Reviews' }))
     await user.click(card('features').getByRole('button', { name: 'Save features' }))
-    await waitFor(() => expect(s.puts[0]?.value.features).toEqual({ wishlist: true, reviews: false, notifyMe: true, customSizing: true, visitTracking: true }))
+    await waitFor(() => expect(s.puts[0]?.value.features).toEqual({ wishlist: true, reviews: false, notifyMe: true, customSizing: true, visitTracking: true, visitConsent: true }))
   })
 
   it('splits the notification emails and refuses one that is not an email', async () => {

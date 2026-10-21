@@ -31,6 +31,15 @@ describe('the visitor number', () => {
   })
 })
 
+describe('what the visitor answered', () => {
+  it('is yes only for 1 and no only for 0; anything else, or nothing, is not asked yet', async () => {
+    const { consentOf } = await import('../app/lib/consent')
+    expect(consentOf('1')).toBe('yes')
+    expect(consentOf('0')).toBe('no')
+    for (const other of [undefined, '', 'yes', 'true', '2']) expect(consentOf(other)).toBe('unset')
+  })
+})
+
 describe('who is not counted', () => {
   it('is a browser that says it does not want to be tracked', () => {
     expect(refusesTracking(request({ 'sec-gpc': '1' }))).toBe(true)

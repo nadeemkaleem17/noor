@@ -10,7 +10,7 @@ export const defaults = {
     priceDisplay: { showDecimals: false, rounding: 'none' },
     orderNumberPrefix: 'RB',
     locale: { default: 'en', supported: ['en'] },
-    features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false, visitTracking: true },
+    features: { wishlist: true, reviews: true, notifyMe: true, customSizing: false, visitTracking: true, visitConsent: true },
     navigation: { mode: 'automatic', showEmptyCategories: true },
     popularSearches: [],
     policies: {},

@@ -10,7 +10,7 @@ const storeValue = () => ({
   priceDisplay: { showDecimals: false, rounding: 'none' },
   orderNumberPrefix: 'RB',
   locale: { default: 'en', supported: ['en'] },
-  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true },
+  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true, visitConsent: true },
   policies: { returnsDays: 7 },
   seo: {},
   notifications: { staffEmails: [] },

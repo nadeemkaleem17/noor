@@ -7,6 +7,7 @@ import { Announcement } from './announcement'
 import { NoticePopup } from './notice-popup'
 import { NoticeSide } from './notice-side'
 import { CheckoutHeader } from './checkout-header'
+import { ConsentNotice, CookieChoices } from './consent'
 import { Footer } from './footer'
 import { Header } from './header'
 import { NavProgress } from './nav-progress'
@@ -63,6 +64,8 @@ export default function Shell() {
   // the checkout has a header of its own and no footer: nothing to wander off to
   const checkout = /^(\/ur)?\/checkout\/?$/.test(pathname)
   const { config, nav, notices, about, locale, headerBar } = shell
+  // visits are counted, and the shop asks first: the question is drawn, and the footer can reopen it
+  const asksFirst = config.features.visitTracking && config.features.visitConsent !== false
   return (
     <ToastProvider>
       <CartDrawerProvider>
@@ -78,8 +81,9 @@ export default function Shell() {
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
-      {checkout ? null : <Footer brand={config.brand.name} about={about} columns={nav.footer} contact={config.contact} payments={config.payments} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />}
+      {checkout ? null : <Footer brand={config.brand.name} about={about} columns={nav.footer} contact={config.contact} payments={config.payments} cookieChoices={<CookieChoices active={asksFirst} />} languageSwitch={<LanguageSwitch supported={config.locale.supported} locale={locale} />} />}
       {config.contact.whatsapp ? <WhatsAppButton number={config.contact.whatsapp} /> : null}
+      {checkout ? null : <ConsentNotice active={asksFirst} />}
       </CartDrawerProvider>
     </ToastProvider>
   )

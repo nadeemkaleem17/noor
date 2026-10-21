@@ -268,6 +268,7 @@ const featureList = /** @type {const} */ ([
   ['reviews', 'Reviews', 'Customers can rate and review products, and the Reviews screen appears here.'],
   ['notifyMe', 'Back-in-stock alerts', 'Customers can ask to be told when a sold-out size returns.'],
   ['customSizing', 'Custom sizing', 'Made-to-order products can ask for measurements.'],
+  ['visitConsent', 'Ask before counting visits', 'A notice with Accept and Decline is shown, and nothing is counted until the visitor accepts. Switch it off only if you do not serve visitors who need to be asked. It does nothing while Count visits is off.'],
   ['visitTracking', 'Count visits', 'The shop counts how often each browser comes back, so Customers can show it. It stores a random number in a cookie, never an address or a name, and does nothing for visitors whose browser says Do Not Track.'],
 ])
 

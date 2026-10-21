@@ -11,7 +11,7 @@ const storeValue = (/** @type {object} */ emails = defaultEmails) => ({
   priceDisplay: { showDecimals: false, rounding: 'none' },
   orderNumberPrefix: 'RB',
   locale: { default: 'en', supported: ['en'] },
-  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true },
+  features: { wishlist: true, reviews: true, notifyMe: true, customSizing: true, visitTracking: true, visitConsent: true },
   policies: {},
   seo: {},
   notifications: { staffEmails: [] },

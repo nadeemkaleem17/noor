@@ -214,6 +214,7 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
     return { cartToken: 'tok-123', lines: [], count: req.body.quantity, subtotal: money(0), discount: money(0), total: money(0), messages: [], hasBlockingIssues: false }
   }
+  if (p === '/api/v1/visits') { state.calls.push('VISIT ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/vitals') { state.calls.push('VITALS ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
   if (p === '/api/v1/store/config') return config()
@@ -364,6 +365,46 @@ describe('the storefront through its whole stack', () => {
 
   it('order pages are never sent with a referrer', async () => {
     expect((await get('/orders/sometoken')).headers.get('referrer-policy')).toBe('no-referrer')
+  })
+
+  describe('counting visits asks first (plan/17-owner-requests-2026-10.md section 6)', () => {
+    const json = { 'content-type': 'application/json' }
+    const visit = (/** @type {Record<string, string>} */ headers, /** @type {object} */ body = { path: '/' }) => get('/visit', { method: 'POST', body: JSON.stringify(body), headers: { ...json, ...headers } })
+
+    it('counts nothing until the visitor has said yes, and sets nothing', async () => {
+      state.calls = []
+      const r = await visit({})
+      expect(r.status).toBe(204)
+      expect(r.headers.get('set-cookie')).toBeNull()
+      expect(state.calls).toEqual([])
+    })
+
+    it('counts a visitor who accepted, and gives them a number the page cannot read', async () => {
+      state.calls = []
+      const r = await visit({ cookie: 'nc_consent=1' })
+      expect(r.status).toBe(204)
+      expect(state.calls).toHaveLength(1)
+      expect(state.calls[0]).toMatch(/^VISIT \{"visitor":"[0-9a-f]{32}","path":"\/"\}$/)
+      expect(r.headers.get('set-cookie')).toMatch(/^nc_vid=[0-9a-f]{32}; .*HttpOnly/)
+    })
+
+    it('counts nothing for a visitor who declined, and ends the number they may have had', async () => {
+      state.calls = []
+      const r = await visit({ cookie: `nc_consent=0; nc_vid=${'a'.repeat(32)}` })
+      expect(r.status).toBe(204)
+      expect(state.calls).toEqual([])
+      expect(r.headers.get('set-cookie')).toMatch(/^nc_vid=; .*Max-Age=0/)
+      // the browser's own "forget me" after the no says the same
+      const forgot = await visit({ cookie: 'nc_consent=0' }, { path: '/', forget: true })
+      expect(forgot.headers.get('set-cookie')).toMatch(/Max-Age=0/)
+    })
+
+    it('does not take a yes from a visitor whose browser asks not to be tracked', async () => {
+      state.calls = []
+      const r = await visit({ cookie: 'nc_consent=1', 'sec-gpc': '1' })
+      expect(r.status).toBe(204)
+      expect(state.calls).toEqual([])
+    })
   })
 
   describe('the unpublished home page (plan/17 item 3)', () => {
