@@ -146,7 +146,7 @@ export function registerRoutes(app, table, handlers, authorize = denyStaff, limi
       handler: async (req, reply) => {
         // the route's cache flag first, so a handler can still say something stricter (a search, a preview)
         if (def.cache === 'shared') void reply.header('cache-control', 'public, s-maxage=60, stale-while-revalidate=600')
-        else if (def.auth === 'cart' || def.auth === 'order-token') void reply.header('cache-control', 'private, no-store') // what belongs to one holder is never shared
+        else if (def.auth === 'cart' || def.auth === 'order-token' || def.auth === 'customer') void reply.header('cache-control', 'private, no-store') // what belongs to one holder is never shared
         const out = await handler({
           params: req.params,
           query: req.query,

@@ -80,6 +80,14 @@ export function createVisitsService({ db, customers, orders, enabled }) {
      */
     async link({ visitor, order }) {
       const { customerId } = await orders.orderByToken(order)
+      await this.linkCustomer({ visitor, customerId })
+    },
+
+    /**
+     * This browser belongs to this customer: they signed in from it. The same rule as an order link: a browser stays with the first customer it was linked to.
+     * @param {{ visitor: string, customerId: string }} input
+     */
+    async linkCustomer({ visitor, customerId }) {
       await transaction(db, async (tx) => {
         const [row] = await tx.select().from(visitors).where(eq(visitors.id, visitor)).for('update')
         if (!row || row.customerId) return

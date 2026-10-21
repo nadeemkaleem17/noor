@@ -501,6 +501,7 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       'admin.content.discardHomeDraft': 'writes its audit entry (content.draft_discarded), which test/settings.int.test.js checks together with save and publish',
       'admin.content.publishHome': 'writes its audit entries (content.updated and content.draft_published), which test/settings.int.test.js checks',
       'admin.content.homePreviewLink': 'only signs a link that expires in half an hour; it changes nothing, so there is nothing to audit',
+      'admin.customers.removeAccount': 'needs a customer with an account; it writes its audit entry (customer.account_removed, security), which test/accounts.int.test.js checks',
       'admin.returns.update': 'needs a delivered order with a request; every status change writes its audit entry, which test/returns.int.test.js checks',
       'admin.delivery.people.create': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.people.update': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',

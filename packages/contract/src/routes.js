@@ -26,7 +26,7 @@
  * @typedef {Shape &
  * (
  * | { auth: 'staff'; permission: import('./permissions.js').Permission; }
- * | { auth: 'public' | 'cart' | 'order-token' | 'staff-pending' | 'staff-any' | 'webhook'; permission?: never; }
+ * | { auth: 'public' | 'cart' | 'order-token' | 'customer' | 'staff-pending' | 'staff-any' | 'webhook'; permission?: never; }
  * )} RouteDef
  */
 

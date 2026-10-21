@@ -1,3 +1,12 @@
+account.changePassword
+account.claimOrder
+account.delete
+account.login
+account.logout
+account.me
+account.orders
+account.register
+account.update
 admin.attributes.bulkDelete
 admin.attributes.create
 admin.attributes.delete
@@ -44,6 +53,7 @@ admin.customers.highlightRules.list
 admin.customers.highlightRules.save
 admin.customers.list
 admin.customers.lookup
+admin.customers.removeAccount
 admin.customers.update
 admin.customers.visits
 admin.dashboard.summary

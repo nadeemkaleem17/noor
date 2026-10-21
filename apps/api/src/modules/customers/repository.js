@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, gte, inArray, like, lte, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, exists, gte, inArray, like, lte, or, sql } from 'drizzle-orm'
 import { staffUsers } from '../../db/schema/auth.js'
 import { likePrefix, phonePrefix } from '../../platform/search-text.js'
 import { customerNotes, customers } from '../../db/schema/customers.js'
+import { customerAccounts } from '../../db/schema/accounts.js'
 import { customerHighlightRules, visitors, visits } from '../../db/schema/visits.js'
 
 /** @typedef {import('../../platform/db.js').Executor} Db */
@@ -20,9 +21,9 @@ const sorts = /** @type {const} */ ({
 
 /**
  * @param {Db} db
- * @param {{ q?: string, cityName?: string, flag?: 'no_cod' | 'vip' | 'consent', minOrders?: number, hasRefusals?: boolean, minVisits?: number, rule?: string, sort?: string, page: number, size: number }} f
+ * @param {{ q?: string, cityName?: string, flag?: 'no_cod' | 'vip' | 'consent', minOrders?: number, hasRefusals?: boolean, minVisits?: number, registered?: boolean, rule?: string, sort?: string, page: number, size: number }} f
  */
-export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefusals, minVisits, rule, sort, page, size }) {
+export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefusals, minVisits, registered, rule, sort, page, size }) {
   const phone = q ? phonePrefix(q) : undefined
   // "the customers this rule colours": the rule's own range on the count it is about (a rule that is off or gone matches nobody)
   const ruleRow = rule ? (await db.select().from(customerHighlightRules).where(eq(customerHighlightRules.id, rule)))[0] : undefined
@@ -35,6 +36,7 @@ export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefus
     minOrders ? gte(customers.ordersCount, minOrders) : undefined,
     hasRefusals ? gte(customers.refusedCount, 1) : undefined,
     minVisits ? gte(customers.visitsCount, minVisits) : undefined,
+    registered ? exists(db.select({ one: sql`1` }).from(customerAccounts).where(eq(customerAccounts.customerId, customers.id))) : undefined,
     rule ? (ruleRow?.enabled ? and(gte(column, ruleRow.minCount), ruleRow.maxCount === null ? undefined : lte(column, ruleRow.maxCount)) : sql`false`) : undefined,
   )
   const key = /** @type {keyof typeof sorts} */ ((sort ?? '-lastOrderAt').replace(/^-/, ''))
@@ -45,6 +47,13 @@ export async function listCustomers(db, { q, cityName, flag, minOrders, hasRefus
     db.select({ n: count() }).from(customers).where(where),
   ])
   return { rows, total: total[0]?.n ?? 0 }
+}
+
+/** When each of these customers registered an account, and signed in last. @param {Db} db @param {string[]} ids */
+export async function accountsOf(db, ids) {
+  if (!ids.length) return new Map()
+  const rows = await db.select({ id: customerAccounts.customerId, registeredAt: customerAccounts.registeredAt, lastLoginAt: customerAccounts.lastLoginAt }).from(customerAccounts).where(inArray(customerAccounts.customerId, ids))
+  return new Map(rows.map((a) => [a.id, a]))
 }
 
 /** @param {Db} db @param {string} id */

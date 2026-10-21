@@ -12,6 +12,7 @@ import { cartHandlers } from './cart/routes.js'
 import { customersHandlers } from './customers/routes.js'
 import { deliveryHandlers } from './delivery/routes.js'
 import { returnsHandlers } from './returns/routes.js'
+import { accountsHandlers } from './accounts/routes.js'
 import { emailHandlers } from './notifications/routes.js'
 import { visitsHandlers } from './visits/routes.js'
 import { ordersHandlers } from './orders/routes.js'
@@ -25,10 +26,10 @@ import { shippingHandlers } from './shipping/routes.js'
 // ponytail: admin.system.info grows with the job queue numbers (M1-01 added the tables).
 /**
  * @param {import('../platform/config.js').Config} config
- * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, cart: ReturnType<import('./cart/index.js').createCartService>, orders: ReturnType<import('./orders/index.js').createOrdersService>, adminOrders: ReturnType<import('./orders/admin.js').createAdminOrders>, reporting: ReturnType<import('./reporting/index.js').createReporting>, reviews: ReturnType<import('./reviews/index.js').createReviewsService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory>, search: ReturnType<import('./search/index.js').createSearch>, visits: ReturnType<import('./visits/index.js').createVisitsService>, delivery: ReturnType<import('./delivery/index.js').createDeliveryService>, returns: ReturnType<import('./returns/index.js').createReturnsService>, notifications: ReturnType<import('./notifications/index.js').createNotifications> }} deps
+ * @param {{ auth: ReturnType<import('./auth/index.js').createAuthService>, audit: ReturnType<import('./audit/index.js').createAuditService>, media: ReturnType<import('./media/index.js').createMediaService>, settings: ReturnType<import('./settings/index.js').createSettingsService>, shipping: ReturnType<import('./shipping/index.js').createShippingService>, customers: ReturnType<import('./customers/index.js').createCustomersService>, promotions: ReturnType<import('./promotions/index.js').createPromotionsService>, cart: ReturnType<import('./cart/index.js').createCartService>, orders: ReturnType<import('./orders/index.js').createOrdersService>, adminOrders: ReturnType<import('./orders/admin.js').createAdminOrders>, reporting: ReturnType<import('./reporting/index.js').createReporting>, reviews: ReturnType<import('./reviews/index.js').createReviewsService>, catalog: ReturnType<import('./catalog/index.js').createCatalogService>, inventory: ReturnType<import('./inventory/index.js').createInventory>, search: ReturnType<import('./search/index.js').createSearch>, visits: ReturnType<import('./visits/index.js').createVisitsService>, delivery: ReturnType<import('./delivery/index.js').createDeliveryService>, returns: ReturnType<import('./returns/index.js').createReturnsService>, accounts: ReturnType<import('./accounts/index.js').createAccountsService>, notifications: ReturnType<import('./notifications/index.js').createNotifications> }} deps
  * @returns {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>}
  */
-export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, adminOrders, reporting, reviews, catalog, inventory, search, visits, delivery, returns, notifications }) => ({
+export const appHandlers = (config, { auth, audit, media, settings, shipping, customers, promotions, cart, orders, adminOrders, reporting, reviews, catalog, inventory, search, visits, delivery, returns, accounts, notifications }) => ({
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (authHandlers(auth, config))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (auditHandlers(audit))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (mediaHandlers(media))),
@@ -38,6 +39,7 @@ export const appHandlers = (config, { auth, audit, media, settings, shipping, cu
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (visitsHandlers(visits))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (deliveryHandlers(delivery))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (returnsHandlers(returns))),
+  ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (accountsHandlers(accounts))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (emailHandlers(notifications))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (promotionsHandlers(promotions))),
   ...(/** @type {import('../platform/http/route-registrar.js').Handlers<import('@noor/contract').Routes>} */ (cartHandlers(cart))),
@@ -58,7 +60,7 @@ export const eventHandlers = { ...searchEvents, ...notificationEvents }
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, log?: { error: (o: object, msg: string) => void } }} deps
  */
 export function backgroundOf({ db, config, storage, log }) {
-  const { media, search, inventory, catalog, cart, orders, notifications, reporting } = createServices({ db, config, ...(storage ? { storage } : {}) })
+  const { media, search, inventory, catalog, cart, orders, notifications, reporting, accounts } = createServices({ db, config, ...(storage ? { storage } : {}) })
   return {
     handlers: {
       ...mediaJobs(media),
@@ -71,11 +73,12 @@ export function backgroundOf({ db, config, storage, log }) {
       },
       'inventory.cleanup_subscriptions': async () => inventory.cleanupSubscriptions(),
       'cart.cleanup': async () => cart.cleanup(),
+      'accounts.cleanup': async () => accounts.cleanup(),
       ...paymentJobs(orders),
       ...notificationJobs(notifications),
       ...reportingJobs(reporting),
     },
     startup: ['search.reconcile'],
-    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'search.reconcile', cron: '*/10 * * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }, { type: 'search.cleanup_misses', cron: '30 21 * * *' }, { type: 'cart.cleanup', cron: '45 21 * * *' }, { type: 'orders.expire_unpaid', cron: '*/5 * * * *' }, { type: 'notifications.cleanup', cron: '30 21 * * *' }, { type: 'reporting.sales_counts', cron: '0 20 * * *' }, { type: 'reporting.cleanup', cron: '45 21 * * *' }], // carts idle 30 days 02:45 PKT, media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
+    schedule: [...platformSchedule, { type: 'media.cleanup', cron: '0 22 * * *' }, { type: 'accounts.cleanup', cron: '30 22 * * *' }, { type: 'search.reconcile', cron: '*/10 * * * *' }, { type: 'catalog.publish_scheduled', cron: '* * * * *' }, { type: 'inventory.expire_reservations', cron: '*/5 * * * *' }, { type: 'inventory.verify', cron: '0 21 * * *' }, { type: 'inventory.cleanup_subscriptions', cron: '15 21 * * *' }, { type: 'search.cleanup_misses', cron: '30 21 * * *' }, { type: 'cart.cleanup', cron: '45 21 * * *' }, { type: 'orders.expire_unpaid', cron: '*/5 * * * *' }, { type: 'notifications.cleanup', cron: '30 21 * * *' }, { type: 'reporting.sales_counts', cron: '0 20 * * *' }, { type: 'reporting.cleanup', cron: '45 21 * * *' }], // carts idle 30 days 02:45 PKT, media 03:00 PKT, scheduled products every minute, reservations every 5 minutes, stock check 02:00 PKT, subscriptions 02:15 PKT
   }
 }

@@ -8,6 +8,7 @@ import { now } from '../../platform/clock.js'
 import { count, rupees, toCsv } from '../../platform/csv.js'
 import { uuidv7 } from '../../platform/ids.js'
 import { record } from '../audit/index.js'
+import { forget as forgetAccount } from '../accounts/service.js'
 import { highlightsFor } from './highlights.js'
 import * as repo from './repository.js'
 
@@ -59,11 +60,13 @@ export function createCustomersService({ db, orders = noOrders }) {
   /** A rule as the API answers: no `maxCount` at all when there is no upper limit. @param {import('./highlights.js').Rule} r */
   const ruleView = ({ maxCount, ...r }) => (maxCount === null ? r : { ...r, maxCount })
 
-  /** @param {repo.CustomerRow} c @param {import('./highlights.js').Rule[]} rules */
-  const toRow = (c, rules) => ({
+  /** @param {repo.CustomerRow} c @param {import('./highlights.js').Rule[]} rules @param {{ registeredAt: Date } | undefined} [account] */
+  const toRow = (c, rules, account) => ({
     id: c.id,
     name: c.name,
     phone: c.phone,
+    ...(c.email ? { email: c.email } : {}),
+    ...(account ? { registeredAt: account.registeredAt.toISOString() } : {}),
     ...(c.city ? { city: c.city } : {}),
     ordersCount: c.ordersCount,
     deliveredCount: c.deliveredCount,
@@ -83,12 +86,13 @@ export function createCustomersService({ db, orders = noOrders }) {
   async function view(x, id) {
     const c = await repo.findById(x, id)
     if (!c) throw new DomainError('not_found')
-    const [notes, addresses, rules, seen] = await Promise.all([repo.notesOf(x, id), orders.addresses(x, id), rulesOf(x), repo.visitsOf(x, id)])
+    const [notes, addresses, rules, seen, accounts] = await Promise.all([repo.notesOf(x, id), orders.addresses(x, id), rulesOf(x), repo.visitsOf(x, id), repo.accountsOf(x, [id])])
+    const account = accounts.get(id)
     return {
-      ...toRow(c, rules),
+      ...toRow(c, rules, account),
+      ...(account?.lastLoginAt ? { lastLoginAt: account.lastLoginAt.toISOString() } : {}),
       recentVisits: seen.recent.map((v) => ({ startedAt: v.startedAt.toISOString(), landingPath: v.landingPath })),
       devices: seen.devices,
-      ...(c.email ? { email: c.email } : {}),
       ...(c.noCodReason ? { noCodReason: c.noCodReason } : {}),
       ...(c.consentNote ? { consentNote: c.consentNote } : {}),
       cancelledCount: c.cancelledCount,
@@ -200,7 +204,8 @@ export function createCustomersService({ db, orders = noOrders }) {
     /** @param {Parameters<typeof repo.listCustomers>[1]} query */
     async list(query) {
       const [{ rows, total }, rules] = await Promise.all([repo.listCustomers(db, query), rulesOf(db)])
-      return { items: rows.map((c) => toRow(c, rules)), total, page: query.page, size: query.size }
+      const accounts = await repo.accountsOf(db, rows.map((c) => c.id))
+      return { items: rows.map((c) => toRow(c, rules, accounts.get(c.id))), total, page: query.page, size: query.size }
     },
 
     /**
@@ -295,6 +300,7 @@ export function createCustomersService({ db, orders = noOrders }) {
           updatedAt: at,
         })
         await repo.deleteNotes(tx, id)
+        await forgetAccount(tx, id)
         await repo.forgetVisitors(tx, id)
         await orders.anonymise(tx, id)
         await record(tx, { ...actorOf(actor, req), action: 'customer.anonymised', entityType: 'customer', entityId: id, entityLabel: id, category: 'security' })

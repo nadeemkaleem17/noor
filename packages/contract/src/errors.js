@@ -63,6 +63,7 @@ export const errorStatus = /** @satisfies {Record<string, number>} */ (/** @type
   no_payment_method: 422,
   no_deliverable_city: 422,
   password_too_weak: 422,
+  account_exists: 409,
   invalid_code: 422,
   token_expired: 410,
 }))

@@ -24,6 +24,8 @@ export const buckets = {
   orderAction: [{ by: 'token', limit: 10, windowMs: HOUR }],
   notify: [{ by: 'ip', limit: 10, windowMs: HOUR, store: 'db' }, { by: 'phone', limit: 3, windowMs: 24 * HOUR, store: 'db' }],
   review: [{ by: 'ip', limit: 5, windowMs: HOUR }],
+  accountLogin: [{ by: 'ip', limit: 20, windowMs: 15 * MIN, store: 'db' }, { by: 'phone', limit: 8, windowMs: 15 * MIN, store: 'db' }],
+  accountRegister: [{ by: 'ip', limit: 10, windowMs: HOUR, store: 'db' }],
   login: [], // counted by the auth service from `login_attempts` (5 per email, 20 per IP, 15 minutes), which also escalates to a lock
   admin: [{ by: 'staff', limit: 600, windowMs: MIN }],
   adminExport: [{ by: 'staff', limit: 10, windowMs: MIN }],

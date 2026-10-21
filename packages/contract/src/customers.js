@@ -42,9 +42,12 @@ export const AdminCustomerRow = z.strictObject({
   refusedCount: z.int(),
   spent: Money,
   lastOrderAt: IsoDate.optional(),
+  email: z.string().optional(),
   noCod: z.boolean(),
   vip: z.boolean(),
   marketingConsent: z.boolean(),
+  /** When the customer registered an account on the shop; absent for a customer who only ever ordered as a guest. */
+  registeredAt: IsoDate.optional(),
   /** When the customer was first recorded: their first order. */
   createdAt: IsoDate,
   /** Visits by the browsers this customer ordered from; the order counts above are a separate thing. */
@@ -57,7 +60,7 @@ export const AdminCustomerRow = z.strictObject({
 export const CustomerNote = z.strictObject({ id: Id, body: z.string(), staffName: z.string().optional(), createdAt: IsoDate })
 
 export const AdminCustomer = AdminCustomerRow.extend({
-  email: z.string().optional(),
+  lastLoginAt: IsoDate.optional(),
   noCodReason: z.string().optional(),
   consentNote: z.string().optional(),
   cancelledCount: z.int(),
@@ -85,6 +88,8 @@ export const CustomerListQuery = PageQuery.extend({
   minOrders: qint(z.number().int().min(1).max(1000)).optional(),
   hasRefusals: flag.optional(),
   minVisits: qint(z.number().int().min(1).max(100_000)).optional(),
+  /** Only the customers who registered an account. */
+  registered: flag.optional(),
   /** Only the customers one highlight rule colours now. */
   rule: Id.optional(),
 })

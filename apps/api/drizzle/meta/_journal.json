@@ -204,6 +204,13 @@
       "when": 1792536073915,
       "tag": "0028_scrub_visit_paths",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1792561489788,
+      "tag": "0029_customer_accounts",
+      "breakpoints": true
     }
   ]
 }

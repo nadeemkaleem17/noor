@@ -21,6 +21,7 @@ import { createSettingsService } from './settings/index.js'
 import { createShippingService } from './shipping/index.js'
 import { createDeliveryService } from './delivery/index.js'
 import { createVisitsService } from './visits/index.js'
+import { createAccountsService } from './accounts/index.js'
 
 /**
  * @param {{ db: import('../platform/db.js').Database['db'], config: import('../platform/config.js').Config, storage?: import('../platform/storage.js').Storage, providers?: ReturnType<typeof createProviders>, mailer?: ReturnType<typeof createMailer>, gateway?: ReturnType<typeof createGateway> }} deps
@@ -50,11 +51,12 @@ export function createServices({ db, config, storage = createStorage(config), pr
   const payments = createPaymentsService({ db, providers })
   const orders = createOrdersService({ db, config, cart, inventory, promotions, customers, settings, shipping, payments, media })
   const visits = createVisitsService({ db, customers, orders, enabled: async () => (await settings.get('store')).value.features.visitTracking !== false })
+  const accounts = createAccountsService({ db, orders, visits, config })
   const delivery = createDeliveryService({ db, orders, settings })
   const returns = createReturnsService({ db, orders, settings })
   const reviews = createReviewsService({ db, settings, media, orders, recomputeRating: catalog.products.recomputeRating })
   const notifications = createNotifications({ db, config, settings, mailer, gateway })
   const adminOrders = createAdminOrders({ db, config, orders, cart, payments, notifications, settings, media, shipping })
   const reporting = createReporting({ db, config, settings, media })
-  return { returns, delivery, visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
+  return { accounts, returns, delivery, visits, reporting, adminOrders, reviews, notifications, payments, orders, auth, audit, storage, search, media, shipping, customers, promotions, cart, inventory, catalog, settings }
 }
