@@ -1,6 +1,6 @@
 // Every admin URL with its permission (plan/07-admin/01-ia-roles.md section 2). The router and the sidebar are both built from this list.
 // A screen with a `group` is a sidebar item; the others are detail or form routes that keep their list item active.
-import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Mail, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Truck, Undo2, Users, Wallet } from 'lucide-react'
+import { Bell, Bike, Database, FileText, Folders, Gauge, Home, Layers, List, ListTree, Mail, Package, Palette, Receipt, Ruler, ScrollText, ShieldCheck, ShoppingBag, Star, Store, Tag, Tags, Trash2, Truck, Undo2, Users, Wallet } from 'lucide-react'
 
 const products = () => import('@/routes/products')
 const product = () => import('@/routes/product')
@@ -27,6 +27,7 @@ const account = () => import('@/routes/account')
 const staff = () => import('@/routes/staff')
 const staffMember = () => import('@/routes/staff-member')
 const staffRoles = () => import('@/routes/staff-roles')
+const trash = () => import('@/routes/trash')
 const audit = () => import('@/routes/audit')
 const orders = () => import('@/routes/orders')
 const order = () => import('@/routes/order')
@@ -100,6 +101,7 @@ export const screens = [
   { path: '/settings/shipping', title: 'Shipping', permission: 'settings:read', group: 'Settings', icon: Truck, lazy: settingsShipping },
   { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: settingsPayments },
   { path: '/settings/emails', title: 'Emails', permission: 'settings:manage', group: 'Settings', icon: Mail, lazy: settingsEmails },
+  { path: '/trash', title: 'Trash', permission: 'catalog:write', group: 'Settings', icon: Trash2, lazy: trash },
   { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: staff },
   { path: '/staff/roles', title: 'Roles', permission: 'staff:read', lazy: staffRoles },
   { path: '/staff/:id', title: 'Staff member', permission: 'staff:read', lazy: staffMember },

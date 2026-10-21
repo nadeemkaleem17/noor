@@ -374,7 +374,7 @@ export function DataTable({ id, label, schema, query, columns, filters = [], def
         open={confirming !== null}
         onOpenChange={(open) => !open && setConfirming(null)}
         title={`${confirming?.label ?? ''} ${fmt(selectedCount)} ${selectedCount === 1 ? 'item' : 'items'}?`}
-        body={confirming?.destructive ? 'This cannot be undone.' : 'This changes every selected item.'}
+        body={confirming?.destructive ? (confirming.note ?? 'This cannot be undone.') : 'This changes every selected item.'}
         confirmLabel={confirming?.label ?? 'Confirm'}
         tone={confirming?.destructive ? 'danger' : 'accent'}
         confirmText={confirming?.destructive && selectedCount > 20 ? String(selectedCount) : undefined}

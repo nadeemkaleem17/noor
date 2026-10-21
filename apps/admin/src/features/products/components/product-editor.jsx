@@ -210,7 +210,7 @@ function ProductForm({ product }) {
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title={`Delete ${product?.title ?? 'this product'}?`}
-        body="This cannot be undone. A product that has been ordered cannot be deleted: archive it instead."
+        body="It stays in the Trash for 30 days, so it can be put back. A product that has been ordered cannot be deleted: archive it instead."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!product) return

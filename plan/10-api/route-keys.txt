@@ -216,6 +216,9 @@ admin.staff.revokeSessions
 admin.staff.setPermissions
 admin.staff.update
 admin.system.info
+admin.trash.list
+admin.trash.purge
+admin.trash.restore
 cart.addLine
 cart.applyPromo
 cart.get

@@ -125,7 +125,7 @@ export function ProductList() {
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
         title={`Delete ${deleting?.title ?? ''}?`}
-        body="This cannot be undone. A product that has been ordered cannot be deleted: archive it instead."
+        body="It stays in the Trash for 30 days, so it can be put back. A product that has been ordered cannot be deleted: archive it instead."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!deleting) return

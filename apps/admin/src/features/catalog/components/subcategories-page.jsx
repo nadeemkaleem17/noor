@@ -184,7 +184,7 @@ export function SubcategoriesPage() {
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
         title={`Delete ${deleting?.name ?? ''}?`}
-        body="Products that are only tagged with it lose the tag. This cannot be undone."
+        body="Products that are only tagged with it lose the tag. It stays in the Trash for 30 days, so it can be put back."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!deleting) return

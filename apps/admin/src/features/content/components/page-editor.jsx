@@ -332,7 +332,7 @@ function PageForm({ page }) {
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title={`Delete ${page?.title ?? ''}?`}
-        body="Its address will stop working. This cannot be undone."
+        body="Its address will stop working until it is put back. It stays in the Trash for 30 days, so it can be put back."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!page) return

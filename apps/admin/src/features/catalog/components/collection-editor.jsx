@@ -308,7 +308,7 @@ function CollectionForm({ collection }) {
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title={`Delete ${collection?.title ?? ''}?`}
-        body="The products stay as they are. This cannot be undone."
+        body="The products stay as they are. It stays in the Trash for 30 days, so it can be put back."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!collection) return

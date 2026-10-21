@@ -17,6 +17,7 @@ import { AppLink } from './app-link'
  * @property {string} label
  * @property {import('@noor/contract').Permission} [permission] - the action is not shown without it
  * @property {boolean} [destructive] - asks for confirmation; more than 20 items ask for the count to be typed
+ * @property {string} [note] - what the confirmation says instead of "This cannot be undone."
  * @property {(n: number) => string} [done] - "3 published"
  * @property {(target: BulkTarget) => Promise<BulkOutcome>} run - one request for the whole selection
  */

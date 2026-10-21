@@ -112,7 +112,7 @@ export function AttributesPage() {
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
         title={`Delete ${deleting?.label ?? ''}?`}
-        body={deleting ? `${deleting.usedByProducts} products and ${deleting.usedByCategories} categories use it. It can only be deleted when nothing does.` : ''}
+        body={deleting ? `${deleting.usedByProducts} products and ${deleting.usedByCategories} categories use it. It can only be deleted when nothing does. It stays in the Trash for 30 days, so it can be put back.` : ''}
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!deleting) return

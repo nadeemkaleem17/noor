@@ -59,7 +59,7 @@ export function useBulkDelete({ route, noun, nameOf, refresh }) {
           open={asking}
           onOpenChange={setAsking}
           title={`Delete ${ids.length} ${word(ids.length)}?`}
-          body={`${names.join(', ')}${ids.length > names.length ? ` and ${ids.length - names.length} more` : ''}. This cannot be undone. One that is still in use is kept, and you are told why.`}
+          body={`${names.join(', ')}${ids.length > names.length ? ` and ${ids.length - names.length} more` : ''}. They stay in the Trash for 30 days, so they can be put back. One that is still in use is kept, and you are told why.`}
           confirmLabel="Delete"
           confirmText={ids.length > 20 ? String(ids.length) : undefined}
           onConfirm={run}

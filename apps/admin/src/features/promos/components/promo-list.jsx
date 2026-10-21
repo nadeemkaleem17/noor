@@ -148,7 +148,7 @@ export function PromoList() {
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
         title={`Delete ${deleting?.code ?? ''}?`}
-        body="A code that no order has used can be deleted. One that has been used is switched off instead, so the orders keep their record."
+        body="A code that no order has used can be deleted. One that has been used is switched off instead, so the orders keep their record. It stays in the Trash for 30 days, so it can be put back."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!deleting) return

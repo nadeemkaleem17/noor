@@ -506,6 +506,8 @@ describe.skipIf(!dbAvailable)('audit trail (MySQL)', () => {
       'admin.profiles.update': 'every change writes its audit entry (access_profile.updated, security), which test/auth.int.test.js checks',
       'admin.profiles.delete': 'every change writes its audit entry (access_profile.deleted, security), which test/auth.int.test.js checks',
       'admin.staff.applyProfile': 'every change writes its audit entry (staff.profile_applied or staff.profile_removed, security), which test/auth.int.test.js checks',
+      'admin.trash.restore': 'needs a deleted record; it writes its audit entry (trash.restored), which test/trash.int.test.js checks',
+      'admin.trash.purge': 'needs a deleted record; it writes its audit entry (trash.purged), which test/trash.int.test.js checks',
       'admin.returns.update': 'needs a delivered order with a request; every status change writes its audit entry, which test/returns.int.test.js checks',
       'admin.delivery.people.create': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',
       'admin.delivery.people.update': 'needs a confirmed order and a delivery person; every step writes its audit entry, which test/delivery.int.test.js checks',

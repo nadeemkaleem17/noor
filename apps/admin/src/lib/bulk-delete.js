@@ -14,6 +14,7 @@ export const deleteAction = (route, permission) => ({
   label: 'Delete',
   permission,
   destructive: true,
+  note: 'They stay in the Trash for 30 days, so they can be put back.',
   done: (n) => `${n} deleted`,
   run: async (target) => ('ids' in target ? api(route, { body: { ids: target.ids } }) : { cancelled: true }),
 })

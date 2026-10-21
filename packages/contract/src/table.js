@@ -10,6 +10,7 @@ import { customerRoutes } from './customers.js'
 import { deliveryRoutes } from './delivery.js'
 import { returnRoutes } from './returns.js'
 import { accountRoutes } from './account.js'
+import { trashRoutes } from './trash.js'
 import { emailRoutes } from './emails.js'
 import { promoRoutes } from './promos.js'
 import { reportingRoutes } from './reporting.js'
@@ -62,6 +63,7 @@ export const routes = defineRoutes({
   ...deliveryRoutes,
   ...returnRoutes,
   ...accountRoutes,
+  ...trashRoutes,
   ...emailRoutes,
   ...cartRoutes,
   ...orderRoutes,
