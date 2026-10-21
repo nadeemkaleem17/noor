@@ -44,9 +44,11 @@ const columns = [
         <span className="block text-xs font-normal text-muted" dir="ltr">
           {c.phone}
         </span>
+        {c.email ? <span className="block text-xs font-normal text-muted" dir="ltr">{c.email}</span> : null}
       </span>
     ),
   },
+  { id: 'registeredAt', header: 'Registered', align: 'end', cell: (c) => (c.registeredAt ? formatDate(c.registeredAt, 'en', { dateStyle: 'medium' }) : <span className="text-muted">Guest</span>) },
   { id: 'createdAt', header: 'Customer since', sortable: true, align: 'end', cell: (c) => formatDate(c.createdAt, 'en', { dateStyle: 'medium' }) },
   { id: 'city', header: 'City', sortable: true, cell: (c) => c.city ?? '' },
   { id: 'ordersCount', header: 'Orders', sortable: true, align: 'end', cell: (c) => c.ordersCount },
@@ -75,6 +77,7 @@ export function CustomerList() {
     ...(lookups.data ? [/** @type {const} */ ({ key: 'cityName', label: 'City', type: 'select', options: lookups.data.cities.map((c) => ({ value: c.name, label: c.name })) })] : []),
     { key: 'flag', label: 'Flag', type: 'select', options: [{ value: 'no_cod', label: 'No COD' }, { value: 'vip', label: 'VIP' }, { value: 'consent', label: 'Marketing consent' }] },
     { key: 'hasRefusals', label: 'Has refusals', type: 'boolean' },
+    { key: 'registered', label: 'Registered only', type: 'boolean' },
     { key: 'minVisits', label: 'Visits', type: 'select', options: [2, 3, 5, 10, 20].map((n) => ({ value: String(n), label: `${n} or more visits` })) },
     ...(rules.data?.items.length ? [/** @type {const} */ ({ key: 'rule', label: 'Highlight', type: 'select', options: rules.data.items.map((r) => ({ value: r.id, label: `${r.label}${r.enabled ? '' : ' (off)'}` })) })] : []),
   ]

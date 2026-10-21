@@ -164,7 +164,8 @@ export function CustomerDetail({ id, orders }) {
   const toast = useToast()
   const navigate = useNavigate()
   const query = useQuery(customerQueries.detail(id))
-  const { anonymise } = useCustomerMutations(id)
+  const { anonymise, removeAccount } = useCustomerMutations(id)
+  const [removing, setRemoving] = useState(false)
   const { run, dialog } = useStepUp()
   const [editing, setEditing] = useState(false)
   const [anonymising, setAnonymising] = useState(false)
@@ -294,6 +295,30 @@ export function CustomerDetail({ id, orders }) {
             )}
             <p className="text-xs text-muted">Counted from the browsers this customer ordered from, so earlier visits count too. Orders are counted separately.</p>
           </Block>
+          <Block title="Account on the shop">
+            {c.registeredAt ? (
+              <>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted">Registered</dt>
+                    <dd className="font-semibold">{formatDateTime(c.registeredAt)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">Last signed in</dt>
+                    <dd className="font-semibold">{c.lastLoginAt ? relativeTime(c.lastLoginAt) : '—'}</dd>
+                  </div>
+                </dl>
+                <p className="text-xs text-muted">Signing in is the one reliable way to tell whose visits are whose, so this customer's visits are counted from their sign-ins too.</p>
+                {can('customers:write') ? (
+                  <Button variant="secondary" onClick={() => setRemoving(true)}>
+                    Remove the account
+                  </Button>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-sm text-muted">No account: this customer orders as a guest, and the date above is that of their first order.</p>
+            )}
+          </Block>
           <Block title="Flags">
             <ul className="space-y-1 text-sm">
               <li>No cash on delivery: {c.noCod ? <strong>Yes</strong> : 'No'}{c.noCodReason ? <span className="block text-muted">{c.noCodReason}</span> : null}</li>
@@ -308,6 +333,22 @@ export function CustomerDetail({ id, orders }) {
       <HistoryPanel entityType="customer" entityId={c.id} />
 
       {editing ? <EditDialog customer={c} onClose={() => setEditing(false)} /> : null}
+      <ConfirmDialog
+        open={removing}
+        onOpenChange={setRemoving}
+        title="Remove this customer's account?"
+        body="Their password and sign-ins are removed and they can register again. The customer, their orders and notes stay. Use this for a number registered by someone who does not own it, or when the customer asks."
+        confirmLabel="Remove the account"
+        tone="danger"
+        onConfirm={async () => {
+          try {
+            await removeAccount.mutateAsync()
+            toast.push({ title: 'Account removed', tone: 'success' })
+          } catch (e) {
+            toast.push({ title: messageFor(e), tone: 'danger' })
+          }
+        }}
+      />
       <ConfirmDialog
         open={anonymising}
         onOpenChange={setAnonymising}

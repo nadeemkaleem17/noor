@@ -27,6 +27,7 @@ Every call to the API carries `X-Internal-Key` (`API_INTERNAL_KEY`) and, behind 
 | `/orders/:token`, `/orders/:token/review/:lineId`, `.../photo` | `order.jsx order-review.jsx review-photo.js` | token = credential (case-sensitive!) |
 | `/track` | `track.jsx` | lookup by order number + phone |
 | `/wishlist` | `wishlist.jsx` | cookie `nc_wishlist` read in `lib/wishlist.js` |
+| `/account`, `/account/login`, `/account/register` | `account.jsx`, `account-enter.jsx` | customer account (DOC-10.11): session cookie `nc_session` (HttpOnly) in `lib/account.server.js`; private, `noindex`; plain forms; the order is added to the account by `addToAccount` after checkout |
 | `/pages/:slug`, `/size-guide` | `page.jsx size-guide.jsx` | CMS Markdown via `@noor/ui/markdown`; contact page draws settings |
 | `/reviews/:id`, `/recent` | resource routes (JSON) | more reviews; recently viewed by ids |
 | `/robots.txt`, `/sitemap.xml`, `/sitemap/:n.xml`, `/healthz` | resource routes | SEO (M5-10) |

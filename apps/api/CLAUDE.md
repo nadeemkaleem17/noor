@@ -57,6 +57,7 @@ test/                  *.test.js (pure) and *.int.test.js (a scratch MySQL datab
 | `notifications` | job `notify.order` writes `notification_log` once per message (`skipped` while no provider; email via `MAIL_URL`) |
 | `reviews` | per order line, `pending` until moderated; `catalog/products.js recomputeRating` writes rating columns |
 | `visits` | visitors (a browser = the `nc_vid` cookie) and visits; linked to a customer only through an order link; `customers/highlights.js` colours customers by rules staff edit |
+| `accounts` | customer accounts: register/sign in with a mobile number and password, sessions (SHA-256), the orders an account may see (placed while signed in, or claimed by order number + phone: registering a number shows none of its earlier orders), leave; a sign-in links the browser's visits; `auth: 'customer'` routes read `X-Customer-Session`; DOC-10.11 |
 | `returns` | return and exchange requests: the customer asks through the order link (window = `policies.returnsDays`, `offer.js` `returnableOf` is the one count of what can still be asked), staff approve/decline/receive/complete; never writes orders, stock or payments; DOC-10.10 |
 | `delivery` | delivery people, runs, assignments (one live per order), the append-only `rider_ledger`, receipts; orders move only through `orders.transition`; DOC-18 |
 | `reporting` | dashboard/summary figures in SQL over Pakistan days, zero-result searches, admin search, system info, web vitals + client errors intake |

@@ -36,6 +36,13 @@ export function useCustomerMutations(id) {
       },
     }),
     note: useMutation({ mutationFn: (/** @type {string} */ body) => api('admin.customers.addNote', { params: { id }, body: { body } }), onSuccess: () => queryClient.invalidateQueries({ queryKey: customerKeys.detail(id) }) }),
+    removeAccount: useMutation({
+      mutationFn: () => api('admin.customers.removeAccount', { params: { id } }),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: customerKeys.detail(id) })
+        void lists()
+      },
+    }),
     anonymise: useMutation({
       mutationFn: (/** @type {string} */ confirm) => api('admin.customers.anonymise', { params: { id }, body: { confirm } }),
       onSuccess: () => {

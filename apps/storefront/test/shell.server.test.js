@@ -214,6 +214,22 @@ function answer(p, locale, q = new URLSearchParams(), req = {}) {
     if (req.body.quantity > 2) return { title: 'Not enough stock', status: 409, code: 'insufficient_stock', available: 2 }
     return { cartToken: 'tok-123', lines: [], count: req.body.quantity, subtotal: money(0), discount: money(0), total: money(0), messages: [], hasBlockingIssues: false }
   }
+  if (p.startsWith('/api/v1/account')) {
+    const mine = req.headers?.['x-customer-session'] === 'sess-1'
+    const account = { name: 'Sana Malik', phoneMasked: '0300 ••••223', email: 'sana@example.com', registeredAt: '2026-09-01T05:00:00.000Z' }
+    const session = { token: 'sess-1', expiresAt: '2026-12-01T00:00:00.000Z', account }
+    if (p === '/api/v1/account/login') return req.body.password === 'good words here' ? session : { title: 'No', status: 401, code: 'invalid_credentials' }
+    if (p === '/api/v1/account/register') {
+      state.calls.push(`REGISTER ${JSON.stringify(req.body)}`)
+      if (req.body.password === 'password') return { title: 'Weak', status: 422, code: 'password_too_weak', reason: 'common' }
+      return req.body.phone === '0300 0000000' ? { title: 'Exists', status: 409, code: 'account_exists' } : session
+    }
+    if (!mine) return { title: 'Sign in', status: 401, code: 'unauthenticated' }
+    if (p === '/api/v1/account/logout') { state.calls.push('SIGNOUT'); return { status: 204 } }
+    if (p === '/api/v1/account/orders/claim') { state.calls.push(`CLAIM ${JSON.stringify(req.body)}`); return { orderNumber: 'RB-10458' } }
+    if (p === '/api/v1/account/orders') return { items: [{ orderNumber: 'RB-10458', placedAt: '2026-10-02T10:45:00.000Z', total: money(724000), status: 'delivered', trackingToken: 'Tok_delivered_Abc' }] }
+    if (p === '/api/v1/account') return account
+  }
   if (p === '/api/v1/visits') { state.calls.push('VISIT ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/vitals') { state.calls.push('VITALS ' + JSON.stringify(req.body)); return { status: 204 } }
   if (p === '/api/v1/sitemap-entries') return { items: [{ loc: '/', lastmod: '2026-10-01T00:00:00.000Z', type: 'home' }, { loc: '/p/dress-1', lastmod: '2026-10-02T00:00:00.000Z', image: 'http://localhost/img/p1.webp', type: 'product' }] }
@@ -365,6 +381,91 @@ describe('the storefront through its whole stack', () => {
 
   it('order pages are never sent with a referrer', async () => {
     expect((await get('/orders/sometoken')).headers.get('referrer-policy')).toBe('no-referrer')
+  })
+
+  describe('customer accounts (plan/10-api/11-account.md)', () => {
+    const json = { 'content-type': 'application/x-www-form-urlencoded' }
+    const send = (/** @type {string} */ path, /** @type {Record<string, string>} */ fields, /** @type {Record<string, string>} */ headers = {}) => get(path, { method: 'POST', body: new URLSearchParams(fields), headers: { ...json, ...headers } })
+    const text = async (/** @type {Response} */ r) => (await r.text()).replace(/<!-- -->/g, '').replace(/\u00a0/g, ' ')
+
+    it('shows the sign-in and the register forms, privately, with a way between them and a word that guests are welcome', async () => {
+      const login = await get('/account/login')
+      const html = await text(login)
+      expect(login.headers.get('cache-control')).toContain('no-store')
+      expect(login.headers.get('x-robots-tag')).toContain('noindex')
+      expect(html).toContain('Sign in')
+      expect(html).toContain('You never need an account to order.')
+      expect(html).toContain('href="/account/register"')
+      const register = await text(await get('/account/register'))
+      expect(register).toContain('Create an account')
+      expect(register).toMatch(/name="name"/)
+    })
+
+    it('signing in: a wrong password says one thing and keeps the number but not the password; the right one sets the session cookie and opens the account', async () => {
+      const wrong = await send('/account/login', { phone: '0300 1112223', password: 'nope' })
+      const html = await text(wrong)
+      expect(wrong.status).toBe(200)
+      expect(html).toContain('The number or the password is not right.')
+      expect(html).toContain('value="0300 1112223"')
+      expect(html).not.toContain('nope')
+      expect(wrong.headers.get('set-cookie')).toBeNull()
+      const right = await send('/account/login', { phone: '0300 1112223', password: 'good words here' })
+      expect(right.status).toBe(303)
+      expect(right.headers.get('location')).toBe('/account')
+      expect(right.headers.get('set-cookie')).toMatch(/^nc_session=sess-1; .*HttpOnly.*SameSite=Lax/)
+      expect(right.headers.get('set-cookie')).not.toMatch(/Max-Age=0/)
+    })
+
+    it('registering: a weak password, a number that has an account, and a shape the contract refuses are each said in words; a good one opens the account', async () => {
+      state.calls = []
+      const weak = await text(await send('/account/register', { name: 'Sana Malik', phone: '0300 1112223', password: 'password' }))
+      expect(weak).toContain('That password is too common.')
+      const exists = await text(await send('/account/register', { name: 'Sana Malik', phone: '0300 0000000', password: 'good words here' }))
+      expect(exists).toContain('This number already has an account.')
+      state.calls = []
+      const short = await text(await send('/account/register', { name: 'Sana Malik', phone: '0300 1112223', password: 'short' }))
+      expect(short).toContain('Use at least 8 characters.')
+      expect(state.calls).toEqual([]) // refused here, before the API
+      const ok = await send('/account/register', { name: 'Sana Malik', phone: '0300 1112223', password: 'good words here', email: 'sana@example.com' })
+      expect(ok.status).toBe(303)
+      expect(ok.headers.get('set-cookie')).toContain('nc_session=sess-1')
+      expect(JSON.parse(String(state.calls.at(-1)).replace(/^REGISTER /, ''))).toEqual({ phone: '0300 1112223', password: 'good words here', name: 'Sana Malik', email: 'sana@example.com' })
+    })
+
+    it('the account page needs a session: without one it goes to sign in and clears a stale cookie; with one it shows the name, the masked number and the orders', async () => {
+      const none = await get('/account')
+      expect(none.status).toBe(302)
+      expect(none.headers.get('location')).toBe('/account/login')
+      expect(none.headers.get('set-cookie')).toMatch(/nc_session=; .*Max-Age=0/)
+      const page = await get('/account', { headers: { cookie: 'nc_session=sess-1' } })
+      const html = await text(page)
+      expect(page.status).toBe(200)
+      expect(page.headers.get('cache-control')).toContain('no-store')
+      expect(html).toContain('Hello, Sana')
+      expect(html).toContain('0300 ••••223')
+      expect(html).toContain('href="/orders/Tok_delivered_Abc"')
+      expect(html).toContain('RB-10458')
+      expect(html).not.toContain('0300 1112223') // the number is never shown whole
+      // a signed-in visitor has no business on the sign-in page
+      expect((await get('/account/login', { headers: { cookie: 'nc_session=sess-1' } })).headers.get('location')).toBe('/account')
+    })
+
+    it('adding an earlier order goes through the order lookup (number and phone) and then the account; signing out ends the session', async () => {
+      state.calls = []
+      const cookie = { cookie: 'nc_session=sess-1' }
+      const claimed = await send('/account', { intent: 'claim', orderNumber: 'RB-10458', phone: '0300 1234567' }, cookie)
+      expect(claimed.status).toBe(200)
+      expect(state.calls).toContain('TRACK {"orderNumber":"RB-10458","phone":"+923001234567"}')
+      expect(state.calls.some((c) => c.startsWith('CLAIM {"order":"Tok_pending_Abc"'))).toBe(true)
+      expect(await text(claimed)).toContain('The order was added to your account.')
+      state.calls = []
+      const out = await send('/account', { intent: 'signout' }, cookie)
+      expect(out.status).toBe(303)
+      expect(out.headers.get('location')).toBe('/')
+      expect(out.headers.get('set-cookie')).toMatch(/nc_session=; .*Max-Age=0/)
+      expect(state.calls).toEqual(['SIGNOUT'])
+    })
+
   })
 
   describe('counting visits asks first (plan/17-owner-requests-2026-10.md section 6)', () => {

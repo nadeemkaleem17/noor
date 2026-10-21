@@ -1,4 +1,4 @@
-import { ChevronDown, Menu as MenuIcon, Search } from 'lucide-react'
+import { ChevronDown, Menu as MenuIcon, Search, User } from 'lucide-react'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
@@ -224,6 +224,9 @@ export function Header({ brand, logo, items, wishlist, bar = { layout: 'left', s
             }}
           >
             <Search aria-hidden="true" className="size-6" />
+          </RouterLink>
+          <RouterLink to={path('/account')} aria-label={t('shell.account')} className={iconButton}>
+            <User aria-hidden="true" className="size-6" />
           </RouterLink>
           {wishlist ? <WishlistLink className={iconButton} /> : null}
           <CartLink className={iconButton} />

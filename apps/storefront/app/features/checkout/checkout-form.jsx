@@ -52,7 +52,7 @@ function Failure({ error, reason, whatsapp }) {
  * the chosen city and "Place order" sends it. With JavaScript, choosing a city or a delivery method asks for the quote by itself, the typed fields are kept for a refresh, and the
  * idempotency key of this checkout survives a reload, so a retry after a lost answer is the same order.
  * @param {object} props
- * @param {{ cart: Cart, cities: { id: string, name: string, province: string, isMajor: boolean }[], key: string, sig: string, extraFields: import('@noor/contract').FormField[], marketing: { enabled: boolean, label: string }, payments: { type: string, label: string, description?: string | undefined }[], whatsapp: string | undefined }} props.loader
+ * @param {{ account?: { name: string, email?: string | undefined } | undefined, cart: Cart, cities: { id: string, name: string, province: string, isMajor: boolean }[], key: string, sig: string, extraFields: import('@noor/contract').FormField[], marketing: { enabled: boolean, label: string }, payments: { type: string, label: string, description?: string | undefined }[], whatsapp: string | undefined }} props.loader
  * @param {{ values?: Record<string, string>, cart?: Cart, result?: any } | undefined} props.action what the last post answered
  */
 export function CheckoutForm({ loader, action }) {
@@ -161,13 +161,13 @@ export function CheckoutForm({ loader, action }) {
           <fieldset className="flex flex-col gap-4">
             <legend className="mb-1 font-heading text-h3">{t('checkout.contact')}</legend>
             <Field label={t('checkout.name')} required {...(fail('customer.name') ? { error: fail('customer.name') } : {})}>
-              <Input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={values.name ?? ''} invalid={Boolean(fail('customer.name'))} />
+              <Input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={values.name ?? loader.account?.name ?? ''} invalid={Boolean(fail('customer.name'))} />
             </Field>
             <Field label={t('checkout.phone')} required hint={t('checkout.phoneHint')} {...(fail('customer.phone') ? { error: fail('customer.phone') } : {})}>
               <Input name="phone" type="tel" inputMode="tel" dir="ltr" required autoComplete="tel" placeholder="03xx xxxxxxx" defaultValue={values.phone ?? ''} invalid={Boolean(fail('customer.phone'))} />
             </Field>
             <Field label={t('checkout.email')} hint={t('checkout.emailHint')} {...(fail('customer.email') ? { error: fail('customer.email') } : {})}>
-              <Input name="email" type="email" inputMode="email" dir="ltr" maxLength={254} autoComplete="email" defaultValue={values.email ?? ''} invalid={Boolean(fail('customer.email'))} />
+              <Input name="email" type="email" inputMode="email" dir="ltr" maxLength={254} autoComplete="email" defaultValue={values.email ?? loader.account?.email ?? ''} invalid={Boolean(fail('customer.email'))} />
             </Field>
           </fieldset>
 

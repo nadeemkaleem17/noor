@@ -4,7 +4,7 @@
 export const isProductionHost = (siteUrl) => /(^|\.)rubaya\.pk$/.test(new URL(siteUrl).hostname)
 
 /** What a crawler may not fetch: the visitor's own pages and the search results (never CSS or scripts). */
-const disallowed = ['/cart', '/checkout', '/orders/', '/track', '/wishlist', '/search']
+const disallowed = ['/cart', '/checkout', '/orders/', '/track', '/wishlist', '/search', '/account']
 
 /** @param {string} siteUrl */
 export function robotsTxt(siteUrl) {

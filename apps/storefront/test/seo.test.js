@@ -150,7 +150,7 @@ describe('robots.txt and sitemaps', () => {
   it('robots.txt shuts everyone out of a copy, and in production hides private pages and names the sitemap', () => {
     expect(robotsTxt('http://localhost:5174')).toBe('User-agent: *\nDisallow: /\n')
     const prod = robotsTxt('https://rubaya.pk')
-    for (const p of ['/cart', '/checkout', '/orders/', '/track', '/wishlist', '/search']) expect(prod).toContain(`Disallow: ${p}\n`)
+    for (const p of ['/cart', '/checkout', '/orders/', '/track', '/wishlist', '/search', '/account']) expect(prod).toContain(`Disallow: ${p}\n`)
     expect(prod).toContain('Sitemap: https://rubaya.pk/sitemap.xml')
     expect(prod).not.toContain('Disallow: /\n')
   })

@@ -185,16 +185,6 @@ export function createAccountsService({ db, orders: publicOrders, visits, config
       return { orderNumber: `${o?.numberPrefix}-${o?.number}` }
     },
 
-    /**
-     * An order placed while signed in is the account's: called right after the order exists, with the order's own link as the proof, and never in the way of the order.
-     * @param {string} customerId @param {string} orderToken
-     */
-    async attachPlaced(customerId, orderToken) {
-      const found = await publicOrders.orderByToken(orderToken)
-      if (found.customerId !== customerId) return
-      await db.insert(accountOrders).values({ orderId: found.id, customerId, via: 'placed', linkedAt: now() }).onDuplicateKeyUpdate({ set: { orderId: found.id } })
-    },
-
     /** Staff take an account away (a number registered by someone who does not own it, or a request). The customer's orders and notes stay. @param {Staff} actor @param {string} customerId @param {RequestInfo} req */
     async adminRemove(actor, customerId, req) {
       await transaction(db, async (tx) => {

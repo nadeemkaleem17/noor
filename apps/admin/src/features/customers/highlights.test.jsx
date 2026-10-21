@@ -81,6 +81,50 @@ describe('the customer page', () => {
   })
 })
 
+describe('accounts of customers on the shop', () => {
+  it('lists the email and when each customer registered, with Guest for one who only ordered', async () => {
+    fakeApi(session(reader, {
+      'GET /admin/customers': () => json(200, { items: [customerRowFixture({ name: 'Sana Malik', email: 'sana@example.com', registeredAt: '2026-09-01T05:00:00.000Z' }), customerRowFixture({ id: oid.customer.replace(/.$/, '9'), name: 'Bilal Khan' })], total: 2, page: 1, size: 50 }),
+      'GET /admin/customers/highlight-rules': () => json(200, { items: [] }),
+    }))
+    renderApp('/customers')
+    const table = await screen.findByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Registered' })).toBeTruthy()
+    expect(await within(table).findByText('sana@example.com')).toBeTruthy()
+    expect(within(table).getByText('01-Sept-2026')).toBeTruthy()
+    expect(within(table).getByText('Guest')).toBeTruthy()
+    expect(await screen.findByRole('combobox', { name: 'Registered only' }).catch(() => screen.queryByText('Registered only'))).toBeTruthy()
+  })
+
+  it('shows the account of a customer, and lets staff remove it after a question', async () => {
+    let removed = false
+    fakeApi(session(writer, {
+      [`GET /admin/customers/${oid.customer}`]: () => json(200, customerFixture({ registeredAt: '2026-09-01T05:00:00.000Z', lastLoginAt: '2026-10-18T10:00:00.000Z' })),
+      [`POST /admin/customers/${oid.customer}/remove-account`]: () => ((removed = true), new Response(null, { status: 204 })),
+      'GET /admin/orders': () => json(200, { items: [], total: 0, page: 1, size: 50 }),
+    }))
+    const { user } = renderApp(`/customers/${oid.customer}`)
+    const block = within(await screen.findByRole('region', { name: 'Account on the shop' }))
+    expect(block.getByText('Registered')).toBeTruthy()
+    expect(block.getByText('Last signed in')).toBeTruthy()
+    await user.click(block.getByRole('button', { name: 'Remove the account' }))
+    expect(removed).toBe(false) // a question first
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove the account' }))
+    await waitFor(() => expect(removed).toBe(true))
+  })
+
+  it('says a guest has no account, and offers nothing to remove', async () => {
+    fakeApi(session(writer, {
+      [`GET /admin/customers/${oid.customer}`]: () => json(200, customerFixture()),
+      'GET /admin/orders': () => json(200, { items: [], total: 0, page: 1, size: 50 }),
+    }))
+    renderApp(`/customers/${oid.customer}`)
+    const block = within(await screen.findByRole('region', { name: 'Account on the shop' }))
+    expect(block.getByText(/orders as a guest/)).toBeTruthy()
+    expect(block.queryByRole('button', { name: 'Remove the account' })).toBeNull()
+  })
+})
+
 describe('the highlight rules screen', () => {
   const two = [rule(1, { label: 'New customer' }), rule(2, { minCount: 6, maxCount: 10, color: '#f59e0b', label: 'Regular' })]
 

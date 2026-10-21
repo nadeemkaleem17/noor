@@ -77,7 +77,8 @@
     "rights": "© {year} {brand}",
     "language": "Language",
     "cartCount": "Cart, {count, plural, one {# item} other {# items}}",
-    "sizeGuide": "Size guide"
+    "sizeGuide": "Size guide",
+    "account": "Your account"
   },
   "offers": {
     "intro": "Enter one of these codes in your bag before you check out.",
@@ -149,11 +150,7 @@
     "siblings": "More categories",
     "comingTitle": "{name}: products are on their way",
     "comingBody": "There is nothing in this category yet. Have a look at the other categories above, or at what is new.",
-    "density": {
-      "label": "Products per row",
-      "compact": "More products per row",
-      "roomy": "Larger products"
-    },
+    "density": { "label": "Products per row", "compact": "More products per row", "roomy": "Larger products" },
     "shopBy": "Shop by category",
     "tileCount": "{count, plural, one {# piece} other {# pieces}}",
     "railNew": "New in {name}",
@@ -655,7 +652,8 @@
     "homeDescription": "Shop stitched, unstitched and made-to-order online. Delivery across Pakistan, cash on delivery.",
     "newDescription": "The newest stitched, unstitched and made-to-order pieces, fresh in the shop. Delivery across Pakistan, cash on delivery.",
     "saleDescription": "Pieces on sale: lawn, formals and more at a lower price. Delivery across Pakistan, cash on delivery.",
-    "sizeGuideDescription": "Size charts in inches and centimetres, and how to take your measurements."
+    "sizeGuideDescription": "Size charts in inches and centimetres, and how to take your measurements.",
+    "account": "Your account"
   },
   "consent": {
     "label": "Cookies and visit counting",
@@ -663,5 +661,66 @@
     "accept": "Accept",
     "decline": "Decline",
     "change": "Cookie choices"
+  },
+  "account": {
+    "title": "Hello, {name}",
+    "since": "a customer since {date}",
+    "signOut": "Sign out",
+    "loginTitle": "Sign in",
+    "loginIntro": "Use the mobile number you order with.",
+    "loginSubmit": "Sign in",
+    "registerTitle": "Create an account",
+    "registerIntro": "Keep your orders in one place. You can still order without an account.",
+    "registerSubmit": "Create the account",
+    "noneYet": "No account yet?",
+    "haveOne": "Already have an account?",
+    "guestOk": "You never need an account to order.",
+    "name": "Your name",
+    "phone": "Mobile number",
+    "phoneHint": "The one you order with, such as 0300 1234567.",
+    "email": "Email (optional)",
+    "emailHint": "For order emails.",
+    "password": "Password",
+    "passwordHint": "At least {n} characters. A few words in a row is easy to remember and hard to guess.",
+    "orders": "Your orders",
+    "noOrders": "No orders on this account yet. An order you place while signed in appears here; for an earlier one, add it below.",
+    "claim": "Add an earlier order",
+    "claimHint": "Enter the number of an order you placed with this mobile number. Your orders are not added by themselves, so nobody can see yours by registering your number.",
+    "claimSubmit": "Add the order",
+    "details": "Your details",
+    "save": "Save",
+    "passwordTitle": "Change your password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "changePassword": "Change the password",
+    "leaveTitle": "Leave",
+    "leaveText": "Deleting the account removes your password and the list of orders on it. The shop keeps its records of the orders you placed.",
+    "leave": "Delete my account",
+    "leaveConfirm": "Type your password to confirm.",
+    "leaveSubmit": "Delete the account",
+    "done": {
+      "updated": "Your details were saved.",
+      "password": "Your password was changed. Other devices were signed out.",
+      "claimed": "The order was added to your account."
+    },
+    "errors": {
+      "name": "Enter your name.",
+      "phone": "Enter a mobile number such as 0300 1234567.",
+      "email": "That email address does not look right.",
+      "password": "Use at least {n} characters.",
+      "weak": "That password is too easy to guess. Try a few words in a row.",
+      "exists": "This number already has an account. Sign in, or WhatsApp us if it is not yours.",
+      "credentials": "The number or the password is not right.",
+      "busy": "Too many tries. Please wait a few minutes.",
+      "notFound": "We could not find an order with that number on this mobile number.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "weak": {
+      "too_short": "That password is too short.",
+      "too_long": "That password is too long.",
+      "common": "That password is too common. Try a few words in a row.",
+      "repetitive": "That password repeats too much.",
+      "contains_name": "Do not use the shop name or your email in the password."
+    }
   }
 }
