@@ -11,6 +11,7 @@ import { formatDateTime, relativeTime } from '@/lib/dates'
 import { useCan } from '@/lib/session'
 import { staffQueries } from '../api'
 import { ModuleAccess } from './module-access'
+import { ProfilePicker } from './profile-picker'
 import { useStaffActions } from './staff-actions'
 import { StatusCell, TwoFactorBadge, humanise } from './staff-list'
 
@@ -67,6 +68,7 @@ export function StaffDetail({ id }) {
             <Item label="Added">{formatDateTime(s.createdAt)}</Item>
           </dl>
         </SectionCard>
+        <ProfilePicker key={`role-${s.id}-${s.version}`} staff={s} canEdit={can('staff:manage')} />
         <ModuleAccess key={`${s.id}-${s.version}`} staff={s} canEdit={can('staff:manage')} />
         <SectionCard id="sessions" title="Sessions">
           {s.sessions.length === 0 ? (

@@ -26,6 +26,7 @@ const settingsData = () => import('@/routes/settings-data')
 const account = () => import('@/routes/account')
 const staff = () => import('@/routes/staff')
 const staffMember = () => import('@/routes/staff-member')
+const staffRoles = () => import('@/routes/staff-roles')
 const audit = () => import('@/routes/audit')
 const orders = () => import('@/routes/orders')
 const order = () => import('@/routes/order')
@@ -100,6 +101,7 @@ export const screens = [
   { path: '/settings/payments', title: 'Payments', permission: 'settings:read', group: 'Settings', icon: Wallet, lazy: settingsPayments },
   { path: '/settings/emails', title: 'Emails', permission: 'settings:manage', group: 'Settings', icon: Mail, lazy: settingsEmails },
   { path: '/staff', title: 'Staff & roles', permission: 'staff:read', group: 'Settings', icon: ShieldCheck, lazy: staff },
+  { path: '/staff/roles', title: 'Roles', permission: 'staff:read', lazy: staffRoles },
   { path: '/staff/:id', title: 'Staff member', permission: 'staff:read', lazy: staffMember },
   { path: '/audit', title: 'Audit log', permission: 'audit:read', group: 'Settings', icon: ScrollText, lazy: audit },
   { path: '/settings/data', title: 'Data', permission: 'settings:manage', group: 'Settings', icon: Database, lazy: settingsData },

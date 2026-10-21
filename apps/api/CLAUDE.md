@@ -41,7 +41,7 @@ test/                  *.test.js (pure) and *.int.test.js (a scratch MySQL datab
 
 | Module | Owns |
 |---|---|
-| `auth` | staff, roles matrix (`roles.js`), Argon2id passwords, sessions + CSRF token, TOTP (AES-GCM secrets), recovery codes, invites, `stepUp` password re-check. `createAuthorize()` is the `authorize` hook |
+| `auth` | staff, roles matrix (`roles.js`; custom named roles = `access_profiles` applied to people as role + grants - revokes), Argon2id passwords, sessions + CSRF token, TOTP (AES-GCM secrets), recovery codes, invites, `stepUp` password re-check. `createAuthorize()` is the `authorize` hook |
 | `audit` | `record(tx, {...})`: every staff change writes an audit row inside its transaction; history panels read it |
 | `settings` | five JSON documents (`store`, `theme`, `checkout`, `payments`, `home`) each with a `version` (stale write = 409 `stale_write`), CMS pages, menus, public `store.getConfig` and `content.*`; `tokens.js` `resolveTokens` puts `{{store.phone}}`, `{{shipping.fee}}`... into page text on the way out |
 | `shipping` | cities (242), zones, methods, couriers; `quote()`; `facts()` feeds config; `publicCities()` |

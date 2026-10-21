@@ -1,9 +1,9 @@
 import { Badge } from '@noor/ui/badge'
-import { Button } from '@noor/ui/button'
+import { Button, LinkButton } from '@noor/ui/button'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link as RouterLink, useSearchParams } from 'react-router'
 import { DataTable } from '@/components/data-table'
 import { PageHeader } from '@/components/page-header'
 import { formatDateTime, relativeTime } from '@/lib/dates'
@@ -52,7 +52,7 @@ const columns = [
       </span>
     ),
   },
-  { id: 'role', header: 'Role', cell: (s) => <span>{humanise(s.role)}{s.grants.length + s.revokes.length > 0 ? <Badge tone="accent" className="ms-2">Custom access</Badge> : null}</span> },
+  { id: 'role', header: 'Role', cell: (s) => <span>{humanise(s.role)}{s.profileId ? <Badge tone="accent" className="ms-2">Custom role</Badge> : s.grants.length + s.revokes.length > 0 ? <Badge tone="accent" className="ms-2">Custom access</Badge> : null}</span> },
   { id: 'twoFactor', header: 'Two-step', cell: (s) => <TwoFactorBadge staff={s} /> },
   { id: 'status', header: 'Status', cell: (s) => <StatusCell staff={s} /> },
   {
@@ -95,6 +95,9 @@ export function StaffList() {
         actions={
           <>
             <PermissionsButton />
+            <LinkButton variant="secondary" href="/staff/roles" render={<RouterLink to="/staff/roles" />}>
+              Roles
+            </LinkButton>
             {can('staff:manage') ? (
               <Button iconStart={<Plus aria-hidden className="size-4" />} onClick={invite}>
                 Invite staff

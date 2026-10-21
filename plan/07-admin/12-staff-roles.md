@@ -51,6 +51,10 @@ The staff member page has a card **Module access**: the person's role, and under
 
 Rules: an owner keeps everything and cannot be reduced; nobody changes their own access; nobody gives a permission they do not hold themselves; only an owner touches an owner; every change is audited (`staff.permissions_changed`, category security, with the old and new lists). Roles themselves stay the six fixed ones (ADR on roles unchanged); a person's difference from their role is the "module-based right". Not built: custom named roles.
 
+### 3.2 Custom named roles (added 2026-10-21, plan/17 item 11)
+
+**Staff > Roles** (`/staff/roles`) lists the built-in roles and the roles the shop made. **New role** asks for a name, a short note, the built-in role it **starts from** (any except owner) and, in the same module picture as a person's Module access, what is added to it and taken from it. Only what differs from the base role is kept. A role is **given to a person from their page** (card **Role**; `None` lets go and leaves the access as it is): their role, additions and removals then become the role's, so every permission check stays `role + additions - removals`. **Changing a role changes everyone who has it at once** (a different base role ends their sessions, like any role change); **deleting** it leaves them the access they have, now theirs alone. Changing someone's access by hand (Module access) or their built-in role lets go of the custom role (the list shows **Custom role** or **Custom access**). Rules: nobody makes a role above their own, nobody puts in what they do not hold, nobody edits or deletes the role that gives them their own access, an owner cannot be given one, every change is audited (security). Routes: DOC-10.4 (`admin.profiles.*`, `admin.staff.applyProfile`).
+
 ## 4. Staff actions
 
 | Action | Dialog and rules |
