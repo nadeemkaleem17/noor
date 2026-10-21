@@ -1,5 +1,6 @@
 // Base seed (plan/14-devops.md section 5.2): what a shop needs to exist, safe to run on every environment and any number of times.
 // Each piece is inserted only when it is missing, so staff edits are never overwritten.
+import { defaultHighlightRules } from '@noor/contract'
 import { now } from '../platform/clock.js'
 import { ensureCounter } from '../platform/counters.js'
 import { uuidv7 } from '../platform/ids.js'
@@ -21,14 +22,6 @@ const REVIEW = ' (review fees before launch)'
 export const baseSizeSystems = [
   { name: "Women's stitched", labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
   { name: 'Footwear EU', labels: ['36', '37', '38', '39', '40', '41'] },
-]
-
-/** A first set of highlight rules, only to show how it works: staff change, switch off or delete every one of them in Customers. */
-export const baseHighlightRules = [
-  { kind: /** @type {const} */ ('orders'), minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New customer' },
-  { kind: /** @type {const} */ ('orders'), minCount: 6, maxCount: 10, color: '#f59e0b', label: 'Regular' },
-  { kind: /** @type {const} */ ('orders'), minCount: 11, maxCount: null, color: '#16a34a', label: 'Loyal' },
-  { kind: /** @type {const} */ ('visits'), minCount: 2, maxCount: null, color: '#8b5cf6', label: 'Repeat visitor' },
 ]
 
 /**
@@ -55,8 +48,8 @@ export async function seedBase(db, { search }) {
   const haveRules = (await db.select({ id: customerHighlightRules.id }).from(customerHighlightRules).limit(1)).length
   done.highlightRules = 0
   if (!haveRules) {
-    for (const r of baseHighlightRules) await db.insert(customerHighlightRules).values({ id: uuidv7(), ...r, enabled: true, createdAt: at, updatedAt: at })
-    done.highlightRules = baseHighlightRules.length
+    for (const r of defaultHighlightRules) await db.insert(customerHighlightRules).values({ id: uuidv7(), ...r, enabled: true, createdAt: at, updatedAt: at })
+    done.highlightRules = defaultHighlightRules.length
   }
 
   // menus

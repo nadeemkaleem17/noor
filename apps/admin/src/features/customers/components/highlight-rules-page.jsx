@@ -1,4 +1,4 @@
-import { HighlightRuleInput, maxHighlightRules } from '@noor/contract'
+import { defaultHighlightRules, HighlightRuleInput, maxHighlightRules } from '@noor/contract'
 import { Button } from '@noor/ui/button'
 import { Checkbox } from '@noor/ui/checkbox'
 import { ErrorState } from '@noor/ui/error-state'
@@ -119,6 +119,9 @@ export function HighlightRulesPage() {
         actions={
           writable ? (
             <>
+              <Button variant="secondary" onClick={() => setDrafts(defaultHighlightRules.map((r) => blank({ kind: r.kind, minCount: String(r.minCount), maxCount: r.maxCount === null ? '' : String(r.maxCount), color: r.color, label: r.label })))}>
+                Start from the suggested ranges
+              </Button>
               {dirty ? (
                 <Button variant="secondary" onClick={() => setDrafts(null)}>
                   Discard changes

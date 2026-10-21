@@ -62,7 +62,7 @@ describe('home page draft, preview and publish (plan/17-owner-requests-2026-10.m
   })
 
   it('asks for a preview link and opens the shop with it in a new tab', async () => {
-    const opened = []
+    const opened = /** @type {string[]} */ ([])
     const real = window.open
     window.open = /** @type {never} */ ((/** @type {string} */ url) => (opened.push(url), null))
     try {

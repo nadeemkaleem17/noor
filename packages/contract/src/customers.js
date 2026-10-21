@@ -89,6 +89,14 @@ export const CustomerListQuery = PageQuery.extend({
   rule: Id.optional(),
 })
 
+/** A first set of highlight rules, only to show how it works and to start again from: staff change, switch off or delete every one of them. Not read by any rule check. */
+export const defaultHighlightRules = /** @type {const} */ ([
+  { kind: 'orders', minCount: 1, maxCount: 5, color: '#3b82f6', label: 'New customer' },
+  { kind: 'orders', minCount: 6, maxCount: 10, color: '#f59e0b', label: 'Regular' },
+  { kind: 'orders', minCount: 11, maxCount: null, color: '#16a34a', label: 'Loyal' },
+  { kind: 'visits', minCount: 2, maxCount: null, color: '#8b5cf6', label: 'Repeat visitor' },
+])
+
 export const VisitSummary = z.strictObject({
   visits: z.int(),
   visitors: z.int(),

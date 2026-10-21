@@ -113,6 +113,24 @@ describe('the highlight rules screen', () => {
     expect((await screen.findAllByText('Highlight rules saved')).length).toBeGreaterThan(0)
   })
 
+  it('starts again from the suggested ranges without saving anything until Save is pressed', async () => {
+    /** @type {any} */
+    let sent = null
+    fakeApi(session(writer, {
+      'GET /admin/customers/highlight-rules': () => json(200, { items: [] }),
+      'PUT /admin/customers/highlight-rules': ({ body }) => ((sent = body), json(200, { items: [] })),
+    }))
+    const { user } = renderApp('/customers/highlights')
+    await user.click(await screen.findByRole('button', { name: 'Start from the suggested ranges' }))
+    expect(sent).toBeNull()
+    expect(screen.getAllByRole('group', { name: /Rule \d/ })).toHaveLength(4)
+    await user.click(screen.getByRole('button', { name: 'Save rules' }))
+    await waitFor(() => expect(sent).not.toBeNull())
+    expect(sent.rules.map((/** @type {{ label: string; minCount: number; maxCount?: number }} */ r) => [r.label, r.minCount, r.maxCount])).toEqual([
+      ['New customer', 1, 5], ['Regular', 6, 10], ['Loyal', 11, undefined], ['Repeat visitor', 2, undefined],
+    ])
+  })
+
   it('will not save a range that ends before it begins, says why, and warns when two ranges overlap', async () => {
     fakeApi(session(writer, { 'GET /admin/customers/highlight-rules': () => json(200, { items: two }) }))
     const { user } = renderApp('/customers/highlights')
