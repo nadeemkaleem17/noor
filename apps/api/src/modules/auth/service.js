@@ -1,7 +1,7 @@
 // Staff sign-in, two-factor, passwords, sessions and staff management (plan/11-security-auth.md sections 3-4, plan/10-api/04).
 // Every state change and its audit entry happen in one transaction.
-import { and, eq } from 'drizzle-orm'
-import { staffUsers } from '../../db/schema/auth.js'
+import { and, count, eq, inArray } from 'drizzle-orm'
+import { accessProfiles, staffUsers } from '../../db/schema/auth.js'
 import { now } from '../../platform/clock.js'
 import { transaction } from '../../platform/db.js'
 import { DomainError } from '../../platform/errors.js'
@@ -81,6 +81,7 @@ export function createAuthService({ db, config }) {
     version: u.version,
     createdAt: u.createdAt.toISOString(),
     // what was added to or taken from the role for this person, and what they may do in the end
+    ...(u.profileId ? { profileId: u.profileId } : {}),
     grants: /** @type {import('@noor/contract').Permission[]} */ (listOf(u.grantedPermissions)),
     revokes: /** @type {import('@noor/contract').Permission[]} */ (listOf(u.revokedPermissions)),
     permissions: /** @type {import('@noor/contract').Permission[]} */ ([...effectivePermissions(/** @type {import('@noor/contract').StaffRole} */ (u.role), listOf(u.grantedPermissions), listOf(u.revokedPermissions))]),
@@ -508,11 +509,140 @@ export function createAuthService({ db, config }) {
         if (!locked) throw new DomainError('not_found')
         if (locked.version !== version) throw new DomainError('stale_write', { currentVersion: locked.version })
         const was = { grants: listOf(locked.grantedPermissions), revokes: listOf(locked.revokedPermissions) }
-        await repo.updateUser(tx, id, { grantedPermissions: newGrants.length ? newGrants : null, revokedPermissions: newRevokes.length ? newRevokes : null, updatedAt: now(), version: locked.version + 1 })
+        await repo.updateUser(tx, id, { grantedPermissions: newGrants.length ? newGrants : null, revokedPermissions: newRevokes.length ? newRevokes : null, profileId: null, updatedAt: now(), version: locked.version + 1 }) // changed by hand: no longer the profile's
         await record(tx, {
           ...actorOf(actor, req), action: 'staff.permissions_changed', entityType: 'staff', entityId: id, entityLabel: locked.email, category: 'security',
           diff: { grants: [was.grants.join(', ') || null, newGrants.join(', ') || null], revokes: [was.revokes.join(', ') || null, newRevokes.join(', ') || null] },
         })
+        return toStaffUser(/** @type {UserRow} */ (await repo.findUserById(tx, id)))
+      })
+    },
+
+    // ---- custom named roles (plan/17-owner-requests-2026-10.md item 11) ---------------------------------------------------------
+
+    /** The view of a profile row with how many people have it. @param {typeof accessProfiles.$inferSelect} p @param {number} members */
+    _profileView(p, members) {
+      const role = /** @type {import('@noor/contract').StaffRole} */ (p.baseRole)
+      const grants = /** @type {import('@noor/contract').Permission[]} */ (listOf(p.grantedPermissions))
+      const revokes = /** @type {import('@noor/contract').Permission[]} */ (listOf(p.revokedPermissions))
+      return {
+        id: p.id, name: p.name, ...(p.summary ? { summary: p.summary } : {}), baseRole: /** @type {'manager' | 'catalog' | 'fulfilment' | 'support' | 'viewer'} */ (role), grants, revokes,
+        permissions: /** @type {import('@noor/contract').Permission[]} */ ([...effectivePermissions(role, grants, revokes)]), members, version: p.version, updatedAt: p.updatedAt.toISOString(),
+      }
+    },
+
+    /**
+     * What a profile keeps of the input: only additions the base role does not have and removals it does, and only what the person making it may give (nobody hands out what they do not
+     * hold, and nobody makes a role above their own).
+     * @param {StaffActor} actor @param {{ baseRole: import('@noor/contract').StaffRole, grants: import('@noor/contract').Permission[], revokes: import('@noor/contract').Permission[] }} input
+     */
+    _shapeOf(actor, { baseRole, grants, revokes }) {
+      if (!mayManage(actor.role, baseRole)) throw new DomainError('forbidden')
+      const base = permissionsOf(baseRole)
+      const kept = { grants: [...new Set(grants)].filter((p) => !base.has(p)).toSorted(), revokes: [...new Set(revokes)].filter((p) => base.has(p)).toSorted() }
+      for (const p of kept.grants) if (!actor.permissions.has(p)) throw new DomainError('forbidden')
+      return kept
+    },
+
+    async listProfiles() {
+      const [rows, counts] = await Promise.all([
+        db.select().from(accessProfiles).orderBy(accessProfiles.name),
+        db.select({ id: staffUsers.profileId, n: count() }).from(staffUsers).where(eq(staffUsers.status, 'active')).groupBy(staffUsers.profileId),
+      ])
+      const members = new Map(counts.map((c) => [c.id, c.n]))
+      return { items: rows.map((p) => this._profileView(p, members.get(p.id) ?? 0)) }
+    },
+
+    /** @param {StaffActor} actor @param {import('@noor/contract').z.infer<typeof import('@noor/contract').AccessProfileInput>} input @param {RequestInfo} req */
+    async createProfile(actor, input, req) {
+      const kept = this._shapeOf(actor, input)
+      const id = uuidv7()
+      const at = now()
+      try {
+        await transaction(db, async (tx) => {
+          await tx.insert(accessProfiles).values({ id, name: input.name, summary: input.summary || null, baseRole: input.baseRole, grantedPermissions: kept.grants.length ? kept.grants : null, revokedPermissions: kept.revokes.length ? kept.revokes : null, createdAt: at, updatedAt: at })
+          await record(tx, { ...actorOf(actor, req), action: 'access_profile.created', entityType: 'access_profile', entityId: id, entityLabel: input.name, category: 'security' })
+        })
+      } catch (e) {
+        if (/** @type {{ cause?: { errno?: number }, errno?: number }} */ (e).cause?.errno === 1062) throw new DomainError('validation_failed', { issues: [{ path: 'name', code: 'invalid_format' }] })
+        throw e
+      }
+      return this._profileView(/** @type {typeof accessProfiles.$inferSelect} */ ((await db.select().from(accessProfiles).where(eq(accessProfiles.id, id)))[0]), 0)
+    },
+
+    /**
+     * Changing a profile changes everyone who has it, at once: their role, additions and removals become the profile's. Nobody edits the profile that gives themselves their access.
+     * @param {StaffActor} actor @param {string} id @param {import('@noor/contract').z.infer<typeof import('@noor/contract').AccessProfileInput> & { version: number }} input @param {RequestInfo} req
+     */
+    async updateProfile(actor, id, input, req) {
+      const kept = this._shapeOf(actor, input)
+      const [mine] = await db.select({ profileId: staffUsers.profileId }).from(staffUsers).where(eq(staffUsers.id, actor.staffId))
+      if (mine?.profileId === id) throw new DomainError('forbidden', {}, 'You cannot change the role that gives you your own access.')
+      let members = 0
+      try {
+        await transaction(db, async (tx) => {
+          const [locked] = await tx.select().from(accessProfiles).where(eq(accessProfiles.id, id)).for('update')
+          if (!locked) throw new DomainError('not_found')
+          if (locked.version !== input.version) throw new DomainError('stale_write', { currentVersion: locked.version })
+          const at = now()
+          await tx.update(accessProfiles).set({ name: input.name, summary: input.summary || null, baseRole: input.baseRole, grantedPermissions: kept.grants.length ? kept.grants : null, revokedPermissions: kept.revokes.length ? kept.revokes : null, updatedAt: at, version: locked.version + 1 }).where(eq(accessProfiles.id, id))
+          const people = await tx.select().from(staffUsers).where(eq(staffUsers.profileId, id)).for('update')
+          members = people.length
+          for (const p of people) {
+            await tx.update(staffUsers).set({ role: input.baseRole, grantedPermissions: kept.grants.length ? kept.grants : null, revokedPermissions: kept.revokes.length ? kept.revokes : null, updatedAt: at, version: p.version + 1 }).where(eq(staffUsers.id, p.id))
+            if (p.role !== input.baseRole) await repo.deleteUserSessions(tx, p.id) // a different base role ends that person's sessions, like any role change
+          }
+          await record(tx, {
+            ...actorOf(actor, req), action: 'access_profile.updated', entityType: 'access_profile', entityId: id, entityLabel: input.name, category: 'security',
+            diff: { baseRole: [locked.baseRole, input.baseRole], grants: [listOf(locked.grantedPermissions).join(', ') || null, kept.grants.join(', ') || null], revokes: [listOf(locked.revokedPermissions).join(', ') || null, kept.revokes.join(', ') || null], people: [null, String(members)] },
+          })
+        })
+      } catch (e) {
+        if (/** @type {{ cause?: { errno?: number }, errno?: number }} */ (e).cause?.errno === 1062) throw new DomainError('validation_failed', { issues: [{ path: 'name', code: 'invalid_format' }] })
+        throw e
+      }
+      return this._profileView(/** @type {typeof accessProfiles.$inferSelect} */ ((await db.select().from(accessProfiles).where(eq(accessProfiles.id, id)))[0]), members)
+    },
+
+    /** People who had it keep the access they have; it is simply theirs alone from now on. @param {StaffActor} actor @param {string} id @param {RequestInfo} req */
+    async deleteProfile(actor, id, req) {
+      const [mine] = await db.select({ profileId: staffUsers.profileId }).from(staffUsers).where(eq(staffUsers.id, actor.staffId))
+      if (mine?.profileId === id) throw new DomainError('forbidden', {}, 'You cannot delete the role that gives you your own access.')
+      await transaction(db, async (tx) => {
+        const [locked] = await tx.select().from(accessProfiles).where(eq(accessProfiles.id, id)).for('update')
+        if (!locked) throw new DomainError('not_found')
+        if (!mayManage(actor.role, /** @type {import('@noor/contract').StaffRole} */ (locked.baseRole))) throw new DomainError('forbidden')
+        await tx.update(staffUsers).set({ profileId: null }).where(eq(staffUsers.profileId, id))
+        await tx.delete(accessProfiles).where(eq(accessProfiles.id, id))
+        await record(tx, { ...actorOf(actor, req), action: 'access_profile.deleted', entityType: 'access_profile', entityId: id, entityLabel: locked.name, category: 'security' })
+      })
+    },
+
+    /**
+     * Gives a person a custom role (their role and additions become the profile's), or lets go of it (`profileId` null: they keep the access they have, now theirs alone).
+     * @param {StaffActor} actor @param {string} id @param {{ profileId: string | null, version: number }} body @param {RequestInfo} req
+     */
+    async applyProfile(actor, id, { profileId, version }, req) {
+      const target = await this._targetOf(actor, id)
+      if (target.role === 'owner') throw new DomainError('forbidden')
+      return transaction(db, async (tx) => {
+        const locked = await repo.lockUserById(tx, id)
+        if (!locked) throw new DomainError('not_found')
+        if (locked.version !== version) throw new DomainError('stale_write', { currentVersion: locked.version })
+        /** @type {Partial<typeof staffUsers.$inferInsert>} */
+        let patch = { profileId: null }
+        let named = '(none)'
+        if (profileId) {
+          const [p] = await tx.select().from(accessProfiles).where(eq(accessProfiles.id, profileId))
+          if (!p) throw new DomainError('not_found')
+          const role = /** @type {import('@noor/contract').StaffRole} */ (p.baseRole)
+          const kept = this._shapeOf(actor, { baseRole: role, grants: /** @type {never} */ (listOf(p.grantedPermissions)), revokes: /** @type {never} */ (listOf(p.revokedPermissions)) })
+          patch = { profileId, role, grantedPermissions: kept.grants.length ? kept.grants : null, revokedPermissions: kept.revokes.length ? kept.revokes : null }
+          named = p.name
+          if (locked.role !== role) await repo.deleteUserSessions(tx, id)
+        }
+        await repo.updateUser(tx, id, { ...patch, updatedAt: now(), version: locked.version + 1 })
+        await record(tx, { ...actorOf(actor, req), action: profileId ? 'staff.profile_applied' : 'staff.profile_removed', entityType: 'staff', entityId: id, entityLabel: locked.email, category: 'security', diff: { profile: [locked.profileId ?? null, named] } })
         return toStaffUser(/** @type {UserRow} */ (await repo.findUserById(tx, id)))
       })
     },
@@ -527,7 +657,7 @@ export function createAuthService({ db, config }) {
         if (!locked) throw new DomainError('not_found')
         if (locked.version !== version) throw new DomainError('stale_write', { currentVersion: locked.version })
         await this._assertOwnerRemains(tx, locked, { role })
-        await repo.updateUser(tx, id, { name, role, updatedAt: at, version: locked.version + 1 })
+        await repo.updateUser(tx, id, { name, role, ...(role !== locked.role ? { profileId: null } : {}), updatedAt: at, version: locked.version + 1 })
         const roleChanged = role !== locked.role
         if (roleChanged) await repo.deleteUserSessions(tx, id) // a role change ends that person's sessions
         /** @type {Record<string, [unknown, unknown]>} */

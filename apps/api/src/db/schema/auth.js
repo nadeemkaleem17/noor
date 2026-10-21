@@ -2,7 +2,7 @@
 // No `roles` table: the five-plus-one roles are fixed in code (modules/auth/roles.js).
 import { enums } from '@noor/contract'
 import { sql } from 'drizzle-orm'
-import { bigint, boolean, check, customType, index, int, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { bigint, boolean, check, customType, foreignKey, index, int, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { binChar, binVarchar, utc, uuid } from '../types.js'
 
 /** `col IN ('a','b')` for a CHECK, from the contract's enum so the two cannot drift (DOC-09.0 section 5). */
@@ -11,6 +11,26 @@ export const inList = (/** @type {import('drizzle-orm').SQLWrapper} */ column, /
 
 /** Raw bytes column: the encrypted TOTP secret. */
 const buffer = /** @type {typeof customType<{ data: Buffer }>} */ (customType)({ dataType: () => 'varbinary(255)' })
+
+/**
+ * Custom named roles (plan/17-owner-requests-2026-10.md item 11): a name for a base role plus what is added to it and taken from it. Giving someone a profile sets their role and their
+ * additions and removals to the profile's, so every permission check stays what it was (role + grants - revokes); editing a profile changes everyone who has it.
+ */
+export const accessProfiles = mysqlTable(
+  'access_profiles',
+  {
+    id: uuid('id').primaryKey(),
+    name: varchar('name', { length: 40 }).notNull(),
+    summary: varchar('summary', { length: 200 }),
+    baseRole: binVarchar('base_role', { length: 32 }).notNull(),
+    grantedPermissions: json('granted_permissions'),
+    revokedPermissions: json('revoked_permissions'),
+    version: int('version').notNull().default(1),
+    createdAt: utc('created_at').notNull(),
+    updatedAt: utc('updated_at').notNull(),
+  },
+  (t) => [uniqueIndex('access_profiles_name_uq').on(t.name), check('access_profiles_role_chk', inList(t.baseRole, enums.staffRole))],
+)
 
 export const staffUsers = mysqlTable(
   'staff_users',
@@ -23,6 +43,8 @@ export const staffUsers = mysqlTable(
     /** Permissions given on top of the role, and taken off it: a list of `resource:action` (plan/17-owner-requests-2026-10.md item 11). Empty or null = the role as it is. */
     grantedPermissions: json('granted_permissions'),
     revokedPermissions: json('revoked_permissions'),
+    /** The custom role this person was given; empty once their access is changed by hand. */
+    profileId: uuid('profile_id'),
     passwordHash: varchar('password_hash', { length: 255 }), // Argon2id PHC string; null until the invite is accepted
     totpSecretEnc: buffer('totp_secret_enc'), // keyId | nonce | ciphertext | tag (AES-256-GCM); null = 2FA off
     totpLastStep: bigint('totp_last_step', { mode: 'number' }),
@@ -40,6 +62,7 @@ export const staffUsers = mysqlTable(
     uniqueIndex('staff_users_email_uq').on(t.email),
     index('staff_users_role_idx').on(t.role, t.status),
     check('staff_users_role_chk', inList(t.role, enums.staffRole)),
+    foreignKey({ name: 'staff_users_profile_fk', columns: [t.profileId], foreignColumns: [accessProfiles.id] }).onDelete('set null'),
     check('staff_users_status_chk', inList(t.status, enums.staffStatus)),
   ],
 )

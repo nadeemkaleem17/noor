@@ -149,6 +149,10 @@ admin.products.get
 admin.products.list
 admin.products.previewLink
 admin.products.update
+admin.profiles.create
+admin.profiles.delete
+admin.profiles.list
+admin.profiles.update
 admin.promos.bulk
 admin.promos.bulkDelete
 admin.promos.create
@@ -198,6 +202,7 @@ admin.sizeSystems.create
 admin.sizeSystems.delete
 admin.sizeSystems.list
 admin.sizeSystems.update
+admin.staff.applyProfile
 admin.staff.clearLock
 admin.staff.deactivate
 admin.staff.get

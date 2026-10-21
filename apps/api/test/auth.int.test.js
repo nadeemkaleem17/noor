@@ -5,7 +5,7 @@ import { generateSync } from 'otplib'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { permissions, routes } from '@noor/contract'
 import { auditLog } from '../src/db/schema/audit.js'
-import { authTokens, loginAttempts, recoveryCodes, sessions, staffUsers } from '../src/db/schema/auth.js'
+import { accessProfiles, authTokens, loginAttempts, recoveryCodes, sessions, staffUsers } from '../src/db/schema/auth.js'
 import { advanceClock, now, setClock } from '../src/platform/clock.js'
 import { roleList } from '../src/modules/auth/roles.js'
 import { sha256Hex } from '../src/modules/auth/tokens.js'
@@ -22,6 +22,7 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
     await t.migrate.db.delete(auditLog) // only the migration user may remove audit entries
     await t.db.delete(loginAttempts)
     await t.db.delete(staffUsers) // sessions, tokens and recovery codes cascade
+    await t.db.delete(accessProfiles)
   })
 
   describe('sign-in', () => {
@@ -505,6 +506,94 @@ describe.skipIf(!dbAvailable)('auth (MySQL, through HTTP)', () => {
         const view = await b.call('GET', `/admin/staff/${o.id}`)
         expect(view.body.permissions).toContain('orders:read')
       }, 60_000)
+    })
+
+    describe('custom named roles (plan/17-owner-requests-2026-10.md item 11)', () => {
+      const mk = (/** @type {Awaited<ReturnType<typeof signedIn>>['b']} */ b, /** @type {object} */ over = {}) =>
+        b.call('POST', '/admin/access-profiles', { body: { name: 'Delivery coordinator', summary: 'Runs deliveries', baseRole: 'support', grants: ['ledger:read', 'deliveries:assign', 'customers:read'], revokes: ['reviews:moderate', 'promos:write'], ...over } })
+
+      it('makes a named role from a base role, with what is added and taken away, keeping only what differs from the base', async () => {
+        const { b: owner } = await signedIn('owner')
+        const made = await mk(owner)
+        expect(made.status, JSON.stringify(made.body)).toBe(201)
+        // customers:read is in the support role (not an addition) and promos:write is not (not a removal)
+        expect(made.body).toMatchObject({ name: 'Delivery coordinator', baseRole: 'support', grants: ['deliveries:assign', 'ledger:read'], revokes: ['reviews:moderate'], members: 0, version: 1 })
+        expect(made.body.permissions).toContain('ledger:read')
+        expect(made.body.permissions).not.toContain('reviews:moderate')
+        expect((await owner.call('GET', '/admin/access-profiles')).body.items).toHaveLength(1)
+        expect((await mk(owner)).status).toBe(400) // the name is taken
+        expect((await mk(owner, { name: 'x' })).status).toBe(400)
+        expect((await mk(owner, { name: 'Owners', baseRole: 'owner' })).status).toBe(400) // never an owner
+      }, 90_000)
+
+      it('gives a person the role: their access becomes the role at once, and the staff record says which role', async () => {
+        const { b: owner } = await signedIn('owner')
+        const profile = (await mk(owner)).body
+        const target = await makeStaff('viewer')
+        const tb = browser('10.8.8.8')
+        await tb.login(target.email)
+        expect((await tb.call('GET', '/admin/delivery/receipts')).status).toBe(403)
+        const applied = await owner.call('PUT', `/admin/staff/${target.id}/profile`, { body: { profileId: profile.id, version: 1 } })
+        expect(applied.status, JSON.stringify(applied.body)).toBe(200)
+        expect(applied.body).toMatchObject({ role: 'support', profileId: profile.id, grants: ['deliveries:assign', 'ledger:read'], revokes: ['reviews:moderate'], version: 2 })
+        // a changed base role ends the person's sessions; the new one gets the role's access
+        expect((await tb.call('GET', '/admin/me')).status).toBe(401)
+        const again = browser('10.8.8.9')
+        await again.login(target.email)
+        expect((await again.call('GET', '/admin/delivery/receipts')).status).toBe(200)
+        expect((await owner.call('GET', '/admin/access-profiles')).body.items[0].members).toBe(1)
+        expect((await t.db.select().from(auditLog)).some((a) => a.action === 'staff.profile_applied' && a.category === 'security')).toBe(true)
+      }, 90_000)
+
+      it('changing the role changes everyone who has it; a person edited by hand stops following it', async () => {
+        const { b: owner } = await signedIn('owner')
+        const profile = (await mk(owner)).body
+        const one = await makeStaff('viewer')
+        const two = await makeStaff('viewer')
+        await owner.call('PUT', `/admin/staff/${one.id}/profile`, { body: { profileId: profile.id, version: 1 } })
+        await owner.call('PUT', `/admin/staff/${two.id}/profile`, { body: { profileId: profile.id, version: 1 } })
+        // by hand: two keeps their own additions and is no longer on the role
+        const hand = await owner.call('PUT', `/admin/staff/${two.id}/permissions`, { body: { grants: ['ledger:read'], revokes: [], version: 2 } })
+        expect(hand.body.profileId).toBeUndefined()
+
+        const changed = await owner.call('PUT', `/admin/access-profiles/${profile.id}`, { body: { name: 'Delivery coordinator', baseRole: 'support', grants: ['ledger:read', 'ledger:write'], revokes: [], version: 1 } })
+        expect(changed.status, JSON.stringify(changed.body)).toBe(200)
+        expect(changed.body).toMatchObject({ grants: ['ledger:read', 'ledger:write'], revokes: [], members: 1, version: 2 })
+        expect((await owner.call('GET', `/admin/staff/${one.id}`)).body).toMatchObject({ profileId: profile.id, grants: ['ledger:read', 'ledger:write'], revokes: [] })
+        expect((await owner.call('GET', `/admin/staff/${two.id}`)).body).toMatchObject({ grants: ['ledger:read'] }) // not touched
+        expect((await owner.call('PUT', `/admin/access-profiles/${profile.id}`, { body: { name: 'Delivery coordinator', baseRole: 'support', grants: [], revokes: [], version: 1 } })).status).toBe(409) // stale
+        const [entry] = await t.db.select().from(auditLog).where(eq(auditLog.action, 'access_profile.updated'))
+        expect(entry).toMatchObject({ category: 'security', diff: { people: [null, '1'] } })
+      }, 120_000)
+
+      it('deleting a role leaves its people with the access they have, now their own', async () => {
+        const { b: owner } = await signedIn('owner')
+        const profile = (await mk(owner)).body
+        const target = await makeStaff('viewer')
+        await owner.call('PUT', `/admin/staff/${target.id}/profile`, { body: { profileId: profile.id, version: 1 } })
+        expect((await owner.call('DELETE', `/admin/access-profiles/${profile.id}`)).status).toBe(204)
+        expect((await owner.call('GET', '/admin/access-profiles')).body.items).toEqual([])
+        expect((await owner.call('GET', `/admin/staff/${target.id}`)).body).toMatchObject({ role: 'support', grants: ['deliveries:assign', 'ledger:read'] })
+        expect((await owner.call('GET', `/admin/staff/${target.id}`)).body.profileId).toBeUndefined()
+        expect((await owner.call('DELETE', `/admin/access-profiles/${profile.id}`)).status).toBe(404)
+      }, 90_000)
+
+      it('is bounded like the rest of access: nothing above your own role, nothing you do not hold, not your own role, not an owner, and only people who manage staff', async () => {
+        const { b: owner } = await signedIn('owner')
+        const { b: manager, user: managerUser } = await signedIn('manager')
+        // a manager has no customers:export, so cannot put it in a role
+        expect((await mk(manager, { name: 'Exporters', baseRole: 'support', grants: ['customers:export'], revokes: [] })).status).toBe(403)
+        expect((await mk(manager, { name: 'Support plus', baseRole: 'support', grants: ['orders:note'], revokes: [] })).status).toBe(201)
+        const profile = (await mk(owner, { name: 'Managers B', baseRole: 'manager', grants: [], revokes: ['audit:read'] })).body
+        // a manager given a role is not allowed to edit the role that gives them their access
+        await owner.call('PUT', `/admin/staff/${managerUser.id}/profile`, { body: { profileId: profile.id, version: 1 } })
+        expect((await manager.call('PUT', `/admin/access-profiles/${profile.id}`, { body: { name: 'Managers B', baseRole: 'manager', grants: [], revokes: [], version: 1 } })).status).toBe(403) // the base role is the same, so the session stays, but it is their own access
+        const second = await makeStaff('owner', { totp: newTotpSecret() })
+        expect((await owner.call('PUT', `/admin/staff/${second.id}/profile`, { body: { profileId: profile.id, version: 1 } })).status).toBe(403) // not an owner
+        const { b: support } = await signedIn('support')
+        expect((await support.call('POST', '/admin/access-profiles', { body: { name: 'Sneaky', baseRole: 'viewer', grants: [], revokes: [] } })).status).toBe(403)
+        expect((await support.call('GET', '/admin/access-profiles')).status).toBe(403) // staff:read is the manager's and the owner's
+      }, 120_000)
     })
 
     it('deactivation ends sessions and blocks sign-in; reactivation restores it', async () => {

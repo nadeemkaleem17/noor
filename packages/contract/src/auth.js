@@ -58,8 +58,29 @@ export const StaffUser = z.strictObject({
   grants: z.array(Permission),
   revokes: z.array(Permission),
   permissions: z.array(Permission),
+  /** The custom role this person has, until their access is changed by hand. The name is in `admin.profiles.list`. */
+  profileId: Id.optional(),
 })
 /** @typedef {z.infer<typeof StaffUser>} StaffUser */
+
+/** A custom named role: a base role, with what is added to it and what is taken from it (plan/17 item 11). Only roles below owner can be a base. */
+export const AccessProfileInput = z.strictObject({
+  name: z.string().trim().min(2).max(40),
+  summary: z.string().trim().max(200).optional(),
+  baseRole: z.enum(['manager', 'catalog', 'fulfilment', 'support', 'viewer']),
+  grants: z.array(Permission).max(60),
+  revokes: z.array(Permission).max(60),
+})
+export const AccessProfile = AccessProfileInput.extend({
+  id: Id,
+  /** What the role allows in the end: the base role + the additions - the removals. */
+  permissions: z.array(Permission),
+  /** How many people have it. */
+  members: z.int(),
+  version: z.int(),
+  updatedAt: IsoDate,
+})
+/** @typedef {z.infer<typeof AccessProfile>} AccessProfile */
 
 export const RoleInfo = z.strictObject({
   role: StaffRole,
@@ -121,6 +142,17 @@ export const authRoutes = defineRoutes({
     method: 'PUT', path: '/admin/staff/:id/permissions', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams,
     body: z.strictObject({ grants: z.array(Permission).max(60), revokes: z.array(Permission).max(60), version: z.number().int() }),
     response: StaffUser,
+  },
+  'admin.profiles.list': { method: 'GET', path: '/admin/access-profiles', auth: 'staff', permission: 'staff:read', response: z.strictObject({ items: z.array(AccessProfile) }) },
+  'admin.profiles.create': { method: 'POST', path: '/admin/access-profiles', auth: 'staff', permission: 'staff:manage', stepUp: true, status: 201, body: AccessProfileInput, response: AccessProfile },
+  'admin.profiles.update': {
+    method: 'PUT', path: '/admin/access-profiles/:id', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams,
+    body: AccessProfileInput.extend({ version: z.int().min(1) }), response: AccessProfile,
+  },
+  'admin.profiles.delete': { method: 'DELETE', path: '/admin/access-profiles/:id', auth: 'staff', permission: 'staff:manage', stepUp: true, status: 204, params: IdParams, response: Empty },
+  'admin.staff.applyProfile': {
+    method: 'PUT', path: '/admin/staff/:id/profile', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams,
+    body: z.strictObject({ profileId: Id.nullable(), version: z.number().int() }), response: StaffUser,
   },
   'admin.staff.resendInvite': { method: 'POST', path: '/admin/staff/:id/invite', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams, response: z.strictObject({ inviteLink: z.string().optional() }) },
   'admin.staff.resetPassword': { method: 'POST', path: '/admin/staff/:id/password-reset', auth: 'staff', permission: 'staff:manage', stepUp: true, params: IdParams, response: z.strictObject({ resetLink: z.string().optional() }) },
