@@ -52,7 +52,11 @@ Call or message us on {{store.phone}} (WhatsApp {{store.whatsapp}}) with your or
 
 When you order we ask for your name, mobile number and delivery address, and, if you choose, your email. If you write a review we keep what you write and any picture you add. We keep your order history so we can support you.
 
-We do not use advertising or tracking services on this site. Your browser keeps two small cookies that the shop needs to work: one remembers your cart, the other your wishlist. We measure how fast our pages load, without knowing who you are, so that we can fix slow ones.
+We do not use advertising or tracking services on this site. Your browser keeps a few small cookies that the shop needs to work: one remembers your cart, one your wishlist, and, if you make an account, one keeps you signed in. We measure how fast our pages load, without knowing who you are, so that we can fix slow ones.
+
+If you accept, we also count how often a browser comes back to the shop, using one random number in a cookie. It holds no name, address or browser details, and nothing is counted unless you accept (you can change your choice at the foot of any page). If you then place an order or sign in, the visits of that browser are shown to our team next to your orders.
+
+If you make an account, we keep your name, mobile number and a scrambled form of your password (never the password itself), and your email if you give one. You can delete the account yourself from your account page; the records of orders you placed stay as described below.
 
 ## Why we use it
 
