@@ -1,6 +1,6 @@
 // Staff sign-in, two-factor, passwords, sessions and staff management (plan/11-security-auth.md sections 3-4, plan/10-api/04).
 // Every state change and its audit entry happen in one transaction.
-import { and, count, eq, inArray } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { accessProfiles, staffUsers } from '../../db/schema/auth.js'
 import { now } from '../../platform/clock.js'
 import { transaction } from '../../platform/db.js'

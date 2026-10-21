@@ -25,7 +25,6 @@ import { dbAvailable } from './support/db.js'
 const S = createShop()
 const PASSWORD = 'tulip bakery 4821'
 const VISITOR = 'c'.repeat(32)
-let seq = 0
 
 const register = (/** @type {object} */ over = {}) => shop('POST', '/account/register', { body: { name: 'Sana Malik', phone: '0300 1112223', password: PASSWORD, ...over } })
 const login = (/** @type {object} */ over = {}) => shop('POST', '/account/login', { body: { phone: '0300 1112223', password: PASSWORD, ...over } })

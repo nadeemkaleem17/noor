@@ -246,6 +246,8 @@ Buckets are named in the contract (`rateLimit: 'checkout'`); values live in `app
 | `orderAction` | Cancel / switch-to-COD by token | 10 / hour / token | memory |
 | `notify` | Back-in-stock subscribe | 10 / hour / IP, 3 / day / phone | database |
 | `review` | Review submit | 5 / hour / IP | memory |
+| `accountLogin` | Customer `account.login`, `account.changePassword`, `account.delete`, `account.claimOrder` (DOC-10.11) | 20 / 15 min / IP and 8 / 15 min / phone number | database |
+| `accountRegister` | Customer `account.register` | 10 / hour / IP | database |
 | `login` | §3.2 | 5 / 15 min / email, 20 / 15 min / IP | database |
 | `admin` | All other admin routes | 600 / min / staff member | memory |
 | `adminExport` | Exports, bulk | 10 / min / staff member | memory |

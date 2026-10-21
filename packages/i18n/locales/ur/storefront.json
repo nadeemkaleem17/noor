@@ -148,7 +148,11 @@
     "siblings": "More categories",
     "comingTitle": "{name}: products are on their way",
     "comingBody": "There is nothing in this category yet. Have a look at the other categories above, or at what is new.",
-    "density": { "label": "Products per row", "compact": "More products per row", "roomy": "Larger products" },
+    "density": {
+      "label": "Products per row",
+      "compact": "More products per row",
+      "roomy": "Larger products"
+    },
     "shopBy": "Shop by category",
     "tileCount": "{count, plural, one {# piece} other {# pieces}}",
     "railNew": "New in {name}",
@@ -609,5 +613,33 @@
     "offers": "Offers",
     "offersDescription": "Codes you can use at checkout: what each one gives and how to use it.",
     "collectionsDescription": "دکان کے تمام کلیکشنز۔ پورے پاکستان میں ڈیلیوری، کیش آن ڈیلیوری۔"
+  },
+  "consent": {
+    "label": "کوکیز اور وزٹ کی گنتی",
+    "text": "ہم ایک بے ترتیب نمبر والی کوکی کے ذریعے گنتے ہیں کہ کوئی براؤزر اس دکان پر کتنی بار آتا ہے۔ ہم کوئی نام، پتہ یا براؤزر کی تفصیل نہیں رکھتے، اور آپ کے قبول کیے بغیر کچھ نہیں گنتے۔",
+    "accept": "قبول کریں",
+    "decline": "انکار",
+    "change": "کوکی کے انتخاب"
+  },
+  "account": {
+    "title": "خوش آمدید، {name}",
+    "since": "{date} سے گاہک",
+    "signOut": "سائن آؤٹ",
+    "loginTitle": "سائن اِن",
+    "loginIntro": "وہی موبائل نمبر استعمال کریں جس سے آپ آرڈر کرتے ہیں۔",
+    "loginSubmit": "سائن اِن",
+    "registerTitle": "اکاؤنٹ بنائیں",
+    "registerIntro": "اپنے سب آرڈر ایک جگہ رکھیں۔ آپ اکاؤنٹ کے بغیر بھی آرڈر کر سکتے ہیں۔",
+    "registerSubmit": "اکاؤنٹ بنائیں",
+    "noneYet": "ابھی اکاؤنٹ نہیں ہے؟",
+    "haveOne": "پہلے سے اکاؤنٹ ہے؟",
+    "guestOk": "آرڈر کرنے کے لیے اکاؤنٹ کی کبھی ضرورت نہیں۔",
+    "name": "آپ کا نام",
+    "phone": "موبائل نمبر",
+    "email": "ای میل (اختیاری)",
+    "password": "پاس ورڈ",
+    "orders": "آپ کے آرڈر",
+    "details": "آپ کی تفصیل",
+    "save": "محفوظ کریں"
   }
 }

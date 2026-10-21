@@ -190,6 +190,8 @@ describe('rate limits', () => {
       orderAction: ['token 10/60min'],
       notify: ['ip 10/60min db', 'phone 3/1440min db'],
       review: ['ip 5/60min'],
+      accountLogin: ['ip 20/15min db', 'phone 8/15min db'],
+      accountRegister: ['ip 10/60min db'],
       login: [],
       admin: ['staff 600/1min'],
       adminExport: ['staff 10/1min'],

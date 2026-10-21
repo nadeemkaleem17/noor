@@ -23,6 +23,7 @@ const zones = () => [
 const courier = { id: uid(200), name: 'TCS', trackingUrlPattern: 'https://tcs.example/t/{tracking}', trackingRequired: true, enabled: true, sortOrder: 0 }
 const storeValue = () => ({
   emails: defaultEmails,
+  messages: { enabled: false },
   brand: { name: 'Rubaya' },
   contact: { socials: [] },
   priceDisplay: { showDecimals: false, rounding: 'none' },

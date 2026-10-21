@@ -49,7 +49,7 @@ The API for all of these already exists (M4: `admin.orders.*`, `admin.customers.
 - Permission gating: the route has `permission` in `screens.js`; inside a screen use `useCan('products:write')` to hide/disable controls (the API enforces anyway). Read-only without `:write`.
 - Every save sends the document `version`; a 409 `stale_write` opens the stale-write dialog (never silently overwrite). Sensitive calls (`stepUp: true`) go through `lib/step-up.jsx`.
 - Lists = `DataTable` + `list-params` (state in the URL); short unpaged lists are plain tables. Bulk actions return a job; the table polls it.
-- Initial JS budget: `node scripts/admin-initial-js.mjs login` (run from the repo root) after a build: 222.3 kB at sign-in and 227.5 at the dashboard against a 230 kB budget (amended at M7-09 from 200, see plan/16): do not grow the login bundle; keep screens lazy.
+- Initial JS budget: `node scripts/admin-initial-js.mjs login` (run from the repo root) after a build: 230.2 kB at sign-in (it was 222.3 at M7-09) against a 240 kB budget (amended at M7-09 from 200 and on 2026-10-21 from 230, see plan/13 §6.4): do not grow the login bundle; keep screens lazy.
 - Physical CSS directions are banned (`node scripts/check-logical.mjs`): use `ms-/me-/ps-/pe-/start-/end-/text-start`.
 - Texts: admin copy lives in `@noor/i18n` staff catalogs (`staff.js`), English only today.
 
