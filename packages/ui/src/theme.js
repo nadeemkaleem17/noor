@@ -14,7 +14,7 @@ const fontStack = /** @type {const} */ ({
 
 const radius = /** @type {const} */ ({
   control: { sharp: '0', soft: '2px', round: '8px' },
-  card: { sharp: '0', soft: '2px', round: '8px' },
+  card: { sharp: '0', soft: '4px', round: '8px' },
   media: { none: '0', soft: '8px' },
 })
 

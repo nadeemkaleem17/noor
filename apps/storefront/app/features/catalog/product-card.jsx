@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useViewTransitionState } from 'react-router'
+import { Tag } from '@noor/ui/badge'
 import { Image, imageProps } from '@noor/ui/image'
 import { Price } from '@noor/ui/price'
 import { useLocalePath, useShell } from '../layout/use-shell'
@@ -20,6 +21,9 @@ export function badgeOf(p) {
   const next = /** @type {const} */ (['made_to_order', 'limited', 'new', 'bestseller']).find((b) => p.badges.includes(b))
   return next ? { name: next } : undefined
 }
+
+/** How each badge is set on the picture: New is the one ink mark, Sale the one red, the rest stay quiet. */
+const badgeTone = /** @type {const} */ ({ new: 'ink', sale: 'sale', bestseller: 'paper', limited: 'paper', made_to_order: 'paper', sold_out: 'quiet' })
 
 /** A colour swatch: one or two flat colours. A swatch that is a picture has no address here to draw, so it shows a neutral dot. @param {{ swatch: import('@noor/contract').Swatch }} props */
 export function Dot({ swatch }) {
@@ -83,13 +87,13 @@ export function ProductCard({ product: p, priority = false }) {
               alt=""
               sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw"
               ratio="var(--media-ratio, 3 / 4)"
-              className="absolute inset-0 hidden h-full w-full opacity-0 transition-opacity duration-(--dur-micro) [@media(hover:hover)]:block [@media(hover:hover)]:group-hover:opacity-100"
+              className="absolute inset-0 hidden h-full w-full opacity-0 transition-opacity duration-(--dur-image) ease-standard [@media(hover:hover)]:block [@media(hover:hover)]:group-hover:opacity-100"
             />
           ) : null}
           {badge ? (
-            <span className="absolute start-2 top-2 rounded-control bg-bg px-2 py-0.5 text-caption font-medium text-fg shadow-sm">
+            <Tag tone={badgeTone[badge.name]} className="absolute start-2 top-2">
               {t(`product.badge.${badge.name}`, { percent: 'percent' in badge ? badge.percent : undefined })}
-            </span>
+            </Tag>
           ) : null}
         </span>
         <span className="line-clamp-2 text-ui text-fg">{p.title}</span>

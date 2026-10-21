@@ -17,4 +17,4 @@ export const controlSizes = /** @type {const} */ ({
 export const controlHeight = (size) => (size ? controlSizes[size] : 'h-(--control-h) text-(length:--control-text)')
 
 export const controlBase =
-  'w-full rounded-control border border-line-strong bg-surface px-3 text-fg placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger data-[invalid]:border-danger'
+  'w-full rounded-control border border-line-strong bg-surface px-3 text-fg transition-colors duration-(--dur-micro) ease-standard placeholder:text-muted hover:border-fg disabled:cursor-not-allowed disabled:hover:border-line-strong disabled:opacity-50 aria-invalid:border-danger data-[invalid]:border-danger'

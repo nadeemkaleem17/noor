@@ -7,10 +7,13 @@
   --text-display: clamp(2.5rem, 1.9125rem + 2.609vw, 4rem);
   --text-display--line-height: 1.05;
   --text-display--letter-spacing: -0.01em;
+  --text-display--font-weight: 500; /* Playfair at 500, DOC-06.15 section 4.1: the serif is never bold */
   --text-h1: clamp(1.875rem, 1.5326rem + 1.5217vw, 2.75rem);
   --text-h1--line-height: 1.12;
+  --text-h1--font-weight: 500;
   --text-h2: clamp(1.5rem, 1.3043rem + 0.8696vw, 2rem);
   --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 500;
   --text-h3: clamp(1.25rem, 1.1522rem + 0.4348vw, 1.5rem);
   --text-h3--line-height: 1.25;
   --text-h4: clamp(1.0625rem, 1.038rem + 0.1087vw, 1.125rem);
@@ -29,8 +32,46 @@
   --text-label--letter-spacing: 0.08em;
 }
 
+/* Space and pictures (DOC-06.15 section 4.3 and 4.5). Tight and moderate gaps use Tailwind's own scale (gap-2, gap-4, gap-6); these are the three the page itself is laid out with:
+   `px-gutter` the page edge (16 phone, 24 tablet, 40 desktop), `py-block` the space around an editorial block (32 to 64), `py-section` between major sections (48 to 96). */
+:root { --gutter: 1rem; }
+@media (min-width: 48rem) { :root { --gutter: 1.5rem; } }
+@media (min-width: 64rem) { :root { --gutter: 2.5rem; } }
+@theme inline {
+  --spacing-gutter: var(--gutter);
+}
+@theme {
+  --spacing-block: clamp(2rem, 1.2174rem + 3.478vw, 4rem);
+  --spacing-section: clamp(3rem, 1.826rem + 5.217vw, 6rem);
+  /* the product ratio is the theme's (`--media-ratio`); these are the others */
+  --aspect-portrait: 3 / 4;
+  --aspect-editorial: 4 / 5;
+  --aspect-landscape: 3 / 2;
+  --aspect-cinema: 16 / 9;
+}
+
 @layer base {
   h1, h2, h3 { text-wrap: balance; }
+}
+
+/* The small label above a headline (NEW ARRIVALS, THE EDIT): Inter at the label size, capitals with 0.08em of tracking, a soft ink. Three words at most; never for sentences. */
+@utility eyebrow {
+  @apply font-body text-label font-medium text-fg-soft uppercase;
+}
+
+/* A block that comes into view as the page scrolls: it rises 16 px and fades in over the first 40% of its entry. Only where the browser can tie an animation to scroll and the visitor has not asked for less motion; elsewhere it is simply there. */
+@keyframes reveal {
+  from { opacity: 0; translate: 0 1rem; }
+  to { opacity: 1; translate: 0 0; }
+}
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
 }
 
 /* Page transitions (DOC-06.15 section 5.3): a quick crossfade between pages, and a picture that grows from the card to the product page (`product-image`). A browser without view transitions just navigates. */

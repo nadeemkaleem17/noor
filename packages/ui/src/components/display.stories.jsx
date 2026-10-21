@@ -2,7 +2,7 @@ import { enums } from '@noor/contract'
 import { Inbox } from 'lucide-react'
 import { useState } from 'react'
 import { Accordion } from './accordion'
-import { Badge, StatusBadge } from './badge'
+import { Badge, StatusBadge, Tag } from './badge'
 import { Breadcrumb } from './breadcrumb'
 import { Button } from './button'
 import { Card } from './card'
@@ -78,6 +78,9 @@ function Board({ rtl = false }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {allStatuses.map((s) => <StatusBadge key={s} status={s} />)}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {/** @type {const} */ (['ink', 'sale', 'paper', 'quiet']).map((t) => <Tag key={t} tone={t}>{t}</Tag>)}
       </div>
       <Paged rtl={rtl} />
       <Carousel label="Banners" autoPlayMs={6000} items={['One', 'Two', 'Three']} renderItem={(n, i) => slide(n, i % 2 ? 'bg-accent-soft' : 'bg-surface-2')} />

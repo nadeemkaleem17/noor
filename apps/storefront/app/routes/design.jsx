@@ -1,3 +1,4 @@
+import { Tag } from '@noor/ui/badge'
 import { Button } from '@noor/ui/button'
 import { Field } from '@noor/ui/field'
 import { Input } from '@noor/ui/input'
@@ -27,7 +28,7 @@ const type = [
   ['h4', 'text-h4 font-semibold', 'Sub-heading'], ['body', 'text-body', 'Body text for descriptions and policies, up to seventy characters wide.'], ['ui', 'text-ui font-medium', 'Product name, button, form value'],
   ['small', 'text-small', 'Secondary and helper text'], ['caption', 'text-caption', 'Fabric line, badge, legal'], ['label', 'text-label uppercase', 'Navigation and filter title'],
 ]
-const motion = [['--dur-fast', '100 ms', 'colour, underline, focus'], ['--dur-base', '200 ms', 'hover, small panels, accordions'], ['--dur-slow', '300 ms', 'drawers, sheets, picture crossfade'], ['--dur-page', '250 ms', 'page transition']]
+const motion = [['--dur-fast', '100 ms', 'colour, underline, focus'], ['--dur-base', '200 ms', 'hover, small panels, accordions'], ['--dur-slow', '300 ms', 'drawers, sheets, picture crossfade'], ['--dur-page', '250 ms', 'page transition'], ['--dur-image', '400 ms', 'a second picture fading in'], ['--dur-reveal', '600 ms', 'editorial blocks and headlines']]
 
 export default function Design() {
   return (
@@ -64,8 +65,36 @@ export default function Design() {
         <div className="flex flex-wrap items-center gap-3">
           <Button>Primary</Button>
           <Button variant="secondary">Secondary</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="link">Text button</Button>
           <Button disabled>Disabled</Button>
           <Button loading>Loading</Button>
+        </div>
+        <p className="text-small text-muted">Hover and press each one: the primary lifts and settles, the secondary darkens its edge, the text button's underline firms up.</p>
+      </section>
+
+      <section aria-labelledby="d-tags" className="flex flex-col gap-4">
+        <h2 id="d-tags" className="font-heading text-h2">Eyebrow and merchandising tags</h2>
+        <p className="eyebrow">New arrivals</p>
+        <ul className="flex flex-wrap items-center gap-3">
+          <li><Tag tone="ink">New</Tag></li>
+          <li><Tag tone="sale">-20%</Tag></li>
+          <li><Tag tone="paper">Bestseller</Tag></li>
+          <li><Tag tone="quiet">Sold out</Tag></li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="d-shape" className="flex flex-col gap-4">
+        <h2 id="d-shape" className="font-heading text-h2">Shape, depth and space</h2>
+        <ul className="grid grid-cols-2 gap-4 text-small md:grid-cols-4">
+          <li className="flex h-20 items-center justify-center rounded-media bg-surface-2">media</li>
+          <li className="flex h-20 items-center justify-center rounded-card border border-line bg-surface">card</li>
+          <li className="flex h-20 items-center justify-center rounded-sheet bg-surface shadow-pop">sheet, floating</li>
+          <li className="flex h-20 items-center justify-center rounded-full bg-accent text-on-accent shadow-float">float</li>
+        </ul>
+        <p className="text-small text-muted">Gutter, block and section space: the three bars below are the page edge, an editorial block and a major section at this width.</p>
+        <div className="flex items-end gap-4">
+          <span className="h-gutter w-24 bg-line" /><span className="h-block w-24 bg-line-strong" /><span className="h-section w-24 bg-fg" />
         </div>
       </section>
 

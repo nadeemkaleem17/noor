@@ -31,7 +31,7 @@ describe('type scale (DOC-06.15 section 4.1)', () => {
 
 describe('motion (DOC-06.15 section 5.1)', () => {
   it('has the durations and the two easings', () => {
-    for (const d of ['fast: 100ms', 'base: 200ms', 'slow: 300ms', 'page: 250ms']) expect(tokens).toContain(`--dur-${d};`)
+    for (const d of ['fast: 100ms', 'micro: 150ms', 'base: 200ms', 'slow: 300ms', 'page: 250ms', 'image: 400ms', 'reveal: 600ms']) expect(tokens).toContain(`--dur-${d};`)
     expect(tokens).toContain('--ease-standard: cubic-bezier(0.2, 0, 0, 1);')
     expect(tokens).toContain('--ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);')
   })
@@ -53,8 +53,12 @@ describe('z-index scale (DOC-06.15 section 4.3)', () => {
 })
 
 describe('storefront shape (DOC-06.15 section 4.4)', () => {
-  it('controls and cards have a 2 px corner, pictures none', () => {
+  it('controls have a 2 px corner, cards 4 px, pictures none, and a sheet twice the card', () => {
     const block = /\[data-brand="storefront"\] \{([^}]*)\}/.exec(tokens)?.[1] ?? ''
-    expect(block).toContain('--sem-radius-control: 2px; --sem-radius-card: 2px; --sem-radius-media: 0;')
+    expect(block).toContain('--sem-radius-control: 2px; --sem-radius-card: 4px; --sem-radius-media: 0;')
+    expect(block).toContain('--sem-radius-sheet: calc(var(--sem-radius-card) * 2);')
+  })
+  it('floating controls have a shadow of their own', () => {
+    expect(tokens).toContain('--shadow-float: var(--sem-shadow-float);')
   })
 })

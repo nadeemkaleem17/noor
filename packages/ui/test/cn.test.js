@@ -20,5 +20,8 @@ describe('cn', () => {
     expect(cn('font-heading', 'font-body')).toBe('font-body')
     expect(cn('z-modal', 'z-popover')).toBe('z-popover')
     expect(cn('text-md', 'leading-urdu')).toBe('text-md leading-urdu')
+    expect(cn('text-caption', 'text-surface')).toBe('text-caption text-surface') // the storefront's scale is a size, not a color
+    expect(cn('rounded-card', 'rounded-sheet')).toBe('rounded-sheet')
+    expect(cn('shadow-pop', 'shadow-float')).toBe('shadow-float')
   })
 })

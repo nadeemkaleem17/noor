@@ -16,7 +16,7 @@ export function Checkbox({ label, invalid, className, disabled, ...props }) {
         disabled={disabled}
         aria-invalid={invalid || undefined}
         className={cn(
-          'group mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-control border border-line-strong bg-surface',
+          'group mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-control border border-line-strong bg-surface transition-colors duration-(--dur-micro) ease-standard hover:border-fg',
           'data-[checked]:border-accent data-[checked]:bg-accent data-[indeterminate]:border-accent data-[indeterminate]:bg-accent aria-invalid:border-danger',
           className,
         )}

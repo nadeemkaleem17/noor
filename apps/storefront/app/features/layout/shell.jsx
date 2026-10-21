@@ -32,7 +32,7 @@ function WhatsAppButton({ number }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={t('shell.whatsapp')}
-      className={`fixed end-4 z-20 grid size-14 place-items-center rounded-full bg-accent text-on-accent shadow-lg ${onProduct ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}
+      className={`fixed end-4 z-20 grid size-14 place-items-center rounded-full bg-accent text-on-accent shadow-float ${onProduct ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}
     >
       <MessageCircle aria-hidden="true" className="size-7" />
     </a>

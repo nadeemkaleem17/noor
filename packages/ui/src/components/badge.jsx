@@ -39,6 +39,25 @@ export function Badge({ tone = 'neutral', variant = 'soft', className, ...props 
   return <span className={cn('inline-flex items-center gap-1 rounded-control px-2 py-0.5 text-sm font-medium', variants[variant][tone], className)} {...props} />
 }
 
+/**
+ * @typedef {'ink' | 'paper' | 'sale' | 'quiet'} TagTone
+ */
+
+const tagTones = /** @type {Record<TagTone, string>} */ ({
+  ink: 'bg-fg text-bg', // New: the strongest mark on a picture
+  paper: 'bg-bg text-fg', // Bestseller, Limited, Made to order: quiet on a picture
+  sale: 'bg-sale text-surface', // the only red on a card
+  quiet: 'bg-surface-2 text-fg-soft', // Sold out
+})
+
+/**
+ * The merchandising mark on a picture or beside a price (New, Sale, Bestseller, Limited): small, sharp, set in capitals with a little tracking. A product carries one; Badge is for statuses.
+ * @param {import('react').ComponentProps<'span'> & { tone?: TagTone; }} props
+ */
+export function Tag({ tone = 'paper', className, ...props }) {
+  return <span className={cn('inline-flex items-center rounded-control px-2 py-1 text-caption leading-none font-medium tracking-wider whitespace-nowrap uppercase', tagTones[tone], className)} {...props} />
+}
+
 // The only place a status maps to a tone and a label (DOC-04b section 6).
 const statuses = /** @satisfies {Record<string, readonly [string, Tone]>} */ (/** @type {const} */ ({
   pending: ['order', 'neutral'],

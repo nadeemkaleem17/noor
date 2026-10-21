@@ -6,11 +6,12 @@ import { extendTailwindMerge } from 'tailwind-merge'
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      color: ['bg', 'surface', 'surface-2', 'fg', 'fg-soft', 'muted', 'line', 'line-strong', 'accent', 'on-accent', 'accent-text', 'accent-soft',
+      color: ['bg', 'surface', 'surface-2', 'fg', 'fg-soft', 'muted', 'line', 'line-strong', 'accent', 'on-accent', 'accent-text', 'accent-soft', 'accent-hover',
         'sale', 'success', 'success-soft', 'warning', 'warning-soft', 'danger', 'danger-soft', 'focus', 'sidebar', 'sidebar-fg', 'sidebar-muted', 'sidebar-active'],
-      text: ['xs', 'sm', 'base', 'md', 'lg', 'xl', '2xl', '3xl'],
-      radius: ['control', 'card', 'media'],
-      shadow: ['card', 'pop', 'modal'],
+      // the storefront's scale (app.css) is listed too: a component that uses `text-caption` next to a `text-surface` would otherwise lose the size
+      text: ['xs', 'sm', 'base', 'md', 'lg', 'xl', '2xl', '3xl', 'display', 'h1', 'h2', 'h3', 'h4', 'body', 'ui', 'small', 'caption', 'label'],
+      radius: ['control', 'card', 'media', 'sheet'],
+      shadow: ['card', 'pop', 'modal', 'float'],
       font: ['heading', 'body', 'mono'],
       leading: ['tight', 'normal', 'urdu'],
     },

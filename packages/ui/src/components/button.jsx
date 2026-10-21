@@ -4,11 +4,12 @@ import { isExternal, safeHref } from '../safe-href'
 import { Spinner } from './spinner'
 
 const variants = /** @type {const} */ ({
-  primary: 'bg-accent text-on-accent hover:brightness-95 active:brightness-90',
-  secondary: 'bg-surface text-fg border border-line-strong hover:bg-surface-2',
-  ghost: 'text-fg hover:bg-surface-2',
+  // primary lifts toward its text colour on hover and settles one pixel on press; secondary keeps its fill and darkens its edge; the text button's underline firms up (brightness on near-black showed nothing)
+  primary: 'bg-accent text-on-accent hover:bg-accent-hover active:translate-y-px active:bg-accent',
+  secondary: 'bg-surface text-fg border border-line-strong hover:border-fg active:bg-surface-2',
+  ghost: 'text-fg hover:bg-surface-2 active:bg-line',
   danger: 'bg-danger text-surface hover:brightness-95 active:brightness-90',
-  link: 'text-accent-text underline underline-offset-4 h-auto px-0',
+  link: 'text-accent-text underline decoration-current/40 underline-offset-4 hover:decoration-current h-auto px-0',
 })
 const sizes = /** @type {const} */ ({ sm: 'h-9 px-3 text-sm', md: 'h-11 px-4 text-md', lg: 'h-13 px-6 text-md' })
 const iconSizes = /** @type {const} */ ({ sm: 'size-9', md: 'size-11', lg: 'size-13' })
@@ -24,7 +25,7 @@ const iconSizes = /** @type {const} */ ({ sm: 'size-9', md: 'size-11', lg: 'size
  */
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-control font-medium transition-colors duration-(--dur-micro) disabled:opacity-50 disabled:pointer-events-none aria-disabled:opacity-50 aria-disabled:pointer-events-none'
+  'inline-flex items-center justify-center gap-2 rounded-control font-medium transition-[color,background-color,border-color,text-decoration-color] duration-(--dur-micro) ease-standard disabled:opacity-50 disabled:pointer-events-none aria-disabled:opacity-50 aria-disabled:pointer-events-none'
 
 /**
  * @param {Visual & { className?: string; }} props

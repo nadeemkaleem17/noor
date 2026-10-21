@@ -24,13 +24,13 @@ import { backdrop, modalSurface } from './overlay-styles'
 const widths = /** @type {const} */ ({ sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' })
 
 const centre =
-  'fixed start-1/2 top-1/2 max-h-[85dvh] w-[calc(100%-2rem)] -translate-y-1/2 rounded-card ltr:-translate-x-1/2 rtl:translate-x-1/2 ' +
-  'transition-[opacity,scale] duration-(--dur-modal) data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[ending-style]:duration-(--dur-modal-close)'
+  'fixed start-1/2 top-1/2 max-h-[85dvh] w-[calc(100%-2rem)] -translate-y-1/2 rounded-sheet ltr:-translate-x-1/2 rtl:translate-x-1/2 ' +
+  'transition-[opacity,scale] duration-(--dur-modal) ease-out data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[ending-style]:duration-(--dur-modal-close)'
 
 // Docked to the inline-end edge from `md` up, a bottom sheet below it. The slide direction follows the page direction.
 const edge =
-  'fixed w-full transition-transform duration-(--dur-modal) data-[ending-style]:duration-(--dur-modal-close) ' +
-  'max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[85dvh] max-md:rounded-t-card max-md:data-[starting-style]:translate-y-full max-md:data-[ending-style]:translate-y-full ' +
+  'fixed w-full transition-transform duration-(--dur-modal) ease-out data-[ending-style]:duration-(--dur-modal-close) ' +
+  'max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[85dvh] max-md:rounded-t-sheet max-md:data-[starting-style]:translate-y-full max-md:data-[ending-style]:translate-y-full ' +
   'md:inset-y-0 md:end-0 md:data-[starting-style]:ltr:translate-x-full md:data-[starting-style]:rtl:-translate-x-full md:data-[ending-style]:ltr:translate-x-full md:data-[ending-style]:rtl:-translate-x-full'
 
 // The navigation drawer: the inline-start edge at every width.

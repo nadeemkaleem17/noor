@@ -45,7 +45,7 @@ export function RadioGroup({ options, onValueChange, orientation = 'vertical', v
             disabled={o.disabled}
             // the round control is a span: it is named by the words beside it, not by the wrapping label
             aria-labelledby={`${base}-${i}`}
-            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface data-[checked]:border-accent"
+            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface transition-colors duration-(--dur-micro) ease-standard hover:border-fg data-[checked]:border-accent"
           >
             <Radio.Indicator className="size-2.5 rounded-full bg-accent" />
           </Radio.Root>

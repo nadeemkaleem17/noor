@@ -64,6 +64,6 @@ describe('tokens.css compiled by Tailwind v4', () => {
   it('keeps durations as plain variables for duration-(--dur-micro)', () => {
     const css = build(['duration-(--dur-micro)'])
     expect(css).toMatch(/transition-duration:\s*var\(--dur-micro\)/)
-    expect(css).toContain('--dur-micro: 120ms')
+    expect(css).toContain('--dur-micro: 150ms')
   })
 })

@@ -127,9 +127,9 @@ Rules: **the primary button is ink with white text** (the standard in this marke
 
 ### 4.4 Shape and depth
 
-- **Radius:** 2 px for buttons, inputs, chips and cards (sharp but not harsh; between the 0 to 3 px of the peers); 0 for pictures; full round only for the avatar-like category circles and the heart button. A `radius` setting in Appearance still offers 0, 2, 8.
+- **Radius (amended 2026-10-21, see section 12):** 2 px for buttons and inputs, 4 px for cards, 0 for pictures, twice the card (8 px) for dialogs, drawers and sheets (`rounded-sheet`), full round for chips, tags on a round theme and floating controls; full round only for the avatar-like category circles and the heart button. A `radius` setting in Appearance still offers 0, 2, 8.
 - **Borders:** 1 px `lineStrong` on inputs and chips, `line` on cards only when a card sits on a same-colour background; otherwise no border.
-- **Shadows:** none on the page; menus and drawers use `0 12px 32px rgba(20, 18, 16, 0.12)`; the mega menu has no shadow, only a 1 px top line. No gradients except the hero scrim.
+- **Shadows:** none on the page; menus and drawers use `0 12px 32px rgba(20, 18, 16, 0.12)`; the mega menu has no shadow, only a 1 px top line. A control that floats over the page (the WhatsApp button) uses `shadow-float`, `0 4px 16px rgba(20, 18, 16, 0.14)`. No gradients except the hero scrim.
 
 ### 4.5 Imagery
 
@@ -156,7 +156,9 @@ Lucide, 24 px (20 in dense rows), stroke 1.5 px, round caps, `currentColor`, wit
 | `--dur-instant` | 0 ms | state changes the user caused (selecting a chip) |
 | `--dur-fast` | 100 ms | colour, underline, focus |
 | `--dur-base` | 200 ms | hover, small panels, toasts, accordions |
-| `--dur-slow` | 300 ms | drawers, sheets, image crossfade |
+| `--dur-slow` | 300 ms | drawers, sheets |
+| `--dur-image` | 400 ms | a second picture fading in (amended 2026-10-21) |
+| `--dur-reveal` | 600 ms | editorial blocks and headlines coming into view |
 | `--dur-page` | 250 ms | page transition |
 | exit rule | entrance minus 50 ms | closing is faster than opening |
 | `--ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | entering and moving |
@@ -249,3 +251,23 @@ Animations use compositor properties only; the mega menu panels are server-rende
 | Date | Change |
 |---|---|
 | 2026-10-16 | Created from measured typography of five Pakistani brands, the code of Shopify Dawn and Saleor, and the research of §1.3; contrast values measured with the WCAG formula |
+| 2026-10-21 | Foundation pass (section 12): hover and press states that show on ink, tags, eyebrow, 4 px cards and 8 px sheets, float shadow, image and reveal durations, gutter/block/section space, aspect tokens, heading weight 500 |
+
+## 12. Foundation pass, 2026-10-21 (what changed in the tokens and the shared components, and what was left for the pages)
+
+| Area | Before | Now | Where |
+|---|---|---|---|
+| Primary button hover | `brightness-95`: invisible on near-black | `bg-accent-hover` (the accent 12% toward its text colour: ink lifts, a light accent deepens, any theme); press settles 1 px and returns to the base colour | `tokens.css` `--color-accent-hover`, `button.jsx` |
+| Secondary, ghost, text button | fill change only | secondary darkens its edge to ink; ghost gains a pressed fill; the text button's underline firms up from 40% to full | `button.jsx` |
+| Inputs, select, checkbox, radio | static border | the border goes to ink on hover (not while invalid or disabled), colour changes ease in `--dur-micro` | `control-styles.js`, `checkbox.jsx`, `radio-group.jsx` |
+| Merchandising mark | a hand-built span on the card | `Tag` (tones `ink` New, `sale`, `paper` Bestseller / Limited / Made to order, `quiet` Sold out): 12 px capitals, tracking 0.05em, one per product | `badge.jsx`, `product-card.jsx` `badgeTone` |
+| Eyebrow | none | `eyebrow`: the label size (12 to 13 px, 0.08em), capitals, soft ink; three words at most | `app.css` |
+| Heading weight | 400 by default | `display`, `h1`, `h2` carry weight 500 (section 4.1) | `app.css` |
+| Radius | control 2, card 2, media 0 | control 2, card 4, media 0, sheet = card x 2 (`rounded-sheet`: dialog, drawer, bottom sheet) | `tokens.css`, `theme.js`, `dialog.jsx` |
+| Shadow | `shadow-lg` on the WhatsApp button compiled to nothing (the default scale is cleared) | `shadow-float` | `tokens.css`, `shell.jsx` |
+| Motion | micro 120 ms | micro 150 ms, `--dur-image` 400 ms, `--dur-reveal` 600 ms, overlays ease with `ease-out`; all zero under reduced motion | `tokens.css`, `dialog.jsx`, `product-card.jsx` |
+| Reveal | none | `reveal`: rises 16 px and fades over the first 40% of its entry; CSS scroll-driven, only where supported and motion is allowed | `app.css` |
+| Space | `px-4` and `py-*` written per page | `px-gutter` (16 / 24 / 40 px at 768 and 1024), `py-block` (32 to 64), `py-section` (48 to 96) | `app.css` |
+| Picture ratios | per page | `aspect-portrait` 3:4, `aspect-editorial` 4:5, `aspect-landscape` 3:2, `aspect-cinema` 16:9; the product ratio stays the theme's `--media-ratio` | `app.css` |
+
+Two things to know. (1) `cn` (tailwind-merge) has its own list of token names in `packages/ui/src/cn.js`: a new colour, radius, shadow or type-size token must be added there or a class next to a colour class is silently dropped (found when `text-caption text-surface` lost its size). (2) The Atelier preset is the default of a new shop, but a shop that saved an older theme keeps it (this machine's dev database still holds the gold preset, so its primary button is gold): choose Atelier in Appearance to see the design as specified.
